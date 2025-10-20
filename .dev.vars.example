@@ -1,0 +1,6 @@
+# Copy this file to .dev.vars and fill in your local credentials.
+#
+# These values are used when running `npm run dev` with the Cloudflare
+# adapter so that the Astro server can connect to Strapi.
+STRAPI_URL=https://your-strapi-app.example.com
+STRAPI_API_TOKEN=your_strapi_api_token
