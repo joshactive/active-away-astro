@@ -1,5 +1,16 @@
 ---
+import { getGroupOrganisers } from '../lib/strapi';
 
+let organisers = [];
+let error = null;
+
+try {
+  const response = await getGroupOrganisers({ pageSize: 10 });
+  organisers = response.data;
+} catch (e) {
+  error = e.message;
+  console.error('Failed to fetch organisers:', e);
+}
 ---
 
 <html lang="en">
@@ -8,9 +19,75 @@
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
+		<title>Active Away - Tennis Holidays & Group Organisers</title>
+		<style>
+			body {
+				font-family: system-ui, -apple-system, sans-serif;
+				max-width: 1200px;
+				margin: 0 auto;
+				padding: 2rem;
+				background: #f5f5f5;
+			}
+			h1 {
+				color: #2c3e50;
+				margin-bottom: 2rem;
+			}
+			.grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+				gap: 1.5rem;
+			}
+			.card {
+				background: white;
+				padding: 1.5rem;
+				border-radius: 8px;
+				box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+			}
+			.card h2 {
+				color: #34495e;
+				margin-top: 0;
+			}
+			.error {
+				background: #fee;
+				border: 1px solid #fcc;
+				padding: 1rem;
+				border-radius: 4px;
+				color: #c33;
+			}
+			.meta {
+				color: #666;
+				font-size: 0.9rem;
+				margin-top: 0.5rem;
+			}
+		</style>
 	</head>
 	<body>
-		<h1>Astro</h1>
+		<h1>🎾 Active Away - Group Organisers</h1>
+		
+		{error ? (
+			<div class="error">
+				<strong>Error connecting to Strapi:</strong> {error}
+				<p>Make sure your .dev.vars file is configured with STRAPI_URL and STRAPI_API_TOKEN</p>
+			</div>
+		) : organisers.length > 0 ? (
+			<div class="grid">
+				{organisers.map((organiser: any) => (
+					<div class="card">
+						<h2>{organiser.attributes.title}</h2>
+						{organiser.attributes.venueMaster && (
+							<p class="meta">📍 {organiser.attributes.venueMaster}</p>
+						)}
+						{organiser.attributes.countryMaster && (
+							<p class="meta">🌍 {organiser.attributes.countryMaster}</p>
+						)}
+						{organiser.attributes.excerpt && (
+							<p>{organiser.attributes.excerpt.substring(0, 150)}...</p>
+						)}
+					</div>
+				))}
+			</div>
+		) : (
+			<p>No group organisers found. Import some data first!</p>
+		)}
 	</body>
 </html>
