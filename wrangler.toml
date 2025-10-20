@@ -1,7 +1,0 @@
-name = "active-away-master"
-compatibility_date = "2025-10-20"
-pages_build_output_dir = "dist"
-
-[env.production]
-compatibility_date = "2025-10-20"
-
