@@ -10,9 +10,13 @@ Your Strapi backend is already deployed on Railway. You'll need:
 
 ### 2. Update .dev.vars for Local Development
 
-Edit `.dev.vars` in your Astro project:
+Copy the sample file and fill in your Strapi details (the `.dev.vars` file is
+ignored by git so your secrets stay local):
 
 ```bash
+cp .dev.vars.example .dev.vars
+
+# then edit the new .dev.vars file
 STRAPI_URL=https://your-railway-app.railway.app
 STRAPI_API_TOKEN=your_api_token_here
 ```
