@@ -7,10 +7,44 @@ type StrapiCredentials = {
   STRAPI_API_TOKEN?: string;
 };
 
-function resolveCredentials(credentials?: StrapiCredentials) {
+function readRuntimeCredentials(): StrapiCredentials | undefined {
+  if (typeof globalThis !== 'object' || globalThis === null) {
+    return undefined;
+  }
+
+  const runtimeEnv = (globalThis as typeof globalThis & {
+    __env__?: Record<string, unknown>;
+  }).__env__;
+
+  if (!runtimeEnv || typeof runtimeEnv !== 'object') {
+    return undefined;
+  }
+
+  const { STRAPI_URL, STRAPI_API_TOKEN } = runtimeEnv as Record<string, unknown>;
+
   return {
-    url: credentials?.STRAPI_URL || import.meta.env.STRAPI_URL || 'http://localhost:1337',
-    token: credentials?.STRAPI_API_TOKEN || import.meta.env.STRAPI_API_TOKEN || '',
+    STRAPI_URL: typeof STRAPI_URL === 'string' && STRAPI_URL.length > 0 ? STRAPI_URL : undefined,
+    STRAPI_API_TOKEN:
+      typeof STRAPI_API_TOKEN === 'string' && STRAPI_API_TOKEN.length > 0
+        ? STRAPI_API_TOKEN
+        : undefined,
+  };
+}
+
+function resolveCredentials(credentials?: StrapiCredentials) {
+  const runtimeCredentials = readRuntimeCredentials();
+
+  return {
+    url:
+      credentials?.STRAPI_URL ||
+      runtimeCredentials?.STRAPI_URL ||
+      import.meta.env.STRAPI_URL ||
+      'http://localhost:1337',
+    token:
+      credentials?.STRAPI_API_TOKEN ||
+      runtimeCredentials?.STRAPI_API_TOKEN ||
+      import.meta.env.STRAPI_API_TOKEN ||
+      '',
   };
 }
 
