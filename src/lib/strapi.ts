@@ -2,7 +2,7 @@
  * Strapi API client
  */
 
-const STRAPI_URL = import.meta.env.STRAPI_URL || 'http://localhost:1337';
+const STRAPI_URL = import.meta.env.STRAPI_URL || 'https://strapi-production-b96d.up.railway.app';
 const STRAPI_API_TOKEN = import.meta.env.STRAPI_API_TOKEN || '';
 
 interface StrapiResponse<T> {
