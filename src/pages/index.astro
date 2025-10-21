@@ -70,22 +70,22 @@ try {
 				<p>Make sure your .dev.vars file is configured with STRAPI_URL and STRAPI_API_TOKEN</p>
 			</div>
 		) : organisers.length > 0 ? (
-			<div class="grid">
-				{organisers.map((organiser: any) => (
-					<div class="card">
-						<h2>{organiser.attributes.title}</h2>
-						{organiser.attributes.venueMaster && (
-							<p class="meta">📍 {organiser.attributes.venueMaster}</p>
-						)}
-						{organiser.attributes.countryMaster && (
-							<p class="meta">🌍 {organiser.attributes.countryMaster}</p>
-						)}
-						{organiser.attributes.excerpt && (
-							<p>{organiser.attributes.excerpt.substring(0, 150)}...</p>
-						)}
-					</div>
-				))}
-			</div>
+		<div class="grid">
+			{organisers.map((organiser: any) => (
+				<div class="card">
+					<h2>{organiser.title}</h2>
+					{organiser.venueMaster && (
+						<p class="meta">📍 {organiser.venueMaster}</p>
+					)}
+					{organiser.countryMaster && (
+						<p class="meta">🌍 {organiser.countryMaster}</p>
+					)}
+					{organiser.excerpt && (
+						<p>{organiser.excerpt.substring(0, 150)}...</p>
+					)}
+				</div>
+			))}
+		</div>
 		) : (
 			<p>No group organisers found. Import some data first!</p>
 		)}
