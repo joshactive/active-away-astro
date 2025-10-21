@@ -1,11 +1,27 @@
 ---
 import { getGroupOrganisers } from '../lib/strapi';
+import type { StrapiCredentials } from '../lib/strapi';
 
 let organisers = [];
 let error = null;
 
+const runtimeEnv = (() => {
+  const env = Astro.locals?.runtime?.env ?? null;
+
+  if (!env) {
+    return null;
+  }
+
+  const { STRAPI_URL, STRAPI_API_TOKEN } = env as Record<string, unknown>;
+
+  return {
+    STRAPI_URL: typeof STRAPI_URL === 'string' ? STRAPI_URL : undefined,
+    STRAPI_API_TOKEN: typeof STRAPI_API_TOKEN === 'string' ? STRAPI_API_TOKEN : undefined,
+  } satisfies StrapiCredentials;
+})();
+
 try {
-  const response = await getGroupOrganisers({ pageSize: 10 });
+  const response = await getGroupOrganisers({ pageSize: 10 }, runtimeEnv ?? undefined);
   organisers = response.data;
 } catch (e) {
   error = e.message;
@@ -67,7 +83,11 @@ try {
 		{error ? (
 			<div class="error">
 				<strong>Error connecting to Strapi:</strong> {error}
-				<p>Make sure your .dev.vars file is configured with STRAPI_URL and STRAPI_API_TOKEN</p>
+                                <p>
+                                        Make sure STRAPI_URL and STRAPI_API_TOKEN are configured for your
+                                        environment (for local development copy <code>.dev.vars.example</code> to
+                                        <code>.dev.vars</code>).
+                                </p>
 			</div>
 		) : organisers.length > 0 ? (
 			<div class="grid">
