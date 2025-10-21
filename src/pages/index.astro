@@ -5,7 +5,7 @@ let organisers = [];
 let error = null;
 
 try {
-  const response = await getGroupOrganisers({ pageSize: 10 });
+  const response = await getGroupOrganisers({ pageSize: 200 });
   organisers = response.data;
 } catch (e) {
   error = e.message;
