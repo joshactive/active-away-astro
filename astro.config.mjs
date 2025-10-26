@@ -6,7 +6,7 @@ import tailwind from '@astrojs/tailwind';
 export default defineConfig({
   integrations: [tailwind()],
   output: 'static',
-  site: 'https://active-away.pages.dev',
+  site: 'https://active-away-astro.pages.dev',
 
   build: {
     assets: 'assets'
