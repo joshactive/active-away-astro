@@ -58,15 +58,7 @@ console.log('Hero Background SrcSet:', heroBgSrcSet);
 <section class="relative w-full h-screen flex flex-col items-start p-0 overflow-x-hidden py-6 sm:py-10">
   <!-- Background Image -->
   <div class="absolute inset-0 w-full h-full">
-    <img 
-      src={heroBgUrl}
-      srcset={heroBgSrcSet}
-      sizes="100vw"
-      alt="Tennis court with players" 
-      class="w-full h-full object-cover"
-      loading="eager"
-      onerror="handleImageError(this, '/images/hero/hero-bg.jpg')"
-    />
+    <div class="w-full h-full object-cover" style={`background-image: url('${heroBgUrl}'); background-size: cover; background-position: center; background-repeat: no-repeat;`}></div>
     <div class="absolute inset-0 bg-gradient-to-b from-black/50 to-black/50"></div>
   </div>
 
