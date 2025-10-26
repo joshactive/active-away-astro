@@ -1,0 +1,121 @@
+---
+// About Us section component for Active Away - Tailwind CSS Version
+import { getImageByName } from '../utils/cloudflareImages.js';
+
+// Get dynamic image URLs
+const aboutUsImage1 = getImageByName('about-us-1', { size: 'public' });
+const aboutUsImage2 = getImageByName('about-us-2', { size: 'public' });
+
+// TODO: Replace with API call when backend is ready
+// Example: const aboutData = await fetch('/api/about').then(res => res.json());
+
+const aboutData = {
+  kicker: "ABOUT US",
+  title: "Why did we start Active Away?",
+  description: "To unite individuals who love racket sports by creating experiences and memories that will last a lifetime.",
+  content: "We've welcomed thousands of racket sport enthusiasts into the Active Away Family. Being part of a family means we care for each other & support each other through trust, honesty & respect.",
+  stats: [
+    "Since 2006",
+    "99% 5/5 Star Reviews", 
+    "85% Return",
+    "Join our community"
+  ],
+  experience: {
+    years: "17+",
+    label: "Years of Experience"
+  },
+  images: {
+    top: aboutUsImage2, // w=320 (2) 1.png
+    bottom: aboutUsImage1 // w=320 (13).png
+  }
+};
+
+// Debug: Log the URLs being generated
+console.log('About Us Image 1 URL:', aboutUsImage1);
+console.log('About Us Image 2 URL:', aboutUsImage2);
+---
+
+<section class="w-full bg-white py-6 sm:py-10 lg:py-24 px-3 sm:px-10">
+  <div class="container mx-auto">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-12 lg:items-stretch">
+      <!-- Column 1: Top Image -->
+      <div class="lg:order-1 h-full">
+        <div class="relative overflow-hidden rounded-2xl bg-gray-900 h-full">
+          <img src={aboutData.images.top} alt="Tennis coaching" class="w-full h-full object-cover" />
+        </div>
+      </div>
+
+      <!-- Column 2: Experience Box + Bottom Image -->
+      <div class="lg:order-2 h-full flex flex-col">
+        <!-- Experience Box -->
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-6 sm:p-8 text-center mb-6 sm:mb-8">
+          <div class="text-4xl sm:text-5xl lg:text-6xl font-playfair font-bold text-amber-600 mb-2">
+            {aboutData.experience.years}
+          </div>
+          <div class="text-sm sm:text-base lg:text-lg font-inter font-medium text-amber-700">
+            {aboutData.experience.label}
+          </div>
+        </div>
+        
+        <!-- Bottom Image -->
+        <div class="relative overflow-hidden rounded-2xl bg-gray-900 flex-1">
+          <img src={aboutData.images.bottom} alt="Tennis group" class="w-full h-full object-cover" />
+        </div>
+      </div>
+
+      <!-- Column 3: Content -->
+      <div class="lg:order-3 h-full flex flex-col justify-center">
+        <!-- Kicker -->
+        <div class="text-sm sm:text-base font-inter font-medium text-gray-900 tracking-widest uppercase mb-3 sm:mb-4">
+          {aboutData.kicker}
+        </div>
+        
+        <!-- Main Content -->
+        <div class="space-y-6 sm:space-y-8">
+          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 leading-tight">
+            {aboutData.title}
+          </h2>
+          
+          <div class="space-y-3 sm:space-y-4 lg:space-y-6">
+            <p class="text-lg sm:text-xl font-inter font-semibold text-gray-900 leading-relaxed">
+              {aboutData.description}
+            </p>
+            <p class="text-base sm:text-lg font-inter text-gray-700 leading-relaxed">
+              {aboutData.content}
+            </p>
+          </div>
+          
+          <!-- Stats List -->
+          <div class="space-y-3 sm:space-y-4">
+            {aboutData.stats.map((stat) => (
+              <div class="flex items-center gap-3 sm:gap-4">
+                <svg class="w-5 h-5 text-gray-600 flex-shrink-0" viewBox="0 0 18 18" fill="none">
+                  <path d="M3 9H15M15 9L9 3M15 9L9 15" stroke="#1E1E1E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="text-sm sm:text-base font-inter text-gray-700">{stat}</span>
+              </div>
+            ))}
+          </div>
+          
+          <!-- CTA Button -->
+          <button class="flex items-center gap-3 bg-gray-900 hover:bg-gray-800 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-inter font-medium text-sm sm:text-base transition-all duration-300 hover:-translate-y-0.5">
+            <span>Learn More</span>
+            <svg class="w-5 h-5" viewBox="0 0 22 22" fill="none">
+              <path d="M5.5 16.5L16.5 5.5M16.5 5.5H5.5M16.5 5.5V16.5" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+</style>

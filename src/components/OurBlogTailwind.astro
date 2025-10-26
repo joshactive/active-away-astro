@@ -1,0 +1,192 @@
+---
+// Blog data - TODO: Replace with API data - Tailwind CSS Version
+import { getImageByName } from '../utils/cloudflareImages.js';
+
+// Get dynamic image URLs
+const blog1Image = getImageByName('blog-1', { size: 'public' });
+const blog2Image = getImageByName('blog-2', { size: 'public' });
+const blog3Image = getImageByName('blog-3', { size: 'public' });
+
+const blogData = {
+  kicker: "EXPLORE",
+  title: "Our Blog",
+  viewAllLink: "View All Events",
+  blogs: [
+    {
+      id: 1,
+      image: blog2Image, // w=320 (1) 1 (1).png
+      author: "Josh Thompson",
+      date: "July 4, 2025",
+      title: "Newcastle Under-Lyme School Tennis Team Enjoy a Wimbledon Escape!",
+      description: "Newcastle-under-Lyme School enjoy a VIP Wimbledon trip with coaching, luxury hotel stay and more on the first-ever....",
+      isActive: false
+    },
+    {
+      id: 2,
+      image: blog1Image, // w=320 (1) 1.png
+      author: "Josh Thompson",
+      date: "February 20, 2025",
+      title: "Active Away Takes On Five Tennis Academies At Ikos Resorts",
+      description: "Discover the best tennis travel destinations worldwide. Explore stunning courts from scenic locales to iconic arenas for your..",
+      isActive: true
+    },
+    {
+      id: 3,
+      image: blog3Image, // w=320 (1) 1 (2).png
+      author: "Sophie Westlake",
+      date: "February 6, 2025",
+      title: "Tennis Nutrition: What to Eat for Optimal Performance",
+      description: "Discover the best nutrition tips for tennis players to enhance performance, boost energy levels, and speed up recovery...",
+      isActive: false
+    }
+  ]
+};
+
+// Debug: Log the URLs being generated
+console.log('Blog Images URLs:', { blog1Image, blog2Image, blog3Image });
+
+let currentBlogIndex = 1; // Middle blog is active by default
+---
+
+<section class="w-full bg-gray-50 py-6 sm:py-10 lg:py-24 px-3 sm:px-10">
+  <div class="container mx-auto">
+    <!-- Header -->
+    <div class="mb-6 sm:mb-8 lg:mb-16">
+      <div class="text-sm sm:text-base font-inter font-medium text-gray-900 tracking-widest uppercase mb-1 sm:mb-2">
+        {blogData.kicker}
+      </div>
+      <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 sm:gap-3 lg:gap-4">
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900">
+          {blogData.title}
+        </h2>
+        <a href="#" class="text-base sm:text-lg font-inter text-gray-900 underline hover:text-gray-700 transition-colors">
+          {blogData.viewAllLink}
+        </a>
+      </div>
+    </div>
+
+    <!-- Blog Carousel -->
+    <div class="relative">
+      <!-- Navigation Arrows -->
+      <button class="hidden lg:flex absolute left-4 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg items-center justify-center hover:bg-gray-50 transition-all duration-300" onclick="previousBlog()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M15 18L9 12L15 6" stroke="#1E1E1E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button class="hidden lg:flex absolute right-4 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg items-center justify-center hover:bg-gray-50 transition-all duration-300" onclick="nextBlog()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M9 18L15 12L9 6" stroke="#1E1E1E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
+      <!-- Blog Cards -->
+      <div class="flex flex-col lg:flex-row justify-center items-center gap-4 sm:gap-6 lg:gap-8">
+        {blogData.blogs.map((blog, index) => (
+          <div class={`blog-card w-full max-w-sm sm:max-w-md lg:max-w-lg ${blog.isActive ? 'active' : 'inactive'}`}>
+            <!-- Blog Image -->
+            <div class="relative overflow-hidden rounded-2xl bg-gray-900">
+              <img src={blog.image} alt={blog.title} class="w-full h-48 sm:h-56 lg:h-64 object-cover" />
+            </div>
+
+            <!-- Blog Content -->
+            <div class="relative -mt-8 lg:-mt-12 z-10 px-4 sm:px-6">
+              <div class="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 shadow-lg">
+                <!-- Tags -->
+                <div class="flex flex-wrap gap-2 mb-3 sm:mb-4">
+                  <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs sm:text-sm font-inter rounded-full">{blog.author}</span>
+                  <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs sm:text-sm font-inter rounded-full">{blog.date}</span>
+                </div>
+
+                <!-- Title and Description -->
+                <div class="mb-4 sm:mb-6">
+                  <h3 class="text-lg sm:text-xl lg:text-2xl font-playfair font-bold text-gray-900 mb-2 sm:mb-3 leading-tight">
+                    {blog.title}
+                  </h3>
+                  <p class="text-sm sm:text-base font-inter text-gray-700 leading-relaxed">
+                    {blog.description}
+                  </p>
+                </div>
+
+                <!-- Read More Button -->
+                <button class="flex items-center gap-2 text-amber-600 hover:text-amber-700 font-inter font-medium text-sm sm:text-base transition-colors">
+                  <span>Read More</span>
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                    <path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+  
+  /* Active/Inactive card states */
+  .blog-card.active {
+    transform: scale(1.05);
+    z-index: 10;
+  }
+  
+  .blog-card.inactive {
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
+  
+  /* Smooth transitions */
+  .blog-card {
+    transition: all 0.3s ease;
+  }
+  
+  /* Mobile responsive adjustments */
+  @media (max-width: 1023px) {
+    .blog-card.active,
+    .blog-card.inactive {
+      transform: none;
+      opacity: 1;
+    }
+  }
+</style>
+
+<script>
+  // Blog carousel functionality
+  let currentBlogIndex = 1; // Middle blog is active by default
+
+  function updateBlogCarousel() {
+    const cards = document.querySelectorAll('.blog-card');
+    
+    cards.forEach((card, index) => {
+      card.classList.remove('active', 'inactive');
+      if (index === currentBlogIndex) {
+        card.classList.add('active');
+      } else {
+        card.classList.add('inactive');
+      }
+    });
+  }
+
+  function nextBlog() {
+    currentBlogIndex = (currentBlogIndex + 1) % 3;
+    updateBlogCarousel();
+  }
+
+  function previousBlog() {
+    currentBlogIndex = (currentBlogIndex - 1 + 3) % 3;
+    updateBlogCarousel();
+  }
+
+  // Initialize carousel on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    updateBlogCarousel();
+  });
+</script>

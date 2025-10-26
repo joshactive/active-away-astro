@@ -1,0 +1,237 @@
+---
+// Footer component - Tailwind CSS Version - Fixed to match Figma
+import { getImageByName } from '../utils/cloudflareImages.js';
+
+// Get dynamic image URLs
+const footerLogo = getImageByName('footer-logo', { size: 'public' });
+const footerProtection1 = getImageByName('footer-protection-1', { size: 'public' });
+const footerProtection2 = getImageByName('footer-protection-2', { size: 'public' });
+const footerTrustpilotIcon = getImageByName('footer-trustpilot-icon', { size: 'public' });
+
+// Debug: Log the URLs being generated
+console.log('Footer Images URLs:', { 
+  footerLogo, footerProtection1, footerProtection2, footerTrustpilotIcon 
+});
+---
+
+<section class="w-full bg-gray-900 py-8 sm:py-12 lg:py-16 px-3 sm:px-10">
+  <div class="container mx-auto">
+    <!-- Main Footer Content -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-8 sm:gap-6 lg:gap-8 mb-6 sm:mb-8">
+      <!-- Column 1: Logo and Contact -->
+      <div>
+        <div class="mb-4 sm:mb-6">
+          <img src={footerLogo} alt="Active Away Logo" class="h-14 sm:h-18 lg:h-20 w-auto" />
+        </div>
+        
+        <div>
+          <h3 class="text-sm sm:text-base font-inter font-semibold text-white mb-3 sm:mb-4">Contact</h3>
+          
+          <div class="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
+            <div class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" viewBox="0 0 14 14" fill="none">
+                <path d="M7 1.5C4.5 1.5 2.5 3.5 2.5 6C2.5 7.5 3.5 8.5 4.5 9.5L7 12L9.5 9.5C10.5 8.5 11.5 7.5 11.5 6C11.5 3.5 9.5 1.5 7 1.5Z" stroke="#AD986C" stroke-width="1"/>
+                <path d="M7 4C6.2 4 5.5 4.7 5.5 5.5C5.5 6.3 6.2 7 7 7C7.8 7 8.5 6.3 8.5 5.5C8.5 4.7 7.8 4 7 4Z" stroke="#AD986C" stroke-width="1"/>
+              </svg>
+              <span class="text-xs sm:text-sm font-inter text-gray-300">Str. Garoafelor no. 3, Codlea, Brașov, Romania</span>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-amber-600 flex-shrink-0" viewBox="0 0 14 14" fill="none">
+                <path d="M3.5 2C2.7 2 2 2.7 2 3.5V10.5C2 11.3 2.7 12 3.5 12H10.5C11.3 12 12 11.3 12 10.5V3.5C12 2.7 11.3 2 10.5 2H3.5Z" stroke="#AD986C" stroke-width="1"/>
+                <path d="M7 7C7 7 7.5 6.5 7.5 6C7.5 5.5 7 5 7 5C7 5 6.5 5.5 6.5 6C6.5 6.5 7 7 7 7Z" stroke="#AD986C" stroke-width="1"/>
+              </svg>
+              <span class="text-xs sm:text-sm font-inter text-gray-300">020 79657277</span>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-amber-600 flex-shrink-0" viewBox="0 0 14 14" fill="none">
+                <path d="M2 4C2 3.4 2.4 3 3 3H11C11.6 3 12 3.4 12 4V10C12 10.6 11.6 11 11 11H3C2.4 11 2 10.6 2 10V4Z" stroke="#AD986C" stroke-width="1"/>
+                <path d="M2 4L7 7L12 4" stroke="#AD986C" stroke-width="1"/>
+              </svg>
+              <span class="text-xs sm:text-sm font-inter text-gray-300">hello@activeaway.com</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-3">
+          <a href="#" class="w-8 h-8 bg-transparent border border-amber-600/30 rounded-lg flex items-center justify-center hover:bg-amber-600/10 transition-colors">
+            <svg class="w-4 h-4 text-amber-600" viewBox="0 0 24 24" fill="none">
+              <path d="M18 2H15C13.9 2 13 2.9 13 4V7H18V10H13V22H10V10H6V7H10V4C10 2.9 9.1 2 8 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V4C20 2.9 19.1 2 18 2Z" stroke="currentColor" stroke-width="1" fill="none"/>
+            </svg>
+          </a>
+          <a href="#" class="w-8 h-8 bg-transparent border border-amber-600/30 rounded-lg flex items-center justify-center hover:bg-amber-600/10 transition-colors">
+            <svg class="w-4 h-4 text-amber-600" viewBox="0 0 24 24" fill="none">
+              <path d="M20.5 2H3.5C2.7 2 2 2.7 2 3.5V20.5C2 21.3 2.7 22 3.5 22H20.5C21.3 22 22 21.3 22 20.5V3.5C22 2.7 21.3 2 20.5 2Z" stroke="currentColor" stroke-width="1"/>
+              <path d="M8 9V15M16 9V15M8 9C8 7.9 8.9 7 10 7H14C15.1 7 16 7.9 16 9V15C16 16.1 15.1 17 14 17H10C8.9 17 8 16.1 8 15V9Z" stroke="currentColor" stroke-width="1"/>
+              <path d="M12 9V15" stroke="currentColor" stroke-width="1"/>
+            </svg>
+          </a>
+          <a href="#" class="w-8 h-8 bg-transparent border border-amber-600/30 rounded-lg flex items-center justify-center hover:bg-amber-600/10 transition-colors">
+            <svg class="w-4 h-4 text-amber-600" viewBox="0 0 24 24" fill="none">
+              <rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" stroke-width="1"/>
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37Z" stroke="currentColor" stroke-width="1"/>
+              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" stroke="currentColor" stroke-width="1"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+      
+      <!-- Column 2: Quick Links -->
+      <div>
+        <h3 class="text-sm sm:text-base font-inter font-semibold text-white mb-3 sm:mb-4">Quick Links</h3>
+        <div class="space-y-2 sm:space-y-3">
+          <a href="#" class="flex items-center gap-2 text-xs sm:text-sm font-inter text-gray-300 hover:text-amber-600 transition-colors">
+            <svg class="w-3 h-3 text-amber-600" viewBox="0 0 14 14" fill="none">
+              <path d="M5.5 7L8.5 4L7.5 3L3.5 7L7.5 11L8.5 10L5.5 7Z" stroke="currentColor" stroke-width="1"/>
+            </svg>
+            <span>Home</span>
+          </a>
+          <a href="#" class="flex items-center gap-2 text-xs sm:text-sm font-inter text-gray-300 hover:text-amber-600 transition-colors">
+            <svg class="w-3 h-3 text-amber-600" viewBox="0 0 14 14" fill="none">
+              <path d="M5.5 7L8.5 4L7.5 3L3.5 7L7.5 11L8.5 10L5.5 7Z" stroke="currentColor" stroke-width="1"/>
+            </svg>
+            <span>Dates</span>
+          </a>
+          <a href="#" class="flex items-center gap-2 text-xs sm:text-sm font-inter text-gray-300 hover:text-amber-600 transition-colors">
+            <svg class="w-3 h-3 text-amber-600" viewBox="0 0 14 14" fill="none">
+              <path d="M5.5 7L8.5 4L7.5 3L3.5 7L7.5 11L8.5 10L5.5 7Z" stroke="currentColor" stroke-width="1"/>
+            </svg>
+            <span>Rackets</span>
+          </a>
+          <a href="#" class="flex items-center gap-2 text-xs sm:text-sm font-inter text-gray-300 hover:text-amber-600 transition-colors">
+            <svg class="w-3 h-3 text-amber-600" viewBox="0 0 14 14" fill="none">
+              <path d="M5.5 7L8.5 4L7.5 3L3.5 7L7.5 11L8.5 10L5.5 7Z" stroke="currentColor" stroke-width="1"/>
+            </svg>
+            <span>About Us</span>
+          </a>
+          <a href="#" class="flex items-center gap-2 text-xs sm:text-sm font-inter text-gray-300 hover:text-amber-600 transition-colors">
+            <svg class="w-3 h-3 text-amber-600" viewBox="0 0 14 14" fill="none">
+              <path d="M5.5 7L8.5 4L7.5 3L3.5 7L7.5 11L8.5 10L5.5 7Z" stroke="currentColor" stroke-width="1"/>
+            </svg>
+            <span>Destination</span>
+          </a>
+          <a href="#" class="flex items-center gap-2 text-xs sm:text-sm font-inter text-gray-300 hover:text-amber-600 transition-colors">
+            <svg class="w-3 h-3 text-amber-600" viewBox="0 0 14 14" fill="none">
+              <path d="M5.5 7L8.5 4L7.5 3L3.5 7L7.5 11L8.5 10L5.5 7Z" stroke="currentColor" stroke-width="1"/>
+            </svg>
+            <span>Blogs</span>
+          </a>
+        </div>
+      </div>
+      
+      <!-- Column 3: Booking Information -->
+      <div>
+        <h3 class="text-sm sm:text-base font-inter font-semibold text-white mb-3 sm:mb-4">Booking information</h3>
+        <div class="space-y-2 sm:space-y-3">
+          <a href="#" class="flex items-center gap-2 text-xs sm:text-sm font-inter text-gray-300 hover:text-amber-600 transition-colors">
+            <svg class="w-3 h-3 text-amber-600" viewBox="0 0 14 14" fill="none">
+              <path d="M5.5 7L8.5 4L7.5 3L3.5 7L7.5 11L8.5 10L5.5 7Z" stroke="currentColor" stroke-width="1"/>
+            </svg>
+            <span>Terms & Conditions</span>
+          </a>
+          <a href="#" class="flex items-center gap-2 text-xs sm:text-sm font-inter text-gray-300 hover:text-amber-600 transition-colors">
+            <svg class="w-3 h-3 text-amber-600" viewBox="0 0 14 14" fill="none">
+              <path d="M5.5 7L8.5 4L7.5 3L3.5 7L7.5 11L8.5 10L5.5 7Z" stroke="currentColor" stroke-width="1"/>
+            </svg>
+            <span>FAQs</span>
+          </a>
+          <a href="#" class="flex items-center gap-2 text-xs sm:text-sm font-inter text-gray-300 hover:text-amber-600 transition-colors">
+            <svg class="w-3 h-3 text-amber-600" viewBox="0 0 14 14" fill="none">
+              <path d="M5.5 7L8.5 4L7.5 3L3.5 7L7.5 11L8.5 10L5.5 7Z" stroke="currentColor" stroke-width="1"/>
+            </svg>
+            <span>The Booking Process</span>
+          </a>
+          <a href="#" class="flex items-center gap-2 text-xs sm:text-sm font-inter text-gray-300 hover:text-amber-600 transition-colors">
+            <svg class="w-3 h-3 text-amber-600" viewBox="0 0 14 14" fill="none">
+              <path d="M5.5 7L8.5 4L7.5 3L3.5 7L7.5 11L8.5 10L5.5 7Z" stroke="currentColor" stroke-width="1"/>
+            </svg>
+            <span>View All Dates</span>
+          </a>
+          <a href="#" class="flex items-center gap-2 text-xs sm:text-sm font-inter text-gray-300 hover:text-amber-600 transition-colors">
+            <svg class="w-3 h-3 text-amber-600" viewBox="0 0 14 14" fill="none">
+              <path d="M5.5 7L8.5 4L7.5 3L3.5 7L7.5 11L8.5 10L5.5 7Z" stroke="currentColor" stroke-width="1"/>
+            </svg>
+            <span>Airport Transfers</span>
+          </a>
+          <a href="#" class="flex items-center gap-2 text-xs sm:text-sm font-inter text-gray-300 hover:text-amber-600 transition-colors">
+            <svg class="w-3 h-3 text-amber-600" viewBox="0 0 14 14" fill="none">
+              <path d="M5.5 7L8.5 4L7.5 3L3.5 7L7.5 11L8.5 10L5.5 7Z" stroke="currentColor" stroke-width="1"/>
+            </svg>
+            <span>Flight</span>
+          </a>
+          <a href="#" class="flex items-center gap-2 text-xs sm:text-sm font-inter text-gray-300 hover:text-amber-600 transition-colors">
+            <svg class="w-3 h-3 text-amber-600" viewBox="0 0 14 14" fill="none">
+              <path d="M5.5 7L8.5 4L7.5 3L3.5 7L7.5 11L8.5 10L5.5 7Z" stroke="currentColor" stroke-width="1"/>
+            </svg>
+            <span>Self Rating Guide</span>
+          </a>
+        </div>
+      </div>
+      
+      <!-- Column 4: Booking Protection -->
+      <div>
+        <h3 class="text-sm sm:text-base font-inter font-semibold text-white mb-3 sm:mb-4">Booking Protection</h3>
+        <div class="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
+          <a href="#" class="flex items-center gap-2 text-xs sm:text-sm font-inter text-gray-300 hover:text-amber-600 transition-colors">
+            <svg class="w-3 h-3 text-amber-600" viewBox="0 0 14 14" fill="none">
+              <path d="M5.5 7L8.5 4L7.5 3L3.5 7L7.5 11L8.5 10L5.5 7Z" stroke="currentColor" stroke-width="1"/>
+            </svg>
+            <span>Travel Trust Association</span>
+          </a>
+          <a href="#" class="flex items-center gap-2 text-xs sm:text-sm font-inter text-gray-300 hover:text-amber-600 transition-colors">
+            <svg class="w-3 h-3 text-amber-600" viewBox="0 0 14 14" fill="none">
+              <path d="M5.5 7L8.5 4L7.5 3L3.5 7L7.5 11L8.5 10L5.5 7Z" stroke="currentColor" stroke-width="1"/>
+            </svg>
+            <span>Package Travel Regulations</span>
+          </a>
+          <a href="#" class="flex items-center gap-2 text-xs sm:text-sm font-inter text-gray-300 hover:text-amber-600 transition-colors">
+            <svg class="w-3 h-3 text-amber-600" viewBox="0 0 14 14" fill="none">
+              <path d="M5.5 7L8.5 4L7.5 3L3.5 7L7.5 11L8.5 10L5.5 7Z" stroke="currentColor" stroke-width="1"/>
+            </svg>
+            <span>ATOL</span>
+          </a>
+        </div>
+        
+        <!-- Protection Badges -->
+        <div class="flex flex-row gap-3">
+          <img src={footerProtection1} alt="ATOL Protected" class="h-14 w-auto" />
+          <img src={footerProtection2} alt="Financial Protection" class="h-14 w-auto" />
+        </div>
+      </div>
+      
+      <!-- Column 5: Newsletter -->
+      <div>
+        <h3 class="text-sm sm:text-base font-inter font-semibold text-white mb-3 sm:mb-4">Newsletter</h3>
+        <div class="space-y-3">
+          <input type="text" placeholder="Full Name" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-xs sm:text-sm text-white placeholder-gray-400 focus:outline-none focus:border-amber-600 transition-colors" />
+          <input type="email" placeholder="Email Address" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-xs sm:text-sm text-white placeholder-gray-400 focus:outline-none focus:border-amber-600 transition-colors" />
+          <button class="w-full px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-inter font-medium rounded-lg transition-colors">
+            Submit
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Section -->
+    <div class="border-t border-gray-800 pt-3 sm:pt-4 pb-1">
+      <div class="flex flex-col lg:flex-row items-center justify-between gap-6 sm:gap-8">
+        <div class="text-center lg:text-left">
+          <p class="text-xs sm:text-sm font-inter text-gray-400">
+            © Active Away All rights reserved
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs sm:text-sm font-inter text-gray-400">See our 912 reviews on</span>
+          <img src={footerTrustpilotIcon} alt="Trustpilot" class="h-6 w-auto" />
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+</style>

@@ -1,0 +1,127 @@
+---
+// Racket Holiday Specialists section component for Active Away - Tailwind CSS Version
+import { getImageByName } from '../utils/cloudflareImages.js';
+
+// Get dynamic image URLs
+const racketSpecialistBg = getImageByName('racket-specialist-bg', { size: 'public' });
+const racketSpecialistOverlay = getImageByName('racket-specialist-overlay', { size: 'public' });
+const racketSpecialistMask = getImageByName('racket-specialist-mask', { size: 'public' });
+
+// Debug: Log the URLs being generated
+console.log('Racket Specialist Images URLs:', { racketSpecialistBg, racketSpecialistOverlay, racketSpecialistMask });
+---
+
+<section class="w-full bg-white py-6 sm:py-10 lg:py-24 px-3 sm:px-10">
+  <div class="container mx-auto">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 lg:items-stretch">
+      <!-- Content Column -->
+      <div class="lg:order-1 h-full flex flex-col justify-center">
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-6 sm:mb-8">
+          Racket Holiday Specialists
+        </h2>
+        
+        <p class="text-base sm:text-lg lg:text-xl font-inter text-gray-700 leading-relaxed mb-8 sm:mb-10">
+          Racket sports are at the heart of what we do, and we're excited to share that passion with you. As trailblazers in Adult & Family Tennis Holidays, Padel Holidays, and Pickleball Holidays, we hold ourselves to the highest standards. Experience our signature hosting style, where our dedicated team goes above and beyond to make every moment exceptional.
+        </p>
+        
+        <!-- Bullet Points Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8 sm:mb-10">
+          <!-- Left Column -->
+          <div class="space-y-3 sm:space-y-4">
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-2 bg-amber-600 rounded-full flex-shrink-0"></div>
+              <span class="text-sm sm:text-base font-inter text-gray-700">Lorem Ipsum</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-2 bg-amber-600 rounded-full flex-shrink-0"></div>
+              <span class="text-sm sm:text-base font-inter text-gray-700">Lorem Ipsum</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-2 bg-amber-600 rounded-full flex-shrink-0"></div>
+              <span class="text-sm sm:text-base font-inter text-gray-700">Lorem Ipsum</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-2 bg-amber-600 rounded-full flex-shrink-0"></div>
+              <span class="text-sm sm:text-base font-inter text-gray-700">Lorem Ipsum</span>
+            </div>
+          </div>
+          
+          <!-- Right Column -->
+          <div class="space-y-3 sm:space-y-4">
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-2 bg-amber-600 rounded-full flex-shrink-0"></div>
+              <span class="text-sm sm:text-base font-inter text-gray-700">Lorem Ipsum</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-2 bg-amber-600 rounded-full flex-shrink-0"></div>
+              <span class="text-sm sm:text-base font-inter text-gray-700">Lorem Ipsum</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-2 bg-amber-600 rounded-full flex-shrink-0"></div>
+              <span class="text-sm sm:text-base font-inter text-gray-700">Lorem Ipsum</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-2 bg-amber-600 rounded-full flex-shrink-0"></div>
+              <span class="text-sm sm:text-base font-inter text-gray-700">Lorem Ipsum</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- CTA Button -->
+        <div class="w-fit">
+          <button class="inline-flex items-center gap-3 bg-gray-900 hover:bg-gray-800 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-inter font-medium text-sm sm:text-base transition-all duration-300 hover:-translate-y-0.5">
+            <span>Learn More</span>
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none">
+              <path d="M7 17L17 7M17 7H7M17 7V17" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Image Column -->
+      <div class="lg:order-2 h-full">
+        <div class="relative overflow-hidden rounded-2xl h-full">
+          <img src={racketSpecialistBg} alt="Racket Holiday Resort" class="w-full h-full object-cover" />
+          
+          <!-- Award Card Overlay -->
+          <div class="absolute bottom-4 sm:bottom-6 right-4 sm:right-6 bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-lg max-w-xs">
+            <div class="flex items-start gap-3 sm:gap-4">
+              <svg class="w-8 h-8 sm:w-10 sm:h-10 text-amber-600 flex-shrink-0 mt-1" viewBox="0 0 48 48" fill="none">
+                <!-- Trophy Cup Base -->
+                <path d="M12 20C12 16.6863 14.6863 14 18 14H30C33.3137 14 36 16.6863 36 20V22C36 25.3137 33.3137 28 30 28H18C14.6863 28 12 25.3137 12 22V20Z" stroke="#D97706" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- Trophy Handle Left -->
+                <path d="M12 22C8 22 6 24 6 28C6 32 8 34 12 34" stroke="#D97706" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- Trophy Handle Right -->
+                <path d="M36 22C40 22 42 24 42 28C42 32 40 34 36 34" stroke="#D97706" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- Trophy Top -->
+                <path d="M18 14V10C18 8.89543 18.8954 8 20 8H28C29.1046 8 30 8.89543 30 10V14" stroke="#D97706" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- Trophy Stem -->
+                <path d="M24 14V28" stroke="#D97706" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- Star/Award Symbol -->
+                <path d="M24 4L26 8L30 8L27 11L28 15L24 13L20 15L21 11L18 8L22 8L24 4Z" stroke="#D97706" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <div class="flex-1">
+                <h3 class="text-sm sm:text-base font-inter font-semibold text-gray-900 mb-1">
+                  We're an Award Winning Pet Care Brand
+                </h3>
+                <p class="text-xs sm:text-sm font-inter text-gray-600 leading-relaxed">
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+</style>

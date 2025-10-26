@@ -1,0 +1,210 @@
+---
+// Holiday Experts data - TODO: Replace with API data - Tailwind CSS Version
+const holidayExpertsData = {
+  title: "Tennis Holiday Experts",
+  accordions: [
+    {
+      id: 1,
+      title: "Tennis Holidays",
+      content: "Tennis Holidays are an immersive experience that unite people through their shared love for tennis in stunning destinations with world-class Tennis Courts. We've put together some incredible Tennis Breaks that will fulfil your dreams and create lasting memories. You'll have seen Active Away Tennis Holidays on Dragons' Den! Why not start by exploring our Tennis Holidays Dates to find your dream Tennis Holiday.",
+      isOpen: true
+    },
+    {
+      id: 2,
+      title: "What is a Tennis Holiday?",
+      content: "A tennis holiday is a specialized vacation experience that combines travel with tennis coaching, playing opportunities, and social activities. It's designed for tennis enthusiasts who want to improve their game while enjoying beautiful destinations.",
+      isOpen: false
+    },
+    {
+      id: 3,
+      title: "Why book your Tennis Holidays with Active Away?",
+      content: "Active Away offers unique tennis holidays crafted by doubles champion Jamie Murray, featuring world-class coaching, stunning destinations, and personalized attention from our expert hosts.",
+      isOpen: false
+    },
+    {
+      id: 4,
+      title: "Luxury Tennis Holiday Camps",
+      content: "Our luxury tennis holiday camps provide premium accommodation, top-tier coaching facilities, and exclusive experiences in some of the world's most beautiful tennis destinations.",
+      isOpen: false
+    },
+    {
+      id: 5,
+      title: "Adult Only Tennis Holidays",
+      content: "Our adult-only tennis holidays offer a sophisticated environment for mature players to enjoy focused coaching, competitive play, and social activities without distractions.",
+      isOpen: false
+    },
+    {
+      id: 6,
+      title: "Padel Tennis Holidays",
+      content: "Experience the exciting world of padel tennis with our specialized holidays that combine traditional tennis with the fast-paced, social nature of padel in stunning locations.",
+      isOpen: false
+    },
+    {
+      id: 7,
+      title: "Tennis Coaching Holidays Abroad",
+      content: "Tennis Holidays are an immersive experience that unite people through their shared love for tennis in stunning destinations with world-class Tennis Courts. We've put together some incredible Tennis Breaks that will fulfil your dreams and create lasting memories. You'll have seen Active Away Tennis Holidays on Dragons' Den! Why not start by exploring our Tennis Holidays Dates to find your dream Tennis Holiday.",
+      isOpen: true
+    },
+    {
+      id: 8,
+      title: "Tennis Holidays in Europe",
+      content: "Discover Europe's finest tennis destinations with our carefully curated holidays that showcase the continent's most beautiful courts, from Mediterranean coastlines to Alpine resorts.",
+      isOpen: false
+    },
+    {
+      id: 9,
+      title: "Tennis Holidays for Singles",
+      content: "Our singles tennis holidays are perfect for solo travelers looking to meet like-minded tennis enthusiasts while enjoying world-class coaching and beautiful destinations.",
+      isOpen: false
+    },
+    {
+      id: 10,
+      title: "Tennis Holidays Deals",
+      content: "Take advantage of our special offers and early bird discounts on tennis holidays throughout the year. We regularly update our deals to provide the best value for tennis enthusiasts.",
+      isOpen: false
+    },
+    {
+      id: 11,
+      title: "Pickleball Holidays",
+      content: "Join our growing community of pickleball enthusiasts with holidays that combine this exciting sport with beautiful destinations and expert coaching.",
+      isOpen: false
+    },
+    {
+      id: 12,
+      title: "Tennis Holiday Links",
+      content: "Access all our tennis holiday resources, including booking information, destination guides, coaching schedules, and special offers in one convenient location.",
+      isOpen: false
+    }
+  ]
+};
+---
+
+<section class="w-full bg-white py-6 sm:py-10 lg:py-24 px-3 sm:px-10">
+  <div class="container mx-auto">
+    <!-- Title -->
+    <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 text-center mb-6 sm:mb-8 lg:mb-16">
+      {holidayExpertsData.title}
+    </h2>
+
+    <!-- Accordions Container -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-8">
+      <!-- Left Column -->
+      <div class="space-y-3 sm:space-y-4 lg:space-y-6">
+        {holidayExpertsData.accordions.slice(0, 6).map((accordion) => (
+          <div class={`accordion bg-white border border-gray-200 rounded-xl overflow-hidden transition-all duration-300 ${accordion.isOpen ? 'shadow-lg' : 'shadow-sm hover:shadow-md'}`}>
+            <div class="accordion-header flex items-center justify-between p-4 sm:p-6 cursor-pointer hover:bg-gray-50 transition-colors" onclick="toggleAccordion(this)">
+              <h3 class="text-sm sm:text-base lg:text-lg font-inter font-medium text-gray-900 pr-4">
+                {accordion.title}
+              </h3>
+              <div class="expand-icon flex-shrink-0">
+                <div class={`arrow-icon w-6 h-6 flex items-center justify-center transition-transform duration-300 ${accordion.isOpen ? 'rotate-180' : ''}`}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M4 6L8 10L12 6" stroke="#1E1E1E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div class={`accordion-content overflow-hidden transition-all duration-300 ${accordion.isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+              <div class="px-4 pb-4 sm:px-6 sm:pb-6 pt-0">
+                <p class="text-xs sm:text-sm lg:text-base font-inter text-gray-700 leading-relaxed">
+                  {accordion.content}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <!-- Right Column -->
+      <div class="space-y-3 sm:space-y-4 lg:space-y-6">
+        {holidayExpertsData.accordions.slice(6, 12).map((accordion) => (
+          <div class={`accordion bg-white border border-gray-200 rounded-xl overflow-hidden transition-all duration-300 ${accordion.isOpen ? 'shadow-lg' : 'shadow-sm hover:shadow-md'}`}>
+            <div class="accordion-header flex items-center justify-between p-4 sm:p-6 cursor-pointer hover:bg-gray-50 transition-colors" onclick="toggleAccordion(this)">
+              <h3 class="text-sm sm:text-base lg:text-lg font-inter font-medium text-gray-900 pr-4">
+                {accordion.title}
+              </h3>
+              <div class="expand-icon flex-shrink-0">
+                <div class={`arrow-icon w-6 h-6 flex items-center justify-center transition-transform duration-300 ${accordion.isOpen ? 'rotate-180' : ''}`}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M4 6L8 10L12 6" stroke="#1E1E1E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div class={`accordion-content overflow-hidden transition-all duration-300 ${accordion.isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+              <div class="px-4 pb-4 sm:px-6 sm:pb-6 pt-0">
+                <p class="text-xs sm:text-sm lg:text-base font-inter text-gray-700 leading-relaxed">
+                  {accordion.content}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+</style>
+
+<script is:inline>
+  function toggleAccordion(header) {
+    const accordion = header.closest('.accordion');
+    if (!accordion) return;
+    
+    const content = accordion.querySelector('.accordion-content');
+    const arrow = accordion.querySelector('.arrow-icon');
+    const isOpen = accordion.classList.contains('open');
+    
+    // Toggle current accordion
+    if (isOpen) {
+      accordion.classList.remove('open');
+      if (content) {
+        content.style.maxHeight = '0';
+        content.style.opacity = '0';
+      }
+      if (arrow) {
+        arrow.classList.remove('rotate-180');
+      }
+    } else {
+      // Close other accordions in the same parent
+      const parent = accordion.parentElement;
+      if (parent) {
+        const siblings = parent.querySelectorAll('.accordion');
+        siblings.forEach(acc => {
+          if (acc !== accordion) {
+            acc.classList.remove('open');
+            const accContent = acc.querySelector('.accordion-content');
+            const accArrow = acc.querySelector('.arrow-icon');
+            if (accContent) {
+              accContent.style.maxHeight = '0';
+              accContent.style.opacity = '0';
+            }
+            if (accArrow) {
+              accArrow.classList.remove('rotate-180');
+            }
+          }
+        });
+      }
+      
+      accordion.classList.add('open');
+      if (content) {
+        content.style.maxHeight = content.scrollHeight + 'px';
+        content.style.opacity = '1';
+      }
+      if (arrow) {
+        arrow.classList.add('rotate-180');
+      }
+    }
+  }
+  
+  console.log('Accordion function loaded');
+</script>

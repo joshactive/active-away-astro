@@ -1,0 +1,71 @@
+---
+// Our Partners section component for Active Away - Tailwind CSS Version
+import { getImageByName } from '../utils/cloudflareImages.js';
+
+// Get dynamic image URLs
+const partner1Logo = getImageByName('partner-1', { size: 'public' });
+const partner2Logo = getImageByName('partner-2', { size: 'public' });
+const partner3Logo = getImageByName('partner-3', { size: 'public' });
+const partner4Logo = getImageByName('partner-4', { size: 'public' });
+const partner5Logo = getImageByName('partner-5', { size: 'public' });
+
+// TODO: Replace with API call when backend is ready
+// Example: const partners = await fetch('/api/partners').then(res => res.json());
+
+const partners = [
+  {
+    id: 1,
+    name: "Grapho",
+    logo: partner1Logo // Compnay logo.png
+  },
+  {
+    id: 2,
+    name: "Iconic",
+    logo: partner2Logo // Compnay logo (1).png
+  },
+  {
+    id: 3,
+    name: "Vectra",
+    logo: partner3Logo // Compnay logo (2).png
+  },
+  {
+    id: 4,
+    name: "Visualy",
+    logo: partner4Logo // Compnay logo (3).png
+  },
+  {
+    id: 5,
+    name: "Dexign Studio",
+    logo: partner5Logo // Compnay logo (4).png
+  }
+];
+
+// Debug: Log the URLs being generated
+console.log('Partner Logos URLs:', { partner1Logo, partner2Logo, partner3Logo, partner4Logo, partner5Logo });
+---
+
+<section class="w-full bg-white py-6 sm:py-10 lg:py-24 px-3 sm:px-10">
+  <div class="container mx-auto">
+    <!-- Title -->
+    <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 text-center mb-6 sm:mb-8 lg:mb-16">
+      Our Partners
+    </h2>
+    
+    <!-- Partners Grid -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6 lg:gap-12">
+      {partners.map((partner) => (
+        <div class="partner-card flex items-center justify-center p-4 sm:p-6 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all duration-300 hover:-translate-y-1">
+          <div class="partner-logo w-full h-20 sm:h-24 lg:h-28 flex items-center justify-center">
+            <img src={partner.logo} alt={partner.name} class="max-w-full max-h-full object-contain filter grayscale hover:grayscale-0 transition-all duration-300" />
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+</style>

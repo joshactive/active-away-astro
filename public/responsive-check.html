@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsive Hero Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        .test-container {
+            background: #f0f0f0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .breakpoint-info {
+            background: #007bff;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .device-frame {
+            border: 3px solid #333;
+            border-radius: 20px;
+            margin: 20px auto;
+            background: white;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .desktop-frame {
+            width: 1200px;
+            height: 800px;
+        }
+        .tablet-frame {
+            width: 768px;
+            height: 1024px;
+        }
+        .mobile-frame {
+            width: 375px;
+            height: 667px;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .instructions {
+            background: #e8f4fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .instructions h3 {
+            color: #007bff;
+            margin-top: 0;
+        }
+        .instructions ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>📱 Responsive Hero Section Test</h1>
+        
+        <div class="instructions">
+            <h3>🎯 Test Instructions:</h3>
+            <ul>
+                <li><strong>Desktop (1200px+):</strong> Full navigation, large title, horizontal search bar</li>
+                <li><strong>Tablet (769px-1024px):</strong> Medium navigation, centered content, horizontal search bar</li>
+                <li><strong>Mobile (768px and below):</strong> Hamburger menu, stacked search bar, smaller text</li>
+            </ul>
+        </div>
+        
+        <div class="breakpoint-info">
+            <strong>Current Viewport:</strong> <span id="viewport-size"></span>
+        </div>
+        
+        <h2>🖥️ Desktop View (1200px+)</h2>
+        <div class="device-frame desktop-frame">
+            <iframe src="http://localhost:4322/" title="Desktop View"></iframe>
+        </div>
+        
+        <h2>📱 Tablet View (768px-1024px)</h2>
+        <div class="device-frame tablet-frame">
+            <iframe src="http://localhost:4322/" title="Tablet View"></iframe>
+        </div>
+        
+        <h2>📱 Mobile View (375px)</h2>
+        <div class="device-frame mobile-frame">
+            <iframe src="http://localhost:4322/" title="Mobile View"></iframe>
+        </div>
+        
+        <div class="instructions">
+            <h3>🔧 Responsive Features Implemented:</h3>
+            <ul>
+                <li><strong>Navigation:</strong> Desktop menu → Tablet menu → Mobile hamburger</li>
+                <li><strong>Typography:</strong> Responsive font sizes for all screen sizes</li>
+                <li><strong>Search Bar:</strong> Horizontal on desktop/tablet → Vertical on mobile</li>
+                <li><strong>Reviews Section:</strong> Responsive positioning and sizing</li>
+                <li><strong>Logo:</strong> Scales appropriately for each device</li>
+                <li><strong>Spacing:</strong> Optimized padding and margins for each breakpoint</li>
+            </ul>
+        </div>
+        
+        <div class="instructions">
+            <h3>📏 Breakpoints Used:</h3>
+            <ul>
+                <li><strong>Desktop:</strong> 1025px and above</li>
+                <li><strong>Tablet:</strong> 769px - 1024px</li>
+                <li><strong>Mobile Large:</strong> 481px - 768px</li>
+                <li><strong>Mobile Small:</strong> 480px and below</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        // Update viewport size display
+        function updateViewportSize() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            document.getElementById('viewport-size').textContent = `${width}x${height}`;
+        }
+        
+        updateViewportSize();
+        window.addEventListener('resize', updateViewportSize);
+        
+        console.log('📱 Responsive Hero Test Page Loaded');
+        console.log('Current viewport:', window.innerWidth + 'x' + window.innerHeight);
+        
+        // Log breakpoint changes
+        function logBreakpoint() {
+            const width = window.innerWidth;
+            let breakpoint = '';
+            
+            if (width >= 1025) {
+                breakpoint = 'Desktop (1025px+)';
+            } else if (width >= 769) {
+                breakpoint = 'Tablet (769px-1024px)';
+            } else if (width >= 481) {
+                breakpoint = 'Mobile Large (481px-768px)';
+            } else {
+                breakpoint = 'Mobile Small (480px and below)';
+            }
+            
+            console.log(`Current breakpoint: ${breakpoint}`);
+        }
+        
+        logBreakpoint();
+        window.addEventListener('resize', logBreakpoint);
+    </script>
+</body>
+</html>

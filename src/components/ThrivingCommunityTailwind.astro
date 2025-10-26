@@ -1,0 +1,120 @@
+---
+// Thriving Community section component for Active Away - Tailwind CSS Version
+import { getImageByName } from '../utils/cloudflareImages.js';
+
+// Get dynamic image URLs
+const thrivingCommunityBg = getImageByName('thriving-community-bg', { size: 'public' });
+const thrivingCommunity1 = getImageByName('thriving-community-1', { size: 'public' });
+const thrivingCommunity2 = getImageByName('thriving-community-2', { size: 'public' });
+
+// TODO: Replace with API call when backend is ready
+// Example: const communityData = await fetch('/api/community').then(res => res.json());
+
+const communityData = {
+  title: "Our Thriving Community",
+  description: "Active Away would be nothing without our thriving community. We talk a lot about being part of 'The Active Away Family' and have built a completely free online platform that all event attendees can join. Our free membership offers exclusive benefits and an online forum to discuss your next event.",
+  bulletPoints: [
+    "Lorem Ipsum",
+    "Lorem Ipsum", 
+    "Lorem Ipsum",
+    "Lorem Ipsum",
+    "Lorem Ipsum",
+    "Lorem Ipsum",
+    "Lorem Ipsum",
+    "Lorem Ipsum"
+  ],
+  buttonText: "Learn More",
+  images: {
+    top: thrivingCommunityBg, // Photo 06-05-2025, 15 39 20 (3) 2.png
+    bottomLeft: thrivingCommunity2, // w=320 (13) 1.png
+    bottomRight: thrivingCommunity1 // w=320 (12) 1.png
+  }
+};
+
+// Debug: Log the URLs being generated
+console.log('Thriving Community Images URLs:', { thrivingCommunityBg, thrivingCommunity1, thrivingCommunity2 });
+---
+
+<section class="w-full bg-gray-50 py-6 sm:py-10 lg:py-24 px-3 sm:px-10">
+  <div class="container mx-auto">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
+      <!-- Images Column -->
+      <div class="lg:order-1">
+        <div class="space-y-3 sm:space-y-4 lg:space-y-6">
+          <!-- Top Image -->
+          <div class="relative overflow-hidden rounded-2xl bg-gray-900">
+            <img src={communityData.images.top} alt="Tennis player" class="w-full h-48 sm:h-64 lg:h-80 object-cover" />
+          </div>
+          
+          <!-- Bottom Images Row -->
+          <div class="grid grid-cols-2 gap-4 sm:gap-6">
+            <div class="relative overflow-hidden rounded-2xl bg-gray-900">
+              <img src={communityData.images.bottomLeft} alt="Tennis group" class="w-full h-32 sm:h-40 lg:h-48 object-cover" />
+            </div>
+            <div class="relative overflow-hidden rounded-2xl bg-gray-900">
+              <img src={communityData.images.bottomRight} alt="Tennis couple" class="w-full h-32 sm:h-40 lg:h-48 object-cover" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content Column -->
+      <div class="lg:order-2">
+        <div class="space-y-6 sm:space-y-8">
+          <!-- Header -->
+          <div>
+            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-4 sm:mb-6">
+              {communityData.title}
+            </h2>
+            <p class="text-base sm:text-lg lg:text-xl font-inter text-gray-700 leading-relaxed">
+              {communityData.description.split('online platform').map((part, index) => (
+                <>
+                  {part}
+                  {index === 0 && <span class="underline decoration-amber-600 decoration-2 underline-offset-2">online platform</span>}
+                </>
+              ))}
+            </p>
+          </div>
+
+          <!-- Bullet Points -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div class="space-y-3 sm:space-y-4">
+              {communityData.bulletPoints.slice(0, 4).map((point) => (
+                <div class="flex items-center gap-3">
+                  <div class="w-2 h-2 bg-amber-600 rounded-full flex-shrink-0"></div>
+                  <span class="text-sm sm:text-base font-inter text-gray-700">{point}</span>
+                </div>
+              ))}
+            </div>
+            <div class="space-y-3 sm:space-y-4">
+              {communityData.bulletPoints.slice(4, 8).map((point) => (
+                <div class="flex items-center gap-3">
+                  <div class="w-2 h-2 bg-amber-600 rounded-full flex-shrink-0"></div>
+                  <span class="text-sm sm:text-base font-inter text-gray-700">{point}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <!-- CTA Button -->
+          <button class="flex items-center gap-3 bg-gray-900 hover:bg-gray-800 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-inter font-medium text-sm sm:text-base transition-all duration-300 hover:-translate-y-0.5">
+            <span>{communityData.buttonText}</span>
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none">
+              <path d="M7 17L17 7M17 7H7M17 7V17" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+</style>

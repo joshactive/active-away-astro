@@ -1,0 +1,268 @@
+---
+// Hero section component for Active Away - Figma Perfect Match
+import { getImageByName, generateSrcSet } from '../utils/cloudflareImages.js';
+
+// Get image URLs using the new system
+const heroBgUrl = getImageByName('hero-bg', { size: 'public' });
+const logoUrl = getImageByName('logo', { size: 'public' });
+
+// Man images URLs
+const man1Url = getImageByName('man-1', { size: 'public' });
+const man2Url = getImageByName('man-2', { size: 'public' });
+const man3Url = getImageByName('man-3', { size: 'public' });
+const man4Url = getImageByName('man-4', { size: 'public' });
+
+// Generate responsive srcset for hero background
+const heroBgSrcSet = generateSrcSet('03bade93-3cf6-49b0-047f-a9eb556aa200', [
+  { size: '480x270', width: 480 },
+  { size: '768x432', width: 768 },
+  { size: '1200x675', width: 1200 },
+  { size: '1920x1080', width: 1920 }
+]);
+
+// Debug: Log the URLs being generated
+console.log('Hero Background URL:', heroBgUrl);
+console.log('Logo URL:', logoUrl);
+console.log('Man Images URLs:', { man1Url, man2Url, man3Url, man4Url });
+console.log('Hero Background SrcSet:', heroBgSrcSet);
+---
+
+<script is:inline>
+  // Better error handling for images
+  function handleImageError(img, fallbackSrc) {
+    if (img.src !== fallbackSrc) {
+      img.src = fallbackSrc;
+    }
+  }
+
+  // Mobile menu toggle
+  function toggleMobileMenu() {
+    const menu = document.getElementById('mobile-menu');
+    const overlay = document.getElementById('mobile-overlay');
+    if (menu && overlay) {
+      menu.classList.toggle('translate-x-full');
+      overlay.classList.toggle('hidden');
+    }
+  }
+
+  function closeMobileMenu() {
+    const menu = document.getElementById('mobile-menu');
+    const overlay = document.getElementById('mobile-overlay');
+    if (menu && overlay) {
+      menu.classList.add('translate-x-full');
+      overlay.classList.add('hidden');
+    }
+  }
+</script>
+
+<section class="relative w-full h-screen flex flex-col items-start p-0 overflow-x-hidden py-6 sm:py-10">
+  <!-- Background Image -->
+  <div class="absolute inset-0 w-full h-full">
+    <img 
+      src={heroBgUrl}
+      srcset={heroBgSrcSet}
+      sizes="100vw"
+      alt="Tennis court with players" 
+      class="w-full h-full object-cover"
+      loading="eager"
+      onerror="handleImageError(this, '/images/hero/hero-bg.jpg')"
+    />
+    <div class="absolute inset-0 bg-gradient-to-b from-black/50 to-black/50"></div>
+  </div>
+
+  <!-- Navigation Bar -->
+  <nav class="absolute w-full top-2 sm:top-4 lg:top-6 z-20">
+    <div class="container mx-auto px-4">
+      <div class="flex justify-between items-center h-14">
+              <!-- Logo -->
+              <div class="w-32 h-10 sm:w-36 sm:h-12 lg:w-40 lg:h-14">
+          <img 
+            src={logoUrl} 
+            alt="Active Away Logo" 
+            class="w-full h-full object-contain" 
+            loading="eager"
+            onerror="handleImageError(this, '/images/hero/logo.png')"
+          />
+        </div>
+
+        <!-- Center Navigation - Desktop Only -->
+        <div class="hidden lg:flex absolute left-1/2 transform -translate-x-1/2 h-14" style="width: 40rem;">
+          <div class="flex flex-row justify-center items-center px-2 w-full h-full bg-white/6 rounded-full gap-0">
+            <a href="#home" class="flex flex-row justify-center items-center px-4 py-3 gap-1 h-11 rounded-full font-inter text-sm leading-6 text-white transition-all duration-300 cursor-pointer bg-white/20 font-semibold">Home</a>
+            <a href="#dates" class="flex flex-row justify-center items-center px-4 py-3 gap-1 h-11 rounded-full font-inter text-sm leading-6 text-white transition-all duration-300 cursor-pointer font-normal hover:bg-amber-500/20 hover:-translate-y-0.5">Dates</a>
+            <a href="#rackets" class="flex flex-row justify-center items-center px-4 py-3 gap-1 h-11 rounded-full font-inter text-sm leading-6 text-white transition-all duration-300 cursor-pointer font-normal hover:bg-amber-500/20 hover:-translate-y-0.5">Rackets</a>
+            <a href="#about" class="flex flex-row justify-center items-center px-4 py-3 gap-1 h-11 rounded-full font-inter text-sm leading-6 text-white transition-all duration-300 cursor-pointer font-normal hover:bg-amber-500/20 hover:-translate-y-0.5">About Us</a>
+            <a href="#destinations" class="flex flex-row justify-center items-center px-4 py-3 gap-1 h-11 rounded-full font-inter text-sm leading-6 text-white transition-all duration-300 cursor-pointer font-normal hover:bg-amber-500/20 hover:-translate-y-0.5">Destinations</a>
+            <a href="#blogs" class="flex flex-row justify-center items-center px-4 py-3 gap-1 h-11 rounded-full font-inter text-sm leading-6 text-white transition-all duration-300 cursor-pointer font-normal hover:bg-amber-500/20 hover:-translate-y-0.5">Blogs</a>
+          </div>
+        </div>
+
+        <!-- Right CTA Buttons - Desktop Only -->
+        <div class="hidden lg:flex flex-row justify-end items-center p-0 gap-3 w-80 h-14">
+          <!-- Option 1: Pure Tailwind with shadcn/ui styling -->
+          <button class="inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-white bg-white/6 text-white hover:bg-amber-500/20 hover:border-amber-500/80 hover:-translate-y-0.5 px-6 py-3 h-14">
+            Login
+          </button>
+          <button class="inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-white text-black hover:bg-amber-500 hover:text-white hover:-translate-y-0.5 px-6 py-3 h-14">
+            Book Now
+          </button>
+        </div>
+
+        <!-- Mobile Menu Button -->
+        <div class="lg:hidden">
+          <button onclick="toggleMobileMenu()" class="bg-none border-none cursor-pointer p-2 rounded-lg transition-colors duration-300 hover:bg-amber-500/20">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12h18M3 6h18M3 18h18"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu Overlay -->
+  <div id="mobile-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
+
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" class="fixed top-0 right-0 h-full w-80 bg-white z-50 transform translate-x-full transition-transform duration-300 ease-in-out shadow-xl">
+    <div class="flex flex-col h-full">
+      <!-- Close Button -->
+      <div class="flex justify-between items-center p-4 border-b">
+        <span class="text-lg font-semibold text-gray-800">Menu</span>
+        <button onclick="closeMobileMenu()" class="p-2 rounded-lg hover:bg-gray-100">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Menu Items -->
+      <div class="flex-1 overflow-y-auto py-4">
+        <div class="flex flex-col gap-2 px-4">
+          <a href="#home" onclick="closeMobileMenu()" class="py-3 px-4 rounded-lg text-gray-800 hover:bg-amber-500/20 hover:text-amber-600 font-medium text-sm sm:text-base transition-colors">Home</a>
+          <a href="#dates" onclick="closeMobileMenu()" class="py-3 px-4 rounded-lg text-gray-800 hover:bg-amber-500/20 hover:text-amber-600 font-medium text-sm sm:text-base transition-colors">Dates</a>
+          <a href="#rackets" onclick="closeMobileMenu()" class="py-3 px-4 rounded-lg text-gray-800 hover:bg-amber-500/20 hover:text-amber-600 font-medium text-sm sm:text-base transition-colors">Rackets</a>
+          <a href="#about" onclick="closeMobileMenu()" class="py-3 px-4 rounded-lg text-gray-800 hover:bg-amber-500/20 hover:text-amber-600 font-medium text-sm sm:text-base transition-colors">About Us</a>
+          <a href="#destinations" onclick="closeMobileMenu()" class="py-3 px-4 rounded-lg text-gray-800 hover:bg-amber-500/20 hover:text-amber-600 font-medium text-sm sm:text-base transition-colors">Destinations</a>
+          <a href="#blogs" onclick="closeMobileMenu()" class="py-3 px-4 rounded-lg text-gray-800 hover:bg-amber-500/20 hover:text-amber-600 font-medium text-sm sm:text-base transition-colors">Blogs</a>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="border-t p-4 space-y-3">
+        <button class="w-full inline-flex items-center justify-center rounded-md border border-gray-300 bg-white text-gray-800 hover:bg-gray-50 text-sm sm:text-base px-4 py-2 transition-colors" onclick="closeMobileMenu()">
+          Login
+        </button>
+        <button class="w-full inline-flex items-center justify-center rounded-md bg-gray-800 text-white hover:bg-amber-500 text-sm sm:text-base px-4 py-2 transition-colors" onclick="closeMobileMenu()">
+          Book Now
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Hero Content -->
+  <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full z-10 px-4 flex justify-center items-center">
+    <div class="container mx-auto">
+      <div class="w-full flex flex-col items-center justify-center gap-4 sm:gap-8 lg:gap-10 text-center">
+        <!-- Headline Section -->
+        <div class="flex flex-col items-center justify-center text-center w-full max-w-4xl gap-3 sm:gap-4 md:gap-5">
+          <h1 class="w-full font-playfair font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl leading-tight lg:leading-[1.3] text-center text-white m-0 break-words hyphens-auto" style="line-height: 1.3 !important;">
+            Exceptional Tennis, Padel & Pickleball Experiences
+          </h1>
+          <p class="w-full font-inter font-normal text-sm sm:text-base md:text-lg lg:text-xl leading-relaxed text-center text-white m-0 max-w-2xl break-words">
+            Unique Racket Experiences that unite like-minded individuals, through impeccable service delivered by truly knowledgeable hosts in excellent locations.
+          </p>
+        </div>
+
+        <!-- Search Section -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-2xl sm:max-w-3xl lg:max-w-4xl">
+          <div class="flex flex-col sm:flex-row items-center w-full bg-white/6 border-0 sm:border sm:border-black/9 rounded-lg sm:rounded-full px-3 sm:px-4 md:px-6 py-3 sm:py-3 md:py-4 gap-3 sm:gap-0">
+            <!-- Event Type Section -->
+            <div class="flex flex-row items-center flex-1 min-w-0 relative">
+              <select class="w-full h-10 sm:h-8 md:h-10 font-inter font-normal text-xs sm:text-sm md:text-base lg:text-lg leading-7 flex items-center text-white bg-transparent border border-white/30 sm:border-none outline-none appearance-none pr-6 sm:pr-8 cursor-pointer px-3 sm:px-4 rounded-lg sm:rounded-none">
+                <option value="" class="text-gray-800 bg-white px-4">Select Event Type</option>
+                <option value="tennis" class="text-gray-800 bg-white px-4">Tennis</option>
+                <option value="padel" class="text-gray-800 bg-white px-4">Padel</option>
+                <option value="pickleball" class="text-gray-800 bg-white px-4">Pickleball</option>
+              </select>
+              <svg class="absolute right-2 w-4 h-4 text-white pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 9l6 6 6-6"/>
+              </svg>
+            </div>
+            
+            <div class="hidden sm:block w-px h-10 bg-white mx-4"></div>
+            
+            <!-- Departure Month Section -->
+            <div class="flex flex-row items-center flex-1 min-w-0 relative">
+              <select class="w-full h-10 sm:h-8 md:h-10 font-inter font-normal text-xs sm:text-sm md:text-base lg:text-lg leading-7 flex items-center text-white bg-transparent border border-white/30 sm:border-none outline-none appearance-none pr-6 sm:pr-8 cursor-pointer px-3 sm:px-4 rounded-lg sm:rounded-none">
+                <option value="" class="text-gray-800 bg-white px-4">Select Departure Month</option>
+                <option value="january" class="text-gray-800 bg-white px-4">January</option>
+                <option value="february" class="text-gray-800 bg-white px-4">February</option>
+                <option value="march" class="text-gray-800 bg-white px-4">March</option>
+                <option value="april" class="text-gray-800 bg-white px-4">April</option>
+                <option value="may" class="text-gray-800 bg-white px-4">May</option>
+                <option value="june" class="text-gray-800 bg-white px-4">June</option>
+                <option value="july" class="text-gray-800 bg-white px-4">July</option>
+                <option value="august" class="text-gray-800 bg-white px-4">August</option>
+                <option value="september" class="text-gray-800 bg-white px-4">September</option>
+                <option value="october" class="text-gray-800 bg-white px-4">October</option>
+                <option value="november" class="text-gray-800 bg-white px-4">November</option>
+                <option value="december" class="text-gray-800 bg-white px-4">December</option>
+              </select>
+              <svg class="absolute right-2 w-4 h-4 text-white pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 9l6 6 6-6"/>
+              </svg>
+            </div>
+            
+            <div class="hidden sm:block w-px h-10 bg-white mx-4"></div>
+            
+            <!-- Search Button -->
+            <button class="w-full sm:w-auto inline-flex items-center justify-center bg-gray-800 hover:bg-amber-500 hover:-translate-y-0.5 rounded-lg sm:rounded-full px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 h-10 sm:h-8 md:h-10 text-white text-xs sm:text-sm md:text-base transition-all">
+              <svg class="w-3 h-3 sm:w-3 sm:h-3 md:w-4 md:h-4 mr-1 sm:mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.35-4.35"/>
+              </svg>
+              Search
+            </button>
+          </div>
+        </div>
+
+        <!-- Reviews Section -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3">
+          <div class="flex items-center gap-2 sm:gap-6" style="gap: 0.75rem;">
+            <div class="flex -space-x-2 sm:-space-x-3">
+              <img src={man1Url} alt="Reviewer 1" class="w-6 h-6 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full border-2 border-white object-cover" onerror="handleImageError(this, '/images/hero/man-1.jpg')" />
+              <img src={man2Url} alt="Reviewer 2" class="w-6 h-6 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full border-2 border-white object-cover" onerror="handleImageError(this, '/images/hero/man-2.jpg')" />
+              <img src={man3Url} alt="Reviewer 3" class="w-6 h-6 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full border-2 border-white object-cover" onerror="handleImageError(this, '/images/hero/man-3.jpg')" />
+              <img src={man4Url} alt="Reviewer 4" class="w-6 h-6 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full border-2 border-white object-cover" onerror="handleImageError(this, '/images/hero/man-4.jpg')" />
+            </div>
+            <div class="flex items-center gap-2 sm:gap-4">
+              <span class="font-inter font-semibold text-white text-sm sm:text-2xl md:text-3xl lg:text-4xl" style="line-height: 1.2rem;">5/5</span>
+              <svg class="text-amber-400" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 1.2rem; height: 1.2rem;">
+                <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
+              </svg>
+            </div>
+          </div>
+          <div class="text-center">
+            <p class="text-xs sm:text-base md:text-lg lg:text-lg font-inter text-white">
+              from <span class="font-semibold">thousands of online reviews</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+  
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+</style>

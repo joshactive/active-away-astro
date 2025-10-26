@@ -1,0 +1,104 @@
+---
+// What do we offer section component for Active Away - Tailwind CSS Version
+import { getImageByName } from '../utils/cloudflareImages.js';
+
+// Get dynamic image URLs
+const offer1Image = getImageByName('offer-1', { size: 'public' });
+const offer2Image = getImageByName('offer-2', { size: 'public' });
+
+// TODO: Replace with API call when backend is ready
+// Example: const offerData = await fetch('/api/offers').then(res => res.json());
+
+const offerData = {
+  title: "What do we offer?",
+  description: "From hosted Adult & Family Tennis, Padel, and Pickleball Holidays in stunning destinations to exclusive Ski Holidays and UK-based Doubles Tennis, Padel, and Pickleball Clinics—if you're passionate about your sport, our trips are perfect for you.",
+  cards: [
+    {
+      id: 1,
+      title: "Adult Only Tennis Holidays",
+      description: "Our flagship product offers a world-class Tennis Programme crafted by doubles champion Jamie Murray, guaranteeing top-quality coaching and unforgettable experiences. What truly sets us apart is our unique 'Active Away Hosting' - each trip is led by one of our experts, ensuring personalised attention with a 'nothing is too much trouble' attitude.",
+      buttonText: "Discover More",
+      image: offer1Image // image 4.png
+    },
+    {
+      id: 2,
+      title: "Adult Weekend Tennis Breaks",
+      description: "Join us for a weekend getaway at some of the UK's most prestigious locations. Our tennis breaks offers the perfect combination of top-quality coaching, friendly matches, and a relaxing atmosphere. Whether you're looking to improve your game or simply enjoy a great weekend of tennis, our UK weekend break is a great choice for any tennis enthusiast.",
+      buttonText: "Discover More",
+      image: offer2Image // image 5.png
+    }
+  ],
+  pagination: {
+    total: 6,
+    active: 1
+  }
+};
+
+// Debug: Log the URLs being generated
+console.log('Offer Images URLs:', { offer1Image, offer2Image });
+---
+
+<section class="w-full bg-white py-6 sm:py-10 lg:py-24 px-3 sm:px-10">
+  <div class="container mx-auto">
+    <!-- Header -->
+    <div class="mb-6 sm:mb-8 lg:mb-16 text-center max-w-4xl mx-auto">
+      <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-3 sm:mb-4">
+        {offerData.title}
+      </h2>
+      <p class="text-base sm:text-lg lg:text-xl font-inter text-gray-700 leading-relaxed">
+        {offerData.description}
+      </p>
+    </div>
+
+    <!-- Cards Container -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12 mb-8 sm:mb-12">
+      {offerData.cards.map((card) => (
+        <div class="offer-card grid grid-cols-1 lg:grid-cols-2 gap-0 bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+          <!-- Image - Left side on desktop -->
+          <div class="relative overflow-hidden">
+            <img src={card.image} alt={card.title} class="w-full h-full object-cover" />
+          </div>
+          
+          <!-- Content - Right side on desktop -->
+          <div class="p-6 sm:p-8 flex flex-col justify-between">
+            <div>
+              <h3 class="text-lg sm:text-xl lg:text-2xl font-playfair font-bold text-gray-900 mb-2 sm:mb-3">
+                {card.title}
+              </h3>
+              <p class="text-xs sm:text-sm lg:text-base font-inter text-gray-700 leading-relaxed">
+                {card.description}
+              </p>
+            </div>
+            
+            <!-- Button -->
+            <div class="w-fit mt-4 sm:mt-5">
+              <button class="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-4 sm:px-5 py-2 sm:py-3 rounded-full font-inter font-medium text-xs sm:text-sm transition-all duration-300 hover:-translate-y-0.5">
+                <span>{card.buttonText}</span>
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                  <path d="M7 17L17 7M17 7H7M17 7V17" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex justify-center items-center gap-2">
+      {Array.from({ length: offerData.pagination.total }, (_, index) => (
+        <div class={`w-2 h-2 rounded-full transition-all duration-300 ${index + 1 === offerData.pagination.active ? 'w-8 bg-amber-600' : 'bg-gray-300'}`}></div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+</style>

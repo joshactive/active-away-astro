@@ -1,0 +1,235 @@
+---
+// Locations section component for Active Away - Tailwind CSS Version
+import { getImageByName } from '../utils/cloudflareImages.js';
+
+// Get dynamic image URLs
+const location1Image = getImageByName('location-1', { size: 'public' });
+const location2Image = getImageByName('location-2', { size: 'public' });
+const location3Image = getImageByName('location-3', { size: 'public' });
+
+// TODO: Replace with API call when backend is ready
+// Example: const locations = await fetch('/api/locations').then(res => res.json());
+
+const locations = [
+  {
+    id: 1,
+    title: "Adult Tennis Holiday - 5* Sani Beach Hotel",
+    location: "Halkidiki, Greece",
+    type: "Adult Hosted Tennis Holiday",
+    price: "Single Occupancy from £420",
+    amount: "£420",
+    image: location1Image, // w=320 1 (1).png
+    active: false
+  },
+  {
+    id: 2,
+    title: "Adult Tennis Holiday - 5* Sani Beach Hotel",
+    location: "Halkidiki, Greece",
+    type: "Adult Hosted Tennis Holiday",
+    price: "Single Occupancy from £420",
+    amount: "£420",
+    image: location3Image, // w=320 1.png (location-3)
+    active: true
+  },
+  {
+    id: 3,
+    title: "Adult Tennis Holiday - 5* Sani Beach Hotel",
+    location: "Halkidiki, Greece",
+    type: "Adult Hosted Tennis Holiday",
+    price: "Single Occupancy from £420",
+    amount: "£420",
+    image: location2Image, // w=320 1 (2).png
+    active: false
+  }
+];
+
+// Debug: Log the URLs being generated
+console.log('Location Images URLs:', { location1Image, location2Image, location3Image });
+---
+
+<section class="w-full bg-white py-6 sm:py-10 lg:py-24 px-3 sm:px-10">
+  <div class="container mx-auto">
+    <!-- Header -->
+    <div class="mb-6 sm:mb-8 lg:mb-16">
+      <div class="text-sm sm:text-base font-inter font-medium text-gray-900 tracking-widest uppercase mb-1 sm:mb-2">
+        DESTINATIONS
+      </div>
+      <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 sm:gap-3 lg:gap-4">
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900">
+          Explore our Locations
+        </h2>
+        <a href="#all-locations" class="text-base sm:text-lg font-inter text-gray-900 underline hover:text-gray-700 transition-colors">
+          See All Locations
+        </a>
+      </div>
+    </div>
+
+    <!-- Cards Carousel -->
+    <div class="relative">
+      <!-- Navigation Arrows -->
+      <button class="hidden lg:flex absolute left-4 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg items-center justify-center hover:bg-gray-50 transition-all duration-300" onclick="previousCard()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M15 18L9 12L15 6" stroke="#1E1E1E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      
+      <button class="hidden lg:flex absolute right-4 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg items-center justify-center hover:bg-gray-50 transition-all duration-300" onclick="nextCard()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M9 18L15 12L9 6" stroke="#1E1E1E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
+      <!-- Cards Container -->
+      <div class="flex flex-col lg:flex-row justify-center items-center gap-3 sm:gap-4 lg:gap-8">
+        {locations.map((location) => (
+          <div class={`location-card w-full max-w-sm sm:max-w-md lg:max-w-lg ${location.active ? 'active' : 'inactive'}`}>
+            <!-- Card Image -->
+            <div class="relative overflow-hidden rounded-2xl bg-gray-900">
+              <img src={location.image} alt={location.title} class="w-full h-48 sm:h-56 lg:h-64 object-cover" />
+            </div>
+            
+            <!-- Card Content -->
+            <div class="relative -mt-8 lg:-mt-12 z-10 px-4 sm:px-6">
+              <div class="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 shadow-lg">
+                <h3 class="text-lg sm:text-xl lg:text-2xl font-playfair font-bold text-gray-900 mb-3 sm:mb-4">
+                  {location.title}
+                </h3>
+                
+                <div class="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
+                  <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-gray-600 flex-shrink-0" viewBox="0 0 19 19" fill="none">
+                      <path d="M9.5 1C12.2614 1 14.5 3.23858 14.5 6C14.5 9.5 9.5 18 9.5 18C9.5 18 4.5 9.5 4.5 6C4.5 3.23858 6.73858 1 9.5 1Z" stroke="#1E1E1E" stroke-width="1.0566"/>
+                      <circle cx="9.5" cy="6" r="2" stroke="#1E1E1E" stroke-width="1.0566"/>
+                    </svg>
+                    <span class="text-sm sm:text-base font-inter text-gray-700">{location.location}</span>
+                  </div>
+                  
+                  <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-gray-600 flex-shrink-0" viewBox="0 0 19 19" fill="none">
+                      <path d="M2 6L9.5 1L17 6V17H2V6Z" stroke="#1E1E1E" stroke-width="1.0566"/>
+                      <path d="M7 17V9H12V17" stroke="#1E1E1E" stroke-width="1.0566"/>
+                    </svg>
+                    <span class="text-sm sm:text-base font-inter text-gray-700">{location.type}</span>
+                  </div>
+                  
+                  <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-gray-600 flex-shrink-0" viewBox="0 0 19 19" fill="none">
+                      <path d="M2 6H17V17H2V6Z" stroke="#1E1E1E" stroke-width="1.0566"/>
+                      <path d="M2 6L9.5 1L17 6" stroke="#1E1E1E" stroke-width="1.0566"/>
+                      <path d="M7 9H12" stroke="#1E1E1E" stroke-width="1.0566"/>
+                      <path d="M7 12H12" stroke="#1E1E1E" stroke-width="1.0566"/>
+                    </svg>
+                    <span class="text-sm sm:text-base font-inter text-gray-700">{location.price}</span>
+                  </div>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                  <div class="text-xl sm:text-2xl lg:text-3xl font-inter font-semibold text-gray-900">
+                    {location.amount}
+                  </div>
+                  <button class="px-4 sm:px-6 py-2 sm:py-3 bg-amber-600 hover:bg-amber-700 text-white font-inter font-medium text-sm sm:text-base rounded-full transition-all duration-300 hover:-translate-y-0.5">
+                    Explore
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- Pagination Dots -->
+    <div class="flex justify-center items-center gap-2 mt-8 sm:mt-12">
+      <div class="w-2 h-2 bg-gray-300 rounded-full"></div>
+      <div class="w-8 h-2 bg-amber-600 rounded-full"></div>
+      <div class="w-2 h-2 bg-gray-300 rounded-full"></div>
+      <div class="w-2 h-2 bg-gray-300 rounded-full"></div>
+      <div class="w-2 h-2 bg-gray-300 rounded-full"></div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+  
+  /* Active/Inactive card states */
+  .location-card.active {
+    transform: scale(1.05);
+    z-index: 10;
+  }
+  
+  .location-card.inactive {
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
+  
+  /* Smooth transitions */
+  .location-card {
+    transition: all 0.3s ease;
+  }
+  
+  /* Mobile responsive adjustments */
+  @media (max-width: 1023px) {
+    .location-card.active,
+    .location-card.inactive {
+      transform: none;
+      opacity: 1;
+    }
+  }
+</style>
+
+<script>
+  // Carousel functionality for future API integration
+  let currentActiveIndex = 1; // Index of active card (0-based)
+  const totalCards = 3; // Will be dynamic with API
+
+  function updateCarousel() {
+    const cards = document.querySelectorAll('.location-card');
+    const dots = document.querySelectorAll('.dot');
+    
+    cards.forEach((card, index) => {
+      card.classList.remove('active', 'inactive');
+      if (index === currentActiveIndex) {
+        card.classList.add('active');
+      } else {
+        card.classList.add('inactive');
+      }
+    });
+    
+    dots.forEach((dot, index) => {
+      dot.classList.remove('active');
+      if (index === currentActiveIndex) {
+        dot.classList.add('active');
+      }
+    });
+  }
+
+  function nextCard() {
+    currentActiveIndex = (currentActiveIndex + 1) % totalCards;
+    updateCarousel();
+  }
+
+  function previousCard() {
+    currentActiveIndex = (currentActiveIndex - 1 + totalCards) % totalCards;
+    updateCarousel();
+  }
+
+  // Initialize carousel on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    updateCarousel();
+  });
+
+  // TODO: When API is integrated, replace with:
+  // async function loadLocations() {
+  //   const response = await fetch('/api/locations');
+  //   const data = await response.json();
+  //   totalCards = data.length;
+  //   // Update DOM with API data
+  // }
+</script>
