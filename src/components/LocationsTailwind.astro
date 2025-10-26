@@ -1,53 +1,60 @@
 ---
 // Locations section component for Active Away - Tailwind CSS Version
+import { getFeaturedLocations } from '../utils/strapi.js';
 import { getImageByName } from '../utils/cloudflareImages.js';
+import { MapPin, Tag, Hotel } from 'lucide-react';
 
-// Get dynamic image URLs
-const location1Image = getImageByName('location-1', { size: 'public' });
-const location2Image = getImageByName('location-2', { size: 'public' });
-const location3Image = getImageByName('location-3', { size: 'public' });
+// Fetch featured locations from Strapi
+let locations = await getFeaturedLocations();
 
-// TODO: Replace with API call when backend is ready
-// Example: const locations = await fetch('/api/locations').then(res => res.json());
-
-const locations = [
-  {
-    id: 1,
-    title: "Adult Tennis Holiday - 5* Sani Beach Hotel",
-    location: "Halkidiki, Greece",
-    type: "Adult Hosted Tennis Holiday",
-    price: "Single Occupancy from £420",
-    amount: "£420",
-    image: location1Image, // w=320 1 (1).png
-    active: false
-  },
-  {
-    id: 2,
-    title: "Adult Tennis Holiday - 5* Sani Beach Hotel",
-    location: "Halkidiki, Greece",
-    type: "Adult Hosted Tennis Holiday",
-    price: "Single Occupancy from £420",
-    amount: "£420",
-    image: location3Image, // w=320 1.png (location-3)
-    active: true
-  },
-  {
-    id: 3,
-    title: "Adult Tennis Holiday - 5* Sani Beach Hotel",
-    location: "Halkidiki, Greece",
-    type: "Adult Hosted Tennis Holiday",
-    price: "Single Occupancy from £420",
-    amount: "£420",
-    image: location2Image, // w=320 1 (2).png
-    active: false
-  }
-];
-
-// Debug: Log the URLs being generated
-console.log('Location Images URLs:', { location1Image, location2Image, location3Image });
+// Fallback to hardcoded data if Strapi fails or returns no data
+if (!locations || locations.length === 0) {
+  console.warn('⚠️  Using fallback locations data');
+  
+  // Get dynamic image URLs for fallback
+  const location1Image = getImageByName('location-1', { size: 'public' });
+  const location2Image = getImageByName('location-2', { size: 'public' });
+  const location3Image = getImageByName('location-3', { size: 'public' });
+  
+  locations = [
+    {
+      id: 1,
+      title: "Adult Tennis Holiday - 5* Sani Beach Hotel",
+      location: "Greece",
+      type: "Adult Hosted Tennis Holiday",
+      price: "Single Occupancy from £420",
+      amount: "from £420pp",
+      image: location1Image,
+      imageAlt: "Tennis courts in Greece",
+      active: false
+    },
+    {
+      id: 2,
+      title: "Adult Tennis Holiday - 5* Sani Beach Hotel",
+      location: "Greece",
+      type: "Adult Hosted Tennis Holiday",
+      price: "Single Occupancy from £420",
+      amount: "from £420pp",
+      image: location3Image,
+      imageAlt: "Tennis stadium",
+      active: true
+    },
+    {
+      id: 3,
+      title: "Adult Tennis Holiday - 5* Sani Beach Hotel",
+      location: "Greece",
+      type: "Adult Hosted Tennis Holiday",
+      price: "Single Occupancy from £420",
+      amount: "from £420pp",
+      image: location2Image,
+      imageAlt: "Tennis coaching",
+      active: false
+    }
+  ];
+}
 ---
 
-<section class="w-full bg-white py-12 sm:py-16 lg:py-24 px-6 sm:px-10">
+<section class="w-full bg-white py-12 sm:py-16 lg:py-24 px-4 sm:px-10">
   <div class="container mx-auto max-w-[1400px]">
     <!-- Header -->
     <div class="mb-6 sm:mb-8 lg:mb-16">
@@ -81,54 +88,61 @@ console.log('Location Images URLs:', { location1Image, location2Image, location3
         </svg>
       </button>
 
-      <!-- Cards Container -->
-      <div class="flex flex-row overflow-x-auto lg:overflow-visible snap-x snap-mandatory lg:snap-none justify-start lg:justify-between items-stretch gap-3 sm:gap-4 lg:gap-6 pb-4 lg:pb-0 -mx-6 sm:-mx-10 px-6 sm:px-10 lg:mx-0 lg:px-0">
-        {locations.map((location) => (
-          <div class="location-card flex-shrink-0 w-[85vw] sm:w-[70vw] lg:flex-1 lg:w-auto snap-center">
+      <!-- Cards Container Wrapper (Desktop overflow hidden) -->
+      <div class="lg:overflow-hidden">
+        <!-- Cards Container -->
+        <div id="cardsContainer" class="flex flex-row overflow-x-auto lg:overflow-visible snap-x snap-mandatory lg:snap-none justify-start items-stretch gap-3 sm:gap-4 lg:gap-6 pb-4 lg:pb-0 -mx-4 sm:-mx-10 px-4 sm:px-10 lg:mx-0 lg:px-0 transition-transform duration-500 ease-out">
+          {locations.map((location, index) => (
+            <div class="location-card flex-shrink-0 w-[85vw] sm:w-[70vw] lg:w-[calc((100%-3rem)/3)] snap-center relative" data-index={index}>
             <!-- Card Image -->
-            <div class="relative overflow-hidden rounded-2xl bg-gray-900">
-              <img src={location.image} alt={location.title} class="w-full h-48 sm:h-56 lg:h-64 object-cover" />
+            <div class="relative overflow-hidden rounded-2xl bg-gray-900 z-0">
+              <img 
+                src={location.image} 
+                alt={location.imageAlt || location.title} 
+                {...(location.imageSrcSet && { 
+                  srcset: location.imageSrcSet, 
+                  sizes: "(max-width: 768px) 85vw, (max-width: 1024px) 70vw, 33vw" 
+                })}
+                class="w-full h-48 sm:h-56 lg:h-64 object-cover" 
+              />
             </div>
             
             <!-- Card Content -->
-            <div class="relative -mt-8 lg:-mt-12 z-10 px-4 sm:px-6">
-              <div class="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 shadow-lg">
+            <div class="relative -mt-8 lg:-mt-12 z-20 px-4 sm:px-6 pb-6">
+              <div class="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 shadow-xl min-h-[280px] sm:min-h-[300px] flex flex-col">
                 <h3 class="text-lg sm:text-xl lg:text-2xl font-playfair font-bold text-gray-900 mb-3 sm:mb-4">
                   {location.title}
                 </h3>
                 
-                <div class="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
+                <div class="space-y-2 sm:space-y-3 mb-4 sm:mb-6 flex-grow">
+                  <!-- Country -->
                   <div class="flex items-center gap-3">
-                    <svg class="w-5 h-5 text-gray-600 flex-shrink-0" viewBox="0 0 19 19" fill="none">
-                      <path d="M9.5 1C12.2614 1 14.5 3.23858 14.5 6C14.5 9.5 9.5 18 9.5 18C9.5 18 4.5 9.5 4.5 6C4.5 3.23858 6.73858 1 9.5 1Z" stroke="#1E1E1E" stroke-width="1.0566"/>
-                      <circle cx="9.5" cy="6" r="2" stroke="#1E1E1E" stroke-width="1.0566"/>
-                    </svg>
+                    <MapPin className="w-5 h-5 text-gray-600 flex-shrink-0" client:load />
                     <span class="text-sm sm:text-base font-inter text-gray-700">{location.location}</span>
                   </div>
                   
+                  <!-- Holiday Type -->
                   <div class="flex items-center gap-3">
-                    <svg class="w-5 h-5 text-gray-600 flex-shrink-0" viewBox="0 0 19 19" fill="none">
-                      <path d="M2 6L9.5 1L17 6V17H2V6Z" stroke="#1E1E1E" stroke-width="1.0566"/>
-                      <path d="M7 17V9H12V17" stroke="#1E1E1E" stroke-width="1.0566"/>
-                    </svg>
+                    <Tag className="w-5 h-5 text-gray-600 flex-shrink-0" client:load />
                     <span class="text-sm sm:text-base font-inter text-gray-700">{location.type}</span>
                   </div>
                   
-                  <div class="flex items-center gap-3">
-                    <svg class="w-5 h-5 text-gray-600 flex-shrink-0" viewBox="0 0 19 19" fill="none">
-                      <path d="M2 6H17V17H2V6Z" stroke="#1E1E1E" stroke-width="1.0566"/>
-                      <path d="M2 6L9.5 1L17 6" stroke="#1E1E1E" stroke-width="1.0566"/>
-                      <path d="M7 9H12" stroke="#1E1E1E" stroke-width="1.0566"/>
-                      <path d="M7 12H12" stroke="#1E1E1E" stroke-width="1.0566"/>
-                    </svg>
-                    <span class="text-sm sm:text-base font-inter text-gray-700">{location.price}</span>
-                  </div>
+                  <!-- Price (only show if exists) -->
+                  {location.price && (
+                    <div class="flex items-center gap-3">
+                      <Hotel className="w-5 h-5 text-gray-600 flex-shrink-0" client:load />
+                      <span class="text-sm sm:text-base font-inter text-gray-700">{location.price}</span>
+                    </div>
+                  )}
                 </div>
                 
-                <div class="flex items-center justify-between">
-                  <div class="text-xl sm:text-2xl lg:text-3xl font-inter font-semibold text-gray-900">
-                    {location.amount}
-                  </div>
+                <div class="flex items-center justify-between mt-auto">
+                  {location.amount && (
+                    <div class="font-inter text-gray-900">
+                      <span class="text-sm sm:text-base font-normal text-gray-600">from </span>
+                      <span class="text-2xl sm:text-3xl lg:text-4xl font-bold">{location.amount.replace('from ', '').replace('pp', '')}</span><span class="text-lg sm:text-xl lg:text-2xl font-semibold">pp</span>
+                    </div>
+                  )}
                   <button class="px-4 sm:px-6 py-2 sm:py-3 bg-gold hover:bg-gold-700 text-white font-inter font-medium text-sm sm:text-base rounded-full transition-all duration-300 hover:-translate-y-0.5">
                     Explore
                   </button>
@@ -137,16 +151,21 @@ console.log('Location Images URLs:', { location1Image, location2Image, location3
             </div>
           </div>
         ))}
+        </div>
       </div>
     </div>
 
-    <!-- Pagination Dots (Desktop Only) -->
-    <div class="hidden lg:flex justify-center items-center gap-2 mt-8 sm:mt-12">
-      <div class="w-2 h-2 bg-gray-300 rounded-full"></div>
-      <div class="w-8 h-2 bg-gold rounded-full"></div>
-      <div class="w-2 h-2 bg-gray-300 rounded-full"></div>
-      <div class="w-2 h-2 bg-gray-300 rounded-full"></div>
-      <div class="w-2 h-2 bg-gray-300 rounded-full"></div>
+    <!-- Pagination Dots -->
+    <div id="paginationDots" class="flex justify-center items-center gap-2 mt-8 sm:mt-12">
+      {Array.from({ length: Math.ceil(locations.length / 3) }, (_, i) => (
+        <button 
+          class={`pagination-dot transition-all duration-300 ${i === 0 ? 'w-8 h-2' : 'w-2 h-2 bg-gray-300'} rounded-full`}
+          style={i === 0 ? 'background-color: #ad986c;' : ''}
+          data-page={i}
+          onclick={`goToPage(${i})`}
+          aria-label={`Go to page ${i + 1}`}
+        ></button>
+      ))}
     </div>
   </div>
 </section>
@@ -190,60 +209,174 @@ console.log('Location Images URLs:', { location1Image, location2Image, location3
 </style>
 
 <script>
-  // Carousel functionality - only for desktop
-  let currentActiveIndex = 1; // Index of active card (0-based)
-  const totalCards = 3; // Will be dynamic with API
+  // Carousel functionality
+  let currentPage = 0;
+  const cardsPerPage = 3; // Show 3 cards at a time on desktop
+  let totalCards = 0;
+  let totalPages = 0;
   const isDesktop = () => window.innerWidth >= 1024;
 
-  function updateCarousel() {
-    // Only apply active/inactive states on desktop
-    if (!isDesktop()) return;
-    
+  function initCarousel() {
     const cards = document.querySelectorAll('.location-card');
-    const dots = document.querySelectorAll('.dot');
+    totalCards = cards.length;
+    totalPages = Math.ceil(totalCards / cardsPerPage);
     
-    cards.forEach((card, index) => {
-      card.classList.remove('active-desktop', 'inactive-desktop');
-      if (index === currentActiveIndex) {
-        card.classList.add('active-desktop');
-      } else {
-        card.classList.add('inactive-desktop');
+    console.log(`🎠 Carousel initialized: ${totalCards} cards, ${totalPages} pages`);
+    
+    updateCarousel();
+  }
+
+  function updateCarousel() {
+    if (!isDesktop()) {
+      // Mobile: no transform, use native scroll
+      const container = document.getElementById('cardsContainer');
+      if (container) {
+        container.style.transform = 'translateX(0)';
       }
-    });
+      return;
+    }
     
+    // Desktop: show 3 cards at a time with transform
+    const container = document.getElementById('cardsContainer');
+    const cards = document.querySelectorAll('.location-card');
+    const dots = document.querySelectorAll('.pagination-dot');
+    
+    if (!container || cards.length === 0) return;
+    
+    // Calculate the offset based on card index
+    // Get the first card to measure width
+    const firstCard = cards[0];
+    if (!firstCard) return;
+    
+    const cardWidth = firstCard.offsetWidth;
+    const containerRect = container.getBoundingClientRect();
+    const gapWidth = 24; // lg:gap-6 = 1.5rem = 24px
+    
+    // Calculate how much to move: (cardWidth + gap) * cardsPerPage * currentPage
+    const offsetPx = (cardWidth + gapWidth) * cardsPerPage * currentPage;
+    
+    console.log(`📏 Card width: ${cardWidth}px, Gap: ${gapWidth}px, Offset: ${offsetPx}px, Page: ${currentPage}`);
+    
+    container.style.transform = `translateX(-${offsetPx}px)`;
+    
+    // Update dots
     dots.forEach((dot, index) => {
-      dot.classList.remove('active');
-      if (index === currentActiveIndex) {
-        dot.classList.add('active');
+      if (index === currentPage) {
+        dot.classList.remove('w-2', 'bg-gray-300');
+        dot.classList.add('w-8');
+        dot.style.backgroundColor = '#ad986c'; // Gold color
+      } else {
+        dot.classList.remove('w-8');
+        dot.classList.add('w-2', 'bg-gray-300');
+        dot.style.backgroundColor = '';
       }
     });
+    
+    // Show/hide navigation arrows based on position
+    const prevBtn = document.querySelector('button[onclick="previousCard()"]');
+    const nextBtn = document.querySelector('button[onclick="nextCard()"]');
+    
+    if (prevBtn) {
+      prevBtn.style.opacity = currentPage === 0 ? '0.3' : '1';
+      prevBtn.style.pointerEvents = currentPage === 0 ? 'none' : 'auto';
+    }
+    
+    if (nextBtn) {
+      nextBtn.style.opacity = currentPage >= totalPages - 1 ? '0.3' : '1';
+      nextBtn.style.pointerEvents = currentPage >= totalPages - 1 ? 'none' : 'auto';
+    }
   }
 
   function nextCard() {
-    currentActiveIndex = (currentActiveIndex + 1) % totalCards;
-    updateCarousel();
+    if (currentPage < totalPages - 1) {
+      currentPage++;
+      console.log(`➡️  Next page: ${currentPage}`);
+      updateCarousel();
+    }
   }
 
   function previousCard() {
-    currentActiveIndex = (currentActiveIndex - 1 + totalCards) % totalCards;
+    if (currentPage > 0) {
+      currentPage--;
+      console.log(`⬅️  Previous page: ${currentPage}`);
+      updateCarousel();
+    }
+  }
+  
+  function goToPage(pageIndex) {
+    currentPage = pageIndex;
+    console.log(`🎯 Go to page: ${currentPage}`);
     updateCarousel();
+  }
+  
+  // Make functions globally accessible
+  window.nextCard = nextCard;
+  window.previousCard = previousCard;
+  window.goToPage = goToPage;
+
+  // Update pagination dots on mobile scroll
+  function updateDotsOnScroll() {
+    if (isDesktop()) return;
+    
+    const container = document.getElementById('cardsContainer');
+    const cards = document.querySelectorAll('.location-card');
+    const dots = document.querySelectorAll('.pagination-dot');
+    
+    if (!container || cards.length === 0) return;
+    
+    // Calculate which card is most in view
+    const containerRect = container.getBoundingClientRect();
+    const containerCenter = containerRect.left + (containerRect.width / 2);
+    
+    let closestIndex = 0;
+    let closestDistance = Infinity;
+    
+    cards.forEach((card, index) => {
+      const cardRect = card.getBoundingClientRect();
+      const cardCenter = cardRect.left + (cardRect.width / 2);
+      const distance = Math.abs(cardCenter - containerCenter);
+      
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+    });
+    
+    // Update current page for dots (groups of 3)
+    const dotIndex = Math.floor(closestIndex / 3);
+    
+    // Update dots appearance
+    dots.forEach((dot, index) => {
+      if (index === dotIndex) {
+        dot.classList.remove('w-2', 'bg-gray-300');
+        dot.classList.add('w-8');
+        dot.style.backgroundColor = '#ad986c';
+      } else {
+        dot.classList.remove('w-8');
+        dot.classList.add('w-2', 'bg-gray-300');
+        dot.style.backgroundColor = '';
+      }
+    });
   }
 
   // Initialize carousel on page load
   document.addEventListener('DOMContentLoaded', () => {
-    updateCarousel();
+    initCarousel();
+    
+    // Add scroll listener for mobile
+    const container = document.getElementById('cardsContainer');
+    if (container) {
+      container.addEventListener('scroll', updateDotsOnScroll);
+    }
   });
   
-  // Re-init on resize
+  // Re-init on resize (with small delay to let layout settle)
+  let resizeTimeout;
   window.addEventListener('resize', () => {
-    updateCarousel();
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      currentPage = 0; // Reset to first page on resize
+      updateCarousel();
+    }, 100);
   });
-
-  // TODO: When API is integrated, replace with:
-  // async function loadLocations() {
-  //   const response = await fetch('/api/locations');
-  //   const data = await response.json();
-  //   totalCards = data.length;
-  //   // Update DOM with API data
-  // }
 </script>

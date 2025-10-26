@@ -4,7 +4,7 @@ import { getImageByName } from '../utils/cloudflareImages.js';
 import { FooterArrow } from '../components/ui/FooterIcons';
 
 // Get dynamic image URLs
-const footerLogo = getImageByName('footer-logo', { size: 'public' });
+const footerLogo = 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/4a4fae2f-b29c-4e69-5a9e-acf953fd3c00/public';
 const footerProtection1 = getImageByName('footer-protection-1', { size: 'public' });
 const footerProtection2 = getImageByName('footer-protection-2', { size: 'public' });
 const footerTrustpilotIcon = getImageByName('footer-trustpilot-icon', { size: 'public' });
@@ -15,14 +15,14 @@ console.log('Footer Images URLs:', {
 });
 ---
 
-<section class="w-full bg-gray-900 py-12 sm:py-16 lg:py-24 px-6 sm:px-10">
+<section class="w-full bg-gray-900 py-12 sm:py-16 lg:py-24 px-4 sm:px-10">
   <div class="container mx-auto">
     <!-- Main Footer Content -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-8 sm:gap-6 lg:gap-8 mb-6 sm:mb-8">
       <!-- Column 1: Logo and Contact -->
       <div>
         <div class="mb-4 sm:mb-6">
-          <img src={footerLogo} alt="Active Away Logo" class="h-14 sm:h-18 lg:h-20 w-auto" />
+          <img src={footerLogo} alt="Active Away Logo" width="200" height="56" class="h-14 sm:h-18 lg:h-20 w-auto" />
         </div>
         
         <div>

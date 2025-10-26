@@ -401,3 +401,123 @@ export async function getHomePage() {
   }
 }
 
+/**
+ * Get featured locations for homepage carousel
+ * Fetches from Featured Locations collection which references multiple holiday types
+ * @returns {Promise<Array>} Array of normalized location objects
+ */
+export async function getFeaturedLocations() {
+  try {
+    // Fetch all active featured locations, sorted by order
+    // Populate all possible holiday type relations and their images
+    const response = await fetchAPI(
+      '/featured-locations?' +
+      'filters[active]=true&' +
+      'sort=order:asc&' +
+      'populate[tennis_holiday][populate][0]=mainHeaderImage&' +
+      'populate[tennis_holiday][populate][1]=featuredImageLg&' +
+      'populate[pickleball_holiday][populate][0]=featuredImage&' +
+      'populate[pickleball_holiday][populate][1]=headerImage&' +
+      'populate[junior_tennis_camp][populate][0]=featuredImage&' +
+      'populate[junior_tennis_camp][populate][1]=headerImage&' +
+      'populate[padel_tennis_holiday][populate][0]=featuredImage&' +
+      'populate[padel_tennis_holiday][populate][1]=headerImage&' +
+      'populate[play_and_watch][populate][0]=featuredImage&' +
+      'populate[play_and_watch][populate][1]=headerImage&' +
+      'populate[ski_holiday][populate][0]=featuredImage&' +
+      'populate[ski_holiday][populate][1]=headerImage&' +
+      'populate[tennis_clinic][populate][0]=featuredImage&' +
+      'populate[tennis_clinic][populate][1]=headerImage'
+    );
+    
+    if (!response?.data) {
+      console.warn('⚠️  No featured locations found');
+      return [];
+    }
+
+    // Map and normalize the data from different holiday types
+    const locations = response.data.map((item, index) => {
+      // Get the actual holiday based on holiday_type
+      const holidayType = item.holiday_type;
+      const holiday = item[holidayType.replace('-', '_')];
+      
+      if (!holiday) {
+        console.warn(`⚠️  Featured location ${item.id} has no ${holidayType} reference`);
+        return null;
+      }
+
+      // Get the appropriate image field based on holiday type
+      let imageField;
+      if (holidayType === 'tennis-holiday') {
+        imageField = holiday.mainHeaderImage || holiday.featuredImageLg;
+      } else {
+        imageField = holiday.featuredImage || holiday.headerImage;
+      }
+      
+      const imageData = getStrapiImageData(imageField);
+
+      // Build location string - use country directly
+      const location = holiday.country || '';
+
+      // Build price text - only show if singleOccupancyFrom exists
+      const priceText = holiday.singleOccupancyFrom 
+                       ? `Single Occupancy from £${holiday.singleOccupancyFrom}` 
+                       : null;
+
+      // Build holiday type display text
+      const typeDisplay = holiday.productType || 
+                         holidayType.split('-').map(word => 
+                           word.charAt(0).toUpperCase() + word.slice(1)
+                         ).join(' ');
+
+      // Normalize data structure for carousel
+      return {
+        id: holiday.id,
+        title: holiday.title || 'Untitled Holiday',
+        location: location,
+        type: typeDisplay,
+        price: priceText, // Can be null if singleOccupancyFrom doesn't exist
+        amount: holiday.priceFrom || holiday.singleOccupancyFrom 
+               ? `from £${holiday.priceFrom || holiday.singleOccupancyFrom}pp` 
+               : null,
+        image: imageData.url,
+        imageAlt: imageData.alt || holiday.title,
+        imageSrcSet: imageData.formats ? generateSrcSetFromFormats(imageData.formats) : undefined,
+        slug: holiday.slug || '',
+        holidayType: holidayType,
+        active: index === 1 // Middle card active by default for carousel
+      };
+    }).filter(Boolean); // Remove null entries
+
+    console.log('📍 Featured Locations loaded:', locations.length);
+    return locations;
+    
+  } catch (error) {
+    console.error('❌ Error fetching featured locations:', error);
+    return [];
+  }
+}
+
+/**
+ * Helper: Generate srcset from Strapi image formats
+ * @param {Object} formats - Strapi image formats object (small, medium, large)
+ * @returns {string|undefined} srcset string or undefined
+ */
+function generateSrcSetFromFormats(formats) {
+  if (!formats) return undefined;
+  
+  const srcsetParts = [];
+  
+  if (formats.small?.url) {
+    srcsetParts.push(`${formats.small.url} ${formats.small.width}w`);
+  }
+  if (formats.medium?.url) {
+    srcsetParts.push(`${formats.medium.url} ${formats.medium.width}w`);
+  }
+  if (formats.large?.url) {
+    srcsetParts.push(`${formats.large.url} ${formats.large.width}w`);
+  }
+  
+  return srcsetParts.length > 0 ? srcsetParts.join(', ') : undefined;
+}
+
