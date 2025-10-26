@@ -414,20 +414,21 @@ export async function getFeaturedLocations() {
       '/featured-locations?' +
       'filters[active]=true&' +
       'sort=order:asc&' +
-      'populate[tennis_holiday][populate][0]=mainHeaderImage&' +
-      'populate[tennis_holiday][populate][1]=featuredImageLg&' +
-      'populate[pickleball_holiday][populate][0]=featuredImage&' +
-      'populate[pickleball_holiday][populate][1]=headerImage&' +
-      'populate[junior_tennis_camp][populate][0]=featuredImage&' +
-      'populate[junior_tennis_camp][populate][1]=headerImage&' +
-      'populate[padel_tennis_holiday][populate][0]=featuredImage&' +
-      'populate[padel_tennis_holiday][populate][1]=headerImage&' +
-      'populate[play_and_watch][populate][0]=featuredImage&' +
-      'populate[play_and_watch][populate][1]=headerImage&' +
-      'populate[ski_holiday][populate][0]=featuredImage&' +
-      'populate[ski_holiday][populate][1]=headerImage&' +
-      'populate[tennis_clinic][populate][0]=featuredImage&' +
-      'populate[tennis_clinic][populate][1]=headerImage'
+      'populate[tennis_holiday][populate][0]=headerImage&' +
+      'populate[tennis_holiday][populate][1]=mainHeaderImage&' +
+      'populate[tennis_holiday][populate][2]=featuredImageLg&' +
+      'populate[pickleball_holiday][populate][0]=headerImage&' +
+      'populate[pickleball_holiday][populate][1]=featuredImage&' +
+      'populate[junior_tennis_camp][populate][0]=headerImage&' +
+      'populate[junior_tennis_camp][populate][1]=featuredImage&' +
+      'populate[padel_tennis_holiday][populate][0]=headerImage&' +
+      'populate[padel_tennis_holiday][populate][1]=featuredImage&' +
+      'populate[play_and_watch][populate][0]=headerImage&' +
+      'populate[play_and_watch][populate][1]=featuredImage&' +
+      'populate[ski_holiday][populate][0]=headerImage&' +
+      'populate[ski_holiday][populate][1]=featuredImage&' +
+      'populate[tennis_clinic][populate][0]=headerImage&' +
+      'populate[tennis_clinic][populate][1]=featuredImage'
     );
     
     if (!response?.data) {
@@ -446,12 +447,12 @@ export async function getFeaturedLocations() {
         return null;
       }
 
-      // Get the appropriate image field based on holiday type
+      // Get the appropriate image field - prioritize headerImage
       let imageField;
       if (holidayType === 'tennis-holiday') {
-        imageField = holiday.mainHeaderImage || holiday.featuredImageLg;
+        imageField = holiday.headerImage || holiday.mainHeaderImage || holiday.featuredImageLg;
       } else {
-        imageField = holiday.featuredImage || holiday.headerImage;
+        imageField = holiday.headerImage || holiday.featuredImage;
       }
       
       const imageData = getStrapiImageData(imageField);
