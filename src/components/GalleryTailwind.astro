@@ -47,7 +47,7 @@ console.log('Gallery Images URLs:', {
 });
 ---
 
-<section class="w-full bg-gray-50 py-12 sm:py-16 px-4 sm:px-10">
+<section class="w-full bg-gray-50 py-12 sm:py-16">
   <!-- Gallery Images -->
   <div class="flex flex-row">
     {galleryData.images.map((item) => (
@@ -59,7 +59,7 @@ console.log('Gallery Images URLs:', {
 
   <!-- Instagram Follow Section -->
   <div class="w-full bg-gray-50 py-8 sm:py-12">
-    <div class="container mx-auto">
+    <div class="container mx-auto px-4 sm:px-10">
       <div class="flex justify-center items-center">
         <div class="flex items-center gap-3 sm:gap-4">
           <img src={galleryData.instagramIcon} alt="Instagram" class="w-6 h-6 sm:w-8 sm:h-8" />
