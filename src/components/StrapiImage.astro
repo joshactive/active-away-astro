@@ -1,0 +1,65 @@
+---
+/**
+ * StrapiImage Component
+ * 
+ * Renders an image from Strapi with automatic:
+ * - URL transformation (imagedelivery.net → activeaway.com)
+ * - Explicit width/height attributes
+ * - Alt text from Strapi metadata
+ * - Optional responsive sizes
+ * 
+ * Usage:
+ * <StrapiImage 
+ *   image={strapiImageField} 
+ *   class="rounded-lg"
+ *   loading="lazy"
+ * />
+ */
+import { getStrapiImageData, getCloudflareImageVariant } from '../utils/strapi.js';
+
+interface Props {
+  image: any; // Strapi image field
+  class?: string;
+  loading?: 'eager' | 'lazy';
+  variant?: string; // Cloudflare size variant (e.g., '800x600', 'thumbnail')
+  sizes?: string; // Responsive sizes attribute
+  fetchpriority?: 'high' | 'low' | 'auto';
+}
+
+const { 
+  image, 
+  class: className = '', 
+  loading = 'lazy',
+  variant,
+  sizes,
+  fetchpriority
+} = Astro.props;
+
+// Get image data from Strapi
+const imageData = getStrapiImageData(image);
+
+if (!imageData.url) {
+  console.warn('StrapiImage: No image URL provided');
+}
+
+// Apply size variant if specified
+let finalUrl = imageData.url;
+if (variant && finalUrl) {
+  finalUrl = getCloudflareImageVariant(finalUrl, variant);
+}
+---
+
+{imageData.url && (
+  <img
+    src={finalUrl}
+    alt={imageData.alt}
+    width={imageData.width}
+    height={imageData.height}
+    class={className}
+    loading={loading}
+    sizes={sizes}
+    fetchpriority={fetchpriority}
+    onerror="this.onerror=null; console.error('Failed to load image:', this.src);"
+  />
+)}
+

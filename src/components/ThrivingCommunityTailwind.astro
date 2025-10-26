@@ -35,7 +35,7 @@ const communityData = {
 console.log('Thriving Community Images URLs:', { thrivingCommunityBg, thrivingCommunity1, thrivingCommunity2 });
 ---
 
-<section class="w-full bg-gray-50 py-6 sm:py-10 lg:py-24 px-3 sm:px-10">
+<section class="w-full bg-gray-50 py-12 sm:py-16 lg:py-24 px-6 sm:px-10">
   <div class="container mx-auto">
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
       <!-- Images Column -->
@@ -70,7 +70,7 @@ console.log('Thriving Community Images URLs:', { thrivingCommunityBg, thrivingCo
               {communityData.description.split('online platform').map((part, index) => (
                 <>
                   {part}
-                  {index === 0 && <span class="underline decoration-amber-600 decoration-2 underline-offset-2">online platform</span>}
+                  {index === 0 && <span class="underline decoration-gold decoration-2 underline-offset-2">online platform</span>}
                 </>
               ))}
             </p>
@@ -81,7 +81,7 @@ console.log('Thriving Community Images URLs:', { thrivingCommunityBg, thrivingCo
             <div class="space-y-3 sm:space-y-4">
               {communityData.bulletPoints.slice(0, 4).map((point) => (
                 <div class="flex items-center gap-3">
-                  <div class="w-2 h-2 bg-amber-600 rounded-full flex-shrink-0"></div>
+                  <div class="w-2 h-2 bg-gold rounded-full flex-shrink-0"></div>
                   <span class="text-sm sm:text-base font-inter text-gray-700">{point}</span>
                 </div>
               ))}
@@ -89,7 +89,7 @@ console.log('Thriving Community Images URLs:', { thrivingCommunityBg, thrivingCo
             <div class="space-y-3 sm:space-y-4">
               {communityData.bulletPoints.slice(4, 8).map((point) => (
                 <div class="flex items-center gap-3">
-                  <div class="w-2 h-2 bg-amber-600 rounded-full flex-shrink-0"></div>
+                  <div class="w-2 h-2 bg-gold rounded-full flex-shrink-0"></div>
                   <span class="text-sm sm:text-base font-inter text-gray-700">{point}</span>
                 </div>
               ))}

@@ -1,6 +1,6 @@
 // Cloudflare Images API utility functions
 const CLOUDFLARE_ACCOUNT_HASH = '-aT8Z2F9gGvZ9fdofZcCaQ';
-const CLOUDFLARE_BASE_URL = `https://imagedelivery.net/${CLOUDFLARE_ACCOUNT_HASH}`;
+const CLOUDFLARE_BASE_URL = `https://activeaway.com/cdn-cgi/imagedelivery/${CLOUDFLARE_ACCOUNT_HASH}`;
 
 // Image mapping for Cloudflare IDs
 const IMAGE_MAPPING = {

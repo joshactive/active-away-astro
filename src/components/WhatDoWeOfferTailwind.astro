@@ -38,7 +38,7 @@ const offerData = {
 console.log('Offer Images URLs:', { offer1Image, offer2Image });
 ---
 
-<section class="w-full bg-white py-6 sm:py-10 lg:py-24 px-3 sm:px-10">
+<section class="w-full bg-white py-12 sm:py-16 lg:py-24 px-6 sm:px-10">
   <div class="container mx-auto">
     <!-- Header -->
     <div class="mb-6 sm:mb-8 lg:mb-16 text-center max-w-4xl mx-auto">
@@ -72,7 +72,7 @@ console.log('Offer Images URLs:', { offer1Image, offer2Image });
             
             <!-- Button -->
             <div class="w-fit mt-4 sm:mt-5">
-              <button class="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-4 sm:px-5 py-2 sm:py-3 rounded-full font-inter font-medium text-xs sm:text-sm transition-all duration-300 hover:-translate-y-0.5">
+              <button class="inline-flex items-center gap-2 bg-gold hover:bg-gold-700 text-white px-4 sm:px-5 py-2 sm:py-3 rounded-full font-inter font-medium text-xs sm:text-sm transition-all duration-300 hover:-translate-y-0.5">
                 <span>{card.buttonText}</span>
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
                   <path d="M7 17L17 7M17 7H7M17 7V17" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -87,7 +87,7 @@ console.log('Offer Images URLs:', { offer1Image, offer2Image });
     <!-- Pagination -->
     <div class="flex justify-center items-center gap-2">
       {Array.from({ length: offerData.pagination.total }, (_, index) => (
-        <div class={`w-2 h-2 rounded-full transition-all duration-300 ${index + 1 === offerData.pagination.active ? 'w-8 bg-amber-600' : 'bg-gray-300'}`}></div>
+        <div class={`w-2 h-2 rounded-full transition-all duration-300 ${index + 1 === offerData.pagination.active ? 'w-8 bg-gold' : 'bg-gray-300'}`}></div>
       ))}
     </div>
   </div>

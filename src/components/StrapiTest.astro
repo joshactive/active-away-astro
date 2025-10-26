@@ -1,0 +1,92 @@
+---
+/**
+ * Test component to verify Strapi connection
+ * 
+ * To use this:
+ * 1. Import it in your index.astro: import StrapiTest from '../components/StrapiTest.astro';
+ * 2. Add it to your page: <StrapiTest />
+ * 3. Check the browser console for results
+ */
+
+import { fetchAPI } from '../utils/strapi.js';
+
+let strapiStatus = {
+  connected: false,
+  error: null,
+  contentTypes: []
+};
+
+try {
+  // Test connection by fetching content types
+  const response = await fetchAPI('/content-type-builder/content-types');
+  strapiStatus.connected = true;
+  strapiStatus.contentTypes = Object.keys(response.data || {});
+} catch (error) {
+  strapiStatus.error = error.message;
+}
+---
+
+<div class="fixed bottom-4 right-4 bg-white shadow-2xl rounded-lg p-6 max-w-md z-50 border-2" 
+     class:list={[strapiStatus.connected ? 'border-green-500' : 'border-red-500']}>
+  <div class="flex items-center gap-3 mb-4">
+    <div class="w-3 h-3 rounded-full" 
+         class:list={[strapiStatus.connected ? 'bg-green-500' : 'bg-red-500']}
+         style="animation: pulse 2s infinite;">
+    </div>
+    <h3 class="font-bold text-lg">
+      Strapi Connection Status
+    </h3>
+  </div>
+
+  {strapiStatus.connected ? (
+    <div class="space-y-2">
+      <p class="text-green-600 font-semibold">✅ Connected Successfully!</p>
+      <p class="text-sm text-gray-600">
+        Strapi URL: {import.meta.env.STRAPI_URL || 'http://localhost:1337'}
+      </p>
+      {strapiStatus.contentTypes.length > 0 && (
+        <details class="mt-4">
+          <summary class="cursor-pointer text-sm font-semibold text-gray-700 hover:text-gold">
+            Available Content Types ({strapiStatus.contentTypes.length})
+          </summary>
+          <ul class="mt-2 ml-4 text-xs text-gray-600 space-y-1">
+            {strapiStatus.contentTypes.map(ct => (
+              <li>• {ct}</li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </div>
+  ) : (
+    <div class="space-y-2">
+      <p class="text-red-600 font-semibold">❌ Connection Failed</p>
+      <p class="text-sm text-gray-700">
+        {strapiStatus.error}
+      </p>
+      <div class="mt-4 p-3 bg-yellow-50 rounded text-xs">
+        <p class="font-semibold mb-2">Quick Fix Checklist:</p>
+        <ul class="space-y-1 ml-4">
+          <li>✓ Start Strapi: <code class="bg-gray-100 px-1 rounded">npm run develop</code></li>
+          <li>✓ Check .env file has STRAPI_URL</li>
+          <li>✓ Verify Strapi is on http://localhost:1337</li>
+          <li>✓ Enable public access in Strapi settings</li>
+        </ul>
+      </div>
+    </div>
+  )}
+
+  <button 
+    onclick="this.parentElement.remove()" 
+    class="mt-4 w-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm py-2 px-4 rounded transition-colors"
+  >
+    Close
+  </button>
+</div>
+
+<style>
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+</style>
+

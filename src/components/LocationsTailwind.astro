@@ -47,17 +47,19 @@ const locations = [
 console.log('Location Images URLs:', { location1Image, location2Image, location3Image });
 ---
 
-<section class="w-full bg-white py-6 sm:py-10 lg:py-24 px-3 sm:px-10">
-  <div class="container mx-auto">
+<section class="w-full bg-white py-12 sm:py-16 lg:py-24 px-6 sm:px-10">
+  <div class="container mx-auto max-w-[1400px]">
     <!-- Header -->
     <div class="mb-6 sm:mb-8 lg:mb-16">
-      <div class="text-sm sm:text-base font-inter font-medium text-gray-900 tracking-widest uppercase mb-1 sm:mb-2">
-        DESTINATIONS
-      </div>
       <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 sm:gap-3 lg:gap-4">
-        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900">
-          Explore our Locations
-        </h2>
+        <div>
+          <div class="text-sm sm:text-base font-inter font-medium text-gray-900 tracking-widest uppercase mb-1 sm:mb-2">
+            DESTINATIONS
+          </div>
+          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900">
+            Explore our Locations
+          </h2>
+        </div>
         <a href="#all-locations" class="text-base sm:text-lg font-inter text-gray-900 underline hover:text-gray-700 transition-colors">
           See All Locations
         </a>
@@ -80,9 +82,9 @@ console.log('Location Images URLs:', { location1Image, location2Image, location3
       </button>
 
       <!-- Cards Container -->
-      <div class="flex flex-col lg:flex-row justify-center items-center gap-3 sm:gap-4 lg:gap-8">
+      <div class="flex flex-row overflow-x-auto lg:overflow-visible snap-x snap-mandatory lg:snap-none justify-start lg:justify-between items-stretch gap-3 sm:gap-4 lg:gap-6 pb-4 lg:pb-0 -mx-6 sm:-mx-10 px-6 sm:px-10 lg:mx-0 lg:px-0">
         {locations.map((location) => (
-          <div class={`location-card w-full max-w-sm sm:max-w-md lg:max-w-lg ${location.active ? 'active' : 'inactive'}`}>
+          <div class="location-card flex-shrink-0 w-[85vw] sm:w-[70vw] lg:flex-1 lg:w-auto snap-center">
             <!-- Card Image -->
             <div class="relative overflow-hidden rounded-2xl bg-gray-900">
               <img src={location.image} alt={location.title} class="w-full h-48 sm:h-56 lg:h-64 object-cover" />
@@ -127,7 +129,7 @@ console.log('Location Images URLs:', { location1Image, location2Image, location3
                   <div class="text-xl sm:text-2xl lg:text-3xl font-inter font-semibold text-gray-900">
                     {location.amount}
                   </div>
-                  <button class="px-4 sm:px-6 py-2 sm:py-3 bg-amber-600 hover:bg-amber-700 text-white font-inter font-medium text-sm sm:text-base rounded-full transition-all duration-300 hover:-translate-y-0.5">
+                  <button class="px-4 sm:px-6 py-2 sm:py-3 bg-gold hover:bg-gold-700 text-white font-inter font-medium text-sm sm:text-base rounded-full transition-all duration-300 hover:-translate-y-0.5">
                     Explore
                   </button>
                 </div>
@@ -138,10 +140,10 @@ console.log('Location Images URLs:', { location1Image, location2Image, location3
       </div>
     </div>
 
-    <!-- Pagination Dots -->
-    <div class="flex justify-center items-center gap-2 mt-8 sm:mt-12">
+    <!-- Pagination Dots (Desktop Only) -->
+    <div class="hidden lg:flex justify-center items-center gap-2 mt-8 sm:mt-12">
       <div class="w-2 h-2 bg-gray-300 rounded-full"></div>
-      <div class="w-8 h-2 bg-amber-600 rounded-full"></div>
+      <div class="w-8 h-2 bg-gold rounded-full"></div>
       <div class="w-2 h-2 bg-gray-300 rounded-full"></div>
       <div class="w-2 h-2 bg-gray-300 rounded-full"></div>
       <div class="w-2 h-2 bg-gray-300 rounded-full"></div>
@@ -158,15 +160,14 @@ console.log('Location Images URLs:', { location1Image, location2Image, location3
     font-family: 'Playfair Display', serif;
   }
   
-  /* Active/Inactive card states */
-  .location-card.active {
-    transform: scale(1.05);
-    z-index: 10;
+  /* Smooth scroll for mobile carousel */
+  .overflow-x-auto {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
   }
   
-  .location-card.inactive {
-    opacity: 0.7;
-    transform: scale(0.95);
+  .overflow-x-auto::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
   }
   
   /* Smooth transitions */
@@ -174,31 +175,39 @@ console.log('Location Images URLs:', { location1Image, location2Image, location3
     transition: all 0.3s ease;
   }
   
-  /* Mobile responsive adjustments */
-  @media (max-width: 1023px) {
-    .location-card.active,
-    .location-card.inactive {
-      transform: none;
-      opacity: 1;
+  /* Desktop only: Active/Inactive card states */
+  @media (min-width: 1024px) {
+    .location-card.active-desktop {
+      transform: scale(1.08);
+      z-index: 10;
+    }
+    
+    .location-card.inactive-desktop {
+      opacity: 0.65;
+      transform: scale(0.90);
     }
   }
 </style>
 
 <script>
-  // Carousel functionality for future API integration
+  // Carousel functionality - only for desktop
   let currentActiveIndex = 1; // Index of active card (0-based)
   const totalCards = 3; // Will be dynamic with API
+  const isDesktop = () => window.innerWidth >= 1024;
 
   function updateCarousel() {
+    // Only apply active/inactive states on desktop
+    if (!isDesktop()) return;
+    
     const cards = document.querySelectorAll('.location-card');
     const dots = document.querySelectorAll('.dot');
     
     cards.forEach((card, index) => {
-      card.classList.remove('active', 'inactive');
+      card.classList.remove('active-desktop', 'inactive-desktop');
       if (index === currentActiveIndex) {
-        card.classList.add('active');
+        card.classList.add('active-desktop');
       } else {
-        card.classList.add('inactive');
+        card.classList.add('inactive-desktop');
       }
     });
     
@@ -222,6 +231,11 @@ console.log('Location Images URLs:', { location1Image, location2Image, location3
 
   // Initialize carousel on page load
   document.addEventListener('DOMContentLoaded', () => {
+    updateCarousel();
+  });
+  
+  // Re-init on resize
+  window.addEventListener('resize', () => {
     updateCarousel();
   });
 
