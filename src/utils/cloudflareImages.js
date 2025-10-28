@@ -2,7 +2,7 @@
 const CLOUDFLARE_ACCOUNT_HASH = '-aT8Z2F9gGvZ9fdofZcCaQ';
 const CLOUDFLARE_BASE_URL = `https://activeaway.com/cdn-cgi/imagedelivery/${CLOUDFLARE_ACCOUNT_HASH}`;
 
-// Image mapping for Cloudflare IDs
+// Image mappings for Cloudflare IDs
 const IMAGE_MAPPING = {
   'hero-bg': '03bade93-3cf6-49b0-047f-a9eb556aa200',
   'logo': '4a4fae2f-b29c-4e69-5a9e-acf953fd3c00',
