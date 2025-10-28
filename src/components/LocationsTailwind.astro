@@ -2,7 +2,9 @@
 // Locations section component for Active Away - Tailwind CSS Version
 import { getFeaturedLocations } from '../utils/strapi.js';
 import { getImageByName, getResponsiveImageByName, getStrapiImageAttrs } from '../utils/cloudflareImages.js';
-import { MapPin, Tag, Hotel } from 'lucide-react';
+import MapPinIcon from './ui/icons/MapPinIcon.astro';
+import TagIcon from './ui/icons/TagIcon.astro';
+import HotelIcon from './ui/icons/HotelIcon.astro';
 
 // Fetch featured locations from Strapi
 let locations = await getFeaturedLocations();
@@ -31,8 +33,8 @@ const buildLocationImage = (imageName, alt) => {
     width: 455,
     height: 256,
     alt,
-      loading: 'lazy',
-      sizes: LOCATION_IMAGE_SIZES
+    loading: 'lazy',
+    sizes: LOCATION_IMAGE_SIZES
   };
 };
 
@@ -191,20 +193,20 @@ if (!locations || locations.length === 0) {
                 <div class="space-y-1.5 sm:space-y-3 mb-3 sm:mb-6">
                   {/* Country */}
                   <div class="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" client:idle />
+                    <MapPinIcon class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" />
                     <span class="text-sm sm:text-base font-inter text-gray-700">{location.location}</span>
                   </div>
                   
                   {/* Holiday Type */}
                   <div class="flex items-center gap-2">
-                    <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" client:idle />
+                    <TagIcon class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" />
                     <span class="text-sm sm:text-base font-inter text-gray-700">{location.type}</span>
                   </div>
                   
                   {/* Price (only show if exists) */}
                   {location.price && (
                     <div class="flex items-center gap-2">
-                      <Hotel className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" client:idle />
+                      <HotelIcon class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" />
                       <span class="text-sm sm:text-base font-inter text-gray-700">{location.price}</span>
                     </div>
                   )}

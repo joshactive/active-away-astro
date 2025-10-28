@@ -2,7 +2,9 @@
 // Events section component for Active Away - Tailwind CSS Version
 import { getFutureEvents } from '../utils/strapi.js';
 import { getImageByName, getResponsiveImageByName, getStrapiImageAttrs } from '../utils/cloudflareImages.js';
-import { MapPin, Tag, Calendar } from 'lucide-react';
+import MapPinIcon from '../components/ui/icons/MapPinIcon.astro';
+import TagIcon from '../components/ui/icons/TagIcon.astro';
+import CalendarIcon from '../components/ui/icons/CalendarIcon.astro';
 
 // Fetch future events from Strapi
 let events = await getFutureEvents();
@@ -173,19 +175,19 @@ if (!events || events.length === 0) {
                 <div class="space-y-1.5 sm:space-y-3 mb-3 sm:mb-6">
                   {/* Country */}
                   <div class="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" client:idle />
+                    <MapPinIcon class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" />
                     <span class="text-sm sm:text-base font-inter text-gray-700">{event.location}</span>
                   </div>
                   
                   {/* Event Type/Product */}
                   <div class="flex items-center gap-2">
-                    <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" client:idle />
+                    <TagIcon class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" />
                     <span class="text-sm sm:text-base font-inter text-gray-700">{event.type}</span>
                   </div>
                   
                   {/* Date */}
                   <div class="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" client:idle />
+                    <CalendarIcon class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" />
                     <span class="text-sm sm:text-base font-inter text-gray-700">{event.date}</span>
                   </div>
                 </div>
@@ -310,11 +312,12 @@ if (!events || events.length === 0) {
   let totalEventCards = 0;
   let totalEventPages = 0;
   const isEventDesktop = () => window.innerWidth >= 1024;
-  const EVENT_GAP_WIDTH = 24;
-  const eventCardMetrics = {
-    width: 0
-  };
-  let eventResizeObserver;
+const EVENT_GAP_WIDTH = 24;
+const eventCardMetrics = {
+  width: 0
+};
+let eventResizeObserver;
+
 
   function measureEventCardWidth(card) {
     if (!card) return;
