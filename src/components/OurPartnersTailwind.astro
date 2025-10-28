@@ -2,52 +2,36 @@
 // Our Partners section component for Active Away - Tailwind CSS Version
 import { getImageByName } from '../utils/cloudflareImages.js';
 
-// Get dynamic image URLs
-const partner1Logo = getImageByName('partner-1', { size: 'public' });
-const partner2Logo = getImageByName('partner-2', { size: 'public' });
-const partner3Logo = getImageByName('partner-3', { size: 'public' });
-const partner4Logo = getImageByName('partner-4', { size: 'public' });
-const partner5Logo = getImageByName('partner-5', { size: 'public' });
+// Accept homeData as prop (fetched once in index.astro)
+interface Props {
+  homeData?: any;
+}
 
-// TODO: Replace with API call when backend is ready
-// Example: const partners = await fetch('/api/partners').then(res => res.json());
+const { homeData } = Astro.props;
 
-const partners = [
-  {
-    id: 1,
-    name: "Grapho",
-    logo: partner1Logo // Compnay logo.png
-  },
-  {
-    id: 2,
-    name: "Iconic",
-    logo: partner2Logo // Compnay logo (1).png
-  },
-  {
-    id: 3,
-    name: "Vectra",
-    logo: partner3Logo // Compnay logo (2).png
-  },
-  {
-    id: 4,
-    name: "Visualy",
-    logo: partner4Logo // Compnay logo (3).png
-  },
-  {
-    id: 5,
-    name: "Dexign Studio",
-    logo: partner5Logo // Compnay logo (4).png
-  }
-];
+// Use Strapi data with fallback to Cloudflare images
+const partners = homeData?.partners?.length > 0 
+  ? homeData.partners.map((p, i) => ({
+      id: i + 1,
+      name: p.name,
+      logo: p.logo // Full image object with url, alt, width, height
+    }))
+  : [
+      { id: 1, name: "Grapho", logo: { url: getImageByName('partner-1', { size: 'public' }), alt: 'Grapho logo', width: 200, height: 100 } },
+      { id: 2, name: "Iconic", logo: { url: getImageByName('partner-2', { size: 'public' }), alt: 'Iconic logo', width: 200, height: 100 } },
+      { id: 3, name: "Vectra", logo: { url: getImageByName('partner-3', { size: 'public' }), alt: 'Vectra logo', width: 200, height: 100 } },
+      { id: 4, name: "Visualy", logo: { url: getImageByName('partner-4', { size: 'public' }), alt: 'Visualy logo', width: 200, height: 100 } },
+      { id: 5, name: "Dexign Studio", logo: { url: getImageByName('partner-5', { size: 'public' }), alt: 'Dexign Studio logo', width: 200, height: 100 } }
+    ];
 
 // Debug: Log the URLs being generated
-console.log('Partner Logos URLs:', { partner1Logo, partner2Logo, partner3Logo, partner4Logo, partner5Logo });
+console.log('Partner Logos URLs:', partners.map(p => ({ name: p.name, logo: p.logo.url })));
 ---
 
 <section class="w-full bg-white py-12 sm:py-16 lg:py-24">
   <div class="container mx-auto px-4 sm:px-10">
     <!-- Title -->
-    <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 text-center mb-6 sm:mb-8 lg:mb-16">
+    <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 lg:text-center mb-6 sm:mb-8 lg:mb-16">
       Our Partners
     </h2>
     
@@ -56,7 +40,7 @@ console.log('Partner Logos URLs:', { partner1Logo, partner2Logo, partner3Logo, p
       {partners.map((partner) => (
         <div class="partner-card flex items-center justify-center p-4 sm:p-6 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all duration-300 hover:-translate-y-1">
           <div class="partner-logo w-full h-20 sm:h-24 lg:h-28 flex items-center justify-center">
-            <img src={partner.logo} alt={partner.name} class="max-w-full max-h-full object-contain filter grayscale hover:grayscale-0 transition-all duration-300" />
+            <img src={partner.logo.url} alt={partner.logo.alt || partner.name} width={partner.logo.width} height={partner.logo.height} class="max-w-full max-h-full object-contain filter grayscale hover:grayscale-0 transition-all duration-300" loading="lazy" />
           </div>
         </div>
       ))}

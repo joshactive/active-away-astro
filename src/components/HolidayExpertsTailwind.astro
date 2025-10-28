@@ -1,8 +1,28 @@
 ---
-// Holiday Experts data - TODO: Replace with API data - Tailwind CSS Version
+// Holiday Experts data - Tailwind CSS Version
+import { marked } from 'marked';
+
+// Accept homeData as prop (fetched once in index.astro)
+interface Props {
+  homeData?: any;
+}
+
+const { homeData } = Astro.props;
+
+// Configure marked to be safe
+marked.setOptions({
+  breaks: true,
+  gfm: true
+});
+
 const holidayExpertsData = {
-  title: "Tennis Holiday Experts",
-  accordions: [
+  title: homeData?.accordions?.title || "Tennis Holiday Experts",
+  accordions: homeData?.accordions?.items?.length > 0 
+    ? homeData.accordions.items.map(item => ({
+        ...item,
+        content: marked.parse(item.content || '')
+      }))
+    : [
     {
       id: 1,
       title: "Tennis Holidays",
@@ -82,7 +102,7 @@ const holidayExpertsData = {
 <section class="w-full bg-white py-12 sm:py-16 lg:py-24">
   <div class="container mx-auto px-4 sm:px-10">
     <!-- Title -->
-    <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 text-center mb-6 sm:mb-8 lg:mb-16">
+    <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 lg:text-center mb-6 sm:mb-8 lg:mb-16">
       {holidayExpertsData.title}
     </h2>
 
@@ -106,9 +126,7 @@ const holidayExpertsData = {
             </div>
             <div class={`accordion-content overflow-hidden transition-all duration-300 ${accordion.isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
               <div class="px-4 pb-4 sm:px-6 sm:pb-6 pt-0">
-                <p class="text-xs sm:text-sm lg:text-base font-inter text-gray-700 leading-relaxed">
-                  {accordion.content}
-                </p>
+                <div class="text-xs sm:text-sm lg:text-base font-inter text-gray-800 leading-relaxed" set:html={accordion.content} />
               </div>
             </div>
           </div>
@@ -133,9 +151,7 @@ const holidayExpertsData = {
             </div>
             <div class={`accordion-content overflow-hidden transition-all duration-300 ${accordion.isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
               <div class="px-4 pb-4 sm:px-6 sm:pb-6 pt-0">
-                <p class="text-xs sm:text-sm lg:text-base font-inter text-gray-700 leading-relaxed">
-                  {accordion.content}
-                </p>
+                <div class="text-xs sm:text-sm lg:text-base font-inter text-gray-800 leading-relaxed" set:html={accordion.content} />
               </div>
             </div>
           </div>
@@ -152,6 +168,56 @@ const holidayExpertsData = {
   
   .font-playfair {
     font-family: 'Playfair Display', serif;
+  }
+
+  /* Markdown content styling */
+  .accordion-content div :global(p) {
+    margin-bottom: 0.75rem;
+  }
+  
+  .accordion-content div :global(p:last-child) {
+    margin-bottom: 0;
+  }
+  
+  .accordion-content div :global(a) {
+    color: #ad986c;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  
+  .accordion-content div :global(a:hover) {
+    text-decoration: underline;
+  }
+  
+  .accordion-content div :global(strong) {
+    font-weight: 600;
+  }
+  
+  .accordion-content div :global(em) {
+    font-style: italic;
+  }
+  
+  .accordion-content div :global(ul) {
+    list-style-type: disc;
+    margin-left: 1.5rem;
+    margin-bottom: 0.75rem;
+    margin-top: 0.5rem;
+  }
+  
+  .accordion-content div :global(ol) {
+    list-style-type: decimal;
+    margin-left: 1.5rem;
+    margin-bottom: 0.75rem;
+    margin-top: 0.5rem;
+  }
+  
+  .accordion-content div :global(li) {
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+  }
+  
+  .accordion-content div :global(li:last-child) {
+    margin-bottom: 0;
   }
 </style>
 
@@ -205,6 +271,4 @@ const holidayExpertsData = {
       }
     }
   }
-  
-  console.log('Accordion function loaded');
 </script>

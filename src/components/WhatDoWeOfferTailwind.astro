@@ -1,93 +1,138 @@
 ---
 // What do we offer section component for Active Away - Tailwind CSS Version
+import { getProducts } from '../utils/strapi.js';
 import { getImageByName } from '../utils/cloudflareImages.js';
 
-// Get dynamic image URLs
-const offer1Image = getImageByName('offer-1', { size: 'public' });
-const offer2Image = getImageByName('offer-2', { size: 'public' });
+// Accept homeData as prop (fetched once in index.astro)
+interface Props {
+  homeData?: any;
+}
 
-// TODO: Replace with API call when backend is ready
-// Example: const offerData = await fetch('/api/offers').then(res => res.json());
+const { homeData } = Astro.props;
 
-const offerData = {
-  title: "What do we offer?",
-  description: "From hosted Adult & Family Tennis, Padel, and Pickleball Holidays in stunning destinations to exclusive Ski Holidays and UK-based Doubles Tennis, Padel, and Pickleball Clinics—if you're passionate about your sport, our trips are perfect for you.",
-  cards: [
+// Fetch products from Strapi
+let products = await getProducts();
+
+// Fallback to hardcoded data if Strapi fails or returns no data
+if (!products || products.length === 0) {
+  console.warn('⚠️  Using fallback products data');
+  
+  // Get dynamic image URLs for fallback
+  const offer1Image = getImageByName('offer-1', { size: 'public' });
+  const offer2Image = getImageByName('offer-2', { size: 'public' });
+  
+  products = [
     {
       id: 1,
       title: "Adult Only Tennis Holidays",
       description: "Our flagship product offers a world-class Tennis Programme crafted by doubles champion Jamie Murray, guaranteeing top-quality coaching and unforgettable experiences. What truly sets us apart is our unique 'Active Away Hosting' - each trip is led by one of our experts, ensuring personalised attention with a 'nothing is too much trouble' attitude.",
-      buttonText: "Discover More",
-      image: offer1Image // image 4.png
+      image: offer1Image,
+      imageAlt: "Adult Only Tennis Holidays",
+      url: "#"
     },
     {
       id: 2,
       title: "Adult Weekend Tennis Breaks",
       description: "Join us for a weekend getaway at some of the UK's most prestigious locations. Our tennis breaks offers the perfect combination of top-quality coaching, friendly matches, and a relaxing atmosphere. Whether you're looking to improve your game or simply enjoy a great weekend of tennis, our UK weekend break is a great choice for any tennis enthusiast.",
-      buttonText: "Discover More",
-      image: offer2Image // image 5.png
+      image: offer2Image,
+      imageAlt: "Adult Weekend Tennis Breaks",
+      url: "#"
     }
-  ],
+  ];
+}
+
+const offerData = {
+  title: homeData?.whatDoWeOffer?.title || "What do we offer?",
+  description: homeData?.whatDoWeOffer?.description || "From hosted Adult & Family Tennis, Padel, and Pickleball Holidays in stunning destinations to exclusive Ski Holidays and UK-based Doubles Tennis, Padel, and Pickleball Clinics—if you're passionate about your sport, our trips are perfect for you.",
+  products: products,
   pagination: {
-    total: 6,
+    total: Math.ceil(products.length / 2), // 2 products per page
     active: 1
   }
 };
-
-// Debug: Log the URLs being generated
-console.log('Offer Images URLs:', { offer1Image, offer2Image });
 ---
 
 <section class="w-full bg-white py-12 sm:py-16 lg:py-24">
-  <div class="container mx-auto px-4 sm:px-10">
+  <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
     <!-- Header -->
-    <div class="mb-6 sm:mb-8 lg:mb-16 text-center max-w-4xl mx-auto">
+    <div class="mb-6 sm:mb-8 lg:mb-16 lg:text-center max-w-4xl lg:mx-auto">
       <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-3 sm:mb-4">
         {offerData.title}
       </h2>
-      <p class="text-base sm:text-lg lg:text-xl font-inter text-gray-700 leading-relaxed">
+      <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed">
         {offerData.description}
       </p>
     </div>
 
-    <!-- Cards Container -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12 mb-8 sm:mb-12">
-      {offerData.cards.map((card) => (
-        <div class="offer-card grid grid-cols-1 lg:grid-cols-2 gap-0 bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-          <!-- Image - Left side on desktop -->
-          <div class="relative overflow-hidden">
-            <img src={card.image} alt={card.title} class="w-full h-full object-cover" />
-          </div>
-          
-          <!-- Content - Right side on desktop -->
-          <div class="p-6 sm:p-8 flex flex-col justify-between">
-            <div>
-              <h3 class="text-lg sm:text-xl lg:text-2xl font-playfair font-bold text-gray-900 mb-2 sm:mb-3">
-                {card.title}
-              </h3>
-              <p class="text-xs sm:text-sm lg:text-base font-inter text-gray-700 leading-relaxed">
-                {card.description}
-              </p>
+    <!-- Cards Carousel -->
+    <div class="relative">
+      <!-- Navigation Arrows -->
+      <button class="hidden lg:flex absolute left-4 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-gold rounded-full shadow-lg items-center justify-center hover:bg-gold-700 transition-all duration-300" onclick="previousProduct()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M15 18L9 12L15 6" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      
+      <button class="hidden lg:flex absolute right-4 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-gold rounded-full shadow-lg items-center justify-center hover:bg-gold-700 transition-all duration-300" onclick="nextProduct()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M9 18L15 12L9 6" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
+      <!-- Cards Container Wrapper -->
+      <div class="relative">
+        <!-- Cards Container -->
+        <div id="productsContainer" class="flex flex-row overflow-x-auto lg:overflow-visible snap-x snap-mandatory lg:snap-none justify-start lg:justify-between items-stretch gap-4 sm:gap-6 lg:gap-6 pb-4 lg:pb-0 pl-4 sm:pl-10 lg:pl-0 transition-transform duration-500 ease-out">
+          {offerData.products.map((product, index) => (
+            <div class="product-card flex-shrink-0 w-[calc(100vw-5rem)] sm:w-[calc(100vw-8rem)] lg:w-[calc((100%-1.5rem)/2)] snap-start relative" data-index={index}>
+            <!-- Flat Card -->
+            <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-lg h-full flex flex-col">
+              <!-- Card Image -->
+              <div class="relative overflow-hidden">
+                <img 
+                  src={product.image} 
+                  alt={product.imageAlt || product.title}
+                  class="w-full h-56 sm:h-64 lg:h-80 object-cover" 
+                />
+              </div>
+              
+              <!-- Card Content -->
+              <div class="p-4 sm:p-6 flex flex-col flex-grow">
+                <h3 class="text-base sm:text-xl lg:text-2xl font-playfair font-bold text-gray-900 mb-2 sm:mb-3 leading-tight">
+                  {product.title}
+                </h3>
+                
+                <p class="text-xs sm:text-sm lg:text-base font-inter text-gray-800 leading-relaxed mb-4 sm:mb-5 flex-grow">
+                  {product.description}
+                </p>
+                
+                <!-- Button -->
+                <div class="mt-auto">
+                  <a href={product.url} class="inline-flex items-center gap-2 bg-gold hover:bg-gold-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full font-inter font-medium text-xs sm:text-base transition-all duration-300 hover:-translate-y-0.5 whitespace-nowrap">
+                    <span>Discover More</span>
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none">
+                      <path d="M7 17L17 7M17 7H7M17 7V17" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </a>
+                </div>
+              </div>
             </div>
-            
-            <!-- Button -->
-            <div class="w-fit mt-4 sm:mt-5">
-              <button class="inline-flex items-center gap-2 bg-gold hover:bg-gold-700 text-white px-4 sm:px-5 py-2 sm:py-3 rounded-full font-inter font-medium text-xs sm:text-sm transition-all duration-300 hover:-translate-y-0.5">
-                <span>{card.buttonText}</span>
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
-                  <path d="M7 17L17 7M17 7H7M17 7V17" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
-            </div>
           </div>
+        ))}
         </div>
-      ))}
+      </div>
     </div>
 
-    <!-- Pagination -->
-    <div class="flex justify-center items-center gap-2">
-      {Array.from({ length: offerData.pagination.total }, (_, index) => (
-        <div class={`w-2 h-2 rounded-full transition-all duration-300 ${index + 1 === offerData.pagination.active ? 'w-8 bg-gold' : 'bg-gray-300'}`}></div>
+    <!-- Pagination Dots -->
+    <div id="productPaginationDots" class="flex justify-center items-center gap-2 mt-8 sm:mt-12">
+      {Array.from({ length: Math.ceil(offerData.products.length / 2) }, (_, i) => (
+        <button 
+          class={`pagination-dot transition-all duration-300 ${i === 0 ? 'w-8 h-2' : 'w-2 h-2 bg-gray-300'} rounded-full`}
+          style={i === 0 ? 'background-color: #ad986c;' : ''}
+          data-page={i}
+          onclick={`goToProductPage(${i})`}
+          aria-label={`Go to page ${i + 1}`}
+        ></button>
       ))}
     </div>
   </div>
@@ -101,4 +146,224 @@ console.log('Offer Images URLs:', { offer1Image, offer2Image });
   .font-playfair {
     font-family: 'Playfair Display', serif;
   }
+  
+  /* Smooth scroll for mobile carousel */
+  .overflow-x-auto {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+  }
+  
+  .overflow-x-auto::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
+  
+  /* Smooth transitions */
+  .product-card {
+    transition: all 0.3s ease;
+    position: relative;
+  }
+  
+  /* White overlay for cards outside main view */
+  .product-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.7);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 5;
+    border-radius: 1rem;
+  }
+  
+  /* Show overlay on cards outside main view */
+  .product-card.card-hidden::after {
+    opacity: 1;
+  }
 </style>
+
+<script>
+  // Carousel functionality
+  let currentProductPage = 0;
+  const productsPerPage = 2; // Show 2 cards at a time on desktop
+  let totalProductCards = 0;
+  let totalProductPages = 0;
+  const isProductDesktop = () => window.innerWidth >= 1024;
+
+  function initProductsCarousel() {
+    const cards = document.querySelectorAll('.product-card');
+    totalProductCards = cards.length;
+    totalProductPages = Math.ceil(totalProductCards / productsPerPage);
+    
+    console.log(`🎠 Products Carousel initialized: ${totalProductCards} cards, ${totalProductPages} pages`);
+    
+    updateProductsCarousel();
+  }
+
+  function updateProductsCarousel() {
+    if (!isProductDesktop()) {
+      // Mobile: no transform, use native scroll
+      const container = document.getElementById('productsContainer');
+      if (container) {
+        container.style.transform = 'translateX(0)';
+      }
+      // Remove all overlays on mobile
+      const cards = document.querySelectorAll('.product-card');
+      cards.forEach(card => card.classList.remove('card-hidden'));
+      return;
+    }
+    
+    // Desktop: show 2 cards at a time with transform
+    const container = document.getElementById('productsContainer');
+    const cards = document.querySelectorAll('.product-card');
+    const dots = document.querySelectorAll('#productPaginationDots .pagination-dot');
+    
+    if (!container || cards.length === 0) return;
+    
+    // Calculate the offset based on card index
+    const firstCard = cards[0];
+    if (!firstCard) return;
+    
+    const cardWidth = firstCard.offsetWidth;
+    const gapWidth = 24; // lg:gap-6 = 1.5rem = 24px
+    
+    // Calculate how much to move: (cardWidth + gap) * productsPerPage * currentProductPage
+    const offsetPx = (cardWidth + gapWidth) * productsPerPage * currentProductPage;
+    
+    console.log(`📏 Product Card width: ${cardWidth}px, Gap: ${gapWidth}px, Offset: ${offsetPx}px, Page: ${currentProductPage}`);
+    
+    container.style.transform = `translateX(-${offsetPx}px)`;
+    
+    // Update card overlays - show overlay on cards outside current view
+    const firstVisibleIndex = currentProductPage * productsPerPage;
+    const lastVisibleIndex = firstVisibleIndex + productsPerPage - 1;
+    
+    cards.forEach((card, index) => {
+      if (index < firstVisibleIndex || index > lastVisibleIndex) {
+        card.classList.add('card-hidden');
+      } else {
+        card.classList.remove('card-hidden');
+      }
+    });
+    
+    // Update dots
+    dots.forEach((dot, index) => {
+      if (index === currentProductPage) {
+        dot.classList.remove('w-2', 'bg-gray-300');
+        dot.classList.add('w-8');
+        dot.style.backgroundColor = '#ad986c'; // Gold color
+      } else {
+        dot.classList.remove('w-8');
+        dot.classList.add('w-2', 'bg-gray-300');
+        dot.style.backgroundColor = '';
+      }
+    });
+    
+    // Show/hide navigation arrows based on position
+    const prevBtn = document.querySelector('button[onclick="previousProduct()"]');
+    const nextBtn = document.querySelector('button[onclick="nextProduct()"]');
+    
+    if (prevBtn) {
+      prevBtn.style.opacity = currentProductPage === 0 ? '0.3' : '1';
+      prevBtn.style.pointerEvents = currentProductPage === 0 ? 'none' : 'auto';
+    }
+    
+    if (nextBtn) {
+      nextBtn.style.opacity = currentProductPage >= totalProductPages - 1 ? '0.3' : '1';
+      nextBtn.style.pointerEvents = currentProductPage >= totalProductPages - 1 ? 'none' : 'auto';
+    }
+  }
+
+  function nextProduct() {
+    if (currentProductPage < totalProductPages - 1) {
+      currentProductPage++;
+      console.log(`➡️  Next product page: ${currentProductPage}`);
+      updateProductsCarousel();
+    }
+  }
+
+  function previousProduct() {
+    if (currentProductPage > 0) {
+      currentProductPage--;
+      console.log(`⬅️  Previous product page: ${currentProductPage}`);
+      updateProductsCarousel();
+    }
+  }
+  
+  function goToProductPage(pageIndex) {
+    currentProductPage = pageIndex;
+    console.log(`🎯 Go to product page: ${currentProductPage}`);
+    updateProductsCarousel();
+  }
+  
+  // Make functions globally accessible
+  window.nextProduct = nextProduct;
+  window.previousProduct = previousProduct;
+  window.goToProductPage = goToProductPage;
+
+  // Update pagination dots on mobile scroll
+  function updateProductDotsOnScroll() {
+    if (isProductDesktop()) return;
+    
+    const container = document.getElementById('productsContainer');
+    const cards = document.querySelectorAll('.product-card');
+    const dots = document.querySelectorAll('#productPaginationDots .pagination-dot');
+    
+    if (!container || cards.length === 0) return;
+    
+    // Calculate which card is most in view
+    const containerRect = container.getBoundingClientRect();
+    const containerCenter = containerRect.left + (containerRect.width / 2);
+    
+    let closestIndex = 0;
+    let closestDistance = Infinity;
+    
+    cards.forEach((card, index) => {
+      const cardRect = card.getBoundingClientRect();
+      const cardCenter = cardRect.left + (cardRect.width / 2);
+      const distance = Math.abs(cardCenter - containerCenter);
+      
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+    });
+    
+    // Update current page for dots (groups of 2)
+    const dotIndex = Math.floor(closestIndex / 2);
+    
+    // Update dots appearance
+    dots.forEach((dot, index) => {
+      if (index === dotIndex) {
+        dot.classList.remove('w-2', 'bg-gray-300');
+        dot.classList.add('w-8');
+        dot.style.backgroundColor = '#ad986c';
+      } else {
+        dot.classList.remove('w-8');
+        dot.classList.add('w-2', 'bg-gray-300');
+        dot.style.backgroundColor = '';
+      }
+    });
+  }
+
+  // Initialize carousel on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    initProductsCarousel();
+    
+    // Add scroll listener for mobile
+    const container = document.getElementById('productsContainer');
+    if (container) {
+      container.addEventListener('scroll', updateProductDotsOnScroll);
+    }
+  });
+  
+  // Re-init on resize (with small delay to let layout settle)
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      currentProductPage = 0; // Reset to first page on resize
+      updateProductsCarousel();
+    }, 100);
+  });
+</script>

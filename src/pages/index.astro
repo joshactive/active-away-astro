@@ -1,4 +1,7 @@
 ---
+// Prerender this page (since we're using hybrid mode)
+export const prerender = true;
+
 import BaseLayout from '../layouts/BaseLayout.astro';
 import HeroTailwind from '../components/HeroTailwind.astro';
 import LocationsTailwind from '../components/LocationsTailwind.astro';
@@ -12,25 +15,52 @@ import ThrivingCommunityTailwind from '../components/ThrivingCommunityTailwind.a
 import WhatDoWeOfferTailwind from '../components/WhatDoWeOfferTailwind.astro';
 import StoriesOfHopeTailwind from '../components/StoriesOfHopeTailwind.astro';
 import OurBlogTailwind from '../components/OurBlogTailwind.astro';
+import InstagramTailwind from '../components/InstagramTailwind.astro';
 import GalleryTailwind from '../components/GalleryTailwind.astro';
 import HolidayExpertsTailwind from '../components/HolidayExpertsTailwind.astro';
 import FooterTailwind from '../components/FooterTailwind.astro';
+import { getHomeData, getHomePage } from '../utils/strapi.js';
+
+// 🚀 SINGLE API CALL - Fetch all homepage data once
+let homeData = null;
+try {
+  homeData = await getHomeData();
+  console.log('🏠 [index.astro] Home data fetched successfully (single API call)');
+} catch (error) {
+  console.warn('[index.astro] New fields not available yet, using basic home data:', error.message);
+  // Fallback to basic home data until Strapi deploys new schema
+  try {
+    const basicData = await getHomePage();
+    if (basicData) {
+      homeData = {
+        hero: {
+          heading: basicData.main_heading,
+          subHeading: basicData.main_sub_heading,
+          headerImage: basicData.headerImage,
+          testimonialImages: []
+        }
+      };
+      console.log('✅ [index.astro] Using basic home data as fallback');
+    }
+  } catch (fallbackError) {
+    console.error('[index.astro] Both getHomeData and getHomePage failed:', fallbackError.message);
+  }
+}
 ---
 
 <BaseLayout title="Active Away - Exceptional Tennis, Padel & Pickleball Experiences" description="Unique Racket Experiences that unite like-minded individuals, through impeccable service delivered by truly knowledgeable hosts in excellent locations.">
-    <HeroTailwind />
+    <HeroTailwind homeData={homeData} />
   <LocationsTailwind />
-  <AboutUsTailwind />
-  <Section4Tailwind />
-  <JamieMurrayTailwind />
+  <AboutUsTailwind homeData={homeData} />
+  <JamieMurrayTailwind homeData={homeData} />
   <EventsTailwind />
-  <OurPartnersTailwind />
-  <RacketHolidaySpecialistsTailwind />
-  <ThrivingCommunityTailwind />
-  <WhatDoWeOfferTailwind />
-  <StoriesOfHopeTailwind />
+  <OurPartnersTailwind homeData={homeData} />
+  <RacketHolidaySpecialistsTailwind homeData={homeData} />
+  <ThrivingCommunityTailwind homeData={homeData} />
+  <WhatDoWeOfferTailwind homeData={homeData} />
+  <StoriesOfHopeTailwind homeData={homeData} />
   <OurBlogTailwind />
-  <GalleryTailwind />
-  <HolidayExpertsTailwind />
+  <InstagramTailwind homeData={homeData} />
+  <HolidayExpertsTailwind homeData={homeData} />
   <FooterTailwind />
 </BaseLayout>

@@ -2,6 +2,7 @@
 import { defineConfig } from 'astro/config';
 import tailwind from '@astrojs/tailwind';
 import react from '@astrojs/react';
+import cloudflare from '@astrojs/cloudflare';
 
 // https://astro.build/config
 export default defineConfig({
@@ -9,7 +10,8 @@ export default defineConfig({
     tailwind(),
     react()
   ],
-  output: 'static',
+  output: 'server', // Use server mode to enable API routes
+  adapter: cloudflare(),
   site: 'https://active-away-astro.pages.dev',
 
   build: {

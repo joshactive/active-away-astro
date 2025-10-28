@@ -1,133 +1,140 @@
 ---
 // Events section component for Active Away - Tailwind CSS Version
+import { getFutureEvents } from '../utils/strapi.js';
 import { getImageByName } from '../utils/cloudflareImages.js';
+import { MapPin, Tag, Calendar } from 'lucide-react';
 
-// Get dynamic image URLs
-const event1Image = getImageByName('event-1', { size: 'public' });
-const event2Image = getImageByName('event-2', { size: 'public' });
-const event3Image = getImageByName('event-3', { size: 'public' });
+// Fetch future events from Strapi
+let events = await getFutureEvents();
 
-// TODO: Replace with API call when backend is ready
-// Example: const events = await fetch('/api/events').then(res => res.json());
-
-const events = [
-  {
-    id: 1,
-    title: "Adult Tennis Holiday - 5* Sani Beach Hotel",
-    location: "United Kingdome",
-    type: "Adult Weekend Tennis Clinic",
-    date: "Sat 01 - Sun 02 November 2025",
-    availability: "N/A",
-    price: "£218pp",
-    image: event1Image, // w=320 1 (3).png
-    active: false
-  },
-  {
-    id: 2,
-    title: "Adult Tennis Holiday - 5* Sani Beach Hotel",
-    location: "United Kingdome",
-    type: "Adult Weekend Tennis Clinic",
-    date: "Sat 01 - Sun 02 November 2025",
-    availability: "N/A",
-    price: "£218pp",
-    image: event2Image, // w=320 1 (4).png
-    active: true
-  },
-  {
-    id: 3,
-    title: "Adult Tennis Holiday - 5* Sani Beach Hotel",
-    location: "United Kingdome",
-    type: "Adult Weekend Tennis Clinic",
-    date: "Sat 01 - Sun 02 November 2025",
-    availability: "N/A",
-    price: "£218pp",
-    image: event3Image, // w=320 1 (5).png
-    active: false
-  }
-];
-
-// Debug: Log the URLs being generated
-console.log('Event Images URLs:', { event1Image, event2Image, event3Image });
+// Fallback to hardcoded data if Strapi fails or returns no data
+if (!events || events.length === 0) {
+  console.warn('⚠️  Using fallback events data');
+  
+  // Get dynamic image URLs for fallback
+  const event1Image = getImageByName('event-1', { size: 'public' });
+  const event2Image = getImageByName('event-2', { size: 'public' });
+  const event3Image = getImageByName('event-3', { size: 'public' });
+  
+  events = [
+    {
+      id: 1,
+      title: "Adult Tennis Holiday - 5* Sani Beach Hotel",
+      location: "United Kingdom",
+      type: "Adult Weekend Tennis Clinic",
+      date: "Sat 01 - Sun 02 November 2025",
+      amount: "£218",
+      image: event1Image,
+      imageAlt: "Tennis event",
+    },
+    {
+      id: 2,
+      title: "Adult Tennis Holiday - 5* Sani Beach Hotel",
+      location: "United Kingdom",
+      type: "Adult Weekend Tennis Clinic",
+      date: "Sat 01 - Sun 02 November 2025",
+      amount: "£218",
+      image: event2Image,
+      imageAlt: "Tennis event",
+    },
+    {
+      id: 3,
+      title: "Adult Tennis Holiday - 5* Sani Beach Hotel",
+      location: "United Kingdom",
+      type: "Adult Weekend Tennis Clinic",
+      date: "Sat 01 - Sun 02 November 2025",
+      amount: "£218",
+      image: event3Image,
+      imageAlt: "Tennis event",
+    }
+  ];
+}
 ---
 
 <section class="w-full bg-gray-50 py-12 sm:py-16 lg:py-24">
-  <div class="container mx-auto px-4 sm:px-10">
+  <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
     <!-- Header -->
     <div class="mb-6 sm:mb-8 lg:mb-16">
-      <div class="text-sm sm:text-base font-inter font-medium text-gray-900 tracking-widest uppercase mb-1 sm:mb-2">
-        JOIN US
-      </div>
       <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 sm:gap-3 lg:gap-4">
-        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900">
-          Our upcoming events
-        </h2>
-        <a href="#" class="text-base sm:text-lg font-inter text-gray-900 underline hover:text-gray-700 transition-colors">
+        <div>
+          <div class="text-sm sm:text-base font-inter font-medium text-gray-900 tracking-widest uppercase mb-1 sm:mb-2">
+            JOIN US
+          </div>
+          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900">
+            Our upcoming events
+          </h2>
+        </div>
+        <a href="#all-events" class="text-base sm:text-lg font-inter text-gray-900 underline hover:text-gray-700 transition-colors">
           View All Events
         </a>
       </div>
     </div>
 
-    <!-- Events Carousel -->
+    <!-- Cards Carousel -->
     <div class="relative">
       <!-- Navigation Arrows -->
-      <button class="hidden lg:flex absolute left-4 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg items-center justify-center hover:bg-gray-50 transition-all duration-300" onclick="previousEvent()">
+      <button class="hidden lg:flex absolute left-4 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-gold rounded-full shadow-lg items-center justify-center hover:bg-gold-700 transition-all duration-300" onclick="previousEventCard()">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <path d="M15 18L9 12L15 6" stroke="#1E1E1E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M15 18L9 12L15 6" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      
+      <button class="hidden lg:flex absolute right-4 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-gold rounded-full shadow-lg items-center justify-center hover:bg-gold-700 transition-all duration-300" onclick="nextEventCard()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M9 18L15 12L9 6" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
 
-      <button class="hidden lg:flex absolute right-4 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg items-center justify-center hover:bg-gray-50 transition-all duration-300" onclick="nextEvent()">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <path d="M9 18L15 12L9 6" stroke="#1E1E1E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-
-      <!-- Events Container -->
-      <div class="flex flex-col lg:flex-row justify-center items-center gap-4 sm:gap-6 lg:gap-8">
-        {events.map((event) => (
-          <div class={`event-card w-full max-w-sm sm:max-w-md lg:max-w-lg ${event.active ? 'active' : 'inactive'}`}>
-            <div class="relative overflow-hidden rounded-2xl bg-gray-900">
-              <img src={event.image} alt={event.title} class="w-full h-48 sm:h-56 lg:h-64 object-cover" />
+      <!-- Cards Container Wrapper -->
+      <div class="relative">
+        <!-- Cards Container -->
+        <div id="eventsContainer" class="flex flex-row overflow-x-auto lg:overflow-visible snap-x snap-mandatory lg:snap-none justify-start lg:justify-between items-stretch gap-4 sm:gap-6 lg:gap-6 pb-4 lg:pb-0 pl-4 sm:pl-10 lg:pl-0 transition-transform duration-500 ease-out">
+          {events.map((event, index) => (
+            <div class="event-card flex-shrink-0 w-[calc(100vw-5rem)] sm:w-[calc(100vw-8rem)] lg:w-[calc((100%-3rem)/3)] snap-start relative" data-index={index}>
+            <!-- Card Image -->
+            <div class="relative overflow-hidden rounded-2xl bg-gray-900 z-0">
+              <img 
+                src={event.image} 
+                alt={event.imageAlt || event.title}
+                class="w-full h-48 sm:h-56 lg:h-64 object-cover" 
+              />
             </div>
             
-            <div class="relative -mt-8 lg:-mt-12 z-10 px-4 sm:px-6">
-              <div class="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 shadow-lg">
-                <h3 class="text-lg sm:text-xl lg:text-2xl font-playfair font-bold text-gray-900 mb-3 sm:mb-4">
+            <!-- Card Content -->
+            <div class="relative -mt-6 sm:-mt-8 lg:-mt-12 z-20 px-3 sm:px-6 pb-3 sm:pb-6">
+              <div class="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 shadow-xl flex flex-col">
+                <h3 class="text-base sm:text-xl lg:text-2xl font-playfair font-bold text-gray-900 mb-2 sm:mb-4 leading-tight">
                   {event.title}
                 </h3>
                 
-                <div class="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
-                  <div class="flex items-center gap-3">
-                    <svg class="w-5 h-5 text-gray-600 flex-shrink-0" viewBox="0 0 18 18" fill="none">
-                      <path d="M9 16.5C13.1421 16.5 16.5 13.1421 16.5 9C16.5 4.85786 13.1421 1.5 9 1.5C4.85786 1.5 1.5 4.85786 1.5 9C1.5 13.1421 4.85786 16.5 9 16.5Z" stroke="#1E1E1E" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
-                      <path d="M9 5.25V9L12 10.5" stroke="#1E1E1E" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+                <div class="space-y-1.5 sm:space-y-3 mb-3 sm:mb-6">
+                  <!-- Country -->
+                  <div class="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" client:load />
                     <span class="text-sm sm:text-base font-inter text-gray-700">{event.location}</span>
                   </div>
                   
-                  <div class="flex items-center gap-3">
-                    <svg class="w-5 h-5 text-gray-600 flex-shrink-0" viewBox="0 0 18 18" fill="none">
-                      <path d="M15 3H3C2.17157 3 1.5 3.67157 1.5 4.5V15C1.5 15.8284 2.17157 16.5 3 16.5H15C15.8284 16.5 16.5 15.8284 16.5 15V4.5C16.5 3.67157 15.8284 3 15 3Z" stroke="#1E1E1E" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
-                      <path d="M6 1.5V4.5" stroke="#1E1E1E" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
-                      <path d="M12 1.5V4.5" stroke="#1E1E1E" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    <span class="text-sm sm:text-base font-inter text-gray-700">{event.date}</span>
+                  <!-- Event Type/Product -->
+                  <div class="flex items-center gap-2">
+                    <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" client:load />
+                    <span class="text-sm sm:text-base font-inter text-gray-700">{event.type}</span>
                   </div>
                   
-                  <div class="flex items-center gap-3">
-                    <svg class="w-5 h-5 text-gray-600 flex-shrink-0" viewBox="0 0 18 18" fill="none">
-                      <path d="M9 1.5C13.1421 1.5 16.5 4.85786 16.5 9C16.5 13.1421 13.1421 16.5 9 16.5C4.85786 16.5 1.5 13.1421 1.5 9C1.5 4.85786 4.85786 1.5 9 1.5Z" stroke="#1E1E1E" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
-                      <path d="M9 5.25V9L12 10.5" stroke="#1E1E1E" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    <span class="text-sm sm:text-base font-inter text-gray-700">{event.type}</span>
+                  <!-- Date -->
+                  <div class="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" client:load />
+                    <span class="text-sm sm:text-base font-inter text-gray-700">{event.date}</span>
                   </div>
                 </div>
                 
-                <div class="flex items-center justify-between">
-                  <div class="text-xl sm:text-2xl lg:text-3xl font-inter font-semibold text-gray-900">
-                    {event.price}
-                  </div>
-                  <button class="px-4 sm:px-6 py-2 sm:py-3 bg-gold hover:bg-gold-700 text-white font-inter font-medium text-sm sm:text-base rounded-full transition-all duration-300 hover:-translate-y-0.5">
+                <div class="flex items-center justify-between gap-3 mt-auto">
+                  {event.amount && (
+                    <div class="font-inter text-gray-900">
+                      <span class="text-xs sm:text-base font-normal text-gray-600">from </span>
+                      <span class="text-xl sm:text-3xl lg:text-4xl font-bold">{event.amount}</span><span class="text-base sm:text-xl lg:text-2xl font-semibold">pp</span>
+                    </div>
+                  )}
+                  <button class="px-4 sm:px-6 py-2 sm:py-3 bg-gold hover:bg-gold-700 text-white font-inter font-medium text-xs sm:text-base rounded-full transition-all duration-300 hover:-translate-y-0.5 whitespace-nowrap">
                     Book Now
                   </button>
                 </div>
@@ -135,16 +142,42 @@ console.log('Event Images URLs:', { event1Image, event2Image, event3Image });
             </div>
           </div>
         ))}
+          
+          <!-- View More Card -->
+          <a href="/events" class="event-card flex-shrink-0 w-[calc(100vw-5rem)] sm:w-[calc(100vw-8rem)] lg:w-[calc((100%-3rem)/3)] snap-start relative group" data-index={events.length}>
+            <!-- Single Card -->
+            <div class="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 lg:p-10 shadow-xl flex flex-col items-center justify-center h-full min-h-[320px] sm:min-h-[360px] lg:min-h-[400px] transition-transform duration-300 group-hover:-translate-y-1">
+              <h3 class="text-xl sm:text-2xl lg:text-3xl font-playfair font-bold text-gray-900 mb-3 sm:mb-4">
+                View All Events
+              </h3>
+              
+              <p class="text-gray-700 font-inter text-center mb-6 text-sm sm:text-base">
+                Discover more exciting events and activities
+              </p>
+              
+              <div class="flex items-center gap-3 bg-[#ad986c] hover:bg-[#8a7454] text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-full font-inter font-medium text-sm transition-all duration-300 hover:-translate-y-0.5">
+                <span>View All Events</span>
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none">
+                  <path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </div>
+          </a>
+        </div>
       </div>
     </div>
 
     <!-- Pagination Dots -->
-    <div class="flex justify-center items-center gap-2 mt-8 sm:mt-12">
-      <div class="w-2 h-2 bg-gray-300 rounded-full"></div>
-      <div class="w-8 h-2 bg-gold rounded-full"></div>
-      <div class="w-2 h-2 bg-gray-300 rounded-full"></div>
-      <div class="w-2 h-2 bg-gray-300 rounded-full"></div>
-      <div class="w-2 h-2 bg-gray-300 rounded-full"></div>
+    <div id="eventPaginationDots" class="flex justify-center items-center gap-2 mt-8 sm:mt-12">
+      {Array.from({ length: Math.ceil((events.length + 1) / 3) }, (_, i) => (
+        <button 
+          class={`pagination-dot transition-all duration-300 ${i === 0 ? 'w-8 h-2' : 'w-2 h-2 bg-gray-300'} rounded-full`}
+          style={i === 0 ? 'background-color: #ad986c;' : ''}
+          data-page={i}
+          onclick={`goToEventPage(${i})`}
+          aria-label={`Go to page ${i + 1}`}
+        ></button>
+      ))}
     </div>
   </div>
 </section>
@@ -158,78 +191,237 @@ console.log('Event Images URLs:', { event1Image, event2Image, event3Image });
     font-family: 'Playfair Display', serif;
   }
   
-  /* Active/Inactive card states */
-  .event-card.active {
-    transform: scale(1.05);
-    z-index: 10;
+  /* Smooth scroll for mobile carousel */
+  .overflow-x-auto {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
   }
   
-  .event-card.inactive {
-    opacity: 0.7;
-    transform: scale(0.95);
+  .overflow-x-auto::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
   }
   
   /* Smooth transitions */
   .event-card {
     transition: all 0.3s ease;
+    position: relative;
   }
   
-  /* Mobile responsive adjustments */
-  @media (max-width: 1023px) {
-    .event-card.active,
-    .event-card.inactive {
-      transform: none;
-      opacity: 1;
+  /* White overlay for cards outside main view */
+  .event-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.7);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 5;
+    border-radius: 1rem;
+  }
+  
+  /* Show overlay on cards outside main view */
+  .event-card.card-hidden::after {
+    opacity: 1;
+  }
+  
+  /* Desktop only: Active/Inactive card states */
+  @media (min-width: 1024px) {
+    .event-card.active-desktop {
+      transform: scale(1.08);
+      z-index: 10;
+    }
+    
+    .event-card.inactive-desktop {
+      opacity: 0.65;
+      transform: scale(0.90);
     }
   }
 </style>
 
 <script>
-  // Carousel functionality for future API integration
-  let currentActiveIndex = 1; // Index of active card (0-based)
-  const totalEvents = 3; // Will be dynamic with API
+  // Carousel functionality
+  let currentEventPage = 0;
+  const eventsPerPage = 3; // Show 3 cards at a time on desktop
+  let totalEventCards = 0;
+  let totalEventPages = 0;
+  const isEventDesktop = () => window.innerWidth >= 1024;
 
-  function updateCarousel() {
+  function initEventsCarousel() {
     const cards = document.querySelectorAll('.event-card');
-    const dots = document.querySelectorAll('.dot');
+    totalEventCards = cards.length;
+    totalEventPages = Math.ceil(totalEventCards / eventsPerPage);
+    
+    console.log(`🎠 Events Carousel initialized: ${totalEventCards} cards, ${totalEventPages} pages`);
+    
+    updateEventsCarousel();
+  }
+
+  function updateEventsCarousel() {
+    if (!isEventDesktop()) {
+      // Mobile: no transform, use native scroll
+      const container = document.getElementById('eventsContainer');
+      if (container) {
+        container.style.transform = 'translateX(0)';
+      }
+      // Remove all overlays on mobile
+      const cards = document.querySelectorAll('.event-card');
+      cards.forEach(card => card.classList.remove('card-hidden'));
+      return;
+    }
+    
+    // Desktop: show 3 cards at a time with transform
+    const container = document.getElementById('eventsContainer');
+    const cards = document.querySelectorAll('.event-card');
+    const dots = document.querySelectorAll('#eventPaginationDots .pagination-dot');
+    
+    if (!container || cards.length === 0) return;
+    
+    // Calculate the offset based on card index
+    // Get the first card to measure width
+    const firstCard = cards[0];
+    if (!firstCard) return;
+    
+    const cardWidth = firstCard.offsetWidth;
+    const gapWidth = 24; // lg:gap-6 = 1.5rem = 24px
+    
+    // Calculate how much to move: (cardWidth + gap) * eventsPerPage * currentEventPage
+    const offsetPx = (cardWidth + gapWidth) * eventsPerPage * currentEventPage;
+    
+    console.log(`📏 Event Card width: ${cardWidth}px, Gap: ${gapWidth}px, Offset: ${offsetPx}px, Page: ${currentEventPage}`);
+    
+    container.style.transform = `translateX(-${offsetPx}px)`;
+    
+    // Update card overlays - show overlay on cards outside current view
+    const firstVisibleIndex = currentEventPage * eventsPerPage;
+    const lastVisibleIndex = firstVisibleIndex + eventsPerPage - 1;
     
     cards.forEach((card, index) => {
-      card.classList.remove('active', 'inactive');
-      if (index === currentActiveIndex) {
-        card.classList.add('active');
+      if (index < firstVisibleIndex || index > lastVisibleIndex) {
+        card.classList.add('card-hidden');
       } else {
-        card.classList.add('inactive');
+        card.classList.remove('card-hidden');
       }
     });
     
+    // Update dots
     dots.forEach((dot, index) => {
-      dot.classList.remove('active');
-      if (index === currentActiveIndex) {
-        dot.classList.add('active');
+      if (index === currentEventPage) {
+        dot.classList.remove('w-2', 'bg-gray-300');
+        dot.classList.add('w-8');
+        dot.style.backgroundColor = '#ad986c'; // Gold color
+      } else {
+        dot.classList.remove('w-8');
+        dot.classList.add('w-2', 'bg-gray-300');
+        dot.style.backgroundColor = '';
       }
     });
+    
+    // Show/hide navigation arrows based on position
+    const prevBtn = document.querySelector('button[onclick="previousEventCard()"]');
+    const nextBtn = document.querySelector('button[onclick="nextEventCard()"]');
+    
+    if (prevBtn) {
+      prevBtn.style.opacity = currentEventPage === 0 ? '0.3' : '1';
+      prevBtn.style.pointerEvents = currentEventPage === 0 ? 'none' : 'auto';
+    }
+    
+    if (nextBtn) {
+      nextBtn.style.opacity = currentEventPage >= totalEventPages - 1 ? '0.3' : '1';
+      nextBtn.style.pointerEvents = currentEventPage >= totalEventPages - 1 ? 'none' : 'auto';
+    }
   }
 
-  function nextEvent() {
-    currentActiveIndex = (currentActiveIndex + 1) % totalEvents;
-    updateCarousel();
+  function nextEventCard() {
+    if (currentEventPage < totalEventPages - 1) {
+      currentEventPage++;
+      console.log(`➡️  Next event page: ${currentEventPage}`);
+      updateEventsCarousel();
+    }
   }
 
-  function previousEvent() {
-    currentActiveIndex = (currentActiveIndex - 1 + totalEvents) % totalEvents;
-    updateCarousel();
+  function previousEventCard() {
+    if (currentEventPage > 0) {
+      currentEventPage--;
+      console.log(`⬅️  Previous event page: ${currentEventPage}`);
+      updateEventsCarousel();
+    }
+  }
+  
+  function goToEventPage(pageIndex) {
+    currentEventPage = pageIndex;
+    console.log(`🎯 Go to event page: ${currentEventPage}`);
+    updateEventsCarousel();
+  }
+  
+  // Make functions globally accessible
+  window.nextEventCard = nextEventCard;
+  window.previousEventCard = previousEventCard;
+  window.goToEventPage = goToEventPage;
+
+  // Update pagination dots on mobile scroll
+  function updateEventDotsOnScroll() {
+    if (isEventDesktop()) return;
+    
+    const container = document.getElementById('eventsContainer');
+    const cards = document.querySelectorAll('.event-card');
+    const dots = document.querySelectorAll('#eventPaginationDots .pagination-dot');
+    
+    if (!container || cards.length === 0) return;
+    
+    // Calculate which card is most in view
+    const containerRect = container.getBoundingClientRect();
+    const containerCenter = containerRect.left + (containerRect.width / 2);
+    
+    let closestIndex = 0;
+    let closestDistance = Infinity;
+    
+    cards.forEach((card, index) => {
+      const cardRect = card.getBoundingClientRect();
+      const cardCenter = cardRect.left + (cardRect.width / 2);
+      const distance = Math.abs(cardCenter - containerCenter);
+      
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+    });
+    
+    // Update current page for dots (groups of 3)
+    const dotIndex = Math.floor(closestIndex / 3);
+    
+    // Update dots appearance
+    dots.forEach((dot, index) => {
+      if (index === dotIndex) {
+        dot.classList.remove('w-2', 'bg-gray-300');
+        dot.classList.add('w-8');
+        dot.style.backgroundColor = '#ad986c';
+      } else {
+        dot.classList.remove('w-8');
+        dot.classList.add('w-2', 'bg-gray-300');
+        dot.style.backgroundColor = '';
+      }
+    });
   }
 
   // Initialize carousel on page load
   document.addEventListener('DOMContentLoaded', () => {
-    updateCarousel();
+    initEventsCarousel();
+    
+    // Add scroll listener for mobile
+    const container = document.getElementById('eventsContainer');
+    if (container) {
+      container.addEventListener('scroll', updateEventDotsOnScroll);
+    }
   });
-
-  // TODO: When API is integrated, replace with:
-  // async function loadEvents() {
-  //   const response = await fetch('/api/events');
-  //   const data = await response.json();
-  //   totalEvents = data.length;
-  //   // Update DOM with API data
-  // }
+  
+  // Re-init on resize (with small delay to let layout settle)
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      currentEventPage = 0; // Reset to first page on resize
+      updateEventsCarousel();
+    }, 100);
+  });
 </script>

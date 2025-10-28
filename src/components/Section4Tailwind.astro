@@ -2,15 +2,27 @@
 // Section 4 component for Active Away - Tailwind CSS Version
 import { getImageByName } from '../utils/cloudflareImages.js';
 
-// Get dynamic image URL
-const section4Image = getImageByName('section-4-bg', { size: 'public' });
+// Accept homeData as prop (fetched once in index.astro)
+interface Props {
+  homeData?: any;
+}
+
+const { homeData } = Astro.props;
+
+// Get dynamic image - Use Strapi with fallback
+const section4Image = homeData?.jamieMurray?.image || { 
+  url: getImageByName('section-4-bg', { size: 'public' }), 
+  alt: 'Jamie Murray Tennis Programme', 
+  width: 1920, 
+  height: 800 
+};
 
 // Debug: Log the URL being generated
-console.log('Section 4 Image URL:', section4Image);
+console.log('Section 4 Image URL:', section4Image.url);
 ---
 
 <section class="w-full bg-white py-0">
   <div class="w-full">
-    <img src={section4Image} alt="Jamie Murray Tennis Programme" class="w-full h-auto object-cover object-center" />
+    <img src={section4Image.url} alt={section4Image.alt || 'Jamie Murray Tennis Programme'} width={section4Image.width} height={section4Image.height} class="w-full h-auto object-cover object-center" loading="lazy" />
   </div>
 </section>

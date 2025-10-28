@@ -2,46 +2,45 @@
 // About Us section component for Active Away - Tailwind CSS Version
 import { getImageByName } from '../utils/cloudflareImages.js';
 
-// Get dynamic image URLs
-const aboutUsImage1 = getImageByName('about-us-1', { size: 'public' });
-const aboutUsImage2 = getImageByName('about-us-2', { size: 'public' });
+// Accept homeData as prop (fetched once in index.astro)
+interface Props {
+  homeData?: any;
+}
 
-// TODO: Replace with API call when backend is ready
-// Example: const aboutData = await fetch('/api/about').then(res => res.json());
+const { homeData } = Astro.props;
 
+// Calculate years of experience dynamically (current year - 2006)
+const yearsOfExperience = new Date().getFullYear() - 2006;
+
+// Use Strapi data (no fallbacks - must be set in Strapi)
 const aboutData = {
-  kicker: "ABOUT US",
-  title: "Why did we start Active Away?",
-  description: "To unite individuals who love racket sports by creating experiences and memories that will last a lifetime.",
-  content: "We've welcomed thousands of racket sport enthusiasts into the Active Away Family. Being part of a family means we care for each other & support each other through trust, honesty & respect.",
-  stats: [
-    "Since 2006",
-    "99% 5/5 Star Reviews", 
-    "85% Return",
-    "Join our community"
-  ],
+  kicker: homeData?.about?.kicker || "ABOUT US",
+  title: homeData?.about?.title || "",
+  description: homeData?.about?.description || "",
+  content: homeData?.about?.content || "",
+  stats: homeData?.about?.stats || [],
   experience: {
-    years: "17+",
+    years: `${yearsOfExperience}+`,
     label: "Years of Experience"
   },
   images: {
-    top: aboutUsImage2, // w=320 (2) 1.png
-    bottom: aboutUsImage1 // w=320 (13).png
+    top: homeData?.about?.images?.image2 || { url: getImageByName('about-us-2', { size: 'public' }), alt: 'Tennis coaching session', width: 800, height: 1200 },
+    bottom: homeData?.about?.images?.image1 || { url: getImageByName('about-us-1', { size: 'public' }), alt: 'Tennis group activity', width: 1000, height: 800 }
   }
 };
 
 // Debug: Log the URLs being generated
-console.log('About Us Image 1 URL:', aboutUsImage1);
-console.log('About Us Image 2 URL:', aboutUsImage2);
+console.log('About Us Image 1 URL:', aboutData.images.bottom.url);
+console.log('About Us Image 2 URL:', aboutData.images.top.url);
 ---
 
 <section class="w-full bg-white py-12 sm:py-16 lg:py-24">
   <div class="container mx-auto px-4 sm:px-10">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-12 lg:items-stretch">
-      <!-- Column 1: Top Image -->
-      <div class="lg:order-1 h-full">
+      <!-- Column 1: Top Image (Hidden on mobile) -->
+      <div class="hidden lg:block lg:order-1 h-full">
         <div class="relative overflow-hidden rounded-2xl bg-gray-900 h-full">
-          <img src={aboutData.images.top} alt="Tennis coaching" class="w-full h-full object-cover" />
+          <img src={aboutData.images.top.url} alt={aboutData.images.top.alt || 'Tennis coaching'} width={aboutData.images.top.width} height={aboutData.images.top.height} class="w-full h-full object-cover" loading="lazy" />
         </div>
       </div>
 
@@ -59,7 +58,7 @@ console.log('About Us Image 2 URL:', aboutUsImage2);
         
         <!-- Bottom Image -->
         <div class="relative overflow-hidden rounded-2xl bg-gray-900 flex-1">
-          <img src={aboutData.images.bottom} alt="Tennis group" class="w-full h-full object-cover" />
+          <img src={aboutData.images.bottom.url} alt={aboutData.images.bottom.alt || 'Tennis group'} width={aboutData.images.bottom.width} height={aboutData.images.bottom.height} class="w-full h-full object-cover" loading="lazy" />
         </div>
       </div>
 
@@ -80,7 +79,7 @@ console.log('About Us Image 2 URL:', aboutUsImage2);
             <p class="text-lg sm:text-xl font-inter font-semibold text-gray-900 leading-relaxed">
               {aboutData.description}
             </p>
-            <p class="text-base sm:text-lg font-inter text-gray-700 leading-relaxed">
+            <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed">
               {aboutData.content}
             </p>
           </div>

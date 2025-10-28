@@ -1,24 +1,71 @@
 ---
 // Jamie Murray section component for Active Away - Tailwind CSS Version
+
+// Accept homeData as prop (fetched once in index.astro)
+interface Props {
+  homeData?: any;
+}
+
+const { homeData } = Astro.props;
+
+const jamieMurrayData = {
+  title: homeData?.jamieMurray?.title || "",
+  description: homeData?.jamieMurray?.description || "",
+  buttonText: homeData?.jamieMurray?.buttonText || "Learn More",
+  videoUrl: homeData?.jamieMurray?.videoUrl || "",
+  image: homeData?.jamieMurray?.image || null
+};
 ---
 
 <section class="w-full bg-white py-12 sm:py-16 lg:py-24">
-  <div class="container mx-auto px-4 sm:px-10">
-    <div class="w-full">
-      <h3 class="text-xl sm:text-2xl lg:text-3xl font-inter font-semibold text-gray-900 mb-4 sm:mb-6">
-        JAMIE MURRAY
-      </h3>
-      
-      <p class="text-lg sm:text-xl lg:text-2xl font-inter font-light text-gray-600 leading-relaxed mb-6 sm:mb-8 w-full">
-        Jamie Murray joined the Active Away community as our brand ambassador in 2024. He's designed our tennis programs on all of our events as well as working with our coaching team to help push our standards on the tennis court.
-      </p>
-      
-      <button class="flex items-center gap-2 bg-gold hover:bg-gold-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-inter font-semibold text-base sm:text-lg transition-all duration-300 hover:-translate-y-0.5">
-        <span>Learn More</span>
-        <svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none">
-          <path d="M7 17L17 7M17 7H7M17 7V17" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
+  <!-- Mobile: Full-width video first, then padded content -->
+  <!-- Desktop: Side-by-side with container padding -->
+  <div class="lg:container lg:mx-auto lg:px-4 sm:lg:px-10">
+    <div class="flex flex-col-reverse lg:grid lg:grid-cols-2 gap-8 lg:gap-12 lg:items-center">
+      <!-- Content Column -->
+      <div class="px-4 sm:px-6 lg:px-0 lg:order-1">
+        <h3 class="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-inter font-semibold text-gray-900 mb-4 sm:mb-6">
+          {jamieMurrayData.title}
+        </h3>
+        
+        <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed mb-6 sm:mb-8">
+          {jamieMurrayData.description}
+        </p>
+        
+        <button class="flex items-center gap-2 bg-gold hover:bg-gold-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-inter font-semibold text-base sm:text-lg transition-all duration-300 hover:-translate-y-0.5">
+          <span>{jamieMurrayData.buttonText}</span>
+          <svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none">
+            <path d="M7 17L17 7M17 7H7M17 7V17" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Video/Image Column - Full width on mobile, rounded on desktop -->
+      <div class="w-full lg:order-2">
+        {jamieMurrayData.videoUrl ? (
+          <div class="relative w-full aspect-video lg:rounded-2xl overflow-hidden lg:shadow-lg">
+            <iframe 
+              src={jamieMurrayData.videoUrl}
+              class="absolute inset-0 w-full h-full"
+              frameborder="0"
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen
+            ></iframe>
+          </div>
+        ) : jamieMurrayData.image ? (
+          <div class="relative w-full lg:rounded-2xl overflow-hidden lg:shadow-lg">
+            <img 
+              src={jamieMurrayData.image.url} 
+              alt={jamieMurrayData.image.alt || 'Jamie Murray Tennis Programme'} 
+              width={jamieMurrayData.image.width} 
+              height={jamieMurrayData.image.height} 
+              class="w-full h-auto object-cover" 
+              loading="lazy" 
+            />
+          </div>
+        ) : null}
+      </div>
     </div>
   </div>
 </section>

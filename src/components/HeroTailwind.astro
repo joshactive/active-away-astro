@@ -1,23 +1,20 @@
 ---
 // Hero section component for Active Away - Figma Perfect Match
 import { getImageByName, generateSrcSet } from '../utils/cloudflareImages.js';
-import { getHomePage, getStrapiImageData, extractCloudflareImageId } from '../utils/strapi.js';
+import { getStrapiImageData, extractCloudflareImageId } from '../utils/strapi.js';
 import { Button } from '../components/ui/button';
 import { MobileMenuButton, CloseButton, SearchIcon, StarIcon, ChevronDownIcon } from '../components/ui/MobileMenuButton';
 
-// Fetch home page data from Strapi
-let homeData = null;
-try {
-  homeData = await getHomePage();
-  console.log('🏠 Home Data received:', !!homeData);
-  console.log('🖼️  Has header_image:', !!homeData?.header_image);
-} catch (error) {
-  console.warn('Could not fetch home page data from Strapi, using defaults:', error);
+// Accept homeData as prop (fetched once in index.astro)
+interface Props {
+  homeData?: any;
 }
 
+const { homeData } = Astro.props;
+
 // Extract heading and subheading with fallbacks
-const mainHeading = homeData?.main_heading || 'Exceptional Tennis, Padel & Pickleball Holidays';
-const mainSubHeading = homeData?.main_sub_heading || 'Unique Racket Experiences that unite like-minded individuals, through impeccable service delivered by truly knowledgeable hosts in excellent locations.';
+const mainHeading = homeData?.hero?.heading || 'Exceptional Tennis, Padel & Pickleball Holidays';
+const mainSubHeading = homeData?.hero?.subHeading || 'Unique Racket Experiences that unite like-minded individuals, through impeccable service delivered by truly knowledgeable hosts in excellent locations.';
 
 // ==========================================
 // Hero Background Image - Dynamic from Strapi
@@ -28,9 +25,9 @@ const HERO_DESIGN_HEIGHT = 1080;
 
 let heroBgUrl, heroBgAlt, heroBgSrcSet;
 
-// Check if Strapi has a header_image
-if (homeData?.header_image) {
-  const strapiHeroBg = getStrapiImageData(homeData.header_image);
+// Check if Strapi has a headerImage
+if (homeData?.hero?.headerImage) {
+  const strapiHeroBg = homeData.hero.headerImage;
   
   if (strapiHeroBg.url) {
     // Use Strapi image URL and alt text
@@ -65,10 +62,10 @@ if (homeData?.header_image) {
       console.log('✅ Using Strapi image (no responsive variants)');
     }
   } else {
-    console.log('⚠️  header_image exists but no URL');
+    console.log('⚠️  headerImage exists but no URL');
   }
 } else {
-  console.log('ℹ️  No header_image field found');
+  console.log('ℹ️  No headerImage field found in Strapi');
 }
 
 // Fallback to hardcoded image
@@ -90,11 +87,11 @@ if (!heroBgUrl) {
 // ==========================================
 const logoUrl = 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/4a4fae2f-b29c-4e69-5a9e-acf953fd3c00/public';
 
-// Man images URLs
-const man1Url = getImageByName('man-1', { size: 'public' });
-const man2Url = getImageByName('man-2', { size: 'public' });
-const man3Url = getImageByName('man-3', { size: 'public' });
-const man4Url = getImageByName('man-4', { size: 'public' });
+// Man images - Use Strapi testimonial images with fallback
+const man1 = homeData?.hero?.testimonialImages?.[0] || { url: getImageByName('man-1', { size: 'public' }), alt: 'Happy customer review', width: 400, height: 400 };
+const man2 = homeData?.hero?.testimonialImages?.[1] || { url: getImageByName('man-2', { size: 'public' }), alt: 'Happy customer review', width: 400, height: 400 };
+const man3 = homeData?.hero?.testimonialImages?.[2] || { url: getImageByName('man-3', { size: 'public' }), alt: 'Happy customer review', width: 400, height: 400 };
+const man4 = homeData?.hero?.testimonialImages?.[3] || { url: getImageByName('man-4', { size: 'public' }), alt: 'Happy customer review', width: 400, height: 400 };
 
 // Debug: Confirm setup
 console.log('🎯 Hero Background:', heroBgUrl ? 'Ready' : 'Missing');
@@ -242,7 +239,7 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
   </div>
 
   <!-- Main Hero Content -->
-  <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full z-10 flex justify-center items-center">
+  <div class="absolute top-[45%] lg:top-[48%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full z-10 flex justify-center items-center">
     <div class="container mx-auto px-4 lg:px-8">
       <div class="w-full flex flex-col items-center justify-center gap-6 sm:gap-8 lg:gap-10 text-center">
         <!-- Headline Section -->
@@ -373,10 +370,10 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
           <div class="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
             <div class="flex items-center gap-3 sm:gap-6">
               <div class="flex -space-x-2 sm:-space-x-3">
-                <img src={man1Url} alt="Reviewer 1" class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full border-2 border-white object-cover" onerror="handleImageError(this, '/images/hero/man-1.jpg')" />
-                <img src={man2Url} alt="Reviewer 2" class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full border-2 border-white object-cover" onerror="handleImageError(this, '/images/hero/man-2.jpg')" />
-                <img src={man3Url} alt="Reviewer 3" class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full border-2 border-white object-cover" onerror="handleImageError(this, '/images/hero/man-3.jpg')" />
-                <img src={man4Url} alt="Reviewer 4" class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full border-2 border-white object-cover" onerror="handleImageError(this, '/images/hero/man-4.jpg')" />
+                <img src={man1.url} alt={man1.alt || 'Happy customer review'} width={man1.width} height={man1.height} class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 aspect-square rounded-full border-4 border-white object-cover shadow-md" loading="lazy" />
+                <img src={man2.url} alt={man2.alt || 'Happy customer review'} width={man2.width} height={man2.height} class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 aspect-square rounded-full border-4 border-white object-cover shadow-md" loading="lazy" />
+                <img src={man3.url} alt={man3.alt || 'Happy customer review'} width={man3.width} height={man3.height} class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 aspect-square rounded-full border-4 border-white object-cover shadow-md" loading="lazy" />
+                <img src={man4.url} alt={man4.alt || 'Happy customer review'} width={man4.width} height={man4.height} class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 aspect-square rounded-full border-4 border-white object-cover shadow-md" loading="lazy" />
               </div>
               <div class="flex items-center gap-2 sm:gap-3">
                 <span class="font-inter font-semibold text-white text-xl sm:text-2xl md:text-3xl lg:text-4xl leading-none">5/5</span>
