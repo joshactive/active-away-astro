@@ -1,10 +1,12 @@
 import type { APIRoute } from 'astro';
 
-export const GET: APIRoute = async () => {
-  const GOOGLE_API_KEY = import.meta.env.GOOGLE_PLACES_API_KEY;
-  const PLACE_ID = import.meta.env.GOOGLE_PLACE_ID || 'ChIJ6aLvHHgPdkgR1oHhIDyNQtU';
+export const GET: APIRoute = async ({ locals }) => {
+  const runtimeEnv = locals.runtime?.env || {};
 
-  console.log('[reviews] env key prefix:', GOOGLE_API_KEY?.slice(0, 6) || 'undefined');
+  const GOOGLE_API_KEY = runtimeEnv.GOOGLE_PLACES_API_KEY || import.meta.env.GOOGLE_PLACES_API_KEY || '';
+  const PLACE_ID = runtimeEnv.GOOGLE_PLACE_ID || import.meta.env.GOOGLE_PLACE_ID || 'ChIJ6aLvHHgPdkgR1oHhIDyNQtU';
+
+  console.log('[reviews] env key prefix:', GOOGLE_API_KEY ? GOOGLE_API_KEY.slice(0, 6) : 'undefined');
   console.log('[reviews] env place id:', PLACE_ID || 'undefined');
 
   // Debug logging
