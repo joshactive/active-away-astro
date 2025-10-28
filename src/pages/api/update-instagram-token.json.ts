@@ -13,10 +13,25 @@ const { Client } = pg;
  *   "secret": "YOUR_SECRET_KEY"
  * }
  */
-export const POST: APIRoute = async ({ request }) => {
-  const SECRET_KEY = import.meta.env.INSTAGRAM_UPDATE_SECRET;
-  const DATABASE_URL = import.meta.env.DATABASE_URL;
-  
+export const POST: APIRoute = async ({ request, locals }) => {
+  const runtimeEnv = locals.runtime?.env || {};
+  const globalEnv = (globalThis as any)?.__env ?? (globalThis as any)?.ENV ?? {};
+
+  const SECRET_KEY = runtimeEnv.INSTAGRAM_UPDATE_SECRET 
+    || globalEnv.INSTAGRAM_UPDATE_SECRET 
+    || import.meta.env.INSTAGRAM_UPDATE_SECRET;
+
+  const DATABASE_URL = runtimeEnv.DATABASE_URL 
+    || globalEnv.DATABASE_URL 
+    || import.meta.env.DATABASE_URL;
+
+  console.log('[instagram] env sources', {
+    runtimeKeys: Object.keys(runtimeEnv).filter(key => key.includes('INSTAGRAM') || key.includes('DATABASE')),
+    globalKeys: Object.keys(globalEnv).filter(key => key.includes('INSTAGRAM') || key.includes('DATABASE')),
+    hasSecret: !!SECRET_KEY,
+    hasDb: !!DATABASE_URL
+  });
+
   if (!DATABASE_URL) {
     return new Response(JSON.stringify({ 
       error: 'Database configuration missing' 
@@ -135,4 +150,3 @@ export const POST: APIRoute = async ({ request }) => {
     });
   }
 };
-

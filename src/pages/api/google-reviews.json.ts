@@ -6,6 +6,12 @@ export const GET: APIRoute = async ({ locals }) => {
   const GOOGLE_API_KEY = runtimeEnv.GOOGLE_PLACES_API_KEY || import.meta.env.GOOGLE_PLACES_API_KEY || '';
   const PLACE_ID = runtimeEnv.GOOGLE_PLACE_ID || import.meta.env.GOOGLE_PLACE_ID || 'ChIJ6aLvHHgPdkgR1oHhIDyNQtU';
 
+  console.log('[reviews] locals keys:', Object.keys(locals || {}));
+  console.log('[reviews] runtime env keys:', Object.keys(runtimeEnv));
+  // In case the adapter exposes bindings on globalThis (Cloudflare Workers style)
+  const globalEnv = (globalThis as any)?.__env ?? (globalThis as any)?.ENV ?? {};
+  console.log('[reviews] global env keys:', Object.keys(globalEnv).filter((key) => key.includes('GOOGLE')));
+
   console.log('[reviews] env key prefix:', GOOGLE_API_KEY ? GOOGLE_API_KEY.slice(0, 6) : 'undefined');
   console.log('[reviews] env place id:', PLACE_ID || 'undefined');
 
