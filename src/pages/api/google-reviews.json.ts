@@ -4,6 +4,9 @@ export const GET: APIRoute = async () => {
   const GOOGLE_API_KEY = import.meta.env.GOOGLE_PLACES_API_KEY;
   const PLACE_ID = import.meta.env.GOOGLE_PLACE_ID || 'ChIJ6aLvHHgPdkgR1oHhIDyNQtU';
 
+  console.log('[reviews] env key prefix:', GOOGLE_API_KEY?.slice(0, 6) || 'undefined');
+  console.log('[reviews] env place id:', PLACE_ID || 'undefined');
+
   // Debug logging
   console.log('🔍 Environment check:', {
     hasApiKey: !!GOOGLE_API_KEY,
@@ -94,4 +97,3 @@ export const GET: APIRoute = async () => {
     });
   }
 };
-
