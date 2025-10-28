@@ -391,10 +391,20 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
   // Mobile menu toggle
   function toggleMobileMenu() {
     const menu = document.getElementById('mobile-menu');
+    const backdrop = document.getElementById('mobile-menu-backdrop');
     const trigger = document.getElementById('mobile-menu-trigger');
-    if (menu) {
-      menu.classList.toggle('translate-x-full');
-      const isOpen = !menu.classList.contains('translate-x-full');
+    if (menu && backdrop) {
+      menu.classList.toggle('translate-y-full');
+      const isOpen = !menu.classList.contains('translate-y-full');
+      
+      if (isOpen) {
+        backdrop.classList.remove('opacity-0', 'pointer-events-none');
+        backdrop.classList.add('opacity-100');
+      } else {
+        backdrop.classList.add('opacity-0', 'pointer-events-none');
+        backdrop.classList.remove('opacity-100');
+      }
+      
       if (trigger) {
         trigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
       }
@@ -404,9 +414,13 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
 
   function closeMobileMenu() {
     const menu = document.getElementById('mobile-menu');
+    const backdrop = document.getElementById('mobile-menu-backdrop');
     const trigger = document.getElementById('mobile-menu-trigger');
-    if (menu) {
-      menu.classList.add('translate-x-full');
+    if (menu && backdrop) {
+      menu.classList.add('translate-y-full');
+      backdrop.classList.add('opacity-0', 'pointer-events-none');
+      backdrop.classList.remove('opacity-100');
+      
       if (trigger) {
         trigger.setAttribute('aria-expanded', 'false');
       }
@@ -471,6 +485,26 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
     }
   }
 
+  // Mobile submenu accordion toggle
+  function toggleMobileSubmenu(menuId) {
+    const submenu = document.getElementById(`mobile-submenu-${menuId}`);
+    const button = submenu ? submenu.previousElementSibling : null;
+    const chevron = button ? button.querySelector('.mobile-chevron') : null;
+    
+    if (submenu) {
+      const isHidden = submenu.classList.contains('hidden');
+      submenu.classList.toggle('hidden');
+      
+      if (chevron) {
+        if (isHidden) {
+          chevron.style.transform = 'rotate(180deg)';
+        } else {
+          chevron.style.transform = 'rotate(0deg)';
+        }
+      }
+    }
+  }
+
   // Expose functions globally
   if (typeof window !== 'undefined') {
     window.toggleMobileMenu = toggleMobileMenu;
@@ -478,6 +512,7 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
     window.showMegaMenu = showMegaMenu;
     window.hideMegaMenuDelayed = hideMegaMenuDelayed;
     window.switchDestinationsTab = switchDestinationsTab;
+    window.toggleMobileSubmenu = toggleMobileSubmenu;
   }
 </script>
 
@@ -801,15 +836,22 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
     </div>
   </nav>
 
-  <!-- Mobile Menu - Full Screen -->
+  <!-- Mobile Menu - Full Screen Bottom Sheet -->
+  <!-- Backdrop Overlay -->
+  <div 
+    id="mobile-menu-backdrop"
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] opacity-0 pointer-events-none transition-opacity duration-300 xl:hidden"
+    onclick="closeMobileMenu()"
+  ></div>
+  
+  <!-- Bottom Sheet Menu - Full Screen -->
   <div 
     id="mobile-menu" 
-    class="fixed inset-0 bg-white z-50 transform translate-x-full transition-transform duration-500 ease-out xl:hidden"
-          style="background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);"
-        >
-          <div class="flex flex-col h-full xl:hidden">
-      <!-- Header with Logo and Close -->
-      <div class="flex justify-between items-center p-6 border-b border-gray-200">
+    class="fixed inset-0 z-[70] bg-white transform translate-y-full transition-transform duration-500 ease-out xl:hidden"
+  >
+    <div class="flex flex-col h-full">
+      <!-- Header -->
+      <div class="flex items-center justify-between pt-6 pb-4 px-6 border-b border-gray-200">
         <div class="w-32 h-10">
           <img 
             src={logoUrl} 
@@ -823,42 +865,135 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
           onclick="closeMobileMenu()"
           aria-label="Close menu"
         >
-          <svg class="w-7 h-7 text-gray-700" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M18 6 6 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-            <path d="m6 6 12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+          <svg class="w-6 h-6 text-gray-600" viewBox="0 0 24 24" fill="none">
+            <path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
       </div>
 
-      <!-- Menu Items - Centered -->
-      <div class="flex-1 flex flex-col justify-center items-center px-6 py-8">
-        <nav class="w-full max-w-md space-y-2">
-          {menuItems.map((item) => (
-            <a 
-              href={item.href} 
-              onclick="closeMobileMenu()" 
-              class={`block py-4 px-6 text-center rounded-2xl hover:bg-gold/10 hover:text-gold-700 font-semibold text-xl transition-all duration-300 transform hover:scale-105 ${item.isActive ? 'bg-gold/10 text-gold-700' : 'text-gray-900'}`}
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
-      </div>
+      <!-- Menu Items - Scrollable with Expandable Sections -->
+      <nav class="flex-1 overflow-y-auto px-4 py-3">
+        <div class="space-y-1">
+          {menuItems.map((item) => {
+            if (!item.hasMegaMenu) {
+              // Simple menu item without mega menu
+              return (
+                <a 
+                  href={item.href} 
+                  onclick="closeMobileMenu()" 
+                  class={`group flex items-center justify-between py-4 px-4 rounded-xl hover:bg-gray-50 transition-all duration-200 ${item.isActive ? 'bg-gold/5' : ''}`}
+                >
+                  <span class={`text-lg font-semibold ${item.isActive ? 'text-gold-700' : 'text-gray-900'} group-hover:text-gold-700 transition-colors`}>
+                    {item.label}
+                  </span>
+                  <svg class="w-5 h-5 text-gray-400 group-hover:text-gold-700 group-hover:translate-x-1 transition-all duration-200" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </a>
+              );
+            } else {
+              // Expandable menu item with mega menu content
+              return (
+                <div class="border border-gray-200 rounded-xl overflow-hidden">
+                  <button
+                    type="button"
+                    class="mobile-menu-toggle w-full flex items-center justify-between py-4 px-4 hover:bg-gray-50 transition-all duration-200"
+                    onclick={`toggleMobileSubmenu('${item.megaMenuId}')`}
+                  >
+                    <span class="text-lg font-semibold text-gray-900">{item.label}</span>
+                    <svg class="mobile-chevron w-5 h-5 text-gray-400 transition-transform duration-200" viewBox="0 0 24 24" fill="none">
+                      <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                  <div id={`mobile-submenu-${item.megaMenuId}`} class="hidden bg-gray-50 px-4 pb-4">
+                    {item.megaMenuId === 'dates' && (
+                      <div class="space-y-4 pt-3">
+                        <div>
+                          <h4 class="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2 px-2">Find your next...</h4>
+                          <div class="space-y-1">
+                            {datesMenuData.findYourNext.map((link) => (
+                              <a href={link.href} onclick="closeMobileMenu()" class="block py-2 px-3 text-sm text-gray-700 hover:text-gold-700 hover:bg-white rounded-lg transition-colors">
+                                {link.name}
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <h4 class="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2 px-2">Useful Links</h4>
+                          <div class="space-y-1">
+                            {datesMenuData.usefulLinks.map((link) => (
+                              <a href={link.href} onclick="closeMobileMenu()" class="block py-2 px-3 text-sm text-gray-700 hover:text-gold-700 hover:bg-white rounded-lg transition-colors">
+                                {link.name}
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {item.megaMenuId === 'rackets' && (
+                      <div class="grid grid-cols-2 gap-2 pt-3">
+                        {racketsMegaMenuItems.map((rItem) => (
+                          <a href={rItem.href} onclick="closeMobileMenu()" class="block">
+                            <div class={`relative overflow-hidden rounded-lg h-24 bg-gradient-to-br ${rItem.gradient}`}>
+                              {rItem.image && rItem.image.url && (
+                                <img src={rItem.image.url} alt={rItem.image.alt || rItem.title} class="w-full h-full object-cover" />
+                              )}
+                              <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+                              <div class="absolute bottom-1.5 left-1.5 text-white">
+                                <h5 class="font-semibold text-xs leading-tight">{rItem.title}</h5>
+                              </div>
+                            </div>
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                    {item.megaMenuId === 'about' && (
+                      <div class="space-y-2 pt-3">
+                        {aboutMegaMenuItems.map((aItem) => (
+                          <a href={aItem.href} onclick="closeMobileMenu()" class="block p-3 rounded-lg hover:bg-white transition-colors">
+                            <h5 class="font-semibold text-sm text-gray-900 mb-1">{aItem.title}</h5>
+                            <p class="text-xs text-gray-600">{aItem.description}</p>
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                    {item.megaMenuId === 'destinations' && (
+                      <div class="space-y-3 pt-3">
+                        {destinationsCategories.map((category) => (
+                          <div>
+                            <h4 class="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2 px-2">{category.label}</h4>
+                            <div class="space-y-1">
+                              {category.destinations.slice(0, 5).map((dest) => (
+                                <a href={dest.href} onclick="closeMobileMenu()" class="block py-2 px-3 text-sm text-gray-700 hover:text-gold-700 hover:bg-white rounded-lg transition-colors">
+                                  {dest.name}
+                                </a>
+                              ))}
+                              {category.destinations.length > 5 && (
+                                <a href="#all-destinations" onclick="closeMobileMenu()" class="block py-2 px-3 text-xs text-gold-700 font-medium hover:bg-white rounded-lg transition-colors">
+                                  View all {category.destinations.length} destinations →
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+          })}
+        </div>
+      </nav>
 
-      <!-- Action Buttons -->
-      <div class="p-6 space-y-3 border-t border-gray-200">
-        <button 
-          class="w-full inline-flex items-center justify-center rounded-full border-2 border-gray-900 bg-transparent text-gray-900 hover:bg-gray-900 hover:text-white font-semibold text-base px-6 py-4 transition-all duration-300"
-          onclick="closeMobileMenu()"
-        >
+      <!-- Action Buttons - Fixed at Bottom -->
+      <div class="p-4 bg-gray-50 border-t border-gray-200 space-y-2">
+        <button class="w-full py-3.5 rounded-full bg-white border-2 border-gray-300 text-gray-900 font-semibold text-base hover:bg-gray-50 transition-all duration-200 shadow-sm">
           Login
         </button>
-        <button 
-          class="w-full inline-flex items-center justify-center rounded-full bg-gold text-white hover:bg-gold-700 font-semibold text-base px-6 py-4 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
-          onclick="closeMobileMenu()"
-        >
-            Book Now
-          </button>
+        <button class="w-full py-3.5 rounded-full bg-gold text-white font-semibold text-base hover:bg-gold-700 transition-all duration-200 shadow-lg">
+          Book Now
+        </button>
       </div>
     </div>
   </div>

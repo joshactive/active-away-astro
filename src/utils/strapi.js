@@ -923,7 +923,7 @@ export async function getBlogs(limit = 8) {
  */
 export async function getNavigationMenu() {
   try {
-    const data = await fetchAPI('/navigation-menu?populate[menuItems][populate]=*&populate[datesMegaMenuItems][populate]=image&populate[racketsMegaMenuItems][populate]=image&populate[aboutMegaMenuItems][populate]=image');
+    const data = await fetchAPI('/navigation-menu?populate[menuItems][populate]=*&populate[datesFindYourNext][populate]=*&populate[datesUsefulLinks][populate]=*&populate[racketsMegaMenuItems][populate]=image&populate[aboutMegaMenuItems][populate]=image&populate[destinationsCategories][populate]=destinations');
     
     if (!data || !data.data) {
       return null;
@@ -941,16 +941,19 @@ export async function getNavigationMenu() {
       megaMenuId: item.megaMenuId || null
     })) || [];
 
-    // Parse mega menu items for Dates dropdown
-    const datesMegaMenuItems = navData.datesMegaMenuItems?.map(item => ({
-      id: item.id,
-      title: item.title,
-      description: item.description,
-      href: item.href || item.url,
-      image: item.image ? getStrapiImageData(item.image) : null,
-      gradient: item.gradient || 'from-purple-500 to-purple-600',
-      menuType: 'dates'
-    })) || [];
+    // Parse Dates menu data (two separate arrays)
+    const datesMenuData = {
+      findYourNext: navData.datesFindYourNext?.map(item => ({
+        id: item.id,
+        name: item.name,
+        href: item.href
+      })) || [],
+      usefulLinks: navData.datesUsefulLinks?.map(item => ({
+        id: item.id,
+        name: item.name,
+        href: item.href
+      })) || []
+    };
 
     // Parse mega menu items for Rackets dropdown
     const racketsMegaMenuItems = navData.racketsMegaMenuItems?.map(item => ({
@@ -974,20 +977,30 @@ export async function getNavigationMenu() {
       menuType: 'about'
     })) || [];
 
+    // Parse destinations categories for Destinations dropdown
+    const destinationsCategories = navData.destinationsCategories?.map(category => ({
+      id: category.id,
+      label: category.label,
+      destinations: category.destinations?.map(destination => ({
+        id: destination.id,
+        name: destination.name,
+        href: destination.href,
+        country: destination.country || null
+      })) || []
+    })) || [];
+
     return {
       menuItems,
-      datesMegaMenuItems,
+      datesMenuData,
       racketsMegaMenuItems,
       aboutMegaMenuItems,
-      megaMenuTitle: navData.megaMenuTitle || 'Explore all our amazing holiday dates',
-      megaMenuCTA: navData.megaMenuCTA || 'Browse All Dates',
-      megaMenuCTAUrl: navData.megaMenuCTAUrl || '#all-dates',
-      racketsMegaMenuTitle: navData.racketsMegaMenuTitle || 'Explore our racket sports collection',
-      racketsMegaMenuCTA: navData.racketsMegaMenuCTA || 'Browse All Rackets',
-      racketsMegaMenuCTAUrl: navData.racketsMegaMenuCTAUrl || '#all-rackets',
+      destinationsCategories,
       aboutMegaMenuTitle: navData.aboutMegaMenuTitle || 'Learn more about Active Away',
       aboutMegaMenuCTA: navData.aboutMegaMenuCTA || 'Get in Touch',
-      aboutMegaMenuCTAUrl: navData.aboutMegaMenuCTAUrl || '#contact'
+      aboutMegaMenuCTAUrl: navData.aboutMegaMenuCTAUrl || '#contact',
+      destinationsMegaMenuTitle: navData.destinationsMegaMenuTitle || 'Find your perfect destination',
+      destinationsMegaMenuCTA: navData.destinationsMegaMenuCTA || 'View All Destinations',
+      destinationsMegaMenuCTAUrl: navData.destinationsMegaMenuCTAUrl || '#all-destinations'
     };
 
   } catch (error) {

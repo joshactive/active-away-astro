@@ -1,277 +1,346 @@
 # Navigation Menu - Strapi Setup Guide
 
-This guide explains how to manage your website's navigation menu through Strapi CMS.
+This guide shows you how to configure the entire navigation menu (including all mega menus) through Strapi CMS.
 
-## 📋 Content Type Structure
+## 📋 Overview
 
-### Create Content Type: `Navigation Menu` (Single Type)
-
-In Strapi Admin Panel, create a new **Single Type** called `Navigation Menu` with the following fields:
-
----
-
-### 1. **Menu Items** (Component - Repeatable)
-
-Component name: `Navigation.MenuItem`
-
-Fields:
-- **label** (Text) - The display text (e.g., "Home", "Dates", "About Us")
-- **href** (Text) - The link URL (e.g., "#home", "/about")
-- **isActive** (Boolean) - Set to true for the currently active page (default: false)
-- **hasMegaMenu** (Boolean) - Set to true if this item should show a mega menu dropdown (default: false)
-- **megaMenuId** (Text) - ID of the mega menu to show (e.g., "dates", "rackets"). Required if hasMegaMenu is true.
+The navigation menu supports **4 different mega menu types**:
+1. **Dates** - Two-column text-based menu
+2. **Rackets** - 9-image grid layout
+3. **About Us** - Image-based cards with descriptions
+4. **Destinations** - Tabbed interface with multiple categories
 
 ---
 
-### 2. **Dates Mega Menu Items** (Component - Repeatable)
+## 🎯 Main Menu Items
 
-Component name: `Navigation.MegaMenuItem`
+Configure the top-level navigation items in Strapi under **Navigation Menu → Menu Items**.
 
-Fields:
-- **title** (Text) - Card title (e.g., "Tennis Holidays")
-- **description** (Text) - Short description
-- **href** (Text) - Link URL
-- **image** (Media - Single Image) - Card image (recommended: 400x300px)
-- **gradient** (Text) - Tailwind gradient classes (e.g., "from-purple-500 to-purple-600")
+Each menu item has:
+- `label` - Display text (e.g., "Home", "Dates", "Rackets")
+- `href` - Link URL (e.g., "#home", "#dates")
+- `isActive` - Whether this is the current page
+- `hasMegaMenu` - True if this item has a dropdown
+- `megaMenuId` - Links to specific mega menu: `dates`, `rackets`, `about`, or `destinations`
 
----
-
-### 3. **Dates Mega Menu Settings** (Text Fields)
-
-- **megaMenuTitle** (Text) - Bottom text above CTA button for Dates menu
-- **megaMenuCTA** (Text) - CTA button text for Dates menu
-- **megaMenuCTAUrl** (Text) - CTA button link for Dates menu
-
----
-
-### 4. **Rackets Mega Menu Items** (Component - Repeatable)
-
-Component name: `Navigation.MegaMenuItem`
-
-Fields:
-- **title** (Text) - Card title (e.g., "Tennis")
-- **description** (Text) - Short description
-- **href** (Text) - Link URL
-- **image** (Media - Single Image) - Card image (recommended: 400x300px)
-- **gradient** (Text) - Tailwind gradient classes (e.g., "from-orange-500 to-orange-600")
-
----
-
-### 5. **Rackets Mega Menu Settings** (Text Fields)
-
-- **racketsMegaMenuTitle** (Text) - Bottom text above CTA button for Rackets menu
-- **racketsMegaMenuCTA** (Text) - CTA button text for Rackets menu
-- **racketsMegaMenuCTAUrl** (Text) - CTA button link for Rackets menu
-
----
-
-### 6. **About Us Mega Menu Items** (Component - Repeatable)
-
-Component name: `Navigation.MegaMenuItem`
-
-Fields:
-- **title** (Text) - Card title (e.g., "Our Story")
-- **description** (Text) - Short description
-- **href** (Text) - Link URL
-- **image** (Media - Single Image) - Card image (recommended: 400x300px)
-- **gradient** (Text) - Tailwind gradient classes (e.g., "from-blue-500 to-indigo-600")
-
----
-
-### 7. **About Us Mega Menu Settings** (Text Fields)
-
-- **aboutMegaMenuTitle** (Text) - Bottom text above CTA button for About Us menu
-- **aboutMegaMenuCTA** (Text) - CTA button text for About Us menu
-- **aboutMegaMenuCTAUrl** (Text) - CTA button link for About Us menu
-
----
-
-## 🎨 Example Configuration
-
-### Main Menu Items:
-
-| Label | Href | isActive | hasMegaMenu | megaMenuId |
-|-------|------|----------|-------------|------------|
-| Home | #home | true | false | (empty) |
-| Dates | #dates | false | true | dates |
-| Rackets | #rackets | false | true | rackets |
-| About Us | #about | false | true | about |
-| Destinations | #destinations | false | false | (empty) |
-| Blog | #blogs | false | false | (empty) |
-
-### Dates Mega Menu Items:
-
-**Item 1:**
-- Title: `Tennis Holidays`
-- Description: `Premium tennis coaching holidays`
-- Href: `#tennis-dates`
-- Image: Upload your tennis holiday image
-- Gradient: `from-purple-500 to-purple-600`
-
-**Item 2:**
-- Title: `Padel Holidays`
-- Description: `Exciting padel experiences abroad`
-- Href: `#padel-dates`
-- Image: Upload your padel holiday image
-- Gradient: `from-blue-500 to-blue-600`
-
-**Item 3:**
-- Title: `Pickleball Holidays`
-- Description: `Fun pickleball getaways`
-- Href: `#pickleball-dates`
-- Image: Upload your pickleball holiday image
-- Gradient: `from-green-500 to-green-600`
-
-### Dates Mega Menu Settings:
-
-- **megaMenuTitle**: `Explore all our amazing holiday dates`
-- **megaMenuCTA**: `Browse All Dates`
-- **megaMenuCTAUrl**: `#all-dates`
-
-### Rackets Mega Menu Items:
-
-**Item 1:**
-- Title: `Tennis`
-- Description: `Professional tennis equipment & coaching`
-- Href: `#tennis-rackets`
-- Image: Upload your tennis image
-- Gradient: `from-orange-500 to-orange-600`
-
-**Item 2:**
-- Title: `Padel`
-- Description: `High-quality padel rackets & gear`
-- Href: `#padel-rackets`
-- Image: Upload your padel image
-- Gradient: `from-cyan-500 to-cyan-600`
-
-**Item 3:**
-- Title: `Pickleball`
-- Description: `Premium pickleball paddles & accessories`
-- Href: `#pickleball-rackets`
-- Image: Upload your pickleball image
-- Gradient: `from-lime-500 to-lime-600`
-
-### Rackets Mega Menu Settings:
-
-- **racketsMegaMenuTitle**: `Explore our racket sports collection`
-- **racketsMegaMenuCTA**: `Browse All Rackets`
-- **racketsMegaMenuCTAUrl**: `#all-rackets`
-
-### About Us Mega Menu Items:
-
-**Item 1:**
-- Title: `Our Story`
-- Description: `Learn about our journey and mission`
-- Href: `#our-story`
-- Image: Upload your company story image
-- Gradient: `from-blue-500 to-indigo-600`
-
-**Item 2:**
-- Title: `Meet the Team`
-- Description: `Get to know our passionate experts`
-- Href: `#team`
-- Image: Upload your team image
-- Gradient: `from-teal-500 to-teal-600`
-
-**Item 3:**
-- Title: `Contact Us`
-- Description: `Get in touch with our team`
-- Href: `#contact`
-- Image: Upload your contact image
-- Gradient: `from-pink-500 to-rose-600`
-
-### About Us Mega Menu Settings:
-
-- **aboutMegaMenuTitle**: `Learn more about Active Away`
-- **aboutMegaMenuCTA**: `Get in Touch`
-- **aboutMegaMenuCTAUrl**: `#contact`
-
----
-
-## 🎨 Gradient Options
-
-Here are some suggested Tailwind gradient classes:
-
-- `from-purple-500 to-purple-600` - Purple
-- `from-blue-500 to-blue-600` - Blue
-- `from-green-500 to-green-600` - Green
-- `from-red-500 to-red-600` - Red
-- `from-yellow-500 to-yellow-600` - Yellow
-- `from-pink-500 to-pink-600` - Pink
-- `from-indigo-500 to-indigo-600` - Indigo
-- `from-teal-500 to-teal-600` - Teal
-- `from-orange-500 to-orange-600` - Orange
-
----
-
-## 🔄 How It Works
-
-1. **Fallback System**: If Strapi data isn't available, the site uses hardcoded defaults
-2. **Desktop Navigation**: Shows as a glassmorphic pill with 6 items
-3. **Mobile Navigation**: Full-screen overlay menu
-4. **Mega Menus**: Multiple mega menus supported (Dates, Rackets, About Us). Only appear on desktop for items with `hasMegaMenu: true`
-5. **Active State**: Highlighted with white background and shadow
-6. **Dynamic Menus**: Each menu item with `hasMegaMenu: true` must have a corresponding `megaMenuId`
-
----
-
-## 📝 API Endpoint
-
-The component fetches data from:
+### Example Configuration:
 ```
-/api/navigation-menu?populate[menuItems][populate]=*&populate[datesMegaMenuItems][populate]=image&populate[racketsMegaMenuItems][populate]=image&populate[aboutMegaMenuItems][populate]=image
+Menu Items:
+1. Label: Home, Href: #home, hasMegaMenu: false
+2. Label: Dates, Href: #dates, hasMegaMenu: true, megaMenuId: dates
+3. Label: Rackets, Href: #rackets, hasMegaMenu: true, megaMenuId: rackets
+4. Label: About Us, Href: #about, hasMegaMenu: true, megaMenuId: about
+5. Label: Destinations, Href: #destinations, hasMegaMenu: true, megaMenuId: destinations
+6. Label: Blog, Href: #blogs, hasMegaMenu: false
 ```
 
 ---
 
-## 🚀 Publishing
+## 📅 Dates Mega Menu (Two-Column Text Layout)
 
-1. Create all fields in Strapi
-2. Add your menu items (with `megaMenuId` for items with mega menus)
-3. Add items to `datesMegaMenuItems`, `racketsMegaMenuItems`, and `aboutMegaMenuItems`
-4. Upload images for all mega menu items
-5. Configure settings for all mega menus
-6. **Click "Publish"** to make changes live
-7. Your navigation menu will update automatically!
+The Dates menu is split into **two columns** of text links.
+
+### Fields in Strapi:
+
+#### **Left Column: "Find your next..." (`datesFindYourNext`)**
+Add text links for holiday types:
+- Component: `navigation.text-link`
+- Fields: `name`, `href`
+
+Example items:
+- Tennis Holiday
+- UK Tennis Clinic
+- Padel Holiday
+- Pickleball Holiday
+- Play & Watch Event
+- School Tennis Tour
+- Ski Holiday
+- View All Destinations
+
+#### **Right Column: "Useful Links" (`datesUsefulLinks`)**
+Add text links for utility pages:
+- Component: `navigation.text-link`
+- Fields: `name`, `href`
+
+Example items:
+- Active Away Itineraries
+- Airport Transfers
+- Book Now
+- FAQs
+- Flights
+- Membership
+- Self Rating Guide
+- The Booking Process
+- View All Dates
+
+### Strapi Setup Steps:
+1. Go to **Content Manager → Navigation Menu**
+2. Scroll to **Dates Find Your Next**
+3. Click **Add Component** and add each link with:
+   - `name` - Display text
+   - `href` - Link URL
+4. Repeat for **Dates Useful Links**
 
 ---
 
-## 💡 Tips
+## 🎾 Rackets Mega Menu (9-Image Grid)
 
-- Keep menu item labels short (1-2 words) for best display
-- Use high-quality images (400x300px minimum) for mega menu cards
-- You can have multiple items with `hasMegaMenu: true` (e.g., Dates, Rackets, About Us)
-- Each mega menu item must have a unique `megaMenuId` that matches the field name (dates, rackets, about)
-- Set `isActive: true` only for the current page's menu item
-- The navigation width is optimized for 6 menu items
-- Images will scale with hover effect for better UX
-- Use different gradient colors for different mega menu types to create visual distinction
+The Rackets menu displays **9 product categories** in a 3×3 grid with images.
+
+### Fields in Strapi:
+- Component: `navigation.mega-menu-item`
+- Each item has:
+  - `title` - Product name (e.g., "Adult Tennis Holidays")
+  - `description` - Not displayed (optional)
+  - `href` - Link URL
+  - `image` - Upload product image
+  - `gradient` - Tailwind gradient classes (e.g., "from-blue-500 to-blue-600")
+
+### Required Items (9 total):
+1. Adult Tennis Holidays
+2. Family Tennis Holidays
+3. Tennis Clinics
+4. Padel
+5. Pickleball
+6. Junior Tennis Camps
+7. Play & Watch
+8. School Tennis Tours
+9. Ski Holidays
+
+### Strapi Setup Steps:
+1. Go to **Content Manager → Navigation Menu**
+2. Scroll to **Rackets Mega Menu Items**
+3. Click **Add Component** for each of the 9 products
+4. Fill in:
+   - `title` - Product name
+   - `href` - Link URL
+   - `image` - Upload a high-quality image (recommended: 400×300px)
+   - `gradient` - Optional Tailwind gradient (e.g., "from-purple-500 to-purple-600")
+
+---
+
+## ℹ️ About Us Mega Menu (Image Cards)
+
+The About Us menu shows **3-6 image-based cards** with descriptions.
+
+### Fields in Strapi:
+- Component: `navigation.mega-menu-item`
+- Each item has:
+  - `title` - Card title (e.g., "Our Story")
+  - `description` - Brief description text
+  - `href` - Link URL
+  - `image` - Upload card image
+  - `gradient` - Tailwind gradient classes
+
+### CTA Section:
+- `aboutMegaMenuTitle` - Text above CTA button
+- `aboutMegaMenuCTA` - Button text
+- `aboutMegaMenuCTAUrl` - Button link
+
+### Strapi Setup Steps:
+1. Go to **Content Manager → Navigation Menu**
+2. Scroll to **About Mega Menu Items**
+3. Click **Add Component** for each card
+4. Fill in all fields including image upload
+5. Set the CTA fields at the bottom:
+   - `aboutMegaMenuTitle`
+   - `aboutMegaMenuCTA`
+   - `aboutMegaMenuCTAUrl`
+
+---
+
+## 🌍 Destinations Mega Menu (Tabbed Categories)
+
+The Destinations menu uses a **tabbed interface** to organize destinations by category.
+
+### Structure:
+- **Left Sidebar** - Holiday type tabs (Tennis Holidays, Padel, etc.)
+- **Right Content** - List of individual destinations for selected tab
+- **Dynamic Columns** - Automatically adjusts columns based on number of items:
+  - 1-8 items: 1 column
+  - 9-16 items: 2 columns
+  - 17-24 items: 3 columns
+  - 25+ items: 4 columns
+
+### Fields in Strapi:
+
+#### **Destination Categories** (`destinationsCategories`):
+- Component: `navigation.destination-category`
+- Each category has:
+  - `label` - Tab name (e.g., "Tennis Holidays")
+  - `destinations` - Repeatable list of destinations
+
+#### **Destination Items** (within each category):
+- Component: `navigation.destination-item`
+- Each destination has:
+  - `name` - Destination name (e.g., "Algarve Tennis Week")
+  - `href` - Link URL
+  - `country` - Optional country name
+
+### CTA Section:
+- `destinationsMegaMenuTitle` - Text above CTA button
+- `destinationsMegaMenuCTA` - Button text
+- `destinationsMegaMenuCTAUrl` - Button link
+
+### Strapi Setup Steps:
+1. Go to **Content Manager → Navigation Menu**
+2. Scroll to **Destinations Categories**
+3. Click **Add Component** to create a new category
+4. Set the `label` (e.g., "Tennis Holidays")
+5. Click **Add Component** under `destinations` for each destination:
+   - `name` - Destination name
+   - `href` - Link URL
+   - `country` - Optional
+6. Repeat for all categories (Tennis Holidays, Tennis Clinics, Padel, etc.)
+7. Set the CTA fields:
+   - `destinationsMegaMenuTitle`
+   - `destinationsMegaMenuCTA`
+   - `destinationsMegaMenuCTAUrl`
+
+### Example Structure:
+```
+Destinations Categories:
+1. Label: Tennis Holidays
+   Destinations:
+   - Algarve Tennis Week (#algarve)
+   - Costa Brava Tennis Camp (#costa-brava)
+   - [... 18 more items ...]
+
+2. Label: Tennis Clinics
+   Destinations:
+   - Advanced Clinic Spain (#clinic-spain)
+   - Beginners Clinic Portugal (#clinic-portugal)
+   - [... more items ...]
+
+3. Label: Junior Tennis Camps
+   [... destinations ...]
+```
+
+---
+
+## 📁 Component Files in Strapi
+
+All navigation components are located in:
+```
+/strapi/src/components/navigation/
+```
+
+### Components:
+1. **menu-item.json** - Main menu items
+2. **text-link.json** - Simple text links (Dates menu)
+3. **mega-menu-item.json** - Image-based menu items (Rackets, About)
+4. **destination-category.json** - Category wrapper for Destinations
+5. **destination-item.json** - Individual destination links
+
+---
+
+## 🔄 How Data Flows
+
+1. **Strapi** - You configure menu items in the CMS
+2. **API Call** - `getNavigationMenu()` in `src/utils/strapi.js` fetches the data
+3. **Astro Component** - `HeroTailwind.astro` uses the data
+4. **Fallback** - If Strapi API fails, default data is used
+
+### API Endpoint:
+```javascript
+/navigation-menu?populate[menuItems][populate]=*
+  &populate[datesFindYourNext][populate]=*
+  &populate[datesUsefulLinks][populate]=*
+  &populate[racketsMegaMenuItems][populate]=image
+  &populate[aboutMegaMenuItems][populate]=image
+  &populate[destinationsCategories][populate]=destinations
+```
+
+---
+
+## ✅ Testing Checklist
+
+After configuring in Strapi:
+
+- [ ] All main menu items appear in navigation bar
+- [ ] Dates mega menu shows both columns with all links
+- [ ] Rackets mega menu displays all 9 images in 3×3 grid
+- [ ] About Us mega menu shows cards with images and descriptions
+- [ ] Destinations mega menu tabs switch correctly
+- [ ] All links work correctly
+- [ ] Images are high quality and load properly
+- [ ] CTA buttons appear and link correctly
+- [ ] Mobile menu shows correctly (below 1280px width)
+- [ ] Hover effects work on all menu items
+
+---
+
+## 🎨 Design Notes
+
+### Breakpoints:
+- **Desktop Menu**: Visible at `xl` and above (≥1280px)
+- **Mobile Menu**: Visible below `xl` (<1280px)
+
+### Responsive Features:
+- Navigation bar uses `clamp()` for fluid sizing
+- Max width: 90vw to prevent overflow
+- Mega menus auto-adjust to viewport width
+- Destinations columns adapt to item count
+
+### Styling:
+- Gold accent color on hover
+- Glassmorphic navigation bar
+- Smooth transitions (200ms-300ms)
+- Rounded corners and shadows for depth
 
 ---
 
 ## 🐛 Troubleshooting
 
-**Menu not updating?**
-- Check that content is published in Strapi
+### Menu not appearing?
+- Check if Navigation Menu is **Published** in Strapi
 - Verify API endpoint is accessible
 - Check browser console for errors
-- Fallback data will display if Strapi fetch fails
 
-**Images not showing in mega menu?**
+### Images not loading?
 - Ensure images are uploaded to Strapi
-- Check image permissions are set to public
-- Verify image field is named `image` (lowercase)
+- Check image permissions
+- Verify Cloudflare Images configuration
 
-**Mega menu not appearing?**
-- Confirm `hasMegaMenu: true` is set for the menu item
-- Check that mega menu items are added
-- Hover over the menu item (not available on mobile)
+### Mega menu not opening?
+- Verify `hasMegaMenu: true` in menu item
+- Check `megaMenuId` matches ("dates", "rackets", "about", "destinations")
+- Ensure mega menu items are added in Strapi
+
+### Wrong number of columns in Destinations?
+- The system automatically calculates columns based on item count
+- 1 column: ≤8 items
+- 2 columns: 9-16 items
+- 3 columns: 17-24 items
+- 4 columns: 25+ items
 
 ---
 
-## 📖 Related Files
+## 📝 Quick Start
 
-- **Component**: `src/components/HeroTailwind.astro`
-- **Utility**: `src/utils/strapi.js` (getNavigationMenu function)
-- **Styling**: Tailwind CSS with glassmorphism effects
+**To get started quickly:**
 
+1. **Create the Single Type** in Strapi:
+   - Content-Types Builder → Create new Single Type → "Navigation Menu"
+   - Or use the existing schema in `/strapi/src/api/navigation-menu/content-types/navigation-menu/schema.json`
+
+2. **Add Components**:
+   - Copy all component files from `/strapi/src/components/navigation/` to your Strapi instance
+
+3. **Configure in CMS**:
+   - Content Manager → Navigation Menu
+   - Add your menu items
+   - Configure all mega menus
+   - **Publish** when done
+
+4. **Verify on Website**:
+   - Frontend will automatically fetch and display your navigation
+   - If API fails, fallback data displays
+
+---
+
+## 🎉 You're Done!
+
+Your navigation menu is now fully manageable through Strapi CMS. Update it anytime without touching code!
+
+Need help? Check the component files or contact your development team.
