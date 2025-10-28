@@ -1,7 +1,7 @@
 ---
 // Locations section component for Active Away - Tailwind CSS Version
 import { getFeaturedLocations } from '../utils/strapi.js';
-import { getImageByName } from '../utils/cloudflareImages.js';
+import { getImageByName, getStrapiImageAttrs, extractImageId } from '../utils/cloudflareImages.js';
 import { MapPin, Tag, Hotel } from 'lucide-react';
 
 // Fetch featured locations from Strapi
@@ -103,18 +103,38 @@ if (!locations || locations.length === 0) {
       <div class="relative">
         <!-- Cards Container -->
         <div id="cardsContainer" class="flex flex-row overflow-x-auto lg:overflow-visible snap-x snap-mandatory lg:snap-none justify-start lg:justify-between items-stretch gap-4 sm:gap-6 lg:gap-6 pb-4 lg:pb-0 pl-4 sm:pl-10 lg:pl-0 transition-transform duration-500 ease-out">
-          {locations.map((location, index) => (
+          {locations.map((location, index) => {
+            // Optimize image if it's from Cloudflare
+            const imageId = extractImageId(location.image);
+            const imgAttrs = imageId 
+              ? getStrapiImageAttrs({ url: location.image, alt: location.imageAlt || location.title }, {
+                  displayWidth: 455, // Approximate display width on desktop
+                  displayHeight: 256, // h-64 = 256px
+                  fit: 'cover'
+                })
+              : {
+                  src: location.image,
+                  alt: location.imageAlt || location.title,
+                  loading: 'lazy'
+                };
+            
+            return (
             <div class="location-card flex-shrink-0 w-[calc(100vw-5rem)] sm:w-[calc(100vw-8rem)] lg:w-[calc((100%-3rem)/3)] snap-start relative" data-index={index}>
-            <!-- Card Image -->
+            {/* Card Image */}
             <div class="relative overflow-hidden rounded-2xl bg-gray-900 z-0">
               <img 
-                src={location.image} 
-                alt={location.imageAlt || location.title}
+                src={imgAttrs.src}
+                srcset={imgAttrs.srcset}
+                sizes={imgAttrs.sizes || '(max-width: 640px) calc(100vw - 5rem), (max-width: 1024px) calc(100vw - 8rem), 455px'}
+                width={imgAttrs.width}
+                height={imgAttrs.height}
+                alt={imgAttrs.alt}
+                loading={imgAttrs.loading}
                 class="w-full h-48 sm:h-56 lg:h-64 object-cover" 
               />
             </div>
             
-            <!-- Card Content -->
+            {/* Card Content */}
             <div class="relative -mt-6 sm:-mt-8 lg:-mt-12 z-20 px-3 sm:px-6 pb-3 sm:pb-6">
               <div class="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 shadow-xl flex flex-col">
                 <h3 class="text-base sm:text-xl lg:text-2xl font-playfair font-bold text-gray-900 mb-2 sm:mb-4 leading-tight">
@@ -122,19 +142,19 @@ if (!locations || locations.length === 0) {
                 </h3>
                 
                 <div class="space-y-1.5 sm:space-y-3 mb-3 sm:mb-6">
-                  <!-- Country -->
+                  {/* Country */}
                   <div class="flex items-center gap-2">
                     <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" client:load />
                     <span class="text-sm sm:text-base font-inter text-gray-700">{location.location}</span>
                   </div>
                   
-                  <!-- Holiday Type -->
+                  {/* Holiday Type */}
                   <div class="flex items-center gap-2">
                     <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" client:load />
                     <span class="text-sm sm:text-base font-inter text-gray-700">{location.type}</span>
                   </div>
                   
-                  <!-- Price (only show if exists) -->
+                  {/* Price (only show if exists) */}
                   {location.price && (
                     <div class="flex items-center gap-2">
                       <Hotel className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" client:load />
@@ -157,7 +177,8 @@ if (!locations || locations.length === 0) {
               </div>
             </div>
           </div>
-        ))}
+            );
+          })}
           
           <!-- View More Card -->
           <a href="/locations" class="location-card flex-shrink-0 w-[calc(100vw-5rem)] sm:w-[calc(100vw-8rem)] lg:w-[calc((100%-3rem)/3)] snap-start relative group" data-index={locations.length}>

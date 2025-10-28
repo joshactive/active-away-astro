@@ -66,23 +66,38 @@ const IMAGE_MAPPING = {
  * Get Cloudflare image URL with optimization options
  * @param {string} imageId - Cloudflare image ID (e.g., 'eedabea1-97ba-419d-35b4-98a08f3d0300')
  * @param {Object} options - Image optimization options
- * @param {string} options.size - Image size ('public', '480x270', '768x432', etc.)
- * @param {string} options.format - Image format ('auto', 'webp', 'jpeg', 'png')
+ * @param {number} options.width - Image width in pixels
+ * @param {number} options.height - Image height in pixels
+ * @param {string} options.fit - Fit mode ('scale-down', 'contain', 'cover', 'crop', 'pad')
+ * @param {string} options.format - Image format ('auto', 'webp', 'avif', 'jpeg', 'png')
  * @param {number} options.quality - Image quality (1-100)
+ * @param {string} options.size - Legacy size format ('public', '480x270', etc.) - for backwards compatibility
  * @returns {string} Complete Cloudflare image URL
  */
 export function getCloudflareImageUrl(imageId, options = {}) {
   const {
-    size = 'public',
+    width,
+    height,
+    fit = 'scale-down',
     format = 'auto',
-    quality = 80
+    quality = 85,
+    size // Legacy size option
   } = options;
 
-  let url = `${CLOUDFLARE_BASE_URL}/${imageId}/${size}`;
+  // Use legacy size format if provided (for backwards compatibility)
+  if (size) {
+    return `${CLOUDFLARE_BASE_URL}/${imageId}/${size}`;
+  }
+
+  // Build URL with flexible variant (using query params for transformations)
+  let url = `${CLOUDFLARE_BASE_URL}/${imageId}/public`;
   
   const params = [];
-  if (format && format !== 'auto') params.push(`f=${format}`);
-  if (quality && quality !== 80) params.push(`q=${quality}`);
+  if (width) params.push(`width=${width}`);
+  if (height) params.push(`height=${height}`);
+  if (fit) params.push(`fit=${fit}`);
+  if (format) params.push(`format=${format}`);
+  if (quality) params.push(`quality=${quality}`);
   
   if (params.length > 0) {
     url += `?${params.join('&')}`;
@@ -111,25 +126,86 @@ export function getImageByName(imageName, options = {}) {
 /**
  * Generate responsive srcset for an image
  * @param {string} imageId - Cloudflare image ID
- * @param {Array} sizes - Array of size objects [{size, width}]
+ * @param {Array} widths - Array of widths [480, 768, 1200, 1920] or custom config [{width, height}]
+ * @param {Object} baseOptions - Base options to apply to all sizes (format, quality, fit)
  * @returns {string} srcset string
  */
-export function generateSrcSet(imageId, sizes = []) {
-  const defaultSizes = [
-    { size: '480x270', width: 480 },
-    { size: '768x432', width: 768 },
-    { size: '1200x675', width: 1200 },
-    { size: '1920x1080', width: 1920 }
-  ];
-
-  const config = sizes.length > 0 ? sizes : defaultSizes;
-  
-  return config
-    .map(({ size, width }) => {
-      const url = getCloudflareImageUrl(imageId, { size });
+export function generateSrcSet(imageId, widths = [480, 768, 1024, 1280, 1920], baseOptions = {}) {
+  return widths
+    .map((config) => {
+      // Handle both simple width arrays and complex config objects
+      const width = typeof config === 'number' ? config : config.width;
+      const height = typeof config === 'object' ? config.height : undefined;
+      
+      const url = getCloudflareImageUrl(imageId, {
+        width,
+        height,
+        ...baseOptions
+      });
       return `${url} ${width}w`;
     })
     .join(', ');
+}
+
+/**
+ * Get responsive image attributes for a given display size
+ * @param {string} imageId - Cloudflare image ID
+ * @param {Object} config - Configuration
+ * @param {number} config.displayWidth - Width the image will be displayed at (in CSS pixels)
+ * @param {number} config.displayHeight - Height the image will be displayed at (in CSS pixels)
+ * @param {string} config.fit - Fit mode ('cover', 'contain', 'scale-down')
+ * @param {string} config.alt - Alt text
+ * @param {number} config.aspectRatio - Aspect ratio (width/height) for calculating heights
+ * @returns {Object} Object with src, srcset, width, height, sizes
+ */
+export function getResponsiveImageAttrs(imageId, config = {}) {
+  const {
+    displayWidth,
+    displayHeight,
+    fit = 'cover',
+    alt = '',
+    aspectRatio = 16 / 9
+  } = config;
+
+  // Generate responsive widths based on display size (1x, 2x for retina)
+  const widths = displayWidth 
+    ? [
+        displayWidth, // 1x
+        Math.round(displayWidth * 1.5), // 1.5x
+        Math.round(displayWidth * 2), // 2x (retina)
+      ]
+    : [480, 768, 1024, 1280]; // Default responsive widths
+
+  // Calculate heights if aspect ratio is provided
+  const configs = widths.map(w => {
+    const h = displayHeight || Math.round(w / aspectRatio);
+    return { width: w, height: h };
+  });
+
+  const src = getCloudflareImageUrl(imageId, {
+    width: widths[0],
+    height: configs[0].height,
+    fit,
+    format: 'auto',
+    quality: 85
+  });
+
+  const srcset = generateSrcSet(imageId, configs, { fit, format: 'auto', quality: 85 });
+
+  // Generate sizes attribute (helps browser pick right image)
+  const sizes = displayWidth 
+    ? `(max-width: ${displayWidth}px) 100vw, ${displayWidth}px`
+    : '100vw';
+
+  return {
+    src,
+    srcset,
+    width: widths[0],
+    height: configs[0].height,
+    sizes,
+    alt,
+    loading: 'lazy'
+  };
 }
 
 /**
@@ -147,5 +223,50 @@ export function addImageMapping(imageName, imageId) {
  */
 export function getAllImageMappings() {
   return { ...IMAGE_MAPPING };
+}
+
+/**
+ * Extract Cloudflare image ID from a URL
+ * @param {string} url - Cloudflare image URL
+ * @returns {string|null} Image ID or null if not found
+ */
+export function extractImageId(url) {
+  if (!url) return null;
+  
+  // Match pattern: /imagedelivery/{hash}/{imageId}/...
+  const match = url.match(/\/imagedelivery\/[^/]+\/([^/]+)/);
+  return match ? match[1] : null;
+}
+
+/**
+ * Helper to get optimized Strapi image attributes
+ * @param {Object} strapiImage - Strapi image object with url property
+ * @param {Object} config - Same as getResponsiveImageAttrs config
+ * @returns {Object} Responsive image attributes or original if not Cloudflare
+ */
+export function getStrapiImageAttrs(strapiImage, config = {}) {
+  if (!strapiImage || !strapiImage.url) {
+    return null;
+  }
+
+  // Extract Cloudflare image ID from Strapi URL
+  const imageId = extractImageId(strapiImage.url);
+  
+  if (imageId) {
+    // Use our responsive helper for Cloudflare images
+    return getResponsiveImageAttrs(imageId, {
+      alt: strapiImage.alt || config.alt || '',
+      ...config
+    });
+  }
+
+  // Fallback for non-Cloudflare images
+  return {
+    src: strapiImage.url,
+    width: strapiImage.width,
+    height: strapiImage.height,
+    alt: strapiImage.alt || config.alt || '',
+    loading: 'lazy'
+  };
 }
 
