@@ -304,6 +304,35 @@ console.log('📝 Blog Data:', blogData.blogs.map(b => b.title));
   let totalBlogCards = 0;
   let totalBlogPages = 0;
   const isBlogDesktop = () => window.innerWidth >= 1024;
+  const BLOG_GAP_WIDTH = 24; // lg:gap-6 = 24px
+  const blogCardMetrics = {
+    width: 0
+  };
+  let blogResizeObserver;
+
+  function measureBlogCardWidth(card) {
+    if (!card) return;
+    const { width } = card.getBoundingClientRect();
+    if (width && Math.abs(width - blogCardMetrics.width) > 0.5) {
+      blogCardMetrics.width = width;
+    }
+  }
+
+  function setupBlogMeasurement(cards) {
+    if (!cards || cards.length === 0) return;
+    const firstCard = cards[0];
+    measureBlogCardWidth(firstCard);
+
+    if (typeof ResizeObserver !== 'undefined' && !blogResizeObserver) {
+      blogResizeObserver = new ResizeObserver((entries) => {
+        const entry = entries[0];
+        if (!entry) return;
+        measureBlogCardWidth(entry.target);
+        window.requestAnimationFrame(updateBlogsCarousel);
+      });
+      blogResizeObserver.observe(firstCard);
+    }
+  }
 
   function initBlogsCarousel() {
     const cards = document.querySelectorAll('.blog-card');
@@ -328,6 +357,8 @@ console.log('📝 Blog Data:', blogData.blogs.map(b => b.title));
     }
     
     totalBlogPages = Math.ceil(totalBlogCards / blogsPerPage);
+
+    setupBlogMeasurement(cards);
     
     // Hide navigation if all cards are visible
     if (totalBlogPages <= 1) {
@@ -375,9 +406,14 @@ console.log('📝 Blog Data:', blogData.blogs.map(b => b.title));
     // Calculate the offset based on card index
     const firstCard = cards[0];
     if (!firstCard) return;
-    
-    const cardWidth = firstCard.offsetWidth;
-    const gapWidth = 24; // lg:gap-6 = 1.5rem = 24px
+
+    if (!blogCardMetrics.width) {
+      measureBlogCardWidth(firstCard);
+    }
+
+    const cardWidth = blogCardMetrics.width;
+    const gapWidth = BLOG_GAP_WIDTH;
+    if (!cardWidth) return;
     
     // Calculate how much to move: (cardWidth + gap) * blogsPerPage * currentBlogPage
     const offsetPx = (cardWidth + gapWidth) * blogsPerPage * currentBlogPage;

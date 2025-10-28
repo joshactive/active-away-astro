@@ -255,11 +255,42 @@ const offerData = {
   let totalProductCards = 0;
   let totalProductPages = 0;
   const isProductDesktop = () => window.innerWidth >= 1024;
+  const PRODUCT_GAP_WIDTH = 24;
+  const productCardMetrics = {
+    width: 0
+  };
+  let productResizeObserver;
+
+  function measureProductCardWidth(card) {
+    if (!card) return;
+    const { width } = card.getBoundingClientRect();
+    if (width && Math.abs(width - productCardMetrics.width) > 0.5) {
+      productCardMetrics.width = width;
+    }
+  }
+
+  function setupProductMeasurement(cards) {
+    if (!cards || cards.length === 0) return;
+    const firstCard = cards[0];
+    measureProductCardWidth(firstCard);
+
+    if (typeof ResizeObserver !== 'undefined' && !productResizeObserver) {
+      productResizeObserver = new ResizeObserver((entries) => {
+        const entry = entries[0];
+        if (!entry) return;
+        measureProductCardWidth(entry.target);
+        window.requestAnimationFrame(updateProductsCarousel);
+      });
+      productResizeObserver.observe(firstCard);
+    }
+  }
 
   function initProductsCarousel() {
     const cards = document.querySelectorAll('.product-card');
     totalProductCards = cards.length;
     totalProductPages = Math.ceil(totalProductCards / productsPerPage);
+
+    setupProductMeasurement(cards);
     
     console.log(`🎠 Products Carousel initialized: ${totalProductCards} cards, ${totalProductPages} pages`);
     
@@ -289,9 +320,14 @@ const offerData = {
     // Calculate the offset based on card index
     const firstCard = cards[0];
     if (!firstCard) return;
-    
-    const cardWidth = firstCard.offsetWidth;
-    const gapWidth = 24; // lg:gap-6 = 1.5rem = 24px
+
+    if (!productCardMetrics.width) {
+      measureProductCardWidth(firstCard);
+    }
+
+    const cardWidth = productCardMetrics.width;
+    const gapWidth = PRODUCT_GAP_WIDTH;
+    if (!cardWidth) return;
     
     // Calculate how much to move: (cardWidth + gap) * productsPerPage * currentProductPage
     const offsetPx = (cardWidth + gapWidth) * productsPerPage * currentProductPage;

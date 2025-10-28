@@ -191,20 +191,20 @@ if (!locations || locations.length === 0) {
                 <div class="space-y-1.5 sm:space-y-3 mb-3 sm:mb-6">
                   {/* Country */}
                   <div class="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" client:load />
+                    <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" client:idle />
                     <span class="text-sm sm:text-base font-inter text-gray-700">{location.location}</span>
                   </div>
                   
                   {/* Holiday Type */}
                   <div class="flex items-center gap-2">
-                    <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" client:load />
+                    <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" client:idle />
                     <span class="text-sm sm:text-base font-inter text-gray-700">{location.type}</span>
                   </div>
                   
                   {/* Price (only show if exists) */}
                   {location.price && (
                     <div class="flex items-center gap-2">
-                      <Hotel className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" client:load />
+                      <Hotel className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" client:idle />
                       <span class="text-sm sm:text-base font-inter text-gray-700">{location.price}</span>
                     </div>
                   )}
@@ -330,11 +330,41 @@ if (!locations || locations.length === 0) {
   let totalCards = 0;
   let totalPages = 0;
   const isDesktop = () => window.innerWidth >= 1024;
+  const LOCATION_GAP_WIDTH = 24;
+  const locationCardMetrics = {
+    width: 0
+  };
+  let locationResizeObserver;
+
+  function measureLocationCardWidth(card) {
+    if (!card) return;
+    const { width } = card.getBoundingClientRect();
+    if (width && Math.abs(width - locationCardMetrics.width) > 0.5) {
+      locationCardMetrics.width = width;
+    }
+  }
+
+  function setupLocationMeasurement(cards) {
+    if (!cards || cards.length === 0) return;
+    const firstCard = cards[0];
+    measureLocationCardWidth(firstCard);
+
+    if (typeof ResizeObserver !== 'undefined' && !locationResizeObserver) {
+      locationResizeObserver = new ResizeObserver((entries) => {
+        const entry = entries[0];
+        if (!entry) return;
+        measureLocationCardWidth(entry.target);
+        window.requestAnimationFrame(updateCarousel);
+      });
+      locationResizeObserver.observe(firstCard);
+    }
+  }
 
   function initCarousel() {
     const cards = document.querySelectorAll('.location-card');
     totalCards = cards.length;
     totalPages = Math.ceil(totalCards / cardsPerPage);
+    setupLocationMeasurement(cards);
     
     console.log(`🎠 Carousel initialized: ${totalCards} cards, ${totalPages} pages`);
     
@@ -365,10 +395,14 @@ if (!locations || locations.length === 0) {
     // Get the first card to measure width
     const firstCard = cards[0];
     if (!firstCard) return;
-    
-    const cardWidth = firstCard.offsetWidth;
-    const containerRect = container.getBoundingClientRect();
-    const gapWidth = 24; // lg:gap-6 = 1.5rem = 24px
+
+    if (!locationCardMetrics.width) {
+      measureLocationCardWidth(firstCard);
+    }
+
+    const cardWidth = locationCardMetrics.width;
+    const gapWidth = LOCATION_GAP_WIDTH;
+    if (!cardWidth) return;
     
     // Calculate how much to move: (cardWidth + gap) * cardsPerPage * currentPage
     const offsetPx = (cardWidth + gapWidth) * cardsPerPage * currentPage;
