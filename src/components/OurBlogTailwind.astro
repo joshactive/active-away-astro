@@ -295,6 +295,13 @@ console.log('📝 Blog Data:', blogData.blogs.map(b => b.title));
       transform: scale(0.90);
     }
   }
+  
+  /* Hide pagination dots on mobile */
+  @media (max-width: 1023px) {
+    #blogPaginationDots {
+      display: none;
+    }
+  }
 </style>
 
 <script>
@@ -308,7 +315,28 @@ console.log('📝 Blog Data:', blogData.blogs.map(b => b.title));
   const blogCardMetrics = {
     width: 0
   };
+  const blogGapMetrics = {
+    value: BLOG_GAP_WIDTH
+  };
   let blogResizeObserver;
+  let blogDotObserver = null;
+  let blogScrollHandler = null;
+  let blogScrollTicking = false;
+
+  function setActiveBlogDots(dots, activeIndex) {
+    dots.forEach((dot, index) => {
+      const isActive = index === activeIndex;
+      dot.classList.toggle('w-8', isActive);
+      dot.classList.toggle('w-2', !isActive);
+      if (isActive) {
+        dot.classList.remove('bg-gray-300');
+        dot.style.backgroundColor = '#ad986c';
+      } else {
+        dot.classList.add('bg-gray-300');
+        dot.style.backgroundColor = '';
+      }
+    });
+  }
 
   function measureBlogCardWidth(card) {
     if (!card) return;
@@ -322,6 +350,17 @@ console.log('📝 Blog Data:', blogData.blogs.map(b => b.title));
     if (!cards || cards.length === 0) return;
     const firstCard = cards[0];
     measureBlogCardWidth(firstCard);
+
+    const container = document.getElementById('blogsContainer');
+    if (container) {
+      const styles = window.getComputedStyle(container);
+      const gapValue = parseFloat(
+        styles.columnGap || styles.gap || styles.gridColumnGap || '0'
+      );
+      if (!Number.isNaN(gapValue) && gapValue > 0) {
+        blogGapMetrics.value = gapValue;
+      }
+    }
 
     if (typeof ResizeObserver !== 'undefined' && !blogResizeObserver) {
       blogResizeObserver = new ResizeObserver((entries) => {
@@ -381,6 +420,7 @@ console.log('📝 Blog Data:', blogData.blogs.map(b => b.title));
     }
     
     updateBlogsCarousel();
+    setupBlogDotTracking();
   }
 
   function updateBlogsCarousel() {
@@ -412,7 +452,7 @@ console.log('📝 Blog Data:', blogData.blogs.map(b => b.title));
     }
 
     const cardWidth = blogCardMetrics.width;
-    const gapWidth = BLOG_GAP_WIDTH;
+    const gapWidth = blogGapMetrics.value;
     if (!cardWidth) return;
     
     // Calculate how much to move: (cardWidth + gap) * blogsPerPage * currentBlogPage
@@ -433,17 +473,7 @@ console.log('📝 Blog Data:', blogData.blogs.map(b => b.title));
     });
     
     // Update dots
-    dots.forEach((dot, index) => {
-      if (index === currentBlogPage) {
-        dot.classList.remove('w-2', 'bg-gray-300');
-        dot.classList.add('w-8');
-        dot.style.backgroundColor = '#ad986c'; // Gold color
-      } else {
-        dot.classList.remove('w-8');
-        dot.classList.add('w-2', 'bg-gray-300');
-        dot.style.backgroundColor = '';
-      }
-    });
+    setActiveBlogDots(dots, currentBlogPage);
     
     // Show/hide navigation arrows based on position
     const prevBtn = document.querySelector('button[onclick="previousBlogCard()"]');
@@ -484,60 +514,88 @@ console.log('📝 Blog Data:', blogData.blogs.map(b => b.title));
   window.previousBlogCard = previousBlogCard;
   window.goToBlogPage = goToBlogPage;
 
-  // Update pagination dots on mobile scroll
-  function updateBlogDotsOnScroll() {
-    if (isBlogDesktop()) return;
-    
+  function teardownBlogDotTracking() {
     const container = document.getElementById('blogsContainer');
-    const cards = document.querySelectorAll('.blog-card');
+    if (blogDotObserver) {
+      blogDotObserver.disconnect();
+      blogDotObserver = null;
+    }
+    if (container && blogScrollHandler) {
+      container.removeEventListener('scroll', blogScrollHandler);
+      blogScrollHandler = null;
+      blogScrollTicking = false;
+    }
+  }
+
+  function setupBlogDotTracking() {
+    const container = document.getElementById('blogsContainer');
     const dots = document.querySelectorAll('#blogPaginationDots .pagination-dot');
-    
-    if (!container || cards.length === 0) return;
-    
-    // Calculate which card is most in view
-    const containerRect = container.getBoundingClientRect();
-    const containerCenter = containerRect.left + (containerRect.width / 2);
-    
-    let closestIndex = 0;
-    let closestDistance = Infinity;
-    
-    cards.forEach((card, index) => {
-      const cardRect = card.getBoundingClientRect();
-      const cardCenter = cardRect.left + (cardRect.width / 2);
-      const distance = Math.abs(cardCenter - containerCenter);
-      
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestIndex = index;
-      }
-    });
-    
-    // Update current page for dots (groups of 3)
-    const dotIndex = Math.floor(closestIndex / 3);
-    
-    // Update dots appearance
-    dots.forEach((dot, index) => {
-      if (index === dotIndex) {
-        dot.classList.remove('w-2', 'bg-gray-300');
-        dot.classList.add('w-8');
-        dot.style.backgroundColor = '#ad986c';
-      } else {
-        dot.classList.remove('w-8');
-        dot.classList.add('w-2', 'bg-gray-300');
-        dot.style.backgroundColor = '';
-      }
-    });
+    if (!container || dots.length === 0) return;
+
+    teardownBlogDotTracking();
+
+    if (isBlogDesktop()) {
+      setActiveBlogDots(dots, currentBlogPage);
+      return;
+    }
+
+    const cards = container.querySelectorAll('.blog-card');
+    if (cards.length === 0) return;
+
+    if ('IntersectionObserver' in window) {
+      blogDotObserver = new IntersectionObserver(
+        (entries) => {
+          const visible = entries
+            .filter((entry) => entry.isIntersecting)
+            .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+          if (!visible) return;
+          const cardIndex = Number(visible.target.getAttribute('data-index') || '0');
+          const dotIndex = Math.min(
+            Math.floor(cardIndex / blogsPerPage),
+            dots.length - 1
+          );
+          setActiveBlogDots(dots, dotIndex);
+        },
+        {
+          root: container,
+          threshold: 0.6
+        }
+      );
+
+      cards.forEach((card) => blogDotObserver.observe(card));
+      return;
+    }
+
+    blogScrollHandler = () => {
+      if (blogScrollTicking) return;
+      blogScrollTicking = true;
+
+      window.requestAnimationFrame(() => {
+        const cardWidth =
+          blogCardMetrics.width ||
+          container.firstElementChild?.getBoundingClientRect?.().width ||
+          container.clientWidth;
+        const itemSpan = cardWidth + blogGapMetrics.value;
+        if (itemSpan > 0) {
+          const scrollCenter = container.scrollLeft + container.clientWidth / 2;
+          const approxIndex = Math.round(scrollCenter / itemSpan);
+          const dotIndex = Math.max(
+            0,
+            Math.min(Math.floor(approxIndex / blogsPerPage), dots.length - 1)
+          );
+          setActiveBlogDots(dots, dotIndex);
+        }
+        blogScrollTicking = false;
+      });
+    };
+
+    container.addEventListener('scroll', blogScrollHandler, { passive: true });
+    blogScrollHandler();
   }
 
   // Initialize carousel on page load
   document.addEventListener('DOMContentLoaded', () => {
     initBlogsCarousel();
-    
-    // Add scroll listener for mobile
-    const container = document.getElementById('blogsContainer');
-    if (container) {
-      container.addEventListener('scroll', updateBlogDotsOnScroll);
-    }
     
     // Re-initialize on window resize
     let resizeTimer;

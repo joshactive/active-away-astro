@@ -121,18 +121,29 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
   function toggleMobileMenu() {
     const menu = document.getElementById('mobile-menu');
     const overlay = document.getElementById('mobile-overlay');
+    const trigger = document.getElementById('mobile-menu-trigger');
     if (menu && overlay) {
       menu.classList.toggle('translate-x-full');
-      overlay.classList.toggle('hidden');
+      const isOpen = !menu.classList.contains('translate-x-full');
+      overlay.classList.toggle('hidden', !isOpen);
+      overlay.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+      if (trigger) {
+        trigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      }
     }
   }
 
   function closeMobileMenu() {
     const menu = document.getElementById('mobile-menu');
     const overlay = document.getElementById('mobile-overlay');
+    const trigger = document.getElementById('mobile-menu-trigger');
     if (menu && overlay) {
       menu.classList.add('translate-x-full');
       overlay.classList.add('hidden');
+      overlay.setAttribute('aria-hidden', 'true');
+      if (trigger) {
+        trigger.setAttribute('aria-expanded', 'false');
+      }
     }
   }
 </script>
@@ -196,10 +207,12 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
         <div class="lg:hidden">
           <button 
             type="button"
+            id="mobile-menu-trigger"
             class="bg-none border-none cursor-pointer p-2 rounded-lg transition-colors duration-300 hover:bg-gold/20"
             onclick="toggleMobileMenu()"
             aria-controls="mobile-menu"
             aria-expanded="false"
+            aria-haspopup="true"
           >
             <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
               <path d="M4 5h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
@@ -214,7 +227,7 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
   </nav>
 
   <!-- Mobile Menu Overlay -->
-  <div id="mobile-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()"></div>
+  <div id="mobile-overlay" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileMenu()" aria-hidden="true"></div>
 
   <!-- Mobile Menu -->
   <div id="mobile-menu" class="fixed top-0 right-0 h-full w-80 bg-white z-50 transform translate-x-full transition-transform duration-300 ease-in-out shadow-xl">
@@ -281,7 +294,8 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
             <div class="grid grid-cols-2 gap-2 w-full sm:hidden">
               <!-- Product Section -->
               <div class="flex flex-row items-center relative">
-                <select class="w-full h-11 font-inter font-normal text-xs leading-7 flex items-center text-white bg-white/10 border border-white/30 outline-none appearance-none pr-7 cursor-pointer px-3 rounded-lg backdrop-blur-sm">
+                <label class="sr-only" for="hero-product-mobile">Product</label>
+                <select id="hero-product-mobile" class="w-full h-11 font-inter font-normal text-xs leading-7 flex items-center text-white bg-white/10 border border-white/30 outline-none appearance-none pr-7 cursor-pointer px-3 rounded-lg backdrop-blur-sm">
                   <option value="" class="text-gray-800 bg-white px-4">Product</option>
                   <option value="tennis" class="text-gray-800 bg-white px-4">Tennis</option>
                   <option value="padel" class="text-gray-800 bg-white px-4">Padel</option>
@@ -294,7 +308,8 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
               
               <!-- Location Section -->
               <div class="flex flex-row items-center relative">
-                <select class="w-full h-11 font-inter font-normal text-xs leading-7 flex items-center text-white bg-white/10 border border-white/30 outline-none appearance-none pr-7 cursor-pointer px-3 rounded-lg backdrop-blur-sm">
+                <label class="sr-only" for="hero-location-mobile">Location</label>
+                <select id="hero-location-mobile" class="w-full h-11 font-inter font-normal text-xs leading-7 flex items-center text-white bg-white/10 border border-white/30 outline-none appearance-none pr-7 cursor-pointer px-3 rounded-lg backdrop-blur-sm">
                   <option value="" class="text-gray-800 bg-white px-4">Location</option>
                   <option value="spain" class="text-gray-800 bg-white px-4">Spain</option>
                   <option value="portugal" class="text-gray-800 bg-white px-4">Portugal</option>
@@ -308,7 +323,8 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
               
               <!-- Month Section -->
               <div class="flex flex-row items-center relative">
-                <select class="w-full h-11 font-inter font-normal text-xs leading-7 flex items-center text-white bg-white/10 border border-white/30 outline-none appearance-none pr-7 cursor-pointer px-3 rounded-lg backdrop-blur-sm">
+                <label class="sr-only" for="hero-month-mobile">Month</label>
+                <select id="hero-month-mobile" class="w-full h-11 font-inter font-normal text-xs leading-7 flex items-center text-white bg-white/10 border border-white/30 outline-none appearance-none pr-7 cursor-pointer px-3 rounded-lg backdrop-blur-sm">
                   <option value="" class="text-gray-800 bg-white px-4">Month</option>
                   <option value="january" class="text-gray-800 bg-white px-4">January</option>
                   <option value="february" class="text-gray-800 bg-white px-4">February</option>
@@ -341,7 +357,8 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
             <!-- Desktop: Horizontal layout (unchanged) -->
             <!-- Product Section -->
             <div class="hidden sm:flex flex-row items-center flex-1 min-w-0 relative">
-              <select class="w-full h-8 md:h-10 font-inter font-normal text-sm md:text-base lg:text-lg leading-7 flex items-center text-white bg-transparent outline-none appearance-none pr-8 cursor-pointer px-4">
+              <label class="sr-only" for="hero-product-desktop">Product</label>
+              <select id="hero-product-desktop" class="w-full h-8 md:h-10 font-inter font-normal text-sm md:text-base lg:text-lg leading-7 flex items-center text-white bg-transparent outline-none appearance-none pr-8 cursor-pointer px-4">
                 <option value="" class="text-gray-800 bg-white px-4">Select Product</option>
                 <option value="tennis" class="text-gray-800 bg-white px-4">Tennis</option>
                 <option value="padel" class="text-gray-800 bg-white px-4">Padel</option>
@@ -356,7 +373,8 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
             
             <!-- Location Section -->
             <div class="hidden sm:flex flex-row items-center flex-1 min-w-0 relative">
-              <select class="w-full h-8 md:h-10 font-inter font-normal text-sm md:text-base lg:text-lg leading-7 flex items-center text-white bg-transparent outline-none appearance-none pr-8 cursor-pointer px-4">
+              <label class="sr-only" for="hero-location-desktop">Location</label>
+              <select id="hero-location-desktop" class="w-full h-8 md:h-10 font-inter font-normal text-sm md:text-base lg:text-lg leading-7 flex items-center text-white bg-transparent outline-none appearance-none pr-8 cursor-pointer px-4">
                 <option value="" class="text-gray-800 bg-white px-4">Select Location</option>
                 <option value="spain" class="text-gray-800 bg-white px-4">Spain</option>
                 <option value="portugal" class="text-gray-800 bg-white px-4">Portugal</option>
@@ -372,7 +390,8 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
             
             <!-- Month Section -->
             <div class="hidden sm:flex flex-row items-center flex-1 min-w-0 relative">
-              <select class="w-full h-8 md:h-10 font-inter font-normal text-sm md:text-base lg:text-lg leading-7 flex items-center text-white bg-transparent outline-none appearance-none pr-8 cursor-pointer px-4">
+              <label class="sr-only" for="hero-month-desktop">Month</label>
+              <select id="hero-month-desktop" class="w-full h-8 md:h-10 font-inter font-normal text-sm md:text-base lg:text-lg leading-7 flex items-center text-white bg-transparent outline-none appearance-none pr-8 cursor-pointer px-4">
                 <option value="" class="text-gray-800 bg-white px-4">Select Month</option>
                 <option value="january" class="text-gray-800 bg-white px-4">January</option>
                 <option value="february" class="text-gray-800 bg-white px-4">February</option>

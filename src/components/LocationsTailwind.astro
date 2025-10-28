@@ -95,7 +95,7 @@ if (!locations || locations.length === 0) {
 }
 ---
 
-<section class="w-full bg-white pt-12 sm:pt-16 lg:pt-24 pb-0">
+<section class="w-full bg-white py-12 sm:py-16 lg:py-24">
   <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
     <!-- Header -->
     <div class="mb-6 sm:mb-8 lg:mb-16">
@@ -255,7 +255,7 @@ if (!locations || locations.length === 0) {
     </div>
 
     <!-- Pagination Dots -->
-    <div id="paginationDots" class="flex justify-center items-center gap-2 mt-6 sm:mt-8 lg:mt-16 mb-0">
+    <div id="paginationDots" class="flex justify-center items-center gap-2 mt-6 sm:mt-8 lg:mt-16">
       {Array.from({ length: Math.ceil((locations.length + 1) / 3) }, (_, i) => (
         <button 
           class={`pagination-dot transition-all duration-300 ${i === 0 ? 'w-8 h-2' : 'w-2 h-2 bg-gray-300'} rounded-full`}
@@ -324,6 +324,13 @@ if (!locations || locations.length === 0) {
       transform: scale(0.90);
     }
   }
+  
+  /* Hide pagination dots on mobile */
+  @media (max-width: 1023px) {
+    #paginationDots {
+      display: none;
+    }
+  }
 </style>
 
 <script>
@@ -337,7 +344,28 @@ if (!locations || locations.length === 0) {
   const locationCardMetrics = {
     width: 0
   };
+  const locationGapMetrics = {
+    value: LOCATION_GAP_WIDTH
+  };
   let locationResizeObserver;
+  let locationDotObserver = null;
+  let locationScrollHandler = null;
+  let locationScrollTicking = false;
+
+  function setActiveDots(dots, activeIndex) {
+    dots.forEach((dot, index) => {
+      const isActive = index === activeIndex;
+      dot.classList.toggle('w-8', isActive);
+      dot.classList.toggle('w-2', !isActive);
+      if (isActive) {
+        dot.classList.remove('bg-gray-300');
+        dot.style.backgroundColor = '#ad986c';
+      } else {
+        dot.classList.add('bg-gray-300');
+        dot.style.backgroundColor = '';
+      }
+    });
+  }
 
   function measureLocationCardWidth(card) {
     if (!card) return;
@@ -351,6 +379,16 @@ if (!locations || locations.length === 0) {
     if (!cards || cards.length === 0) return;
     const firstCard = cards[0];
     measureLocationCardWidth(firstCard);
+    const container = document.getElementById('cardsContainer');
+    if (container) {
+      const styles = window.getComputedStyle(container);
+      const gapValue = parseFloat(
+        styles.columnGap || styles.gap || styles.gridColumnGap || '0'
+      );
+      if (!Number.isNaN(gapValue) && gapValue > 0) {
+        locationGapMetrics.value = gapValue;
+      }
+    }
 
     if (typeof ResizeObserver !== 'undefined' && !locationResizeObserver) {
       locationResizeObserver = new ResizeObserver((entries) => {
@@ -404,7 +442,7 @@ if (!locations || locations.length === 0) {
     }
 
     const cardWidth = locationCardMetrics.width;
-    const gapWidth = LOCATION_GAP_WIDTH;
+    const gapWidth = locationGapMetrics.value;
     if (!cardWidth) return;
     
     // Calculate how much to move: (cardWidth + gap) * cardsPerPage * currentPage
@@ -427,17 +465,7 @@ if (!locations || locations.length === 0) {
     });
     
     // Update dots
-    dots.forEach((dot, index) => {
-      if (index === currentPage) {
-        dot.classList.remove('w-2', 'bg-gray-300');
-        dot.classList.add('w-8');
-        dot.style.backgroundColor = '#ad986c'; // Gold color
-      } else {
-        dot.classList.remove('w-8');
-        dot.classList.add('w-2', 'bg-gray-300');
-        dot.style.backgroundColor = '';
-      }
-    });
+    setActiveDots(dots, currentPage);
     
     // Show/hide navigation arrows based on position
     const prevBtn = document.querySelector('button[onclick="previousCard()"]');
@@ -475,66 +503,96 @@ if (!locations || locations.length === 0) {
     console.log(`🎯 Go to page: ${currentPage}`);
     updateCarousel();
   }
+
+  function teardownLocationDotTracking() {
+    const container = document.getElementById('cardsContainer');
+    if (locationDotObserver) {
+      locationDotObserver.disconnect();
+      locationDotObserver = null;
+    }
+    if (container && locationScrollHandler) {
+      container.removeEventListener('scroll', locationScrollHandler);
+      locationScrollHandler = null;
+      locationScrollTicking = false;
+    }
+  }
+
+  function setupLocationDotTracking() {
+    const container = document.getElementById('cardsContainer');
+    const dots = document.querySelectorAll('.pagination-dot');
+    if (!container || dots.length === 0) return;
+
+    teardownLocationDotTracking();
+
+    if (isDesktop()) {
+      setActiveDots(dots, currentPage);
+      return;
+    }
+
+    const cards = container.querySelectorAll('.location-card');
+    if (cards.length === 0) return;
+
+    if ('IntersectionObserver' in window) {
+      locationDotObserver = new IntersectionObserver(
+        (entries) => {
+          const visible = entries
+            .filter((entry) => entry.isIntersecting)
+            .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+          if (!visible) return;
+          const cardIndex = Number(visible.target.getAttribute('data-index') || '0');
+          const dotIndex = Math.min(
+            Math.floor(cardIndex / cardsPerPage),
+            dots.length - 1
+          );
+          setActiveDots(dots, dotIndex);
+        },
+        {
+          root: container,
+          threshold: 0.6
+        }
+      );
+
+      cards.forEach((card) => locationDotObserver.observe(card));
+      return;
+    }
+
+    locationScrollHandler = () => {
+      if (locationScrollTicking) return;
+      locationScrollTicking = true;
+
+      window.requestAnimationFrame(() => {
+        const cardWidth =
+          locationCardMetrics.width ||
+          container.firstElementChild?.getBoundingClientRect?.().width ||
+          container.clientWidth;
+        const itemSpan = cardWidth + locationGapMetrics.value;
+        if (itemSpan > 0) {
+          const scrollCenter = container.scrollLeft + container.clientWidth / 2;
+          const approxIndex = Math.round(scrollCenter / itemSpan);
+          const dotIndex = Math.max(
+            0,
+            Math.min(Math.floor(approxIndex / cardsPerPage), dots.length - 1)
+          );
+          setActiveDots(dots, dotIndex);
+        }
+        locationScrollTicking = false;
+      });
+    };
+
+    container.addEventListener('scroll', locationScrollHandler, { passive: true });
+    // Sync initial state
+    locationScrollHandler();
+  }
   
   // Make functions globally accessible
   window.nextCard = nextCard;
   window.previousCard = previousCard;
   window.goToPage = goToPage;
 
-  // Update pagination dots on mobile scroll
-  function updateDotsOnScroll() {
-    if (isDesktop()) return;
-    
-    const container = document.getElementById('cardsContainer');
-    const cards = document.querySelectorAll('.location-card');
-    const dots = document.querySelectorAll('.pagination-dot');
-    
-    if (!container || cards.length === 0) return;
-    
-    // Calculate which card is most in view
-    const containerRect = container.getBoundingClientRect();
-    const containerCenter = containerRect.left + (containerRect.width / 2);
-    
-    let closestIndex = 0;
-    let closestDistance = Infinity;
-    
-    cards.forEach((card, index) => {
-      const cardRect = card.getBoundingClientRect();
-      const cardCenter = cardRect.left + (cardRect.width / 2);
-      const distance = Math.abs(cardCenter - containerCenter);
-      
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestIndex = index;
-      }
-    });
-    
-    // Update current page for dots (groups of 3)
-    const dotIndex = Math.floor(closestIndex / 3);
-    
-    // Update dots appearance
-    dots.forEach((dot, index) => {
-      if (index === dotIndex) {
-        dot.classList.remove('w-2', 'bg-gray-300');
-        dot.classList.add('w-8');
-        dot.style.backgroundColor = '#ad986c';
-      } else {
-        dot.classList.remove('w-8');
-        dot.classList.add('w-2', 'bg-gray-300');
-        dot.style.backgroundColor = '';
-      }
-    });
-  }
-
   // Initialize carousel on page load
   document.addEventListener('DOMContentLoaded', () => {
     initCarousel();
-    
-    // Add scroll listener for mobile
-    const container = document.getElementById('cardsContainer');
-    if (container) {
-      container.addEventListener('scroll', updateDotsOnScroll);
-    }
+    setupLocationDotTracking();
   });
   
   // Re-init on resize (with small delay to let layout settle)
@@ -544,6 +602,7 @@ if (!locations || locations.length === 0) {
     resizeTimeout = setTimeout(() => {
       currentPage = 0; // Reset to first page on resize
       updateCarousel();
+      setupLocationDotTracking();
     }, 100);
   });
 </script>

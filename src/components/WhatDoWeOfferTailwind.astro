@@ -246,6 +246,13 @@ const offerData = {
   .product-card.card-hidden::after {
     opacity: 1;
   }
+  
+  /* Hide pagination dots on mobile */
+  @media (max-width: 1023px) {
+    #productPaginationDots {
+      display: none;
+    }
+  }
 </style>
 
 <script>
@@ -259,7 +266,28 @@ const offerData = {
   const productCardMetrics = {
     width: 0
   };
+  const productGapMetrics = {
+    value: PRODUCT_GAP_WIDTH
+  };
   let productResizeObserver;
+  let productDotObserver = null;
+  let productScrollHandler = null;
+  let productScrollTicking = false;
+
+  function setActiveProductDots(dots, activeIndex) {
+    dots.forEach((dot, index) => {
+      const isActive = index === activeIndex;
+      dot.classList.toggle('w-8', isActive);
+      dot.classList.toggle('w-2', !isActive);
+      if (isActive) {
+        dot.classList.remove('bg-gray-300');
+        dot.style.backgroundColor = '#ad986c';
+      } else {
+        dot.classList.add('bg-gray-300');
+        dot.style.backgroundColor = '';
+      }
+    });
+  }
 
   function measureProductCardWidth(card) {
     if (!card) return;
@@ -273,6 +301,17 @@ const offerData = {
     if (!cards || cards.length === 0) return;
     const firstCard = cards[0];
     measureProductCardWidth(firstCard);
+
+    const container = document.getElementById('productsContainer');
+    if (container) {
+      const styles = window.getComputedStyle(container);
+      const gapValue = parseFloat(
+        styles.columnGap || styles.gap || styles.gridColumnGap || '0'
+      );
+      if (!Number.isNaN(gapValue) && gapValue > 0) {
+        productGapMetrics.value = gapValue;
+      }
+    }
 
     if (typeof ResizeObserver !== 'undefined' && !productResizeObserver) {
       productResizeObserver = new ResizeObserver((entries) => {
@@ -295,6 +334,7 @@ const offerData = {
     console.log(`🎠 Products Carousel initialized: ${totalProductCards} cards, ${totalProductPages} pages`);
     
     updateProductsCarousel();
+    setupProductDotTracking();
   }
 
   function updateProductsCarousel() {
@@ -326,7 +366,7 @@ const offerData = {
     }
 
     const cardWidth = productCardMetrics.width;
-    const gapWidth = PRODUCT_GAP_WIDTH;
+    const gapWidth = productGapMetrics.value;
     if (!cardWidth) return;
     
     // Calculate how much to move: (cardWidth + gap) * productsPerPage * currentProductPage
@@ -349,17 +389,7 @@ const offerData = {
     });
     
     // Update dots
-    dots.forEach((dot, index) => {
-      if (index === currentProductPage) {
-        dot.classList.remove('w-2', 'bg-gray-300');
-        dot.classList.add('w-8');
-        dot.style.backgroundColor = '#ad986c'; // Gold color
-      } else {
-        dot.classList.remove('w-8');
-        dot.classList.add('w-2', 'bg-gray-300');
-        dot.style.backgroundColor = '';
-      }
-    });
+    setActiveProductDots(dots, currentProductPage);
     
     // Show/hide navigation arrows based on position
     const prevBtn = document.querySelector('button[onclick="previousProduct()"]');
@@ -403,60 +433,88 @@ const offerData = {
   window.previousProduct = previousProduct;
   window.goToProductPage = goToProductPage;
 
-  // Update pagination dots on mobile scroll
-  function updateProductDotsOnScroll() {
-    if (isProductDesktop()) return;
-    
+  function teardownProductDotTracking() {
     const container = document.getElementById('productsContainer');
-    const cards = document.querySelectorAll('.product-card');
+    if (productDotObserver) {
+      productDotObserver.disconnect();
+      productDotObserver = null;
+    }
+    if (container && productScrollHandler) {
+      container.removeEventListener('scroll', productScrollHandler);
+      productScrollHandler = null;
+      productScrollTicking = false;
+    }
+  }
+
+  function setupProductDotTracking() {
+    const container = document.getElementById('productsContainer');
     const dots = document.querySelectorAll('#productPaginationDots .pagination-dot');
-    
-    if (!container || cards.length === 0) return;
-    
-    // Calculate which card is most in view
-    const containerRect = container.getBoundingClientRect();
-    const containerCenter = containerRect.left + (containerRect.width / 2);
-    
-    let closestIndex = 0;
-    let closestDistance = Infinity;
-    
-    cards.forEach((card, index) => {
-      const cardRect = card.getBoundingClientRect();
-      const cardCenter = cardRect.left + (cardRect.width / 2);
-      const distance = Math.abs(cardCenter - containerCenter);
-      
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestIndex = index;
-      }
-    });
-    
-    // Update current page for dots (groups of 2)
-    const dotIndex = Math.floor(closestIndex / 2);
-    
-    // Update dots appearance
-    dots.forEach((dot, index) => {
-      if (index === dotIndex) {
-        dot.classList.remove('w-2', 'bg-gray-300');
-        dot.classList.add('w-8');
-        dot.style.backgroundColor = '#ad986c';
-      } else {
-        dot.classList.remove('w-8');
-        dot.classList.add('w-2', 'bg-gray-300');
-        dot.style.backgroundColor = '';
-      }
-    });
+    if (!container || dots.length === 0) return;
+
+    teardownProductDotTracking();
+
+    if (isProductDesktop()) {
+      setActiveProductDots(dots, currentProductPage);
+      return;
+    }
+
+    const cards = container.querySelectorAll('.product-card');
+    if (cards.length === 0) return;
+
+    if ('IntersectionObserver' in window) {
+      productDotObserver = new IntersectionObserver(
+        (entries) => {
+          const visible = entries
+            .filter((entry) => entry.isIntersecting)
+            .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+          if (!visible) return;
+          const cardIndex = Number(visible.target.getAttribute('data-index') || '0');
+          const dotIndex = Math.min(
+            Math.floor(cardIndex / productsPerPage),
+            dots.length - 1
+          );
+          setActiveProductDots(dots, dotIndex);
+        },
+        {
+          root: container,
+          threshold: 0.6
+        }
+      );
+
+      cards.forEach((card) => productDotObserver.observe(card));
+      return;
+    }
+
+    productScrollHandler = () => {
+      if (productScrollTicking) return;
+      productScrollTicking = true;
+
+      window.requestAnimationFrame(() => {
+        const cardWidth =
+          productCardMetrics.width ||
+          container.firstElementChild?.getBoundingClientRect?.().width ||
+          container.clientWidth;
+        const itemSpan = cardWidth + productGapMetrics.value;
+        if (itemSpan > 0) {
+          const scrollCenter = container.scrollLeft + container.clientWidth / 2;
+          const approxIndex = Math.round(scrollCenter / itemSpan);
+          const dotIndex = Math.max(
+            0,
+            Math.min(Math.floor(approxIndex / productsPerPage), dots.length - 1)
+          );
+          setActiveProductDots(dots, dotIndex);
+        }
+        productScrollTicking = false;
+      });
+    };
+
+    container.addEventListener('scroll', productScrollHandler, { passive: true });
+    productScrollHandler();
   }
 
   // Initialize carousel on page load
   document.addEventListener('DOMContentLoaded', () => {
     initProductsCarousel();
-    
-    // Add scroll listener for mobile
-    const container = document.getElementById('productsContainer');
-    if (container) {
-      container.addEventListener('scroll', updateProductDotsOnScroll);
-    }
   });
   
   // Re-init on resize (with small delay to let layout settle)
@@ -466,6 +524,7 @@ const offerData = {
     resizeTimeout = setTimeout(() => {
       currentProductPage = 0; // Reset to first page on resize
       updateProductsCarousel();
+      setupProductDotTracking();
     }, 100);
   });
 </script>
