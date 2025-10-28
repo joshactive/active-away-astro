@@ -14,7 +14,7 @@ const { homeData } = Astro.props;
 let products = await getProducts();
 
 const PRODUCT_IMAGE_SIZES = '(max-width: 640px) calc(100vw - 5rem), (max-width: 1024px) calc(100vw - 8rem), 680px';
-const PRODUCT_IMAGE_QUALITY = 70;
+const PRODUCT_IMAGE_QUALITY = 60;
 
 const buildProductImage = (imageName, alt) => {
   const attrs = getResponsiveImageByName(imageName, {

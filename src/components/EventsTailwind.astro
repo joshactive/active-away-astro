@@ -2,15 +2,15 @@
 // Events section component for Active Away - Tailwind CSS Version
 import { getFutureEvents } from '../utils/strapi.js';
 import { getImageByName, getResponsiveImageByName, getStrapiImageAttrs } from '../utils/cloudflareImages.js';
-import MapPinIcon from '../components/ui/icons/MapPinIcon.astro';
-import TagIcon from '../components/ui/icons/TagIcon.astro';
-import CalendarIcon from '../components/ui/icons/CalendarIcon.astro';
+import MapPinIcon from './ui/icons/MapPinIcon.astro';
+import TagIcon from './ui/icons/TagIcon.astro';
+import CalendarIcon from './ui/icons/CalendarIcon.astro';
 
 // Fetch future events from Strapi
 let events = await getFutureEvents();
 
 const EVENT_IMAGE_SIZES = '(max-width: 640px) calc(100vw - 5rem), (max-width: 1024px) calc(100vw - 8rem), 402px';
-const EVENT_IMAGE_QUALITY = 70;
+const EVENT_IMAGE_QUALITY = 60;
 
 const buildEventImage = (imageName, alt) => {
   const attrs = getResponsiveImageByName(imageName, {
@@ -33,8 +33,8 @@ const buildEventImage = (imageName, alt) => {
     width: 402,
     height: 268,
     alt,
-      loading: 'lazy',
-      sizes: EVENT_IMAGE_SIZES
+    loading: 'lazy',
+    sizes: EVENT_IMAGE_SIZES
   };
 };
 

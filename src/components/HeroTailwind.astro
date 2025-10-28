@@ -1,9 +1,6 @@
 ---
 // Hero section component for Active Away - Figma Perfect Match
 import { getImageByName, getStrapiImageAttrs, getResponsiveImageAttrs } from '../utils/cloudflareImages.js';
-import { getStrapiImageData, extractCloudflareImageId } from '../utils/strapi.js';
-import { Button } from '../components/ui/button';
-import { MobileMenuButton, CloseButton, SearchIcon, StarIcon, ChevronDownIcon } from '../components/ui/MobileMenuButton';
 
 // Accept homeData as prop (fetched once in index.astro)
 interface Props {
@@ -36,7 +33,7 @@ if (homeData?.hero?.headerImage) {
       fit: 'cover',
       alt: strapiHeroBg.alt || 'Hero background',
       sizes: '100vw',
-      quality: 70
+      quality: 60
     });
     console.log('✅ Using Strapi image with responsive transforms');
   } else {
@@ -55,7 +52,7 @@ if (!heroBgAttrs) {
       fit: 'cover',
       alt: 'Active Away - Tennis, Padel & Pickleball Holidays',
       sizes: '100vw',
-      quality: 70
+      quality: 60
     }),
   };
   console.log('ℹ️  Using fallback hero background');
@@ -79,10 +76,33 @@ const testimonial2 = homeData?.hero?.testimonialImages?.[1];
 const testimonial3 = homeData?.hero?.testimonialImages?.[2];
 const testimonial4 = homeData?.hero?.testimonialImages?.[3];
 
-const man1 = testimonial1 ? getStrapiImageAttrs(testimonial1, { displayWidth: 96, displayHeight: 96, fit: 'cover' }) : getResponsiveImageAttrs('man-1', { displayWidth: 96, displayHeight: 96, fit: 'cover', alt: 'Happy customer review' });
-const man2 = testimonial2 ? getStrapiImageAttrs(testimonial2, { displayWidth: 96, displayHeight: 96, fit: 'cover' }) : getResponsiveImageAttrs('man-2', { displayWidth: 96, displayHeight: 96, fit: 'cover', alt: 'Happy customer review' });
-const man3 = testimonial3 ? getStrapiImageAttrs(testimonial3, { displayWidth: 96, displayHeight: 96, fit: 'cover' }) : getResponsiveImageAttrs('man-3', { displayWidth: 96, displayHeight: 96, fit: 'cover', alt: 'Happy customer review' });
-const man4 = testimonial4 ? getStrapiImageAttrs(testimonial4, { displayWidth: 96, displayHeight: 96, fit: 'cover' }) : getResponsiveImageAttrs('man-4', { displayWidth: 96, displayHeight: 96, fit: 'cover', alt: 'Happy customer review' });
+const TESTIMONIAL_IMAGE_CONFIG = {
+  displayWidth: 96,
+  displayHeight: 96,
+  fit: 'cover',
+  quality: 60,
+};
+
+const buildTestimonialImage = (image, fallbackId) => {
+  const alt = image?.alt || 'Happy customer review';
+
+  if (image) {
+    return getStrapiImageAttrs(image, {
+      ...TESTIMONIAL_IMAGE_CONFIG,
+      alt,
+    });
+  }
+
+  return getResponsiveImageAttrs(fallbackId, {
+    ...TESTIMONIAL_IMAGE_CONFIG,
+    alt,
+  });
+};
+
+const man1 = buildTestimonialImage(testimonial1, 'man-1');
+const man2 = buildTestimonialImage(testimonial2, 'man-2');
+const man3 = buildTestimonialImage(testimonial3, 'man-3');
+const man4 = buildTestimonialImage(testimonial4, 'man-4');
 
 // Debug: Confirm setup
 console.log('🎯 Hero Background:', heroBgAttrs?.src ? 'Ready' : 'Missing');
@@ -174,14 +194,20 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
 
         <!-- Mobile Menu Button -->
         <div class="lg:hidden">
-          <MobileMenuButton client:idle onClick={() => {
-            const menu = document.getElementById('mobile-menu');
-            const overlay = document.getElementById('mobile-overlay');
-            if (menu && overlay) {
-              menu.classList.toggle('translate-x-full');
-              overlay.classList.toggle('hidden');
-            }
-          }} />
+          <button 
+            type="button"
+            class="bg-none border-none cursor-pointer p-2 rounded-lg transition-colors duration-300 hover:bg-gold/20"
+            onclick="toggleMobileMenu()"
+            aria-controls="mobile-menu"
+            aria-expanded="false"
+          >
+            <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M4 5h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              <path d="M4 12h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              <path d="M4 19h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+            </svg>
+            <span class="sr-only">Open main menu</span>
+          </button>
         </div>
       </div>
     </div>
@@ -196,14 +222,18 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
       <!-- Close Button -->
       <div class="flex justify-between items-center p-4 border-b">
         <span class="text-lg font-semibold text-gray-800">Menu</span>
-        <CloseButton client:idle onClick={() => {
-          const menu = document.getElementById('mobile-menu');
-          const overlay = document.getElementById('mobile-overlay');
-          if (menu && overlay) {
-            menu.classList.add('translate-x-full');
-            overlay.classList.add('hidden');
-          }
-        }} />
+        <button 
+          type="button" 
+          class="p-2 rounded-lg hover:bg-gray-100"
+          onclick="closeMobileMenu()"
+          aria-controls="mobile-menu"
+        >
+          <svg class="w-6 h-6" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+            <path d="m6 6 12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+          </svg>
+          <span class="sr-only">Close menu</span>
+        </button>
       </div>
 
       <!-- Menu Items -->
@@ -257,7 +287,9 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
                   <option value="padel" class="text-gray-800 bg-white px-4">Padel</option>
                   <option value="pickleball" class="text-gray-800 bg-white px-4">Pickleball</option>
                 </select>
-                <ChevronDownIcon client:idle className="absolute right-2.5 w-4 h-4 text-white pointer-events-none" />
+                <svg class="absolute right-2.5 w-4 h-4 text-white pointer-events-none" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                </svg>
               </div>
               
               <!-- Location Section -->
@@ -269,7 +301,9 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
                   <option value="italy" class="text-gray-800 bg-white px-4">Italy</option>
                   <option value="greece" class="text-gray-800 bg-white px-4">Greece</option>
                 </select>
-                <ChevronDownIcon client:idle className="absolute right-2.5 w-4 h-4 text-white pointer-events-none" />
+                <svg class="absolute right-2.5 w-4 h-4 text-white pointer-events-none" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                </svg>
               </div>
               
               <!-- Month Section -->
@@ -289,12 +323,17 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
                   <option value="november" class="text-gray-800 bg-white px-4">November</option>
                   <option value="december" class="text-gray-800 bg-white px-4">December</option>
                 </select>
-                <ChevronDownIcon client:idle className="absolute right-2.5 w-4 h-4 text-white pointer-events-none" />
+                <svg class="absolute right-2.5 w-4 h-4 text-white pointer-events-none" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                </svg>
               </div>
               
               <!-- Search Button (mobile) -->
               <button class="inline-flex items-center justify-center bg-white/30 backdrop-blur-md border border-white/30 hover:bg-white/40 active:bg-white/50 rounded-lg px-4 py-2.5 h-11 text-white text-sm transition-all shadow-lg font-medium">
-                <SearchIcon client:idle className="w-4 h-4 mr-1.5" />
+                <svg class="w-4 h-4 mr-1.5" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                  <path d="m21 21-4.34-4.34" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                </svg>
                 Search
               </button>
             </div>
@@ -308,7 +347,9 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
                 <option value="padel" class="text-gray-800 bg-white px-4">Padel</option>
                 <option value="pickleball" class="text-gray-800 bg-white px-4">Pickleball</option>
               </select>
-              <ChevronDownIcon client:idle className="absolute right-2 w-4 h-4 text-white pointer-events-none" />
+              <svg class="absolute right-2 w-4 h-4 text-white pointer-events-none" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              </svg>
             </div>
             
             <div class="hidden sm:block w-px h-10 bg-white/30 mx-4"></div>
@@ -322,7 +363,9 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
                 <option value="italy" class="text-gray-800 bg-white px-4">Italy</option>
                 <option value="greece" class="text-gray-800 bg-white px-4">Greece</option>
               </select>
-              <ChevronDownIcon client:idle className="absolute right-2 w-4 h-4 text-white pointer-events-none" />
+              <svg class="absolute right-2 w-4 h-4 text-white pointer-events-none" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              </svg>
             </div>
             
             <div class="hidden sm:block w-px h-10 bg-white/30 mx-4"></div>
@@ -344,14 +387,19 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
                 <option value="november" class="text-gray-800 bg-white px-4">November</option>
                 <option value="december" class="text-gray-800 bg-white px-4">December</option>
               </select>
-              <ChevronDownIcon client:idle className="absolute right-2 w-4 h-4 text-white pointer-events-none" />
+              <svg class="absolute right-2 w-4 h-4 text-white pointer-events-none" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              </svg>
             </div>
             
             <div class="hidden sm:block w-px h-10 bg-white/30 mx-4"></div>
             
             <!-- Search Button (desktop) -->
             <button class="hidden sm:inline-flex items-center justify-center bg-white/30 backdrop-blur-md border border-white/30 hover:bg-white/40 rounded-full px-5 md:px-6 py-2.5 md:py-3 h-8 md:h-10 text-white text-sm md:text-base transition-all shadow-lg font-medium">
-              <SearchIcon client:idle className="w-3 h-3 md:w-4 md:h-4 mr-2" />
+              <svg class="w-3 h-3 md:w-4 md:h-4 mr-2" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                <path d="m21 21-4.34-4.34" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              </svg>
               Search
             </button>
           </div>
@@ -369,7 +417,9 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
               </div>
               <div class="flex items-center gap-2 sm:gap-3">
                 <span class="font-inter font-semibold text-white text-xl sm:text-2xl md:text-3xl lg:text-4xl leading-none">5/5</span>
-                <StarIcon client:idle className="text-white w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
+                <svg class="text-white w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" fill="currentColor" />
+                </svg>
               </div>
             </div>
             <div class="text-center">

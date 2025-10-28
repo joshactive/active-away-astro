@@ -10,7 +10,7 @@ import HotelIcon from './ui/icons/HotelIcon.astro';
 let locations = await getFeaturedLocations();
 
 const LOCATION_IMAGE_SIZES = '(max-width: 640px) calc(100vw - 5rem), (max-width: 1024px) calc(100vw - 8rem), 455px';
-const LOCATION_IMAGE_QUALITY = 70;
+const LOCATION_IMAGE_QUALITY = 60;
 
 const buildLocationImage = (imageName, alt) => {
   const attrs = getResponsiveImageByName(imageName, {
@@ -179,6 +179,7 @@ if (!locations || locations.length === 0) {
                 height={imgAttrs.height || 256}
                 alt={imgAttrs.alt || imageAlt}
                 loading={imgAttrs.loading || 'lazy'}
+                decoding="async"
                 class="w-full h-48 sm:h-56 lg:h-64 object-cover" 
               />
             </div>

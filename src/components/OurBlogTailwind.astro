@@ -8,7 +8,7 @@ let blogs = await getBlogs(8); // Get 8 most recent posts
 
 // Fallback to hardcoded data if Strapi fails or returns no data
 const BLOG_IMAGE_SIZES = '(max-width: 640px) calc(100vw - 5rem), (max-width: 1024px) calc(100vw - 8rem), 704px';
-const BLOG_IMAGE_QUALITY = 70;
+const BLOG_IMAGE_QUALITY = 60;
 
 const buildBlogImage = (imageName, alt) => {
   const attrs = getResponsiveImageByName(imageName, {
