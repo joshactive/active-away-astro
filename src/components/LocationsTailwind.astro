@@ -8,6 +8,7 @@ import { MapPin, Tag, Hotel } from 'lucide-react';
 let locations = await getFeaturedLocations();
 
 const LOCATION_IMAGE_SIZES = '(max-width: 640px) calc(100vw - 5rem), (max-width: 1024px) calc(100vw - 8rem), 455px';
+const LOCATION_IMAGE_QUALITY = 70;
 
 const buildLocationImage = (imageName, alt) => {
   const attrs = getResponsiveImageByName(imageName, {
@@ -15,22 +16,23 @@ const buildLocationImage = (imageName, alt) => {
     displayHeight: 256,
     fit: 'cover',
     alt,
-    sizes: LOCATION_IMAGE_SIZES
+    sizes: LOCATION_IMAGE_SIZES,
+    quality: LOCATION_IMAGE_QUALITY
   });
 
   if (attrs) {
     return attrs;
   }
 
-  const fallbackSrc = getImageByName(imageName, { width: 455, height: 256, fit: 'cover', format: 'auto', quality: 85 });
+  const fallbackSrc = getImageByName(imageName, { width: 455, height: 256, fit: 'cover', format: 'auto', quality: LOCATION_IMAGE_QUALITY });
   return {
     src: fallbackSrc,
     url: fallbackSrc,
     width: 455,
     height: 256,
     alt,
-    loading: 'lazy',
-    sizes: LOCATION_IMAGE_SIZES
+      loading: 'lazy',
+      sizes: LOCATION_IMAGE_SIZES
   };
 };
 
@@ -146,7 +148,8 @@ if (!locations || locations.length === 0) {
                   displayWidth: 455,
                   displayHeight: 256,
                   fit: 'cover',
-                  sizes: LOCATION_IMAGE_SIZES
+                  sizes: LOCATION_IMAGE_SIZES,
+                  quality: LOCATION_IMAGE_QUALITY
                 });
                 imgAttrs = strapiAttrs ?? {
                   src: imageUrl,

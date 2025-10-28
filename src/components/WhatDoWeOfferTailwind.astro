@@ -14,6 +14,7 @@ const { homeData } = Astro.props;
 let products = await getProducts();
 
 const PRODUCT_IMAGE_SIZES = '(max-width: 640px) calc(100vw - 5rem), (max-width: 1024px) calc(100vw - 8rem), 680px';
+const PRODUCT_IMAGE_QUALITY = 70;
 
 const buildProductImage = (imageName, alt) => {
   const attrs = getResponsiveImageByName(imageName, {
@@ -21,14 +22,15 @@ const buildProductImage = (imageName, alt) => {
     displayHeight: 400,
     fit: 'cover',
     alt,
-    sizes: PRODUCT_IMAGE_SIZES
+    sizes: PRODUCT_IMAGE_SIZES,
+    quality: PRODUCT_IMAGE_QUALITY
   });
 
   if (attrs) {
     return attrs;
   }
 
-  const fallbackSrc = getImageByName(imageName, { width: 680, height: 400, fit: 'cover', format: 'auto', quality: 85 });
+  const fallbackSrc = getImageByName(imageName, { width: 680, height: 400, fit: 'cover', format: 'auto', quality: PRODUCT_IMAGE_QUALITY });
   return {
     src: fallbackSrc,
     url: fallbackSrc,
@@ -124,7 +126,8 @@ const offerData = {
                   displayWidth: 680,
                   displayHeight: 400,
                   fit: 'cover',
-                  sizes: PRODUCT_IMAGE_SIZES
+                  sizes: PRODUCT_IMAGE_SIZES,
+                  quality: PRODUCT_IMAGE_QUALITY
                 });
                 imgAttrs = strapiAttrs ?? {
                   src: imageUrl,

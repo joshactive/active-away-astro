@@ -8,6 +8,7 @@ let blogs = await getBlogs(8); // Get 8 most recent posts
 
 // Fallback to hardcoded data if Strapi fails or returns no data
 const BLOG_IMAGE_SIZES = '(max-width: 640px) calc(100vw - 5rem), (max-width: 1024px) calc(100vw - 8rem), 704px';
+const BLOG_IMAGE_QUALITY = 70;
 
 const buildBlogImage = (imageName, alt) => {
   const attrs = getResponsiveImageByName(imageName, {
@@ -15,14 +16,15 @@ const buildBlogImage = (imageName, alt) => {
     displayHeight: 256,
     fit: 'cover',
     alt,
-    sizes: BLOG_IMAGE_SIZES
+    sizes: BLOG_IMAGE_SIZES,
+    quality: BLOG_IMAGE_QUALITY
   });
 
   if (attrs) {
     return attrs;
   }
 
-  const fallbackSrc = getImageByName(imageName, { width: 704, height: 256, fit: 'cover', format: 'auto', quality: 85 });
+  const fallbackSrc = getImageByName(imageName, { width: 704, height: 256, fit: 'cover', format: 'auto', quality: BLOG_IMAGE_QUALITY });
   return {
     src: fallbackSrc,
     url: fallbackSrc,
@@ -135,7 +137,8 @@ console.log('📝 Blog Data:', blogData.blogs.map(b => b.title));
                   displayHeight: 256,
                   fit: 'cover',
                   sizes: BLOG_IMAGE_SIZES,
-                  alt: imageAlt
+                  alt: imageAlt,
+                  quality: BLOG_IMAGE_QUALITY
                 };
 
                 const strapiAttrs = getStrapiImageAttrs({ url: imageUrl, alt: imageAlt }, config);

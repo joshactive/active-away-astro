@@ -8,6 +8,7 @@ import { MapPin, Tag, Calendar } from 'lucide-react';
 let events = await getFutureEvents();
 
 const EVENT_IMAGE_SIZES = '(max-width: 640px) calc(100vw - 5rem), (max-width: 1024px) calc(100vw - 8rem), 402px';
+const EVENT_IMAGE_QUALITY = 70;
 
 const buildEventImage = (imageName, alt) => {
   const attrs = getResponsiveImageByName(imageName, {
@@ -15,22 +16,23 @@ const buildEventImage = (imageName, alt) => {
     displayHeight: 268,
     fit: 'cover',
     alt,
-    sizes: EVENT_IMAGE_SIZES
+    sizes: EVENT_IMAGE_SIZES,
+    quality: EVENT_IMAGE_QUALITY
   });
 
   if (attrs) {
     return attrs;
   }
 
-  const fallbackSrc = getImageByName(imageName, { width: 402, height: 268, fit: 'cover', format: 'auto', quality: 85 });
+  const fallbackSrc = getImageByName(imageName, { width: 402, height: 268, fit: 'cover', format: 'auto', quality: EVENT_IMAGE_QUALITY });
   return {
     src: fallbackSrc,
     url: fallbackSrc,
     width: 402,
     height: 268,
     alt,
-    loading: 'lazy',
-    sizes: EVENT_IMAGE_SIZES
+      loading: 'lazy',
+      sizes: EVENT_IMAGE_SIZES
   };
 };
 
@@ -128,7 +130,8 @@ if (!events || events.length === 0) {
                   displayWidth: 402,
                   displayHeight: 268,
                   fit: 'cover',
-                  sizes: EVENT_IMAGE_SIZES
+                  sizes: EVENT_IMAGE_SIZES,
+                  quality: EVENT_IMAGE_QUALITY
                 });
                 imgAttrs = strapiAttrs ?? {
                   src: imageUrl,

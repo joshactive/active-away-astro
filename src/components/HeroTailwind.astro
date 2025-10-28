@@ -35,7 +35,8 @@ if (homeData?.hero?.headerImage) {
       displayHeight: HERO_DESIGN_HEIGHT,
       fit: 'cover',
       alt: strapiHeroBg.alt || 'Hero background',
-      sizes: '100vw'
+      sizes: '100vw',
+      quality: 70
     });
     console.log('✅ Using Strapi image with responsive transforms');
   } else {
@@ -53,7 +54,8 @@ if (!heroBgAttrs) {
       displayHeight: HERO_DESIGN_HEIGHT,
       fit: 'cover',
       alt: 'Active Away - Tennis, Padel & Pickleball Holidays',
-      sizes: '100vw'
+      sizes: '100vw',
+      quality: 70
     }),
   };
   console.log('ℹ️  Using fallback hero background');

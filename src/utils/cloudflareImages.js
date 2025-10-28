@@ -181,7 +181,8 @@ export function getResponsiveImageAttrs(imageId, config = {}) {
     displayHeight,
     fit = 'cover',
     alt = '',
-    aspectRatio = 16 / 9
+    aspectRatio = 16 / 9,
+    quality = 85
   } = config;
 
   // Generate responsive widths based on display size (1x, 2x for retina)
@@ -204,10 +205,10 @@ export function getResponsiveImageAttrs(imageId, config = {}) {
     height: configs[0].height,
     fit,
     format: 'auto',
-    quality: 85
+    quality
   });
 
-  const srcset = generateSrcSet(imageId, configs, { fit, format: 'auto', quality: 85 });
+  const srcset = generateSrcSet(imageId, configs, { fit, format: 'auto', quality });
 
   // Generate sizes attribute (helps browser pick right image)
   const sizes = displayWidth 
@@ -329,7 +330,8 @@ export function getStrapiImageAttrs(strapiImage, config = {}) {
       displayWidth = 800,
       displayHeight,
       fit = 'cover',
-      alt = ''
+      alt = '',
+      quality = 85
     } = config;
     
     // Get base URL without variant
@@ -353,7 +355,7 @@ export function getStrapiImageAttrs(strapiImage, config = {}) {
         height: h.toString(),
         fit,
         format: 'auto',
-        quality: '85'
+        quality: quality.toString()
       });
       return `${baseUrl}/public?${params.toString()} ${w}w`;
     });
@@ -364,7 +366,7 @@ export function getStrapiImageAttrs(strapiImage, config = {}) {
       height: (displayHeight || Math.round(widths[0] / aspectRatio)).toString(),
       fit,
       format: 'auto',
-      quality: '85'
+      quality: quality.toString()
     });
     
     return {
