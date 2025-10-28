@@ -21,13 +21,26 @@ export const GET: APIRoute = async () => {
   });
 };
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   console.log('🔔 Newsletter API called');
   console.log('📨 Request method:', request.method);
   console.log('📨 Request URL:', request.url);
-  const WEBHOOK_URL = import.meta.env.NEWSLETTER_WEBHOOK_URL;
-  const TURNSTILE_SECRET = import.meta.env.TURNSTILE_SECRET_KEY;
-  const IS_DEV = import.meta.env.DEV;
+  const runtimeEnv = locals.runtime?.env || {};
+  const globalEnv = (globalThis as any)?.__env ?? (globalThis as any)?.ENV ?? {};
+  const WEBHOOK_URL = runtimeEnv.NEWSLETTER_WEBHOOK_URL 
+    || globalEnv.NEWSLETTER_WEBHOOK_URL 
+    || import.meta.env.NEWSLETTER_WEBHOOK_URL;
+  const TURNSTILE_SECRET = runtimeEnv.TURNSTILE_SECRET_KEY 
+    || globalEnv.TURNSTILE_SECRET_KEY 
+    || import.meta.env.TURNSTILE_SECRET_KEY;
+  const IS_DEV = runtimeEnv.DEV ?? globalEnv.DEV ?? import.meta.env.DEV;
+  console.log('[newsletter] env sources', {
+    runtimeKeys: Object.keys(runtimeEnv).filter(key => key.includes('NEWSLETTER') || key.includes('TURNSTILE')),
+    globalKeys: Object.keys(globalEnv).filter(key => key.includes('NEWSLETTER') || key.includes('TURNSTILE')),
+    hasWebhook: !!WEBHOOK_URL,
+    hasTurnstileSecret: !!TURNSTILE_SECRET,
+    isDev: IS_DEV
+  });
   
   if (!WEBHOOK_URL) {
     console.error('❌ NEWSLETTER_WEBHOOK_URL not configured');
@@ -243,4 +256,3 @@ export const POST: APIRoute = async ({ request }) => {
     });
   }
 };
-
