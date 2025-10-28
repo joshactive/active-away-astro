@@ -4,9 +4,24 @@ export const GET: APIRoute = async () => {
   const GOOGLE_API_KEY = import.meta.env.GOOGLE_PLACES_API_KEY;
   const PLACE_ID = import.meta.env.GOOGLE_PLACE_ID || 'ChIJ6aLvHHgPdkgR1oHhIDyNQtU';
 
+  // Debug logging
+  console.log('🔍 Environment check:', {
+    hasApiKey: !!GOOGLE_API_KEY,
+    apiKeyLength: GOOGLE_API_KEY?.length || 0,
+    apiKeyPrefix: GOOGLE_API_KEY?.substring(0, 10) || 'none',
+    placeId: PLACE_ID,
+    allEnvKeys: Object.keys(import.meta.env).filter(k => k.includes('GOOGLE'))
+  });
+
   if (!GOOGLE_API_KEY) {
     console.error('❌ Google Places API key not found');
-    return new Response(JSON.stringify({ error: 'API key not configured' }), {
+    console.error('Available env vars:', Object.keys(import.meta.env));
+    return new Response(JSON.stringify({ 
+      error: 'API key not configured',
+      debug: {
+        availableVars: Object.keys(import.meta.env).filter(k => !k.includes('SECRET'))
+      }
+    }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
