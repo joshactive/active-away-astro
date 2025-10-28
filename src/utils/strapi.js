@@ -916,3 +916,82 @@ export async function getBlogs(limit = 8) {
     return [];
   }
 }
+
+/**
+ * Fetch navigation menu data from Strapi
+ * @returns {Promise<Object>} Navigation menu data
+ */
+export async function getNavigationMenu() {
+  try {
+    const data = await fetchAPI('/navigation-menu?populate[menuItems][populate]=*&populate[datesMegaMenuItems][populate]=image&populate[racketsMegaMenuItems][populate]=image&populate[aboutMegaMenuItems][populate]=image');
+    
+    if (!data || !data.data) {
+      return null;
+    }
+
+    const navData = data.data.attributes || data.data;
+    
+    // Parse main menu items
+    const menuItems = navData.menuItems?.map(item => ({
+      id: item.id,
+      label: item.label || item.text,
+      href: item.href || item.url,
+      isActive: item.isActive || false,
+      hasMegaMenu: item.hasMegaMenu || false,
+      megaMenuId: item.megaMenuId || null
+    })) || [];
+
+    // Parse mega menu items for Dates dropdown
+    const datesMegaMenuItems = navData.datesMegaMenuItems?.map(item => ({
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      href: item.href || item.url,
+      image: item.image ? getStrapiImageData(item.image) : null,
+      gradient: item.gradient || 'from-purple-500 to-purple-600',
+      menuType: 'dates'
+    })) || [];
+
+    // Parse mega menu items for Rackets dropdown
+    const racketsMegaMenuItems = navData.racketsMegaMenuItems?.map(item => ({
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      href: item.href || item.url,
+      image: item.image ? getStrapiImageData(item.image) : null,
+      gradient: item.gradient || 'from-orange-500 to-orange-600',
+      menuType: 'rackets'
+    })) || [];
+
+    // Parse mega menu items for About Us dropdown
+    const aboutMegaMenuItems = navData.aboutMegaMenuItems?.map(item => ({
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      href: item.href || item.url,
+      image: item.image ? getStrapiImageData(item.image) : null,
+      gradient: item.gradient || 'from-blue-500 to-indigo-600',
+      menuType: 'about'
+    })) || [];
+
+    return {
+      menuItems,
+      datesMegaMenuItems,
+      racketsMegaMenuItems,
+      aboutMegaMenuItems,
+      megaMenuTitle: navData.megaMenuTitle || 'Explore all our amazing holiday dates',
+      megaMenuCTA: navData.megaMenuCTA || 'Browse All Dates',
+      megaMenuCTAUrl: navData.megaMenuCTAUrl || '#all-dates',
+      racketsMegaMenuTitle: navData.racketsMegaMenuTitle || 'Explore our racket sports collection',
+      racketsMegaMenuCTA: navData.racketsMegaMenuCTA || 'Browse All Rackets',
+      racketsMegaMenuCTAUrl: navData.racketsMegaMenuCTAUrl || '#all-rackets',
+      aboutMegaMenuTitle: navData.aboutMegaMenuTitle || 'Learn more about Active Away',
+      aboutMegaMenuCTA: navData.aboutMegaMenuCTA || 'Get in Touch',
+      aboutMegaMenuCTAUrl: navData.aboutMegaMenuCTAUrl || '#contact'
+    };
+
+  } catch (error) {
+    console.error('❌ Error fetching navigation menu:', error);
+    return null;
+  }
+}
