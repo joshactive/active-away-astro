@@ -234,8 +234,26 @@ export function extractImageId(url) {
   if (!url) return null;
   
   // Match pattern: /imagedelivery/{hash}/{imageId}/...
+  // Handles both:
+  // - https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/3b40f4d8-c0c6-417f-aeef-343af3a69000/public
+  // - https://imagedelivery.net/-aT8Z2F9gGvZ9fdofZcCaQ/activeaway.com/Sani-Beach-Tennis-Courts.jpg/public
   const match = url.match(/\/imagedelivery\/[^/]+\/([^/]+)/);
-  return match ? match[1] : null;
+  
+  if (!match) return null;
+  
+  const extracted = match[1];
+  
+  // Check if extracted value is a UUID/hash (alphanumeric with dashes)
+  // UUIDs are like: 3b40f4d8-c0c6-417f-aeef-343af3a69000
+  const isUUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(extracted);
+  
+  if (isUUID) {
+    return extracted;
+  }
+  
+  // If it's not a UUID, it might be a path like "activeaway.com/Sani-Beach-Tennis-Courts.jpg"
+  // In this case, we should return null and use the original URL
+  return null;
 }
 
 /**
