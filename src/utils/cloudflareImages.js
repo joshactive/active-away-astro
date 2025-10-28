@@ -257,6 +257,28 @@ export function extractImageId(url) {
 }
 
 /**
+ * Check if URL is a Cloudflare Images URL
+ * @param {string} url - URL to check
+ * @returns {boolean} True if it's a Cloudflare Images URL
+ */
+function isCloudflareImageUrl(url) {
+  if (!url) return false;
+  return url.includes('/imagedelivery/') || url.includes('cdn-cgi/imagedelivery');
+}
+
+/**
+ * Get base Cloudflare URL without variant or query params
+ * @param {string} url - Full Cloudflare image URL
+ * @returns {string} Base URL without /variant or ?params
+ */
+function getCloudflareBaseUrl(url) {
+  // Remove variant (like /public) and any query params
+  // Match everything up to and including the image ID or path
+  const match = url.match(/(.*\/imagedelivery\/[^/]+\/[^/]+)/);
+  return match ? match[1] : url.split('?')[0].replace(/\/[^/]+$/, '');
+}
+
+/**
  * Helper to get optimized Strapi image attributes
  * @param {Object} strapiImage - Strapi image object with url property
  * @param {Object} config - Same as getResponsiveImageAttrs config
@@ -267,11 +289,68 @@ export function getStrapiImageAttrs(strapiImage, config = {}) {
     return null;
   }
 
-  // Extract Cloudflare image ID from Strapi URL
-  const imageId = extractImageId(strapiImage.url);
+  const url = strapiImage.url;
+  
+  // Check if it's a Cloudflare image (either UUID or path-based)
+  if (isCloudflareImageUrl(url)) {
+    const {
+      displayWidth = 800,
+      displayHeight,
+      fit = 'cover',
+      alt = ''
+    } = config;
+    
+    // Get base URL without variant
+    const baseUrl = getCloudflareBaseUrl(url);
+    
+    // Calculate heights based on aspect ratio if not provided
+    const aspectRatio = displayHeight ? displayWidth / displayHeight : 16 / 9;
+    
+    // Generate responsive widths (1x, 1.5x, 2x)
+    const widths = [
+      displayWidth,
+      Math.round(displayWidth * 1.5),
+      Math.round(displayWidth * 2)
+    ];
+    
+    // Build srcset
+    const srcsetParts = widths.map(w => {
+      const h = displayHeight || Math.round(w / aspectRatio);
+      const params = new URLSearchParams({
+        width: w.toString(),
+        height: h.toString(),
+        fit,
+        format: 'auto',
+        quality: '85'
+      });
+      return `${baseUrl}/public?${params.toString()} ${w}w`;
+    });
+    
+    // Build src (use 1x size)
+    const srcParams = new URLSearchParams({
+      width: widths[0].toString(),
+      height: (displayHeight || Math.round(widths[0] / aspectRatio)).toString(),
+      fit,
+      format: 'auto',
+      quality: '85'
+    });
+    
+    return {
+      src: `${baseUrl}/public?${srcParams.toString()}`,
+      srcset: srcsetParts.join(', '),
+      sizes: config.sizes || `(max-width: ${displayWidth}px) 100vw, ${displayWidth}px`,
+      width: widths[0],
+      height: displayHeight || Math.round(widths[0] / aspectRatio),
+      alt: strapiImage.alt || alt,
+      loading: 'lazy'
+    };
+  }
+
+  // Extract UUID for legacy support
+  const imageId = extractImageId(url);
   
   if (imageId) {
-    // Use our responsive helper for Cloudflare images
+    // Use our responsive helper for UUID-based Cloudflare images
     return getResponsiveImageAttrs(imageId, {
       alt: strapiImage.alt || config.alt || '',
       ...config
@@ -280,7 +359,7 @@ export function getStrapiImageAttrs(strapiImage, config = {}) {
 
   // Fallback for non-Cloudflare images
   return {
-    src: strapiImage.url,
+    src: url,
     width: strapiImage.width,
     height: strapiImage.height,
     alt: strapiImage.alt || config.alt || '',

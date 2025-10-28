@@ -1,7 +1,7 @@
 ---
 // Events section component for Active Away - Tailwind CSS Version
 import { getFutureEvents } from '../utils/strapi.js';
-import { getImageByName } from '../utils/cloudflareImages.js';
+import { getImageByName, getStrapiImageAttrs, extractImageId } from '../utils/cloudflareImages.js';
 import { MapPin, Tag, Calendar } from 'lucide-react';
 
 // Fetch future events from Strapi
@@ -89,18 +89,35 @@ if (!events || events.length === 0) {
       <div class="relative">
         <!-- Cards Container -->
         <div id="eventsContainer" class="flex flex-row overflow-x-auto lg:overflow-visible snap-x snap-mandatory lg:snap-none justify-start lg:justify-between items-stretch gap-4 sm:gap-6 lg:gap-6 pb-4 lg:pb-0 pl-4 sm:pl-10 lg:pl-0 transition-transform duration-500 ease-out">
-          {events.map((event, index) => (
+          {events.map((event, index) => {
+            // Optimize image if it's from Cloudflare
+            const imgAttrs = getStrapiImageAttrs({ url: event.image, alt: event.imageAlt || event.title }, {
+              displayWidth: 402, // Approximate display width
+              displayHeight: 268, // h-48 to h-64 average
+              fit: 'cover'
+            }) || {
+              src: event.image,
+              alt: event.imageAlt || event.title,
+              loading: 'lazy'
+            };
+            
+            return (
             <div class="event-card flex-shrink-0 w-[calc(100vw-5rem)] sm:w-[calc(100vw-8rem)] lg:w-[calc((100%-3rem)/3)] snap-start relative" data-index={index}>
-            <!-- Card Image -->
+            {/* Card Image */}
             <div class="relative overflow-hidden rounded-2xl bg-gray-900 z-0">
               <img 
-                src={event.image} 
-                alt={event.imageAlt || event.title}
+                src={imgAttrs.src}
+                srcset={imgAttrs.srcset}
+                sizes={imgAttrs.sizes || '(max-width: 640px) calc(100vw - 5rem), (max-width: 1024px) calc(100vw - 8rem), 402px'}
+                width={imgAttrs.width}
+                height={imgAttrs.height}
+                alt={imgAttrs.alt}
+                loading={imgAttrs.loading}
                 class="w-full h-48 sm:h-56 lg:h-64 object-cover" 
               />
             </div>
             
-            <!-- Card Content -->
+            {/* Card Content */}
             <div class="relative -mt-6 sm:-mt-8 lg:-mt-12 z-20 px-3 sm:px-6 pb-3 sm:pb-6">
               <div class="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 shadow-xl flex flex-col">
                 <h3 class="text-base sm:text-xl lg:text-2xl font-playfair font-bold text-gray-900 mb-2 sm:mb-4 leading-tight">
@@ -108,19 +125,19 @@ if (!events || events.length === 0) {
                 </h3>
                 
                 <div class="space-y-1.5 sm:space-y-3 mb-3 sm:mb-6">
-                  <!-- Country -->
+                  {/* Country */}
                   <div class="flex items-center gap-2">
                     <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" client:load />
                     <span class="text-sm sm:text-base font-inter text-gray-700">{event.location}</span>
                   </div>
                   
-                  <!-- Event Type/Product -->
+                  {/* Event Type/Product */}
                   <div class="flex items-center gap-2">
                     <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" client:load />
                     <span class="text-sm sm:text-base font-inter text-gray-700">{event.type}</span>
                   </div>
                   
-                  <!-- Date -->
+                  {/* Date */}
                   <div class="flex items-center gap-2">
                     <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" client:load />
                     <span class="text-sm sm:text-base font-inter text-gray-700">{event.date}</span>
@@ -141,7 +158,8 @@ if (!events || events.length === 0) {
               </div>
             </div>
           </div>
-        ))}
+            );
+          })}
           
           <!-- View More Card -->
           <a href="/events" class="event-card flex-shrink-0 w-[calc(100vw-5rem)] sm:w-[calc(100vw-8rem)] lg:w-[calc((100%-3rem)/3)] snap-start relative group" data-index={events.length}>
