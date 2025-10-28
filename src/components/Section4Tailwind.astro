@@ -1,6 +1,6 @@
 ---
 // Section 4 component for Active Away - Tailwind CSS Version
-import { getImageByName } from '../utils/cloudflareImages.js';
+import { getImageByName, getResponsiveImageByName, getStrapiImageAttrs } from '../utils/cloudflareImages.js';
 
 // Accept homeData as prop (fetched once in index.astro)
 interface Props {
@@ -10,19 +10,58 @@ interface Props {
 const { homeData } = Astro.props;
 
 // Get dynamic image - Use Strapi with fallback
-const section4Image = homeData?.jamieMurray?.image || { 
-  url: getImageByName('section-4-bg', { size: 'public' }), 
-  alt: 'Jamie Murray Tennis Programme', 
-  width: 1920, 
-  height: 800 
+const SECTION4_SIZES = '100vw';
+
+const buildSectionImage = (imageName, alt) => {
+  const attrs = getResponsiveImageByName(imageName, {
+    displayWidth: 1920,
+    displayHeight: 800,
+    fit: 'cover',
+    alt,
+    sizes: SECTION4_SIZES
+  });
+
+  if (attrs) {
+    return attrs;
+  }
+
+  const fallbackSrc = getImageByName(imageName, { width: 1920, height: 800, fit: 'cover', format: 'auto', quality: 85 });
+  return {
+    src: fallbackSrc,
+    url: fallbackSrc,
+    width: 1920,
+    height: 800,
+    alt,
+    loading: 'lazy',
+    sizes: SECTION4_SIZES
+  };
 };
 
+const section4Image = homeData?.jamieMurray?.image
+  ? getStrapiImageAttrs(homeData.jamieMurray.image, {
+      displayWidth: 1920,
+      displayHeight: 800,
+      fit: 'cover',
+      alt: homeData.jamieMurray.image.alt || 'Jamie Murray Tennis Programme',
+      sizes: SECTION4_SIZES
+    })
+  : buildSectionImage('section-4-bg', 'Jamie Murray Tennis Programme');
+
 // Debug: Log the URL being generated
-console.log('Section 4 Image URL:', section4Image.url);
+console.log('Section 4 Image URL:', section4Image.url || section4Image.src);
 ---
 
 <section class="w-full bg-white py-0">
   <div class="w-full">
-    <img src={section4Image.url} alt={section4Image.alt || 'Jamie Murray Tennis Programme'} width={section4Image.width} height={section4Image.height} class="w-full h-auto object-cover object-center" loading="lazy" />
+    <img 
+      src={section4Image.src || section4Image.url} 
+      {...(section4Image.srcset && { srcset: section4Image.srcset })}
+      sizes={section4Image.sizes || SECTION4_SIZES}
+      width={section4Image.width || 1920}
+      height={section4Image.height || 800}
+      alt={section4Image.alt || 'Jamie Murray Tennis Programme'}
+      loading={section4Image.loading || 'lazy'}
+      class="w-full h-auto object-cover object-center" 
+    />
   </div>
 </section>

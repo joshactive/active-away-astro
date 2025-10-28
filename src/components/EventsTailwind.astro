@@ -1,20 +1,42 @@
 ---
 // Events section component for Active Away - Tailwind CSS Version
 import { getFutureEvents } from '../utils/strapi.js';
-import { getImageByName, getStrapiImageAttrs, extractImageId } from '../utils/cloudflareImages.js';
+import { getImageByName, getResponsiveImageByName, getStrapiImageAttrs } from '../utils/cloudflareImages.js';
 import { MapPin, Tag, Calendar } from 'lucide-react';
 
 // Fetch future events from Strapi
 let events = await getFutureEvents();
 
+const EVENT_IMAGE_SIZES = '(max-width: 640px) calc(100vw - 5rem), (max-width: 1024px) calc(100vw - 8rem), 402px';
+
+const buildEventImage = (imageName, alt) => {
+  const attrs = getResponsiveImageByName(imageName, {
+    displayWidth: 402,
+    displayHeight: 268,
+    fit: 'cover',
+    alt,
+    sizes: EVENT_IMAGE_SIZES
+  });
+
+  if (attrs) {
+    return attrs;
+  }
+
+  const fallbackSrc = getImageByName(imageName, { width: 402, height: 268, fit: 'cover', format: 'auto', quality: 85 });
+  return {
+    src: fallbackSrc,
+    url: fallbackSrc,
+    width: 402,
+    height: 268,
+    alt,
+    loading: 'lazy',
+    sizes: EVENT_IMAGE_SIZES
+  };
+};
+
 // Fallback to hardcoded data if Strapi fails or returns no data
 if (!events || events.length === 0) {
   console.warn('⚠️  Using fallback events data');
-  
-  // Get dynamic image URLs for fallback
-  const event1Image = getImageByName('event-1', { size: 'public' });
-  const event2Image = getImageByName('event-2', { size: 'public' });
-  const event3Image = getImageByName('event-3', { size: 'public' });
   
   events = [
     {
@@ -24,7 +46,7 @@ if (!events || events.length === 0) {
       type: "Adult Weekend Tennis Clinic",
       date: "Sat 01 - Sun 02 November 2025",
       amount: "£218",
-      image: event1Image,
+      image: buildEventImage('event-1', 'Adult Tennis Holiday - 5* Sani Beach Hotel'),
       imageAlt: "Tennis event",
     },
     {
@@ -34,7 +56,7 @@ if (!events || events.length === 0) {
       type: "Adult Weekend Tennis Clinic",
       date: "Sat 01 - Sun 02 November 2025",
       amount: "£218",
-      image: event2Image,
+      image: buildEventImage('event-2', 'Adult Tennis Holiday - 5* Sani Beach Hotel'),
       imageAlt: "Tennis event",
     },
     {
@@ -44,7 +66,7 @@ if (!events || events.length === 0) {
       type: "Adult Weekend Tennis Clinic",
       date: "Sat 01 - Sun 02 November 2025",
       amount: "£218",
-      image: event3Image,
+      image: buildEventImage('event-3', 'Adult Tennis Holiday - 5* Sani Beach Hotel'),
       imageAlt: "Tennis event",
     }
   ];
@@ -90,29 +112,50 @@ if (!events || events.length === 0) {
         <!-- Cards Container -->
         <div id="eventsContainer" class="flex flex-row overflow-x-auto lg:overflow-visible snap-x snap-mandatory lg:snap-none justify-start lg:justify-between items-stretch gap-4 sm:gap-6 lg:gap-6 pb-4 lg:pb-0 pl-4 sm:pl-10 lg:pl-0 transition-transform duration-500 ease-out">
           {events.map((event, index) => {
-            // Optimize image if it's from Cloudflare
-            const imgAttrs = getStrapiImageAttrs({ url: event.image, alt: event.imageAlt || event.title }, {
-              displayWidth: 402, // Approximate display width
-              displayHeight: 268, // h-48 to h-64 average
-              fit: 'cover'
-            }) || {
-              src: event.image,
-              alt: event.imageAlt || event.title,
-              loading: 'lazy'
-            };
-            
+            const imageAlt = event.image?.alt || event.imageAlt || event.title;
+            let imgAttrs;
+
+            if (event.image?.src) {
+              imgAttrs = {
+                ...event.image,
+                alt: event.image.alt || imageAlt,
+                sizes: event.image.sizes || EVENT_IMAGE_SIZES
+              };
+            } else {
+              const imageUrl = typeof event.image === 'string' ? event.image : event.image?.url;
+              if (imageUrl) {
+                const strapiAttrs = getStrapiImageAttrs({ url: imageUrl, alt: imageAlt }, {
+                  displayWidth: 402,
+                  displayHeight: 268,
+                  fit: 'cover',
+                  sizes: EVENT_IMAGE_SIZES
+                });
+                imgAttrs = strapiAttrs ?? {
+                  src: imageUrl,
+                  url: imageUrl,
+                  alt: imageAlt,
+                  width: 402,
+                  height: 268,
+                  loading: 'lazy',
+                  sizes: EVENT_IMAGE_SIZES
+                };
+              } else {
+                imgAttrs = buildEventImage('event-1', imageAlt);
+              }
+            }
+
             return (
             <div class="event-card flex-shrink-0 w-[calc(100vw-5rem)] sm:w-[calc(100vw-8rem)] lg:w-[calc((100%-3rem)/3)] snap-start relative" data-index={index}>
             {/* Card Image */}
             <div class="relative overflow-hidden rounded-2xl bg-gray-900 z-0">
               <img 
                 src={imgAttrs.src}
-                srcset={imgAttrs.srcset}
-                sizes={imgAttrs.sizes || '(max-width: 640px) calc(100vw - 5rem), (max-width: 1024px) calc(100vw - 8rem), 402px'}
-                width={imgAttrs.width}
-                height={imgAttrs.height}
-                alt={imgAttrs.alt}
-                loading={imgAttrs.loading}
+                {...(imgAttrs.srcset && { srcset: imgAttrs.srcset })}
+                sizes={imgAttrs.sizes || EVENT_IMAGE_SIZES}
+                width={imgAttrs.width || 402}
+                height={imgAttrs.height || 268}
+                alt={imgAttrs.alt || imageAlt}
+                loading={imgAttrs.loading || 'lazy'}
                 class="w-full h-48 sm:h-56 lg:h-64 object-cover" 
               />
             </div>
@@ -120,7 +163,7 @@ if (!events || events.length === 0) {
             {/* Card Content */}
             <div class="relative -mt-6 sm:-mt-8 lg:-mt-12 z-20 px-3 sm:px-6 pb-3 sm:pb-6">
               <div class="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 shadow-xl flex flex-col">
-                <h3 class="text-base sm:text-xl lg:text-2xl font-playfair font-bold text-gray-900 mb-2 sm:mb-4 leading-tight">
+                <h3 class="text-base sm:text-xl lg:text-2xl font-playfair font-bold text-gray-900 mb-2 sm:mb-4 leading-tight line-clamp-2">
                   {event.title}
                 </h3>
                 

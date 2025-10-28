@@ -53,9 +53,9 @@ Square logos: 400x400px  (1:1 ratio)
 - **Desktop** (≥ 1024px): `h-28` (112px)
 
 ### **Grid Layout**
-- **Mobile**: 2 columns
-- **Tablet**: 3 columns
-- **Desktop**: 5 columns
+- **Mobile**: 2 columns (4 partners visible - partner 2 is hidden)
+- **Tablet**: 3 columns (all 5 partners visible)
+- **Desktop**: 5 columns (all 5 partners visible)
 
 ### **Visual Effects**
 ```css

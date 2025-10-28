@@ -1,6 +1,6 @@
 ---
 // Stories of Hope section component for Active Away - Tailwind CSS Version
-import { getImageByName } from '../utils/cloudflareImages.js';
+import { getImageByName, getResponsiveImageByName, getStrapiImageAttrs } from '../utils/cloudflareImages.js';
 
 // Accept homeData as prop (fetched once in index.astro)
 interface Props {
@@ -25,6 +25,30 @@ try {
 }
 
 // Limit reviews: 4 for all devices
+const buildAvatarAttrs = (imageName, alt = 'Happy customer review') => {
+  const attrs = getResponsiveImageByName(imageName, {
+    displayWidth: 80,
+    displayHeight: 80,
+    fit: 'cover',
+    alt,
+    sizes: '(max-width: 640px) 64px, 80px'
+  });
+
+  if (attrs) {
+    return attrs;
+  }
+
+  const fallbackSrc = getImageByName(imageName, { width: 80, height: 80, fit: 'cover', format: 'auto', quality: 85 });
+  return {
+    src: fallbackSrc,
+    url: fallbackSrc,
+    width: 80,
+    height: 80,
+    alt,
+    loading: 'lazy'
+  };
+};
+
 const allReviews = googleReviews.length > 0 
   ? googleReviews.slice(0, 4)
   : homeData?.stories?.testimonials?.length > 0 
@@ -36,7 +60,7 @@ const allReviews = googleReviews.length > 0
           date: "04/11/2025",
           rating: 5,
           text: "It was great when I happened to come across the store's products while browsing the web. My child really loves this toy. He looks so excited...",
-          avatar: { url: getImageByName('story-1', { size: 'public' }) }
+          avatar: buildAvatarAttrs('story-1')
         },
         {
           id: 2,
@@ -44,7 +68,7 @@ const allReviews = googleReviews.length > 0
           date: "04/11/2025",
           rating: 5,
           text: "It was great when I happened to come across the store's products while browsing the web. My child really loves this toy. He looks so excited...",
-          avatar: { url: getImageByName('story-2', { size: 'public' }) }
+          avatar: buildAvatarAttrs('story-2')
         },
         {
           id: 3,
@@ -52,7 +76,7 @@ const allReviews = googleReviews.length > 0
           date: "04/11/2025",
           rating: 5,
           text: "It was great when I happened to come across the store's products while browsing the web. My child really loves this toy. He looks so excited...",
-          avatar: { url: getImageByName('story-3', { size: 'public' }) }
+          avatar: buildAvatarAttrs('story-3')
         },
         {
           id: 4,
@@ -60,7 +84,7 @@ const allReviews = googleReviews.length > 0
           date: "04/11/2025",
           rating: 5,
           text: "It was great when I happened to come across the store's products while browsing the web. My child really loves this toy. He looks so excited...",
-          avatar: { url: getImageByName('story-4', { size: 'public' }) }
+          avatar: buildAvatarAttrs('story-4')
         },
         {
           id: 5,
@@ -68,7 +92,7 @@ const allReviews = googleReviews.length > 0
           date: "04/11/2025",
           rating: 5,
           text: "It was great when I happened to come across the store's products while browsing the web. My child really loves this toy. He looks so excited...",
-          avatar: { url: getImageByName('story-5', { size: 'public' }) }
+          avatar: buildAvatarAttrs('story-5')
         },
         {
           id: 6,
@@ -76,7 +100,7 @@ const allReviews = googleReviews.length > 0
           date: "04/11/2025",
           rating: 5,
           text: "It was great when I happened to come across the store's products while browsing the web. My child really loves this toy. He looks so excited...",
-          avatar: { url: getImageByName('story-6', { size: 'public' }) }
+          avatar: buildAvatarAttrs('story-6')
         },
         {
           id: 4,
@@ -84,15 +108,56 @@ const allReviews = googleReviews.length > 0
           date: "04/11/2025",
           rating: 5,
           text: "It was great when I happened to come across the store's products while browsing the web. My child really loves this toy. He looks so excited...",
-          avatar: { url: getImageByName('story-4', { size: 'public' }) }
+          avatar: buildAvatarAttrs('story-4')
         }
       ];
+
+const googleIconImage = homeData?.stories?.googleIcon
+  ? getStrapiImageAttrs(homeData.stories.googleIcon, {
+      displayWidth: 32,
+      displayHeight: 32,
+      fit: 'contain',
+      alt: 'Google',
+      sizes: '32px'
+    })
+  : (getResponsiveImageByName('google-icon', {
+      displayWidth: 32,
+      displayHeight: 32,
+      fit: 'contain',
+      alt: 'Google',
+      sizes: '32px'
+    }) ?? (() => {
+      const fallbackSrc = getImageByName('google-icon', { width: 32, height: 32, fit: 'contain', format: 'auto', quality: 85 });
+      return { src: fallbackSrc, url: fallbackSrc, width: 32, height: 32, alt: 'Google', loading: 'lazy' };
+    })());
+
+const normalizedReviews = allReviews.map((review, index) => {
+  // If avatar already has responsive attrs, keep it
+  if (review.avatar?.src || review.avatar?.url) {
+    if (review.avatar?.url && !review.avatar.src) {
+      const attrs = getStrapiImageAttrs(review.avatar, {
+        displayWidth: 80,
+        displayHeight: 80,
+        fit: 'cover',
+        alt: review.avatar.alt || review.name || 'Happy customer review',
+        sizes: '(max-width: 640px) 64px, 80px'
+      });
+      return { ...review, avatar: attrs ?? review.avatar };
+    }
+    return review;
+  }
+
+  return {
+    ...review,
+    avatar: buildAvatarAttrs(`story-${(index % 6) + 1}`, review.name || 'Happy customer review')
+  };
+});
 
 const storiesData = {
   title: homeData?.stories?.title || "Stories of Hope",
   subtitle: homeData?.stories?.subtitle || "Real people, real transformation",
-  reviews: allReviews,
-  googleIcon: homeData?.stories?.googleIcon?.url || getImageByName('google-icon', { size: 'public' })
+  reviews: normalizedReviews,
+  googleIcon: googleIconImage
 };
 
 // Debug: Log the review count
@@ -118,12 +183,14 @@ console.log('Stories Reviews:', storiesData.reviews.length);
           <!-- Google Logo -->
           <div class="absolute top-4 right-4">
             <img 
-              src={typeof storiesData.googleIcon === 'string' ? storiesData.googleIcon : storiesData.googleIcon?.url} 
-              alt="Google" 
+              src={storiesData.googleIcon?.src || storiesData.googleIcon?.url} 
+              {...(storiesData.googleIcon?.srcset && { srcset: storiesData.googleIcon.srcset })}
+              {...(storiesData.googleIcon?.sizes && { sizes: storiesData.googleIcon.sizes })}
+              alt={storiesData.googleIcon?.alt || 'Google'} 
               width={storiesData.googleIcon?.width || 32} 
               height={storiesData.googleIcon?.height || 32} 
               class="w-6 h-6 sm:w-8 sm:h-8" 
-              loading="lazy" 
+              loading={storiesData.googleIcon?.loading || 'lazy'} 
             />
           </div>
           
@@ -150,7 +217,7 @@ console.log('Stories Reviews:', storiesData.reviews.length);
               {testimonial.text}
             </p>
             <button 
-              class="read-more-btn mt-2 text-xs sm:text-sm font-inter font-semibold text-[#ad986c] hover:text-[#8a7454] transition-colors"
+              class="read-more-btn mt-2 text-xs sm:text-sm font-inter font-semibold text-[#ad986c] hover:text-[#8a7454] transition-colors hidden"
               data-review-id={index}
               type="button"
             >
@@ -167,6 +234,36 @@ console.log('Stories Reviews:', storiesData.reviews.length);
   document.addEventListener('DOMContentLoaded', () => {
     const readMoreButtons = document.querySelectorAll('.read-more-btn');
     
+    // Function to check if text is truncated and show/hide button accordingly
+    function checkTruncation() {
+      readMoreButtons.forEach(button => {
+        const reviewId = button.getAttribute('data-review-id');
+        const reviewText = document.querySelector(`.review-text[data-review-id="${reviewId}"]`);
+        
+        if (reviewText) {
+          // Check if content is truncated (scrollHeight > clientHeight)
+          const isTruncated = reviewText.scrollHeight > reviewText.clientHeight;
+          
+          if (isTruncated) {
+            button.classList.remove('hidden');
+          } else {
+            button.classList.add('hidden');
+          }
+        }
+      });
+    }
+    
+    // Check on load
+    checkTruncation();
+    
+    // Check on resize (debounced)
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(checkTruncation, 250);
+    });
+    
+    // Handle click to expand/collapse
     readMoreButtons.forEach(button => {
       button.addEventListener('click', () => {
         const reviewId = button.getAttribute('data-review-id');

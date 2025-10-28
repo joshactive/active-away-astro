@@ -1,6 +1,6 @@
 ---
 // Thriving Community section component for Active Away - Tailwind CSS Version
-import { getImageByName } from '../utils/cloudflareImages.js';
+import { getImageByName, getResponsiveImageByName, getStrapiImageAttrs } from '../utils/cloudflareImages.js';
 
 // Accept homeData as prop (fetched once in index.astro)
 interface Props {
@@ -9,20 +9,72 @@ interface Props {
 
 const { homeData } = Astro.props;
 
+const COMMUNITY_TOP_SIZES = '(max-width: 1024px) 100vw, 50vw';
+const COMMUNITY_BOTTOM_SIZES = '(max-width: 1024px) 50vw, 25vw';
+
+const buildCommunityImage = (imageName, alt, width, height, sizes) => {
+  const attrs = getResponsiveImageByName(imageName, {
+    displayWidth: width,
+    displayHeight: height,
+    fit: 'cover',
+    alt,
+    sizes
+  });
+
+  if (attrs) {
+    return attrs;
+  }
+
+  const fallbackSrc = getImageByName(imageName, { width, height, fit: 'cover', format: 'auto', quality: 85 });
+  return {
+    src: fallbackSrc,
+    url: fallbackSrc,
+    width,
+    height,
+    alt,
+    loading: 'lazy',
+    sizes
+  };
+};
+
 const communityData = {
   title: homeData?.thrivingCommunity?.title || "Our Thriving Community",
   description: homeData?.thrivingCommunity?.description || "Active Away would be nothing without our thriving community. We talk a lot about being part of 'The Active Away Family' and have built a completely free online platform that all event attendees can join. Our free membership offers exclusive benefits and an online forum to discuss your next event.",
-  bulletPoints: homeData?.thrivingCommunity?.bulletPoints?.length > 0 ? homeData.thrivingCommunity.bulletPoints : Array(8).fill("Lorem Ipsum"),
+  bulletPoints: homeData?.thrivingCommunity?.bulletPoints?.length > 0 ? homeData.thrivingCommunity.bulletPoints.slice(0, 4) : Array(4).fill("Lorem Ipsum"),
   buttonText: homeData?.thrivingCommunity?.buttonText || "Learn More",
   images: {
-    top: homeData?.thrivingCommunity?.images?.bg || { url: getImageByName('thriving-community-bg', { size: 'public' }), alt: 'Tennis community', width: 1200, height: 600 },
-    bottomLeft: homeData?.thrivingCommunity?.images?.image2 || { url: getImageByName('thriving-community-2', { size: 'public' }), alt: 'Tennis training', width: 600, height: 800 },
-    bottomRight: homeData?.thrivingCommunity?.images?.image1 || { url: getImageByName('thriving-community-1', { size: 'public' }), alt: 'Tennis group', width: 600, height: 800 }
+    top: homeData?.thrivingCommunity?.images?.bg
+      ? getStrapiImageAttrs(homeData.thrivingCommunity.images.bg, {
+          displayWidth: 1200,
+          displayHeight: 600,
+          fit: 'cover',
+          alt: homeData.thrivingCommunity.images.bg.alt || 'Tennis community',
+          sizes: COMMUNITY_TOP_SIZES
+        })
+      : buildCommunityImage('thriving-community-bg', 'Tennis community', 1200, 600, COMMUNITY_TOP_SIZES),
+    bottomLeft: homeData?.thrivingCommunity?.images?.image2
+      ? getStrapiImageAttrs(homeData.thrivingCommunity.images.image2, {
+          displayWidth: 600,
+          displayHeight: 800,
+          fit: 'cover',
+          alt: homeData.thrivingCommunity.images.image2.alt || 'Tennis training',
+          sizes: COMMUNITY_BOTTOM_SIZES
+        })
+      : buildCommunityImage('thriving-community-2', 'Tennis training', 600, 800, COMMUNITY_BOTTOM_SIZES),
+    bottomRight: homeData?.thrivingCommunity?.images?.image1
+      ? getStrapiImageAttrs(homeData.thrivingCommunity.images.image1, {
+          displayWidth: 600,
+          displayHeight: 800,
+          fit: 'cover',
+          alt: homeData.thrivingCommunity.images.image1.alt || 'Tennis group',
+          sizes: COMMUNITY_BOTTOM_SIZES
+        })
+      : buildCommunityImage('thriving-community-1', 'Tennis group', 600, 800, COMMUNITY_BOTTOM_SIZES)
   }
 };
 
 // Debug: Log the URLs being generated
-console.log('Thriving Community Images URLs:', { top: communityData.images.top.url, bottomLeft: communityData.images.bottomLeft.url, bottomRight: communityData.images.bottomRight.url });
+console.log('Thriving Community Images URLs:', { top: communityData.images.top.url || communityData.images.top.src, bottomLeft: communityData.images.bottomLeft.url || communityData.images.bottomLeft.src, bottomRight: communityData.images.bottomRight.url || communityData.images.bottomRight.src });
 ---
 
 <section class="w-full bg-gray-50 py-12 sm:py-16 lg:py-24">
@@ -33,16 +85,43 @@ console.log('Thriving Community Images URLs:', { top: communityData.images.top.u
         <div class="space-y-3 sm:space-y-4 lg:space-y-6">
           <!-- Top Image -->
           <div class="relative overflow-hidden rounded-2xl bg-gray-900">
-            <img src={communityData.images.top.url} alt={communityData.images.top.alt || 'Tennis player'} width={communityData.images.top.width} height={communityData.images.top.height} class="w-full h-48 sm:h-64 lg:h-80 object-cover" loading="lazy" />
+            <img 
+              src={communityData.images.top.src || communityData.images.top.url} 
+              {...(communityData.images.top.srcset && { srcset: communityData.images.top.srcset })}
+              sizes={communityData.images.top.sizes || COMMUNITY_TOP_SIZES}
+              width={communityData.images.top.width || 1200}
+              height={communityData.images.top.height || 600}
+              alt={communityData.images.top.alt || 'Tennis player'}
+              loading={communityData.images.top.loading || 'lazy'}
+              class="w-full h-48 sm:h-64 lg:h-80 object-cover"
+            />
           </div>
           
           <!-- Bottom Images Row -->
           <div class="grid grid-cols-2 gap-4 sm:gap-6">
             <div class="relative overflow-hidden rounded-2xl bg-gray-900">
-              <img src={communityData.images.bottomLeft.url} alt={communityData.images.bottomLeft.alt || 'Tennis group'} width={communityData.images.bottomLeft.width} height={communityData.images.bottomLeft.height} class="w-full h-32 sm:h-40 lg:h-48 object-cover" loading="lazy" />
+              <img 
+                src={communityData.images.bottomLeft.src || communityData.images.bottomLeft.url} 
+                {...(communityData.images.bottomLeft.srcset && { srcset: communityData.images.bottomLeft.srcset })}
+                sizes={communityData.images.bottomLeft.sizes || COMMUNITY_BOTTOM_SIZES}
+                width={communityData.images.bottomLeft.width || 600}
+                height={communityData.images.bottomLeft.height || 800}
+                alt={communityData.images.bottomLeft.alt || 'Tennis group'}
+                loading={communityData.images.bottomLeft.loading || 'lazy'}
+                class="w-full h-32 sm:h-40 lg:h-48 object-cover"
+              />
             </div>
             <div class="relative overflow-hidden rounded-2xl bg-gray-900">
-              <img src={communityData.images.bottomRight.url} alt={communityData.images.bottomRight.alt || 'Tennis couple'} width={communityData.images.bottomRight.width} height={communityData.images.bottomRight.height} class="w-full h-32 sm:h-40 lg:h-48 object-cover" loading="lazy" />
+              <img 
+                src={communityData.images.bottomRight.src || communityData.images.bottomRight.url} 
+                {...(communityData.images.bottomRight.srcset && { srcset: communityData.images.bottomRight.srcset })}
+                sizes={communityData.images.bottomRight.sizes || COMMUNITY_BOTTOM_SIZES}
+                width={communityData.images.bottomRight.width || 600}
+                height={communityData.images.bottomRight.height || 800}
+                alt={communityData.images.bottomRight.alt || 'Tennis couple'}
+                loading={communityData.images.bottomRight.loading || 'lazy'}
+                class="w-full h-32 sm:h-40 lg:h-48 object-cover"
+              />
             </div>
           </div>
         </div>
@@ -64,7 +143,7 @@ console.log('Thriving Community Images URLs:', { top: communityData.images.top.u
           <!-- Bullet Points -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div class="space-y-3 sm:space-y-4">
-              {communityData.bulletPoints.slice(0, 4).map((point) => (
+              {communityData.bulletPoints.slice(0, 2).map((point) => (
                 <div class="flex items-center gap-3">
                   <div class="w-2 h-2 bg-gold rounded-full flex-shrink-0"></div>
                   <span class="text-sm sm:text-base font-inter text-gray-700">{point}</span>
@@ -72,7 +151,7 @@ console.log('Thriving Community Images URLs:', { top: communityData.images.top.u
               ))}
             </div>
             <div class="space-y-3 sm:space-y-4">
-              {communityData.bulletPoints.slice(4, 8).map((point) => (
+              {communityData.bulletPoints.slice(2, 4).map((point) => (
                 <div class="flex items-center gap-3">
                   <div class="w-2 h-2 bg-gold rounded-full flex-shrink-0"></div>
                   <span class="text-sm sm:text-base font-inter text-gray-700">{point}</span>

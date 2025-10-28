@@ -1,6 +1,6 @@
 ---
 // About Us section component for Active Away - Tailwind CSS Version
-import { getImageByName } from '../utils/cloudflareImages.js';
+import { getImageByName, getResponsiveImageByName, getStrapiImageAttrs } from '../utils/cloudflareImages.js';
 
 // Accept homeData as prop (fetched once in index.astro)
 interface Props {
@@ -13,6 +13,34 @@ const { homeData } = Astro.props;
 const yearsOfExperience = new Date().getFullYear() - 2006;
 
 // Use Strapi data (no fallbacks - must be set in Strapi)
+const ABOUT_TOP_SIZES = '(max-width: 1024px) 0px, 33vw';
+const ABOUT_BOTTOM_SIZES = '(max-width: 1024px) 100vw, 33vw';
+
+const buildAboutImage = (imageName, alt, width, height, sizes) => {
+  const attrs = getResponsiveImageByName(imageName, {
+    displayWidth: width,
+    displayHeight: height,
+    fit: 'cover',
+    alt,
+    sizes
+  });
+
+  if (attrs) {
+    return attrs;
+  }
+
+  const fallbackSrc = getImageByName(imageName, { width, height, fit: 'cover', format: 'auto', quality: 85 });
+  return {
+    src: fallbackSrc,
+    url: fallbackSrc,
+    width,
+    height,
+    alt,
+    loading: 'lazy',
+    sizes
+  };
+};
+
 const aboutData = {
   kicker: homeData?.about?.kicker || "ABOUT US",
   title: homeData?.about?.title || "",
@@ -24,14 +52,30 @@ const aboutData = {
     label: "Years of Experience"
   },
   images: {
-    top: homeData?.about?.images?.image2 || { url: getImageByName('about-us-2', { size: 'public' }), alt: 'Tennis coaching session', width: 800, height: 1200 },
-    bottom: homeData?.about?.images?.image1 || { url: getImageByName('about-us-1', { size: 'public' }), alt: 'Tennis group activity', width: 1000, height: 800 }
+    top: homeData?.about?.images?.image2
+      ? getStrapiImageAttrs(homeData.about.images.image2, {
+          displayWidth: 800,
+          displayHeight: 1200,
+          fit: 'cover',
+          alt: homeData.about.images.image2.alt || 'Tennis coaching session',
+          sizes: ABOUT_TOP_SIZES
+        })
+      : buildAboutImage('about-us-2', 'Tennis coaching session', 800, 1200, ABOUT_TOP_SIZES),
+    bottom: homeData?.about?.images?.image1
+      ? getStrapiImageAttrs(homeData.about.images.image1, {
+          displayWidth: 1000,
+          displayHeight: 800,
+          fit: 'cover',
+          alt: homeData.about.images.image1.alt || 'Tennis group activity',
+          sizes: ABOUT_BOTTOM_SIZES
+        })
+      : buildAboutImage('about-us-1', 'Tennis group activity', 1000, 800, ABOUT_BOTTOM_SIZES)
   }
 };
 
 // Debug: Log the URLs being generated
-console.log('About Us Image 1 URL:', aboutData.images.bottom.url);
-console.log('About Us Image 2 URL:', aboutData.images.top.url);
+console.log('About Us Image 1 URL:', aboutData.images.bottom.url || aboutData.images.bottom.src);
+console.log('About Us Image 2 URL:', aboutData.images.top.url || aboutData.images.top.src);
 ---
 
 <section class="w-full bg-white py-12 sm:py-16 lg:py-24">
@@ -40,7 +84,16 @@ console.log('About Us Image 2 URL:', aboutData.images.top.url);
       <!-- Column 1: Top Image (Hidden on mobile) -->
       <div class="hidden lg:block lg:order-1 h-full">
         <div class="relative overflow-hidden rounded-2xl bg-gray-900 h-full">
-          <img src={aboutData.images.top.url} alt={aboutData.images.top.alt || 'Tennis coaching'} width={aboutData.images.top.width} height={aboutData.images.top.height} class="w-full h-full object-cover" loading="lazy" />
+          <img 
+            src={aboutData.images.top.src || aboutData.images.top.url} 
+            {...(aboutData.images.top.srcset && { srcset: aboutData.images.top.srcset })}
+            sizes={aboutData.images.top.sizes || ABOUT_TOP_SIZES}
+            width={aboutData.images.top.width || 800}
+            height={aboutData.images.top.height || 1200}
+            alt={aboutData.images.top.alt || 'Tennis coaching'}
+            loading={aboutData.images.top.loading || 'lazy'}
+            class="w-full h-full object-cover" 
+          />
         </div>
       </div>
 
@@ -58,7 +111,16 @@ console.log('About Us Image 2 URL:', aboutData.images.top.url);
         
         <!-- Bottom Image -->
         <div class="relative overflow-hidden rounded-2xl bg-gray-900 flex-1">
-          <img src={aboutData.images.bottom.url} alt={aboutData.images.bottom.alt || 'Tennis group'} width={aboutData.images.bottom.width} height={aboutData.images.bottom.height} class="w-full h-full object-cover" loading="lazy" />
+          <img 
+            src={aboutData.images.bottom.src || aboutData.images.bottom.url} 
+            {...(aboutData.images.bottom.srcset && { srcset: aboutData.images.bottom.srcset })}
+            sizes={aboutData.images.bottom.sizes || ABOUT_BOTTOM_SIZES}
+            width={aboutData.images.bottom.width || 1000}
+            height={aboutData.images.bottom.height || 800}
+            alt={aboutData.images.bottom.alt || 'Tennis group'}
+            loading={aboutData.images.bottom.loading || 'lazy'}
+            class="w-full h-full object-cover" 
+          />
         </div>
       </div>
 

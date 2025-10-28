@@ -1,14 +1,50 @@
 ---
 // Gallery data - TODO: Replace with API data - Tailwind CSS Version
-import { getImageByName } from '../utils/cloudflareImages.js';
+import { getImageByName, getResponsiveImageByName } from '../utils/cloudflareImages.js';
 
-// Get dynamic image URLs
-const gallery1Image = getImageByName('gallery-1', { size: 'public' });
-const gallery2Image = getImageByName('gallery-2', { size: 'public' });
-const gallery3Image = getImageByName('gallery-3', { size: 'public' });
-const gallery4Image = getImageByName('gallery-4', { size: 'public' });
-const gallery5Image = getImageByName('gallery-5', { size: 'public' });
-const instagramIcon = getImageByName('instagram-icon', { size: 'public' });
+const GALLERY_IMAGE_SIZES = '(max-width: 640px) 60vw, (max-width: 1024px) 25vw, 20vw';
+
+const buildGalleryImage = (imageName, alt) => {
+  const attrs = getResponsiveImageByName(imageName, {
+    displayWidth: 400,
+    displayHeight: 320,
+    fit: 'cover',
+    alt,
+    sizes: GALLERY_IMAGE_SIZES
+  });
+
+  if (attrs) {
+    return attrs;
+  }
+
+  const fallbackSrc = getImageByName(imageName, { width: 400, height: 320, fit: 'cover', format: 'auto', quality: 85 });
+  return {
+    src: fallbackSrc,
+    url: fallbackSrc,
+    width: 400,
+    height: 320,
+    alt,
+    loading: 'lazy',
+    sizes: GALLERY_IMAGE_SIZES
+  };
+};
+
+const gallery1Image = buildGalleryImage('gallery-1', 'Active Away gallery image 1');
+const gallery2Image = buildGalleryImage('gallery-2', 'Active Away gallery image 2');
+const gallery3Image = buildGalleryImage('gallery-3', 'Active Away gallery image 3');
+const gallery4Image = buildGalleryImage('gallery-4', 'Active Away gallery image 4');
+const gallery5Image = buildGalleryImage('gallery-5', 'Active Away gallery image 5');
+
+const instagramIcon = getResponsiveImageByName('instagram-icon', {
+  displayWidth: 32,
+  displayHeight: 32,
+  fit: 'contain',
+  alt: 'Instagram',
+  sizes: '32px'
+}) ?? (() => {
+  const fallbackSrc = getImageByName('instagram-icon', { width: 32, height: 32, fit: 'contain', format: 'auto', quality: 85 });
+  return { src: fallbackSrc, url: fallbackSrc, width: 32, height: 32, alt: 'Instagram', loading: 'lazy', sizes: '32px' };
+})();
 
 const galleryData = {
   images: [
@@ -43,7 +79,12 @@ const galleryData = {
 
 // Debug: Log the URLs being generated
 console.log('Gallery Images URLs:', { 
-  gallery1Image, gallery2Image, gallery3Image, gallery4Image, gallery5Image, instagramIcon 
+  gallery1Image: gallery1Image.url || gallery1Image.src,
+  gallery2Image: gallery2Image.url || gallery2Image.src,
+  gallery3Image: gallery3Image.url || gallery3Image.src,
+  gallery4Image: gallery4Image.url || gallery4Image.src,
+  gallery5Image: gallery5Image.url || gallery5Image.src,
+  instagramIcon: instagramIcon.url || instagramIcon.src 
 });
 ---
 
@@ -52,7 +93,16 @@ console.log('Gallery Images URLs:', {
   <div class="flex flex-row">
     {galleryData.images.map((item) => (
       <div class="gallery-item flex-1 h-48 sm:h-64 lg:h-72 relative overflow-hidden" style={`background: ${item.background}`}>
-        <img src={item.image} alt={`Gallery image ${item.id}`} class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+        <img 
+          src={item.image.src || item.image.url} 
+          {...(item.image.srcset && { srcset: item.image.srcset })}
+          sizes={item.image.sizes || GALLERY_IMAGE_SIZES}
+          width={item.image.width || 400}
+          height={item.image.height || 320}
+          alt={item.image.alt || `Gallery image ${item.id}`}
+          loading={item.image.loading || 'lazy'}
+          class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" 
+        />
       </div>
     ))}
   </div>
@@ -62,7 +112,16 @@ console.log('Gallery Images URLs:', {
     <div class="container mx-auto px-4 sm:px-10">
       <div class="flex justify-center items-center">
         <div class="flex items-center gap-3 sm:gap-4">
-          <img src={galleryData.instagramIcon} alt="Instagram" class="w-6 h-6 sm:w-8 sm:h-8" />
+          <img 
+            src={galleryData.instagramIcon.src || galleryData.instagramIcon.url} 
+            {...(galleryData.instagramIcon.srcset && { srcset: galleryData.instagramIcon.srcset })}
+            sizes={galleryData.instagramIcon.sizes || '32px'}
+            width={galleryData.instagramIcon.width || 32}
+            height={galleryData.instagramIcon.height || 32}
+            alt={galleryData.instagramIcon.alt || 'Instagram'} 
+            loading={galleryData.instagramIcon.loading || 'lazy'}
+            class="w-6 h-6 sm:w-8 sm:h-8" 
+          />
           <span class="text-lg sm:text-xl font-inter font-normal text-gold text-center">
             Follow @active.away
           </span>

@@ -1,11 +1,28 @@
 // Strapi API utility functions
 // Support both Astro (import.meta.env) and Node.js (process.env) environments
+import { getCloudflareImageUrl } from './cloudflareImages.js';
 const STRAPI_URL = (typeof import.meta !== 'undefined' && import.meta.env?.STRAPI_URL) 
   || process.env.STRAPI_URL 
   || 'http://localhost:1337';
 const STRAPI_TOKEN = (typeof import.meta !== 'undefined' && import.meta.env?.STRAPI_API_TOKEN) 
   || process.env.STRAPI_API_TOKEN 
   || '';
+
+const EVENT_PLACEHOLDER_URL = getCloudflareImageUrl('45b69090-1c22-46cd-7f98-086ba71efc00', {
+  width: 402,
+  height: 268,
+  fit: 'cover',
+  format: 'auto',
+  quality: 85
+});
+
+const GENERIC_PLACEHOLDER_URL = getCloudflareImageUrl('placeholder', {
+  width: 455,
+  height: 256,
+  fit: 'cover',
+  format: 'auto',
+  quality: 85
+});
 
 /**
  * Fetch data from Strapi API
@@ -314,7 +331,7 @@ export async function getFutureEvents() {
         date: formattedDate,
         price: priceText,
         amount: priceAmount,
-        image: featuredImage?.url || 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/45b69090-1c22-46cd-7f98-086ba71efc00/public', // Fallback image
+        image: featuredImage?.url || EVENT_PLACEHOLDER_URL, // Fallback image with responsive transform
         imageAlt: featuredImage?.alt || event.title || 'Event image',
         imageSrcSet: featuredImage?.url ? `${featuredImage.url}?width=320 320w, ${featuredImage.url}?width=640 640w, ${featuredImage.url}?width=1024 1024w` : null
       };
@@ -550,7 +567,7 @@ export async function getFeaturedLocations() {
           type: holidayType,
           price: null,
           amount: null,
-          image: 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/placeholder/public',
+          image: GENERIC_PLACEHOLDER_URL,
           imageAlt: 'Missing relation',
           slug: '',
           holidayType: holidayType,
@@ -579,7 +596,7 @@ export async function getFeaturedLocations() {
       const imageField = holiday.headerImage;
       const imageData = imageField 
         ? getStrapiImageData(imageField)
-        : { url: 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/placeholder/public', alt: holiday.title };
+        : { url: GENERIC_PLACEHOLDER_URL, alt: holiday.title };
 
       // Build location string - use country directly
       const location = holiday.country || '';
@@ -899,4 +916,3 @@ export async function getBlogs(limit = 8) {
     return [];
   }
 }
-

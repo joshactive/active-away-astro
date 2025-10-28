@@ -20,14 +20,15 @@ const holidayExpertsData = {
   accordions: homeData?.accordions?.items?.length > 0 
     ? homeData.accordions.items.map(item => ({
         ...item,
-        content: marked.parse(item.content || '')
+        content: marked.parse(item.content || ''),
+        isOpen: false  // Always start closed on page load
       }))
     : [
     {
       id: 1,
       title: "Tennis Holidays",
       content: "Tennis Holidays are an immersive experience that unite people through their shared love for tennis in stunning destinations with world-class Tennis Courts. We've put together some incredible Tennis Breaks that will fulfil your dreams and create lasting memories. You'll have seen Active Away Tennis Holidays on Dragons' Den! Why not start by exploring our Tennis Holidays Dates to find your dream Tennis Holiday.",
-      isOpen: true
+      isOpen: false
     },
     {
       id: 2,
@@ -63,7 +64,7 @@ const holidayExpertsData = {
       id: 7,
       title: "Tennis Coaching Holidays Abroad",
       content: "Tennis Holidays are an immersive experience that unite people through their shared love for tennis in stunning destinations with world-class Tennis Courts. We've put together some incredible Tennis Breaks that will fulfil your dreams and create lasting memories. You'll have seen Active Away Tennis Holidays on Dragons' Den! Why not start by exploring our Tennis Holidays Dates to find your dream Tennis Holiday.",
-      isOpen: true
+      isOpen: false
     },
     {
       id: 8,
@@ -126,7 +127,7 @@ const holidayExpertsData = {
             </div>
             <div class={`accordion-content overflow-hidden transition-all duration-300 ${accordion.isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
               <div class="px-4 pb-4 sm:px-6 sm:pb-6 pt-0">
-                <div class="text-xs sm:text-sm lg:text-base font-inter text-gray-800 leading-relaxed" set:html={accordion.content} />
+                <div class="text-sm sm:text-base font-inter text-gray-800 leading-relaxed" set:html={accordion.content} />
               </div>
             </div>
           </div>
@@ -151,7 +152,7 @@ const holidayExpertsData = {
             </div>
             <div class={`accordion-content overflow-hidden transition-all duration-300 ${accordion.isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
               <div class="px-4 pb-4 sm:px-6 sm:pb-6 pt-0">
-                <div class="text-xs sm:text-sm lg:text-base font-inter text-gray-800 leading-relaxed" set:html={accordion.content} />
+                <div class="text-sm sm:text-base font-inter text-gray-800 leading-relaxed" set:html={accordion.content} />
               </div>
             </div>
           </div>

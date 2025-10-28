@@ -1,16 +1,59 @@
 ---
 // Footer component - Tailwind CSS Version - Fixed to match Figma
-import { getImageByName } from '../utils/cloudflareImages.js';
+import { getImageByName, getResponsiveImageByName } from '../utils/cloudflareImages.js';
 import { FooterArrow } from '../components/ui/FooterIcons';
 
 // Get dynamic image URLs
-const footerLogo = 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/4a4fae2f-b29c-4e69-5a9e-acf953fd3c00/public';
-const footerProtection1 = getImageByName('footer-protection-1', { size: 'public' });
-const footerProtection2 = getImageByName('footer-protection-2', { size: 'public' });
+const footerLogo = getResponsiveImageByName('logo', {
+  displayWidth: 200,
+  displayHeight: 56,
+  fit: 'contain',
+  alt: 'Active Away Logo',
+  sizes: '(max-width: 640px) 160px, 200px'
+}) ?? {
+  src: getImageByName('logo', { width: 200, height: 56, fit: 'contain', format: 'auto', quality: 85 }),
+  width: 200,
+  height: 56,
+  alt: 'Active Away Logo',
+  loading: 'lazy',
+  url: getImageByName('logo', { width: 200, height: 56, fit: 'contain', format: 'auto', quality: 85 })
+};
+
+const footerProtection1 = getResponsiveImageByName('footer-protection-1', {
+  displayWidth: 140,
+  displayHeight: 80,
+  fit: 'contain',
+  alt: 'ATOL Protected',
+  sizes: '(max-width: 640px) 120px, 140px'
+}) ?? {
+  src: getImageByName('footer-protection-1', { width: 140, height: 80, fit: 'contain', format: 'auto', quality: 85 }),
+  width: 140,
+  height: 80,
+  alt: 'ATOL Protected',
+  loading: 'lazy',
+  url: getImageByName('footer-protection-1', { width: 140, height: 80, fit: 'contain', format: 'auto', quality: 85 })
+};
+
+const footerProtection2 = getResponsiveImageByName('footer-protection-2', {
+  displayWidth: 140,
+  displayHeight: 80,
+  fit: 'contain',
+  alt: 'Financial Protection',
+  sizes: '(max-width: 640px) 120px, 140px'
+}) ?? {
+  src: getImageByName('footer-protection-2', { width: 140, height: 80, fit: 'contain', format: 'auto', quality: 85 }),
+  width: 140,
+  height: 80,
+  alt: 'Financial Protection',
+  loading: 'lazy',
+  url: getImageByName('footer-protection-2', { width: 140, height: 80, fit: 'contain', format: 'auto', quality: 85 })
+};
 
 // Debug: Log the URLs being generated
 console.log('Footer Images URLs:', { 
-  footerLogo, footerProtection1, footerProtection2
+  footerLogo: footerLogo.url || footerLogo.src,
+  footerProtection1: footerProtection1.url || footerProtection1.src,
+  footerProtection2: footerProtection2.url || footerProtection2.src
 });
 ---
 
@@ -21,7 +64,16 @@ console.log('Footer Images URLs:', {
       <!-- Column 1: Logo and Contact -->
       <div class="order-1">
         <div class="mb-4 sm:mb-6">
-          <img src={footerLogo} alt="Active Away Logo" width="200" height="56" class="h-14 sm:h-18 lg:h-20 w-auto" />
+          <img 
+            src={footerLogo.src || footerLogo.url} 
+            {...(footerLogo.srcset && { srcset: footerLogo.srcset })}
+            {...(footerLogo.sizes && { sizes: footerLogo.sizes })}
+            alt={footerLogo.alt || 'Active Away Logo'} 
+            width={footerLogo.width || 200} 
+            height={footerLogo.height || 56} 
+            class="h-14 sm:h-18 lg:h-20 w-auto" 
+            loading={footerLogo.loading || 'lazy'}
+          />
         </div>
         
         <div>
@@ -222,8 +274,26 @@ console.log('Footer Images URLs:', {
         
         <!-- Protection Badges (Center on Desktop, Middle on Mobile) -->
         <div class="flex justify-center items-center gap-4 order-2">
-          <img src={footerProtection1} alt="ATOL Protected" width="100" height="56" class="h-12 sm:h-14 w-auto" />
-          <img src={footerProtection2} alt="Financial Protection" width="100" height="56" class="h-12 sm:h-14 w-auto" />
+          <img 
+            src={footerProtection1.src || footerProtection1.url} 
+            {...(footerProtection1.srcset && { srcset: footerProtection1.srcset })}
+            {...(footerProtection1.sizes && { sizes: footerProtection1.sizes })}
+            alt={footerProtection1.alt || 'ATOL Protected'} 
+            width={footerProtection1.width || 100} 
+            height={footerProtection1.height || 56} 
+            class="h-12 sm:h-14 w-auto" 
+            loading={footerProtection1.loading || 'lazy'}
+          />
+          <img 
+            src={footerProtection2.src || footerProtection2.url} 
+            {...(footerProtection2.srcset && { srcset: footerProtection2.srcset })}
+            {...(footerProtection2.sizes && { sizes: footerProtection2.sizes })}
+            alt={footerProtection2.alt || 'Financial Protection'} 
+            width={footerProtection2.width || 100} 
+            height={footerProtection2.height || 56} 
+            class="h-12 sm:h-14 w-auto" 
+            loading={footerProtection2.loading || 'lazy'}
+          />
         </div>
         
         <!-- Trustpilot Widget (Right on Desktop, Top on Mobile) -->

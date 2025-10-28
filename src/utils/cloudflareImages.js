@@ -5,7 +5,7 @@ const CLOUDFLARE_BASE_URL = `https://activeaway.com/cdn-cgi/imagedelivery/${CLOU
 // Image mapping for Cloudflare IDs
 const IMAGE_MAPPING = {
   'hero-bg': '03bade93-3cf6-49b0-047f-a9eb556aa200',
-  'logo': 'eedabea1-97ba-419d-35b4-98a08f3d0300',
+  'logo': '4a4fae2f-b29c-4e69-5a9e-acf953fd3c00',
   'man-1': '182d9302-4485-432a-479a-96b2b995f300',
   'man-2': '828f5d00-3d19-4fd5-0e8a-e3b1ee471b00',
   'man-3': 'c6048724-cc4f-405c-4bcc-811f8c74b700',
@@ -49,7 +49,7 @@ const IMAGE_MAPPING = {
   'gallery-4': '6e39a1fc-f006-4930-d5c9-25a94c62c500',
   'gallery-5': 'b834910c-b502-434a-1a0d-9128f26ede00',
   'instagram-icon': '9ebe88b7-4be7-4c4f-e322-53d5011b1200',
-  'footer-logo': '3da5e152-28af-431c-ac5e-eb7188168a00',
+  'footer-logo': '4a4fae2f-b29c-4e69-5a9e-acf953fd3c00',
   'footer-calling-icon': 'a689b567-cd19-43b4-08f7-6a46eb6e1d00',
   'footer-facebook-icon': 'ae5c52dd-db35-491d-89e6-da4c3deb1900',
   'footer-instagram-icon': '7d468354-d426-4ca6-0846-995cce67a100',
@@ -121,6 +121,23 @@ export function getImageByName(imageName, options = {}) {
   }
 
   return getCloudflareImageUrl(imageId, options);
+}
+
+/**
+ * Get responsive image attributes by mapped image name
+ * @param {string} imageName - Image name from mapping
+ * @param {Object} config - Same config as getResponsiveImageAttrs
+ * @returns {Object|null} Responsive image attributes or null if mapping missing
+ */
+export function getResponsiveImageByName(imageName, config = {}) {
+  const imageId = IMAGE_MAPPING[imageName];
+  
+  if (!imageId) {
+    console.warn(`No Cloudflare ID found for image: ${imageName}`);
+    return null;
+  }
+
+  return getResponsiveImageAttrs(imageId, config);
 }
 
 /**
@@ -204,7 +221,8 @@ export function getResponsiveImageAttrs(imageId, config = {}) {
     height: configs[0].height,
     sizes,
     alt,
-    loading: 'lazy'
+    loading: 'lazy',
+    url: src
   };
 }
 
@@ -272,10 +290,24 @@ function isCloudflareImageUrl(url) {
  * @returns {string} Base URL without /variant or ?params
  */
 function getCloudflareBaseUrl(url) {
-  // Remove variant (like /public) and any query params
-  // Match everything up to and including the image ID or path
-  const match = url.match(/(.*\/imagedelivery\/[^/]+\/[^/]+)/);
-  return match ? match[1] : url.split('?')[0].replace(/\/[^/]+$/, '');
+  // Remove variant (like /public, /thumbnail) and any query params
+  // For path-based URLs, we need to capture the full path, not just the first segment
+  // Example: /imagedelivery/{hash}/activeaway.com/path/to/image.jpg/public
+  // Should extract: /imagedelivery/{hash}/activeaway.com/path/to/image.jpg
+  
+  // First, remove query params
+  const urlWithoutParams = url.split('?')[0];
+  
+  // Check if it ends with a known variant
+  const knownVariants = ['/public', '/thumbnail', '/avatar', '/small', '/medium', '/large'];
+  for (const variant of knownVariants) {
+    if (urlWithoutParams.endsWith(variant)) {
+      return urlWithoutParams.slice(0, -variant.length);
+    }
+  }
+  
+  // If no known variant at the end, try to match the pattern and remove the last segment
+  return urlWithoutParams.replace(/\/[^/]+$/, '');
 }
 
 /**
@@ -342,7 +374,8 @@ export function getStrapiImageAttrs(strapiImage, config = {}) {
       width: widths[0],
       height: displayHeight || Math.round(widths[0] / aspectRatio),
       alt: strapiImage.alt || alt,
-      loading: 'lazy'
+      loading: 'lazy',
+      url: `${baseUrl}/public?${srcParams.toString()}`
     };
   }
 
@@ -363,7 +396,7 @@ export function getStrapiImageAttrs(strapiImage, config = {}) {
     width: strapiImage.width,
     height: strapiImage.height,
     alt: strapiImage.alt || config.alt || '',
-    loading: 'lazy'
+    loading: 'lazy',
+    url
   };
 }
-

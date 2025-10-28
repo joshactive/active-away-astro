@@ -1,6 +1,6 @@
 ---
 // Our Partners section component for Active Away - Tailwind CSS Version
-import { getImageByName } from '../utils/cloudflareImages.js';
+import { getImageByName, getResponsiveImageByName, getStrapiImageAttrs } from '../utils/cloudflareImages.js';
 
 // Accept homeData as prop (fetched once in index.astro)
 interface Props {
@@ -9,23 +9,55 @@ interface Props {
 
 const { homeData } = Astro.props;
 
+const buildPartnerLogo = (logo, fallbackKey, name) => {
+  const altText = logo?.alt || logo?.alternativeText || name;
+  const config = {
+    displayWidth: 200,
+    displayHeight: 120,
+    fit: 'contain',
+    alt: altText,
+    sizes: '(max-width: 640px) 140px, (max-width: 1024px) 180px, 200px'
+  };
+
+  if (logo?.url) {
+    return getStrapiImageAttrs(logo, config) ?? { ...logo, alt: altText };
+  }
+
+  const attrs = getResponsiveImageByName(fallbackKey, config);
+  if (attrs) {
+    return attrs;
+  }
+
+  const fallbackSrc = getImageByName(fallbackKey, { width: 200, height: 120, fit: 'contain', format: 'auto', quality: 85 });
+  return {
+    src: fallbackSrc,
+    url: fallbackSrc,
+    width: 200,
+    height: 120,
+    alt: altText,
+    loading: 'lazy'
+  };
+};
+
+const fallbackPartners = [
+  { id: 1, name: "Grapho", logo: buildPartnerLogo(null, 'partner-1', 'Grapho logo') },
+  { id: 2, name: "Iconic", logo: buildPartnerLogo(null, 'partner-2', 'Iconic logo') },
+  { id: 3, name: "Vectra", logo: buildPartnerLogo(null, 'partner-3', 'Vectra logo') },
+  { id: 4, name: "Visualy", logo: buildPartnerLogo(null, 'partner-4', 'Visualy logo') },
+  { id: 5, name: "Dexign Studio", logo: buildPartnerLogo(null, 'partner-5', 'Dexign Studio logo') }
+];
+
 // Use Strapi data with fallback to Cloudflare images
 const partners = homeData?.partners?.length > 0 
   ? homeData.partners.map((p, i) => ({
       id: i + 1,
       name: p.name,
-      logo: p.logo // Full image object with url, alt, width, height
+      logo: buildPartnerLogo(p.logo, `partner-${(i % fallbackPartners.length) + 1}`, p.name)
     }))
-  : [
-      { id: 1, name: "Grapho", logo: { url: getImageByName('partner-1', { size: 'public' }), alt: 'Grapho logo', width: 200, height: 100 } },
-      { id: 2, name: "Iconic", logo: { url: getImageByName('partner-2', { size: 'public' }), alt: 'Iconic logo', width: 200, height: 100 } },
-      { id: 3, name: "Vectra", logo: { url: getImageByName('partner-3', { size: 'public' }), alt: 'Vectra logo', width: 200, height: 100 } },
-      { id: 4, name: "Visualy", logo: { url: getImageByName('partner-4', { size: 'public' }), alt: 'Visualy logo', width: 200, height: 100 } },
-      { id: 5, name: "Dexign Studio", logo: { url: getImageByName('partner-5', { size: 'public' }), alt: 'Dexign Studio logo', width: 200, height: 100 } }
-    ];
+  : fallbackPartners;
 
 // Debug: Log the URLs being generated
-console.log('Partner Logos URLs:', partners.map(p => ({ name: p.name, logo: p.logo.url })));
+console.log('Partner Logos URLs:', partners.map(p => ({ name: p.name, logo: p.logo.url || p.logo.src })));
 ---
 
 <section class="w-full bg-white py-12 sm:py-16 lg:py-24">
@@ -37,10 +69,19 @@ console.log('Partner Logos URLs:', partners.map(p => ({ name: p.name, logo: p.lo
     
     <!-- Partners Grid -->
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6 lg:gap-12">
-      {partners.map((partner) => (
-        <div class="partner-card flex items-center justify-center p-4 sm:p-6 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all duration-300 hover:-translate-y-1">
+      {partners.map((partner, index) => (
+        <div class={`partner-card flex items-center justify-center p-4 sm:p-6 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all duration-300 hover:-translate-y-1 ${index === 1 ? 'hidden sm:flex' : ''}`}>
           <div class="partner-logo w-full h-20 sm:h-24 lg:h-28 flex items-center justify-center">
-            <img src={partner.logo.url} alt={partner.logo.alt || partner.name} width={partner.logo.width} height={partner.logo.height} class="max-w-full max-h-full object-contain filter grayscale hover:grayscale-0 transition-all duration-300" loading="lazy" />
+            <img 
+              src={partner.logo.src || partner.logo.url} 
+              {...(partner.logo.srcset && { srcset: partner.logo.srcset })}
+              {...(partner.logo.sizes && { sizes: partner.logo.sizes })}
+              alt={partner.logo.alt || partner.name} 
+              width={partner.logo.width || 200} 
+              height={partner.logo.height || 120} 
+              class="max-w-full max-h-full object-contain filter grayscale hover:grayscale-0 transition-all duration-300" 
+              loading={partner.logo.loading || 'lazy'} 
+            />
           </div>
         </div>
       ))}

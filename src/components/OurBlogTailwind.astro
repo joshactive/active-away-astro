@@ -1,24 +1,46 @@
 ---
 // Blog data - Fetched from Strapi - Tailwind CSS Version
 import { getBlogs } from '../utils/strapi.js';
-import { getImageByName, getStrapiImageAttrs, extractImageId } from '../utils/cloudflareImages.js';
+import { getImageByName, getResponsiveImageByName, getStrapiImageAttrs } from '../utils/cloudflareImages.js';
 
 // Fetch blogs from Strapi
 let blogs = await getBlogs(8); // Get 8 most recent posts
 
 // Fallback to hardcoded data if Strapi fails or returns no data
+const BLOG_IMAGE_SIZES = '(max-width: 640px) calc(100vw - 5rem), (max-width: 1024px) calc(100vw - 8rem), 704px';
+
+const buildBlogImage = (imageName, alt) => {
+  const attrs = getResponsiveImageByName(imageName, {
+    displayWidth: 704,
+    displayHeight: 256,
+    fit: 'cover',
+    alt,
+    sizes: BLOG_IMAGE_SIZES
+  });
+
+  if (attrs) {
+    return attrs;
+  }
+
+  const fallbackSrc = getImageByName(imageName, { width: 704, height: 256, fit: 'cover', format: 'auto', quality: 85 });
+  return {
+    src: fallbackSrc,
+    url: fallbackSrc,
+    width: 704,
+    height: 256,
+    alt,
+    loading: 'lazy',
+    sizes: BLOG_IMAGE_SIZES
+  };
+};
+
 if (!blogs || blogs.length === 0) {
   console.warn('⚠️  Using fallback blog data');
-  
-  // Get dynamic image URLs for fallback
-  const blog1Image = getImageByName('blog-1', { size: 'public' });
-  const blog2Image = getImageByName('blog-2', { size: 'public' });
-  const blog3Image = getImageByName('blog-3', { size: 'public' });
   
   blogs = [
     {
       id: 1,
-      image: blog2Image,
+      image: buildBlogImage('blog-2', 'Newcastle Under-Lyme School Tennis Team Enjoy a Wimbledon Escape!'),
       author: "Josh Thompson",
       date: "July 4, 2025",
       title: "Newcastle Under-Lyme School Tennis Team Enjoy a Wimbledon Escape!",
@@ -27,7 +49,7 @@ if (!blogs || blogs.length === 0) {
     },
     {
       id: 2,
-      image: blog1Image,
+      image: buildBlogImage('blog-1', 'Active Away Takes On Five Tennis Academies At Ikos Resorts'),
       author: "Josh Thompson",
       date: "February 20, 2025",
       title: "Active Away Takes On Five Tennis Academies At Ikos Resorts",
@@ -36,7 +58,7 @@ if (!blogs || blogs.length === 0) {
     },
     {
       id: 3,
-      image: blog3Image,
+      image: buildBlogImage('blog-3', 'Tennis Nutrition: What to Eat for Optimal Performance'),
       author: "Sophie Westlake",
       date: "February 6, 2025",
       title: "Tennis Nutrition: What to Eat for Optimal Performance",
@@ -96,32 +118,53 @@ console.log('📝 Blog Data:', blogData.blogs.map(b => b.title));
         <!-- Cards Container -->
         <div id="blogsContainer" class="flex flex-row overflow-x-auto lg:overflow-visible snap-x snap-mandatory lg:snap-none justify-start lg:justify-between items-stretch gap-4 sm:gap-6 lg:gap-6 pb-4 lg:pb-0 pl-4 sm:pl-10 lg:pl-0 transition-transform duration-500 ease-out">
           {blogData.blogs.map((blog, index) => {
-            // Optimize image if it's from Cloudflare  
-            const imageId = extractImageId(blog.image);
-            const imgAttrs = imageId 
-              ? getStrapiImageAttrs({ url: blog.image, alt: blog.imageAlt || blog.title }, {
-                  displayWidth: 704, // Approximate display width based on PageSpeed
-                  displayHeight: 256, // h-64 = 256px
-                  fit: 'cover'
-                })
-              : {
-                  src: blog.image,
-                  alt: blog.imageAlt || blog.title,
-                  loading: 'lazy'
+            const imageAlt = blog.image?.alt || blog.imageAlt || blog.title;
+            let imgAttrs;
+
+            if (blog.image?.src) {
+              imgAttrs = {
+                ...blog.image,
+                alt: blog.image.alt || imageAlt,
+                sizes: blog.image.sizes || BLOG_IMAGE_SIZES
+              };
+            } else {
+              const imageUrl = typeof blog.image === 'string' ? blog.image : blog.image?.url;
+              if (imageUrl) {
+                const config = {
+                  displayWidth: 704,
+                  displayHeight: 256,
+                  fit: 'cover',
+                  sizes: BLOG_IMAGE_SIZES,
+                  alt: imageAlt
                 };
-            
+
+                const strapiAttrs = getStrapiImageAttrs({ url: imageUrl, alt: imageAlt }, config);
+                imgAttrs = strapiAttrs ?? {
+                  src: imageUrl,
+                  url: imageUrl,
+                  alt: imageAlt,
+                  width: 704,
+                  height: 256,
+                  loading: 'lazy',
+                  sizes: BLOG_IMAGE_SIZES
+                };
+              } else {
+                imgAttrs = buildBlogImage('blog-1', imageAlt);
+              }
+            }
+
             return (
             <a href={`/blog/${blog.slug || blog.id}`} class="blog-card flex-shrink-0 w-[calc(100vw-5rem)] sm:w-[calc(100vw-8rem)] lg:w-[calc((100%-3rem)/3)] snap-start relative" data-index={index} data-total={blogData.blogs.length}>
               {/* Card Image */}
               <div class="relative overflow-hidden rounded-2xl bg-gray-900 z-0">
                 <img 
                   src={imgAttrs.src}
-                  srcset={imgAttrs.srcset}
-                  sizes={imgAttrs.sizes || '(max-width: 640px) calc(100vw - 5rem), (max-width: 1024px) calc(100vw - 8rem), 704px'}
-                  width={imgAttrs.width}
-                  height={imgAttrs.height}
-                  alt={imgAttrs.alt}
-                  loading={imgAttrs.loading}
+                  {...(imgAttrs.srcset && { srcset: imgAttrs.srcset })}
+                  sizes={imgAttrs.sizes || BLOG_IMAGE_SIZES}
+                  width={imgAttrs.width || 704}
+                  height={imgAttrs.height || 256}
+                  alt={imgAttrs.alt || imageAlt}
+                  loading={imgAttrs.loading || 'lazy'}
                   class="w-full h-48 sm:h-56 lg:h-64 object-cover" 
                 />
               </div>
@@ -136,7 +179,7 @@ console.log('📝 Blog Data:', blogData.blogs.map(b => b.title));
                   </div>
 
                   {/* Title and Description */}
-                  <h3 class="text-base sm:text-xl lg:text-2xl font-playfair font-bold text-gray-900 mb-2 sm:mb-4 leading-tight">
+                  <h3 class="text-base sm:text-xl lg:text-2xl font-playfair font-bold text-gray-900 mb-2 sm:mb-4 leading-tight line-clamp-2">
                     {blog.title}
                   </h3>
                   <p class="text-sm sm:text-base font-inter text-gray-800 leading-relaxed mb-4 sm:mb-6 line-clamp-3">

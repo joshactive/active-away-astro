@@ -1,6 +1,6 @@
 ---
 // Racket Holiday Specialists section component for Active Away - Tailwind CSS Version
-import { getImageByName } from '../utils/cloudflareImages.js';
+import { getImageByName, getResponsiveImageByName, getStrapiImageAttrs } from '../utils/cloudflareImages.js';
 
 // Accept homeData as prop (fetched once in index.astro)
 interface Props {
@@ -12,17 +12,51 @@ const { homeData } = Astro.props;
 const specialistData = {
   title: homeData?.racketSpecialist?.title || "Racket Holiday Specialists",
   description: homeData?.racketSpecialist?.description || "Racket sports are at the heart of what we do, and we're excited to share that passion with you. As trailblazers in Adult & Family Tennis Holidays, Padel Holidays, and Pickleball Holidays, we hold ourselves to the highest standards. Experience our signature hosting style, where our dedicated team goes above and beyond to make every moment exceptional.",
-  bulletPoints: homeData?.racketSpecialist?.bulletPoints?.length > 0 ? homeData.racketSpecialist.bulletPoints : Array(8).fill("Lorem Ipsum"),
+  bulletPoints: homeData?.racketSpecialist?.bulletPoints?.length > 0 ? homeData.racketSpecialist.bulletPoints.slice(0, 4) : Array(4).fill("Lorem Ipsum"),
   buttonText: homeData?.racketSpecialist?.buttonText || "Learn More",
   quote: homeData?.racketSpecialist?.quote || "The best tennis holiday we've ever experienced. The coaching was world-class and the location was absolutely stunning!",
   quoteAuthor: homeData?.racketSpecialist?.quoteAuthor || "Sarah & Mark Thompson"
 };
 
-// Get dynamic image - Use Strapi with fallback
-const racketSpecialistBg = homeData?.racketSpecialist?.images?.bg || { url: getImageByName('racket-specialist-bg', { size: 'public' }), alt: 'Racket sports resort', width: 1200, height: 800 };
+const RACKET_BG_SIZES = '(max-width: 1024px) 100vw, 50vw';
+
+const buildRacketBackground = (imageName, alt) => {
+  const attrs = getResponsiveImageByName(imageName, {
+    displayWidth: 1200,
+    displayHeight: 800,
+    fit: 'cover',
+    alt,
+    sizes: RACKET_BG_SIZES
+  });
+
+  if (attrs) {
+    return attrs;
+  }
+
+  const fallbackSrc = getImageByName(imageName, { width: 1200, height: 800, fit: 'cover', format: 'auto', quality: 85 });
+  return {
+    src: fallbackSrc,
+    url: fallbackSrc,
+    width: 1200,
+    height: 800,
+    alt,
+    loading: 'lazy',
+    sizes: RACKET_BG_SIZES
+  };
+};
+
+const racketSpecialistBg = homeData?.racketSpecialist?.images?.bg
+  ? getStrapiImageAttrs(homeData.racketSpecialist.images.bg, {
+      displayWidth: 1200,
+      displayHeight: 800,
+      fit: 'cover',
+      alt: homeData.racketSpecialist.images.bg.alt || 'Racket sports resort',
+      sizes: RACKET_BG_SIZES
+    })
+  : buildRacketBackground('racket-specialist-bg', 'Racket sports resort');
 
 // Debug: Log the URL being generated
-console.log('Racket Specialist Background URL:', racketSpecialistBg.url);
+console.log('Racket Specialist Background URL:', racketSpecialistBg?.url || racketSpecialistBg?.src);
 ---
 
 <section class="w-full bg-white py-12 sm:py-16 lg:py-24">
@@ -42,7 +76,7 @@ console.log('Racket Specialist Background URL:', racketSpecialistBg.url);
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8 sm:mb-10">
           <!-- Left Column -->
           <div class="space-y-3 sm:space-y-4">
-            {specialistData.bulletPoints.slice(0, 4).map((point) => (
+            {specialistData.bulletPoints.slice(0, 2).map((point) => (
               <div class="flex items-center gap-3">
                 <div class="w-2 h-2 bg-gold rounded-full flex-shrink-0"></div>
                 <span class="text-sm sm:text-base font-inter text-gray-700">{point}</span>
@@ -52,7 +86,7 @@ console.log('Racket Specialist Background URL:', racketSpecialistBg.url);
           
           <!-- Right Column -->
           <div class="space-y-3 sm:space-y-4">
-            {specialistData.bulletPoints.slice(4, 8).map((point) => (
+            {specialistData.bulletPoints.slice(2, 4).map((point) => (
               <div class="flex items-center gap-3">
                 <div class="w-2 h-2 bg-gold rounded-full flex-shrink-0"></div>
                 <span class="text-sm sm:text-base font-inter text-gray-700">{point}</span>
@@ -75,7 +109,16 @@ console.log('Racket Specialist Background URL:', racketSpecialistBg.url);
       <!-- Image Column -->
       <div class="lg:order-2 h-full min-h-[400px] sm:min-h-[500px] lg:min-h-[600px]">
         <div class="relative overflow-hidden h-full w-full rounded-[48px]">
-          <img src={racketSpecialistBg.url} alt={racketSpecialistBg.alt || 'Racket Holiday Resort'} width={racketSpecialistBg.width} height={racketSpecialistBg.height} class="w-full h-full object-cover" loading="lazy" />
+          <img 
+            src={racketSpecialistBg.src || racketSpecialistBg.url} 
+            {...(racketSpecialistBg.srcset && { srcset: racketSpecialistBg.srcset })}
+            sizes={racketSpecialistBg.sizes || RACKET_BG_SIZES}
+            width={racketSpecialistBg.width || 1200}
+            height={racketSpecialistBg.height || 800}
+            alt={racketSpecialistBg.alt || 'Racket Holiday Resort'}
+            loading={racketSpecialistBg.loading || 'lazy'}
+            class="w-full h-full object-cover"
+          />
           
           <!-- Testimonial Quote Card -->
           <div class="absolute bottom-6 sm:bottom-8 lg:bottom-10 right-6 sm:right-8 lg:right-10 bg-white/95 backdrop-blur-sm rounded-2xl p-5 sm:p-6 lg:p-8 shadow-2xl w-[calc(100%-3rem)] sm:w-[380px] lg:w-[420px]">
