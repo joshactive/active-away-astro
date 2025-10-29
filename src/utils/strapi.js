@@ -918,6 +918,95 @@ export async function getBlogs(limit = 8) {
 }
 
 /**
+ * Fetch Pre-Orders from Strapi
+ * @param {number} page - Page number
+ * @param {number} pageSize - Number of items per page
+ * @returns {Promise<Array>} Pre-orders data
+ */
+export async function getPreOrders(page = 1, pageSize = 25) {
+  try {
+    const data = await fetchAPI(
+      `/pre-orders?pagination[page]=${page}&pagination[pageSize]=${pageSize}&sort=createdAt:desc`
+    );
+    
+    if (!data || !data.data) {
+      console.log('📦 No pre-orders found');
+      return [];
+    }
+
+    console.log(`📦 Pre-orders fetched: ${data.data.length} items`);
+
+    return data.data.map(item => {
+      // In Strapi v5, fields are at the top level, not under attributes
+      const preOrder = item.attributes || item;
+
+      // Generate slug from title if not present
+      const slug = preOrder.slug || 
+                   preOrder.title?.toLowerCase()
+                     .replace(/[^a-z0-9]+/g, '-')
+                     .replace(/^-|-$/g, '') || 
+                   item.documentId || 
+                   item.id;
+
+      return {
+        id: item.id,
+        documentId: item.documentId || item.id,
+        title: preOrder.title || 'Untitled Pre-Order',
+        slug: slug,
+        excerpt: preOrder.excerpt || '',
+        description: preOrder.description || '',
+        createdAt: preOrder.createdAt || item.createdAt || new Date().toISOString(),
+        publishedAt: preOrder.publishedAt || item.publishedAt || null,
+        status: preOrder.status || 'active',
+        price: preOrder.price || null,
+        currency: preOrder.currency || 'GBP',
+        wpurl: preOrder.wpurl || null,
+        wpid: preOrder.wpid || null
+      };
+    });
+
+  } catch (error) {
+    console.error('❌ Error fetching pre-orders:', error);
+    return [];
+  }
+}
+
+/**
+ * Fetch Pre-Orders Page data from Strapi
+ * @returns {Promise<Object>} Pre-orders page data
+ */
+export async function getPreOrdersPage() {
+  try {
+    const data = await fetchAPI('/pre-orders-page?populate=*');
+    
+    if (!data || !data.data) {
+      console.log('📦 No pre-orders page data found');
+      return null;
+    }
+
+    const pageData = data.data.attributes || data.data;
+    console.log('📦 Pre-orders page data fetched successfully');
+
+    return {
+      hero: {
+        title: pageData.heroTitle || 'Pre-Orders',
+        subtitle: pageData.heroSubtitle || 'Be the first to secure your spot for our upcoming events, tours, and special experiences. Limited availability.',
+        kicker: pageData.heroKicker || 'EXCLUSIVE OPPORTUNITIES',
+        backgroundImage: pageData.heroBackgroundImage ? getStrapiImageData(pageData.heroBackgroundImage) : null
+      },
+      meta: {
+        title: pageData.metaTitle || 'Pre-Orders - Active Away',
+        description: pageData.metaDescription || 'Explore our exclusive pre-order opportunities. Be the first to secure your spot for upcoming events, tours, and special experiences.'
+      }
+    };
+
+  } catch (error) {
+    console.error('Error fetching pre-orders page data:', error);
+    return null;
+  }
+}
+
+/**
  * Fetch Venues Page data from Strapi
  * @returns {Promise<Object>} Venues page data
  */

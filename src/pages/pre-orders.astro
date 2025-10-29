@@ -1,0 +1,189 @@
+---
+// Prerender this page (since we're using hybrid mode)
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getPreOrders, getPreOrdersPage } from '../utils/strapi.js';
+
+// Fetch pre-orders page content from Strapi
+let pageContent = null;
+try {
+  pageContent = await getPreOrdersPage();
+  console.log('📦 [pre-orders.astro] Pre-orders page content fetched successfully');
+} catch (error) {
+  console.warn('[pre-orders.astro] Could not fetch pre-orders page content, using defaults:', error.message);
+}
+
+// Fetch pre-orders data
+let preOrders = [];
+try {
+  preOrders = await getPreOrders(1, 100);
+  
+  // Sort by title A-Z by default
+  preOrders.sort((a, b) => a.title.localeCompare(b.title));
+  
+  console.log('📦 [pre-orders.astro] Pre-orders data fetched successfully:', preOrders.length, 'items');
+} catch (error) {
+  console.error('[pre-orders.astro] Error fetching pre-orders:', error.message);
+}
+
+// Extract page content with fallbacks
+const heroTitle = pageContent?.hero?.title || 'Pre-Orders';
+const heroSubtitle = pageContent?.hero?.subtitle || 'Be the first to secure your spot for our upcoming events, tours, and special experiences. Limited availability.';
+const heroKicker = pageContent?.hero?.kicker || 'EXCLUSIVE OPPORTUNITIES';
+const heroBackgroundImage = pageContent?.hero?.backgroundImage?.url || 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/45b69090-1c22-46cd-7f98-086ba71efc00/public';
+const heroBackgroundImageAlt = pageContent?.hero?.backgroundImage?.alt || 'Tennis courts and resort';
+const pageTitle = pageContent?.meta?.title || 'Pre-Orders - Active Away';
+const pageDescription = pageContent?.meta?.description || 'Explore our exclusive pre-order opportunities. Be the first to secure your spot for upcoming events, tours, and special experiences.';
+---
+
+<BaseLayout 
+  title={pageTitle}
+  description={pageDescription}
+>
+  <!-- Hero Header Section with Background Image -->
+  <section class="relative w-full h-[300px] sm:h-[400px] lg:h-[500px] overflow-hidden">
+    <!-- Background Image -->
+    <div class="absolute inset-0 bg-gradient-to-r from-[#0D1C4E]/90 to-[#0D1C4E]/70 z-10"></div>
+    <img 
+      src={heroBackgroundImage}
+      alt={heroBackgroundImageAlt}
+      class="absolute inset-0 w-full h-full object-cover"
+      loading="eager"
+    />
+    
+    <!-- Content -->
+    <div class="relative z-20 container mx-auto max-w-[1400px] px-4 sm:px-10 h-full flex flex-col justify-center">
+      <div class="text-sm sm:text-base font-inter font-medium text-gold tracking-widest uppercase mb-3">
+        {heroKicker}
+      </div>
+      <h1 class="text-3xl sm:text-4xl lg:text-6xl font-playfair font-bold text-white mb-4 sm:mb-6">
+        {heroTitle}
+      </h1>
+      <p class="text-base sm:text-lg lg:text-xl font-inter text-gray-100 max-w-3xl">
+        {heroSubtitle}
+      </p>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="w-full bg-white py-12 sm:py-16 lg:py-24">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      
+      <!-- Results Header with Sort -->
+      <div class="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
+        <div class="text-base sm:text-lg font-inter text-gray-900">
+          Showing <span class="font-semibold">{preOrders.length}</span> {preOrders.length === 1 ? 'pre-order' : 'pre-orders'}
+        </div>
+        
+        <!-- Sort By Dropdown -->
+        <div class="flex items-center gap-3">
+          <label for="sortBy" class="text-sm font-inter text-gray-600 hidden sm:block">Sort by</label>
+          <div class="relative">
+            <select 
+              id="sortBy"
+              class="appearance-none bg-white border border-gray-300 rounded-lg pl-4 pr-10 py-2.5 text-sm font-inter text-gray-900 focus:ring-2 focus:ring-gold focus:border-gold transition-all cursor-pointer"
+            >
+              <option value="title-asc" selected>Title: A to Z</option>
+              <option value="title-desc">Title: Z to A</option>
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+            </select>
+            <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none" viewBox="0 0 24 24" fill="none">
+              <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pre-Orders Grid -->
+      {preOrders.length > 0 ? (
+        <div id="preOrdersGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {preOrders.map((preOrder) => (
+            <a 
+              href={`/pre-orders/${preOrder.slug}`}
+              class="pre-order-card group bg-white border-2 border-gray-200 rounded-2xl p-8 shadow-md hover:shadow-xl hover:border-gold transition-all duration-300 hover:-translate-y-1"
+              data-title={preOrder.title}
+              data-created={preOrder.createdAt}
+            >
+              <!-- Content -->
+              <div>
+                <h2 class="text-2xl sm:text-3xl font-playfair font-bold text-gray-900 mb-4 leading-tight group-hover:text-gold transition-colors">
+                  {preOrder.title}
+                </h2>
+                
+                {preOrder.excerpt && (
+                  <p class="text-base font-inter text-gray-600 leading-relaxed line-clamp-4">
+                    {preOrder.excerpt}
+                  </p>
+                )}
+                
+                <!-- Read More Arrow -->
+                <div class="mt-6 flex items-center gap-2 text-gold font-inter font-semibold">
+                  <span>Learn More</span>
+                  <svg class="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <!-- Empty State -->
+        <div class="text-center py-16">
+          <svg class="w-24 h-24 mx-auto text-gray-300 mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+          </svg>
+          <h3 class="text-2xl font-playfair font-semibold text-gray-900 mb-2">No pre-orders available</h3>
+          <p class="text-gray-600 font-inter mb-6">Check back soon for exclusive pre-order opportunities</p>
+        </div>
+      )}
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* Line clamp for excerpt text */
+  .line-clamp-4 {
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>
+
+<script>
+  // Sorting functionality
+  const sortBySelect = document.getElementById('sortBy');
+  const preOrdersGrid = document.getElementById('preOrdersGrid');
+
+  if (sortBySelect && preOrdersGrid) {
+    sortBySelect.addEventListener('change', (e) => {
+      const sortValue = e.target.value;
+      const cards = Array.from(preOrdersGrid.querySelectorAll('.pre-order-card'));
+      
+      // Sort the cards
+      cards.sort((a, b) => {
+        switch (sortValue) {
+          case 'title-asc':
+            return a.dataset.title.localeCompare(b.dataset.title);
+          
+          case 'title-desc':
+            return b.dataset.title.localeCompare(a.dataset.title);
+          
+          case 'oldest':
+            return new Date(a.dataset.created) - new Date(b.dataset.created);
+          
+          case 'newest':
+          default:
+            return new Date(b.dataset.created) - new Date(a.dataset.created);
+        }
+      });
+      
+      // Re-append cards in sorted order
+      cards.forEach(card => preOrdersGrid.appendChild(card));
+    });
+  }
+</script>
+
