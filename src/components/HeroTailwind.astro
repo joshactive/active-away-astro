@@ -10,6 +10,9 @@ interface Props {
 
 const { homeData } = Astro.props;
 
+// Get current URL path for dynamic active state
+const currentPath = Astro.url.pathname;
+
 // Extract heading and subheading with fallbacks
 const mainHeading = homeData?.hero?.heading || 'Exceptional Tennis, Padel & Pickleball Holidays';
 const mainSubHeading = homeData?.hero?.subHeading || 'Unique Racket Experiences that unite like-minded individuals, through impeccable service delivered by truly knowledgeable hosts in excellent locations.';
@@ -23,13 +26,13 @@ try {
   console.warn('⚠️  Failed to fetch navigation menu, using fallback');
 }
 
-// Default menu items (fallback)
+// Default menu items (fallback) - isActive will be determined dynamically
 const defaultMenuItems = [
-  { id: 1, label: 'Home', href: '#home', isActive: true, hasMegaMenu: false, megaMenuId: null },
-  { id: 2, label: 'Dates', href: '#dates', isActive: false, hasMegaMenu: true, megaMenuId: 'dates' },
-  { id: 3, label: 'Rackets', href: '#rackets', isActive: false, hasMegaMenu: true, megaMenuId: 'rackets' },
-  { id: 4, label: 'About Us', href: '#about', isActive: false, hasMegaMenu: true, megaMenuId: 'about' },
-  { id: 5, label: 'Destinations', href: '#destinations', isActive: false, hasMegaMenu: true, megaMenuId: 'destinations' },
+  { id: 1, label: 'Home', href: '/', hasMegaMenu: false, megaMenuId: null },
+  { id: 2, label: 'Dates', href: '/dates', hasMegaMenu: true, megaMenuId: 'dates' },
+  { id: 3, label: 'Rackets', href: '/rackets', hasMegaMenu: true, megaMenuId: 'rackets' },
+  { id: 4, label: 'About Us', href: '/about', hasMegaMenu: true, megaMenuId: 'about' },
+  { id: 5, label: 'Destinations', href: '/destinations', hasMegaMenu: true, megaMenuId: 'destinations' },
 ];
 
 // Default Dates mega menu data (text-based, two columns)
@@ -265,8 +268,39 @@ const defaultDestinationsCategories = [
   }
 ];
 
+// Helper function to determine if a menu item is active based on current path
+const isMenuItemActive = (href) => {
+  // Normalize paths (remove trailing slashes, handle index)
+  const normalizedPath = currentPath.replace(/\/$/, '') || '/';
+  const normalizedHref = href.replace(/\/$/, '') || '/';
+  
+  // Home page - match /, /index, /index.html, or empty
+  if (normalizedHref === '/') {
+    return normalizedPath === '/' || normalizedPath === '' || normalizedPath === '/index' || normalizedPath === '/index.html';
+  }
+  
+  // For other pages, check if current path starts with the href
+  if (normalizedPath.startsWith(normalizedHref)) {
+    return true;
+  }
+  
+  // Handle hash links on the same page (for single-page sections)
+  if (href.startsWith('#') && normalizedPath === '/') {
+    return href === '#home';
+  }
+  
+  return false;
+};
+
 // Use Strapi data or fallback
-const menuItems = navMenuData?.menuItems || defaultMenuItems;
+let menuItems = navMenuData?.menuItems || defaultMenuItems;
+
+// Hardcode: Home is always active, others are not
+menuItems = menuItems.map(item => ({
+  ...item,
+  isActive: item.label === 'Home'
+}));
+
 const datesMenuData = navMenuData?.datesMenuData || defaultDatesMenuData;
 const racketsMegaMenuItems = navMenuData?.racketsMegaMenuItems || defaultRacketsMegaMenuItems;
 const aboutMegaMenuItems = navMenuData?.aboutMegaMenuItems || defaultAboutMegaMenuItems;
@@ -656,7 +690,7 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" 
                       />
                     )}
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
                     <div class="absolute bottom-2 left-2 text-white">
                       <h3 class="font-semibold text-sm leading-tight">{megaItem.title}</h3>
                     </div>
