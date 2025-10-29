@@ -918,6 +918,45 @@ export async function getBlogs(limit = 8) {
 }
 
 /**
+ * Fetch Venues Page data from Strapi
+ * @returns {Promise<Object>} Venues page data
+ */
+export async function getVenuesPage() {
+  try {
+    const data = await fetchAPI('/venues-page?populate=*');
+    
+    if (!data || !data.data) {
+      console.log('📍 No venues page data found');
+      return null;
+    }
+
+    const pageData = data.data.attributes || data.data;
+    console.log('🏨 Venues page data fetched successfully');
+
+    return {
+      hero: {
+        title: pageData.heroTitle || 'Explore All Venues',
+        subtitle: pageData.heroSubtitle || 'Discover our complete collection of tennis, padel, pickleball, and ski holidays across the world.',
+        kicker: pageData.heroKicker || 'ALL DESTINATIONS',
+        backgroundImage: pageData.heroBackgroundImage ? getStrapiImageData(pageData.heroBackgroundImage) : null
+      },
+      meta: {
+        title: pageData.pageTitle || 'All Venues - Active Away',
+        description: pageData.metaDescription || 'Explore all our tennis, padel, pickleball, and ski holiday destinations.'
+      },
+      featured: {
+        title: pageData.featuredSectionTitle || null,
+        description: pageData.featuredSectionDescription || null
+      }
+    };
+
+  } catch (error) {
+    console.error('Error fetching venues page data:', error);
+    return null;
+  }
+}
+
+/**
  * Fetch navigation menu data from Strapi
  * @returns {Promise<Object>} Navigation menu data
  */
@@ -1006,5 +1045,306 @@ export async function getNavigationMenu() {
   } catch (error) {
     console.error('❌ Error fetching navigation menu:', error);
     return null;
+  }
+}
+
+// ============================================
+// Venue Collection Type Fetch Functions
+// ============================================
+
+/**
+ * Normalize venue data from any collection type
+ * @param {Object} item - Raw Strapi item
+ * @param {string} holidayType - Type of holiday
+ * @returns {Object} Normalized venue object
+ */
+function normalizeVenueData(item, holidayType) {
+  const venue = item.attributes || item;
+  
+  // Get header image
+  const headerImage = venue.headerImage ? getStrapiImageData(venue.headerImage) : null;
+  
+  // Get price - try different field names
+  const price = venue.priceFrom || venue.singleOccupancyFrom || venue.singleOccupancyShort || null;
+  
+  return {
+    id: `${holidayType}-${item.id}`,
+    strapiId: item.id,
+    title: venue.title || 'Untitled Venue',
+    country: venue.country || '',
+    holidayType: holidayType,
+    productType: venue.productType || holidayType.split('-').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' '),
+    price: price,
+    priceText: price ? `from £${price}pp` : null,
+    dateFrom: venue.dateFrom || null,
+    dateUntil: venue.dateUntil || null,
+    image: headerImage?.url || GENERIC_PLACEHOLDER_URL,
+    imageAlt: headerImage?.alt || venue.title || 'Venue image',
+    slug: venue.slug || '',
+    createdAt: venue.createdAt || item.createdAt || new Date().toISOString(),
+    // Additional useful fields
+    description: venue.description || venue.blogExcerpt || '',
+    location: venue.location || venue.country || ''
+  };
+}
+
+/**
+ * Fetch Junior Tennis Camps
+ * @param {number} page - Page number (1-indexed)
+ * @param {number} pageSize - Items per page
+ * @returns {Promise<Array>} Array of normalized venue data
+ */
+export async function getJuniorTennisCamps(page = 1, pageSize = 25) {
+  try {
+    const data = await fetchAPI(`/junior-tennis-camps?populate=headerImage&sort=createdAt:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`);
+    
+    if (!data || !data.data || data.data.length === 0) {
+      return [];
+    }
+    
+    return data.data.map(item => normalizeVenueData(item, 'junior-tennis-camp'));
+  } catch (error) {
+    console.error('❌ Error fetching junior tennis camps:', error);
+    return [];
+  }
+}
+
+/**
+ * Fetch Padel Tennis Holidays
+ * @param {number} page - Page number (1-indexed)
+ * @param {number} pageSize - Items per page
+ * @returns {Promise<Array>} Array of normalized venue data
+ */
+export async function getPadelTennisHolidays(page = 1, pageSize = 25) {
+  try {
+    const data = await fetchAPI(`/padel-tennis-holidays?populate=headerImage&sort=createdAt:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`);
+    
+    if (!data || !data.data || data.data.length === 0) {
+      return [];
+    }
+    
+    return data.data.map(item => normalizeVenueData(item, 'padel-tennis-holiday'));
+  } catch (error) {
+    console.error('❌ Error fetching padel tennis holidays:', error);
+    return [];
+  }
+}
+
+/**
+ * Fetch Pickleball Holidays
+ * @param {number} page - Page number (1-indexed)
+ * @param {number} pageSize - Items per page
+ * @returns {Promise<Array>} Array of normalized venue data
+ */
+export async function getPickleballHolidays(page = 1, pageSize = 25) {
+  try {
+    const data = await fetchAPI(`/pickleball-holidays?populate=headerImage&sort=createdAt:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`);
+    
+    if (!data || !data.data || data.data.length === 0) {
+      return [];
+    }
+    
+    return data.data.map(item => normalizeVenueData(item, 'pickleball-holiday'));
+  } catch (error) {
+    console.error('❌ Error fetching pickleball holidays:', error);
+    return [];
+  }
+}
+
+/**
+ * Fetch Play & Watch Holidays
+ * @param {number} page - Page number (1-indexed)
+ * @param {number} pageSize - Items per page
+ * @returns {Promise<Array>} Array of normalized venue data
+ */
+export async function getPlayAndWatchHolidays(page = 1, pageSize = 25) {
+  try {
+    const data = await fetchAPI(`/play-and-watches?populate=headerImage&sort=createdAt:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`);
+    
+    if (!data || !data.data || data.data.length === 0) {
+      return [];
+    }
+    
+    return data.data.map(item => normalizeVenueData(item, 'play-and-watch'));
+  } catch (error) {
+    console.error('❌ Error fetching play and watch holidays:', error);
+    return [];
+  }
+}
+
+/**
+ * Fetch School Tennis Tours
+ * @param {number} page - Page number (1-indexed)
+ * @param {number} pageSize - Items per page
+ * @returns {Promise<Array>} Array of normalized venue data
+ */
+export async function getSchoolTennisTours(page = 1, pageSize = 25) {
+  try {
+    const data = await fetchAPI(`/school-tennis-tours?populate=headerImage&sort=createdAt:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`);
+    
+    if (!data || !data.data || data.data.length === 0) {
+      return [];
+    }
+    
+    return data.data.map(item => normalizeVenueData(item, 'school-tennis-tour'));
+  } catch (error) {
+    console.error('❌ Error fetching school tennis tours:', error);
+    return [];
+  }
+}
+
+/**
+ * Fetch Ski Holidays
+ * @param {number} page - Page number (1-indexed)
+ * @param {number} pageSize - Items per page
+ * @returns {Promise<Array>} Array of normalized venue data
+ */
+export async function getSkiHolidays(page = 1, pageSize = 25) {
+  try {
+    const data = await fetchAPI(`/ski-holidays?populate=headerImage&sort=createdAt:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`);
+    
+    if (!data || !data.data || data.data.length === 0) {
+      return [];
+    }
+    
+    return data.data.map(item => normalizeVenueData(item, 'ski-holiday'));
+  } catch (error) {
+    console.error('❌ Error fetching ski holidays:', error);
+    return [];
+  }
+}
+
+/**
+ * Fetch Tennis Clinics
+ * @param {number} page - Page number (1-indexed)
+ * @param {number} pageSize - Items per page
+ * @returns {Promise<Array>} Array of normalized venue data
+ */
+export async function getTennisClinics(page = 1, pageSize = 25) {
+  try {
+    const data = await fetchAPI(`/tennis-clinics?populate=headerImage&sort=createdAt:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`);
+    
+    if (!data || !data.data || data.data.length === 0) {
+      return [];
+    }
+    
+    return data.data.map(item => normalizeVenueData(item, 'tennis-clinic'));
+  } catch (error) {
+    console.error('❌ Error fetching tennis clinics:', error);
+    return [];
+  }
+}
+
+/**
+ * Fetch Tennis Holidays
+ * @param {number} page - Page number (1-indexed)
+ * @param {number} pageSize - Items per page
+ * @returns {Promise<Array>} Array of normalized venue data
+ */
+export async function getTennisHolidays(page = 1, pageSize = 25) {
+  try {
+    const data = await fetchAPI(`/tennis-holidays?populate=headerImage&sort=createdAt:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`);
+    
+    if (!data || !data.data || data.data.length === 0) {
+      return [];
+    }
+    
+    return data.data.map(item => normalizeVenueData(item, 'tennis-holiday'));
+  } catch (error) {
+    console.error('❌ Error fetching tennis holidays:', error);
+    return [];
+  }
+}
+
+/**
+ * Fetch all venues from all 8 collection types
+ * @param {Object} options - Options object
+ * @param {number} options.pageSize - Items per page (default: 18)
+ * @returns {Promise<Object>} Object with venues array and metadata
+ */
+export async function getAllVenues(options = {}) {
+  const { pageSize = 18 } = options;
+  
+  try {
+    // Fetch from all 8 collection types in parallel
+    const [
+      juniorCamps,
+      padelHolidays,
+      pickleballHolidays,
+      playAndWatch,
+      schoolTours,
+      skiHolidays,
+      tennisClinics,
+      tennisHolidays
+    ] = await Promise.all([
+      getJuniorTennisCamps(1, pageSize),
+      getPadelTennisHolidays(1, pageSize),
+      getPickleballHolidays(1, pageSize),
+      getPlayAndWatchHolidays(1, pageSize),
+      getSchoolTennisTours(1, pageSize),
+      getSkiHolidays(1, pageSize),
+      getTennisClinics(1, pageSize),
+      getTennisHolidays(1, pageSize)
+    ]);
+    
+    // Combine all venues
+    const allVenues = [
+      ...juniorCamps,
+      ...padelHolidays,
+      ...pickleballHolidays,
+      ...playAndWatch,
+      ...schoolTours,
+      ...skiHolidays,
+      ...tennisClinics,
+      ...tennisHolidays
+    ];
+    
+    // Sort by creation date (newest first)
+    allVenues.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    // Extract unique countries for filters
+    const countries = [...new Set(allVenues.map(v => v.country).filter(Boolean))].sort();
+    
+    // Extract price range
+    const prices = allVenues.map(v => v.price).filter(Boolean);
+    const priceRange = prices.length > 0 ? {
+      min: Math.min(...prices),
+      max: Math.max(...prices)
+    } : { min: 0, max: 5000 };
+    
+    console.log(`📍 Fetched ${allVenues.length} total venues from all collection types`);
+    
+    return {
+      venues: allVenues,
+      metadata: {
+        total: allVenues.length,
+        countries,
+        priceRange,
+        holidayTypes: [
+          { value: 'junior-tennis-camp', label: 'Junior Tennis Camp' },
+          { value: 'padel-tennis-holiday', label: 'Padel Tennis Holiday' },
+          { value: 'pickleball-holiday', label: 'Pickleball Holiday' },
+          { value: 'play-and-watch', label: 'Play & Watch' },
+          { value: 'school-tennis-tour', label: 'School Tennis Tour' },
+          { value: 'ski-holiday', label: 'Ski Holiday' },
+          { value: 'tennis-clinic', label: 'Tennis Clinic' },
+          { value: 'tennis-holiday', label: 'Tennis Holiday' }
+        ]
+      }
+    };
+    
+  } catch (error) {
+    console.error('❌ Error fetching all venues:', error);
+    return {
+      venues: [],
+      metadata: {
+        total: 0,
+        countries: [],
+        priceRange: { min: 0, max: 5000 },
+        holidayTypes: []
+      }
+    };
   }
 }

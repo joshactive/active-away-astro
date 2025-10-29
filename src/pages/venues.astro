@@ -1,0 +1,907 @@
+---
+// Prerender this page (since we're using hybrid mode)
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getAllVenues, getVenuesPage } from '../utils/strapi.js';
+import { getStrapiImageAttrs } from '../utils/cloudflareImages.js';
+import MapPinIcon from '../components/ui/icons/MapPinIcon.astro';
+import TagIcon from '../components/ui/icons/TagIcon.astro';
+import HotelIcon from '../components/ui/icons/HotelIcon.astro';
+
+// Fetch venues page content from Strapi
+let pageContent = null;
+try {
+  pageContent = await getVenuesPage();
+  console.log('🏨 [venues.astro] Venues page content fetched successfully');
+} catch (error) {
+  console.warn('[venues.astro] Could not fetch venues page content, using defaults:', error.message);
+}
+
+// Fetch initial venues data
+let venuesData = { venues: [], metadata: { total: 0, countries: [], priceRange: { min: 0, max: 5000 }, holidayTypes: [] } };
+try {
+  venuesData = await getAllVenues({ pageSize: 18 });
+  console.log('🏨 [venues.astro] Venues data fetched successfully:', venuesData.metadata.total, 'venues');
+} catch (error) {
+  console.error('[venues.astro] Error fetching venues:', error.message);
+}
+
+const { venues, metadata } = venuesData;
+const VENUE_IMAGE_SIZES = '(max-width: 1024px) 100vw, 600px';
+const VENUE_IMAGE_QUALITY = 60;
+
+// Extract page content with fallbacks
+const heroTitle = pageContent?.hero?.title || 'Explore All Venues';
+const heroSubtitle = pageContent?.hero?.subtitle || 'Discover our complete collection of tennis, padel, pickleball, and ski holidays across the world. Filter by type, location, and price to find your perfect getaway.';
+const heroKicker = pageContent?.hero?.kicker || 'ALL DESTINATIONS';
+const heroBackgroundImage = pageContent?.hero?.backgroundImage?.url || 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/45b69090-1c22-46cd-7f98-086ba71efc00/public';
+const heroBackgroundImageAlt = pageContent?.hero?.backgroundImage?.alt || 'Tennis courts and resort';
+const pageTitle = pageContent?.meta?.title || 'All Venues - Active Away';
+const pageDescription = pageContent?.meta?.description || 'Explore all our tennis, padel, pickleball, and ski holiday destinations. Find your perfect vacation with expert hosts and exceptional service.';
+---
+
+<BaseLayout 
+  title={pageTitle}
+  description={pageDescription}
+>
+  <!-- Hero Header Section with Background Image -->
+  <section class="relative w-full h-[300px] sm:h-[400px] lg:h-[500px] overflow-hidden">
+    <!-- Background Image -->
+    <div class="absolute inset-0 bg-gradient-to-r from-[#0D1C4E]/90 to-[#0D1C4E]/70 z-10"></div>
+    <img 
+      src={heroBackgroundImage}
+      alt={heroBackgroundImageAlt}
+      class="absolute inset-0 w-full h-full object-cover"
+      loading="eager"
+    />
+    
+    <!-- Content -->
+    <div class="relative z-20 container mx-auto max-w-[1400px] px-4 sm:px-10 h-full flex flex-col justify-center">
+      <div class="text-sm sm:text-base font-inter font-medium text-gold tracking-widest uppercase mb-3">
+        {heroKicker}
+      </div>
+      <h1 class="text-3xl sm:text-4xl lg:text-6xl font-playfair font-bold text-white mb-4 sm:mb-6">
+        {heroTitle}
+      </h1>
+      <p class="text-base sm:text-lg lg:text-xl font-inter text-gray-100 max-w-3xl">
+        {heroSubtitle}
+      </p>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="w-full bg-white py-12 sm:py-16 lg:py-24">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      <div class="flex flex-col lg:flex-row gap-8 lg:gap-12">
+        
+        <!-- Left Sidebar - Filters -->
+        <aside class="w-full lg:w-[320px] flex-shrink-0">
+          <div id="filterBar" class="bg-white border border-gray-200 rounded-2xl p-6 shadow-lg lg:sticky lg:top-4">
+            <!-- Filter Header -->
+            <div class="mb-6 pb-4 border-b border-gray-200">
+              <div class="flex items-center justify-between">
+                <h3 class="text-lg font-playfair font-semibold text-gray-900">Filters</h3>
+                <span id="activeFilterCount" class="hidden bg-gold text-white text-xs font-bold px-2.5 py-1 rounded-full">0</span>
+              </div>
+              <p id="filterStatus" class="text-sm font-inter text-gray-600 mt-1">0 filters selected</p>
+            </div>
+
+            <!-- Mobile Filter Toggle -->
+            <button 
+              id="mobileFilterToggle"
+              class="lg:hidden w-full flex items-center justify-between bg-gray-50 hover:bg-gray-100 px-4 py-3 rounded-lg transition-colors mb-4"
+            >
+              <span class="font-inter font-medium text-gray-900">Show/Hide Filters</span>
+              <svg class="w-5 h-5 text-gray-600 transition-transform" id="filterChevron" viewBox="0 0 24 24" fill="none">
+                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+
+            <!-- Filters Container -->
+            <div id="filtersContainer" class="space-y-6">
+              <!-- Holiday Type Filter -->
+              <div class="filter-group">
+                <button class="filter-header w-full flex items-center justify-between py-3 text-left" data-filter="holidayType">
+                  <span class="text-sm font-inter font-semibold text-gray-900">Holiday Type</span>
+                  <svg class="w-5 h-5 text-gray-600 transition-transform" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div class="filter-content space-y-2 mt-3">
+                  {metadata.holidayTypes.map(type => (
+                    <label class="flex items-center cursor-pointer group">
+                      <input 
+                        type="checkbox" 
+                        name="holidayType" 
+                        value={type.value}
+                        class="w-4 h-4 text-gold border-gray-300 rounded focus:ring-gold focus:ring-2"
+                      />
+                      <span class="ml-3 text-sm font-inter text-gray-700 group-hover:text-gray-900">{type.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <!-- Country Filter -->
+              <div class="filter-group">
+                <button class="filter-header w-full flex items-center justify-between py-3 text-left" data-filter="country">
+                  <span class="text-sm font-inter font-semibold text-gray-900">Country</span>
+                  <svg class="w-5 h-5 text-gray-600 transition-transform" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div class="filter-content space-y-2 mt-3">
+                  {metadata.countries.map(country => (
+                    <label class="flex items-center cursor-pointer group">
+                      <input 
+                        type="checkbox" 
+                        name="country" 
+                        value={country}
+                        class="w-4 h-4 text-gold border-gray-300 rounded focus:ring-gold focus:ring-2"
+                      />
+                      <span class="ml-3 text-sm font-inter text-gray-700 group-hover:text-gray-900">{country}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <!-- Price Range Filter -->
+              <div class="filter-group">
+                <button class="filter-header w-full flex items-center justify-between py-3 text-left" data-filter="price">
+                  <span class="text-sm font-inter font-semibold text-gray-900">Price Range</span>
+                  <svg class="w-5 h-5 text-gray-600 transition-transform" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div class="filter-content mt-3">
+                  <div class="flex items-center gap-2">
+                    <div class="relative flex-1">
+                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-inter">£</span>
+                      <input 
+                        type="number" 
+                        id="priceMin" 
+                        placeholder="Min"
+                        min={metadata.priceRange.min}
+                        max={metadata.priceRange.max}
+                        class="w-full bg-gray-50 border border-gray-300 rounded-lg pl-7 pr-2 py-2.5 text-sm font-inter text-gray-900 focus:ring-2 focus:ring-gold focus:border-gold transition-all"
+                      />
+                    </div>
+                    <span class="text-gray-400 font-inter">—</span>
+                    <div class="relative flex-1">
+                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-inter">£</span>
+                      <input 
+                        type="number" 
+                        id="priceMax" 
+                        placeholder="Max"
+                        min={metadata.priceRange.min}
+                        max={metadata.priceRange.max}
+                        class="w-full bg-gray-50 border border-gray-300 rounded-lg pl-7 pr-2 py-2.5 text-sm font-inter text-gray-900 focus:ring-2 focus:ring-gold focus:border-gold transition-all"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Date Range Filter -->
+              <div class="filter-group">
+                <button class="filter-header w-full flex items-center justify-between py-3 text-left" data-filter="dates">
+                  <span class="text-sm font-inter font-semibold text-gray-900">Available Dates</span>
+                  <svg class="w-5 h-5 text-gray-600 transition-transform" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div class="filter-content mt-3">
+                  <div class="space-y-2">
+                    <input 
+                      type="date" 
+                      id="dateFrom"
+                      placeholder="From"
+                      class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2.5 text-sm font-inter text-gray-900 focus:ring-2 focus:ring-gold focus:border-gold transition-all"
+                    />
+                    <input 
+                      type="date" 
+                      id="dateTo"
+                      placeholder="To"
+                      class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2.5 text-sm font-inter text-gray-900 focus:ring-2 focus:ring-gold focus:border-gold transition-all"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Clear Filters Button -->
+              <div class="pt-4 border-t border-gray-200">
+                <button 
+                  id="clearFilters"
+                  class="w-full px-4 py-2.5 text-sm font-inter font-medium text-gold hover:text-gold-700 border border-gold hover:bg-gold hover:text-white rounded-lg transition-all"
+                >
+                  Clear All Filters
+                </button>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Right Content Area -->
+        <main class="flex-1 min-w-0">
+          <!-- Results Header with Sort -->
+          <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+            <div class="text-base sm:text-lg font-inter text-gray-900">
+              Showing <span id="filteredCount" class="font-semibold">{venues.length}</span> of <span class="font-semibold">{metadata.total}</span> venues
+            </div>
+            
+            <!-- Sort By Dropdown -->
+            <div class="flex items-center gap-3">
+              <label class="text-sm font-inter text-gray-600 hidden sm:block">Sort by</label>
+              <div class="relative">
+                <select 
+                  id="sortBy"
+                  class="appearance-none bg-white border border-gray-300 rounded-lg pl-4 pr-10 py-2.5 text-sm font-inter text-gray-900 focus:ring-2 focus:ring-gold focus:border-gold transition-all cursor-pointer"
+                >
+                  <option value="recommended">Recommended</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
+                  <option value="name-asc">Name: A to Z</option>
+                  <option value="name-desc">Name: Z to A</option>
+                  <option value="newest">Newest First</option>
+                </select>
+                <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none" viewBox="0 0 24 24" fill="none">
+                  <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Venues Grid -->
+          <div id="venuesGrid" class="flex flex-col gap-6 lg:gap-8">
+        {venues.slice(0, 18).map((venue, index) => {
+          const imageAlt = venue.imageAlt || venue.title;
+          const imageUrl = venue.image;
+          const strapiAttrs = getStrapiImageAttrs({ url: imageUrl, alt: imageAlt }, {
+            displayWidth: 600,
+            displayHeight: 400,
+            fit: 'cover',
+            sizes: '(max-width: 1024px) 100vw, 600px',
+            quality: VENUE_IMAGE_QUALITY
+          });
+
+          const imgAttrs = strapiAttrs ?? {
+            src: imageUrl,
+            url: imageUrl,
+            alt: imageAlt,
+            width: 600,
+            height: 400,
+            loading: index < 6 ? 'eager' : 'lazy',
+            sizes: '(max-width: 1024px) 100vw, 600px'
+          };
+
+          return (
+            <div class="venue-card bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300" data-venue-id={venue.id} data-country={venue.country} data-holiday-type={venue.holidayType} data-price={venue.price || 0} data-date-from={venue.dateFrom || ''} data-date-until={venue.dateUntil || ''}>
+              {/* Mobile: Vertical Layout | Desktop: Horizontal Layout */}
+              <div class="flex flex-col lg:flex-row lg:h-[280px]">
+                {/* Image Section */}
+                <div class="relative w-full lg:w-[45%] h-64 lg:h-full flex-shrink-0 overflow-hidden bg-gray-900">
+                  <img 
+                    src={imgAttrs.src}
+                    {...(imgAttrs.srcset && { srcset: imgAttrs.srcset })}
+                    sizes={imgAttrs.sizes || '(max-width: 1024px) 100vw, 600px'}
+                    width={imgAttrs.width || 600}
+                    height={imgAttrs.height || 400}
+                    alt={imgAttrs.alt || imageAlt}
+                    loading={imgAttrs.loading || 'lazy'}
+                    decoding="async"
+                    class="w-full h-full object-cover transition-transform duration-300 hover:scale-105" 
+                  />
+                </div>
+                
+                {/* Content Section */}
+                <div class="flex flex-col p-6 lg:p-8 lg:w-[55%] justify-between">
+                  <div>
+                    <h3 class="text-xl sm:text-2xl lg:text-2xl font-playfair font-bold text-gray-900 mb-3 lg:mb-4 leading-tight">
+                      {venue.title}
+                    </h3>
+                    
+                    <div class="space-y-2 mb-4 lg:mb-6">
+                      {/* Country */}
+                      {venue.country && (
+                        <div class="flex items-center gap-2">
+                          <MapPinIcon class="w-5 h-5 text-gray-600 flex-shrink-0" />
+                          <span class="text-sm sm:text-base font-inter text-gray-700">{venue.country}</span>
+                        </div>
+                      )}
+                      
+                      {/* Holiday Type */}
+                      <div class="flex items-center gap-2">
+                        <TagIcon class="w-5 h-5 text-gray-600 flex-shrink-0" />
+                        <span class="text-sm sm:text-base font-inter text-gray-700">{venue.productType}</span>
+                      </div>
+                      
+                      {/* Price (only show if exists) */}
+                      {venue.priceText && (
+                        <div class="flex items-center gap-2">
+                          <HotelIcon class="w-5 h-5 text-gray-600 flex-shrink-0" />
+                          <span class="text-sm sm:text-base font-inter text-gray-700">{venue.priceText}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div class="flex items-center justify-between gap-3 mt-auto">
+                    {venue.price && (
+                      <div class="font-inter text-gray-900">
+                        <span class="text-sm font-normal text-gray-600">from </span>
+                        <span class="text-2xl lg:text-3xl font-bold">£{venue.price}</span><span class="text-lg lg:text-xl font-semibold">pp</span>
+                      </div>
+                    )}
+                    <button class="px-6 py-3 bg-gold hover:bg-gold-700 text-white font-inter font-medium text-sm sm:text-base rounded-full transition-all duration-300 hover:-translate-y-0.5 whitespace-nowrap">
+                      Explore
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+          <!-- Loading Indicator -->
+          <div id="loadingIndicator" class="hidden text-center py-12">
+            <div class="inline-block w-12 h-12 border-4 border-gray-300 border-t-gold rounded-full animate-spin"></div>
+            <p class="mt-4 text-gray-600 font-inter">Loading more venues...</p>
+          </div>
+
+          <!-- Empty State -->
+          <div id="emptyState" class="hidden text-center py-16">
+            <svg class="w-24 h-24 mx-auto text-gray-300 mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M12 12h.01M12 12h.01M12 12h.01M12 21a9 9 0 100-18 9 9 0 000 18z" />
+            </svg>
+            <h3 class="text-2xl font-playfair font-semibold text-gray-900 mb-2">No venues found</h3>
+            <p class="text-gray-600 font-inter mb-6">Try adjusting your filters to see more results</p>
+            <button id="emptyStateClearBtn" class="px-6 py-3 bg-gold hover:bg-gold-700 text-white font-inter font-medium rounded-full transition-all duration-300">
+              Clear All Filters
+            </button>
+          </div>
+
+          <!-- Infinite Scroll Sentinel -->
+          <div id="scrollSentinel" class="h-4"></div>
+
+          <!-- End of Results Message -->
+          <div id="endMessage" class="hidden text-center py-12">
+            <p class="text-gray-600 font-inter">You've reached the end of all venues</p>
+          </div>
+        </main>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+
+  .venue-card {
+    transition: all 0.3s ease;
+  }
+
+  .venue-card.hidden {
+    display: none;
+  }
+
+  /* Filter Group Styles */
+  .filter-group {
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .filter-group:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0;
+  }
+
+  .filter-header {
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s ease;
+  }
+
+  .filter-header:hover {
+    background-color: #f9fafb;
+    border-radius: 0.5rem;
+  }
+
+  .filter-header svg {
+    transition: transform 0.3s ease;
+  }
+
+  .filter-group.collapsed .filter-header svg {
+    transform: rotate(-90deg);
+  }
+
+  .filter-group.collapsed .filter-content {
+    display: none;
+  }
+
+  /* Loading skeleton animation */
+  @keyframes shimmer {
+    0% {
+      background-position: -1000px 0;
+    }
+    100% {
+      background-position: 1000px 0;
+    }
+  }
+
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Mobile filter container */
+  @media (max-width: 1023px) {
+    #filtersContainer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    #filtersContainer.show {
+      max-height: 2000px;
+    }
+  }
+</style>
+
+<script define:vars={{ initialVenues: venues, metadata }}>
+  // Global state
+  let allVenues = [...initialVenues];
+  let filteredVenues = [...initialVenues];
+  let displayedVenues = [...initialVenues].slice(0, 18);
+  let currentPage = 1;
+  const pageSize = 18;
+  let isLoading = false;
+  let hasMoreVenues = allVenues.length > displayedVenues.length;
+
+  // Filter state
+  const filters = {
+    holidayTypes: new Set(),
+    countries: new Set(),
+    priceMin: null,
+    priceMax: null,
+    dateFrom: null,
+    dateTo: null
+  };
+
+  // DOM elements
+  const venuesGrid = document.getElementById('venuesGrid');
+  const loadingIndicator = document.getElementById('loadingIndicator');
+  const emptyState = document.getElementById('emptyState');
+  const endMessage = document.getElementById('endMessage');
+  const scrollSentinel = document.getElementById('scrollSentinel');
+  const filteredCountEl = document.getElementById('filteredCount');
+  const activeFilterCountEl = document.getElementById('activeFilterCount');
+  const filterStatusEl = document.getElementById('filterStatus');
+  const sortBySelect = document.getElementById('sortBy');
+  
+  // Mobile filter toggle
+  const mobileFilterToggle = document.getElementById('mobileFilterToggle');
+  const filtersContainer = document.getElementById('filtersContainer');
+  const filterChevron = document.getElementById('filterChevron');
+
+  // Initialize
+  function init() {
+    setupEventListeners();
+    setupInfiniteScroll();
+    restoreFiltersFromURL();
+    updateFilterCount();
+  }
+
+  // Setup event listeners
+  function setupEventListeners() {
+    // Mobile filter toggle
+    mobileFilterToggle?.addEventListener('click', () => {
+      filtersContainer.classList.toggle('show');
+      if (filtersContainer.classList.contains('show')) {
+        filterChevron.style.transform = 'rotate(180deg)';
+      } else {
+        filterChevron.style.transform = 'rotate(0deg)';
+      }
+    });
+
+    // Filter group collapse/expand
+    document.querySelectorAll('.filter-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const filterGroup = header.parentElement;
+        filterGroup.classList.toggle('collapsed');
+      });
+    });
+
+    // Holiday type checkboxes
+    document.querySelectorAll('input[name="holidayType"]').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          filters.holidayTypes.add(e.target.value);
+        } else {
+          filters.holidayTypes.delete(e.target.value);
+        }
+        updateHolidayTypeButton();
+        applyFilters();
+      });
+    });
+
+    // Country checkboxes
+    document.querySelectorAll('input[name="country"]').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          filters.countries.add(e.target.value);
+        } else {
+          filters.countries.delete(e.target.value);
+        }
+        updateCountryButton();
+        applyFilters();
+      });
+    });
+
+    // Price range inputs
+    document.getElementById('priceMin')?.addEventListener('input', debounce((e) => {
+      filters.priceMin = e.target.value ? parseInt(e.target.value) : null;
+      applyFilters();
+    }, 500));
+
+    document.getElementById('priceMax')?.addEventListener('input', debounce((e) => {
+      filters.priceMax = e.target.value ? parseInt(e.target.value) : null;
+      applyFilters();
+    }, 500));
+
+    // Date range inputs
+    document.getElementById('dateFrom')?.addEventListener('change', (e) => {
+      filters.dateFrom = e.target.value || null;
+      applyFilters();
+    });
+
+    document.getElementById('dateTo')?.addEventListener('change', (e) => {
+      filters.dateTo = e.target.value || null;
+      applyFilters();
+    });
+
+    // Sort by dropdown
+    sortBySelect?.addEventListener('change', (e) => {
+      applySorting(e.target.value);
+    });
+
+    // Clear filters button
+    document.getElementById('clearFilters')?.addEventListener('click', clearAllFilters);
+    document.getElementById('emptyStateClearBtn')?.addEventListener('click', clearAllFilters);
+  }
+
+  // Apply sorting
+  function applySorting(sortValue) {
+    switch (sortValue) {
+      case 'price-low':
+        filteredVenues.sort((a, b) => (a.price || 0) - (b.price || 0));
+        break;
+      case 'price-high':
+        filteredVenues.sort((a, b) => (b.price || 0) - (a.price || 0));
+        break;
+      case 'name-asc':
+        filteredVenues.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case 'name-desc':
+        filteredVenues.sort((a, b) => b.title.localeCompare(a.title));
+        break;
+      case 'newest':
+        filteredVenues.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        break;
+      case 'recommended':
+      default:
+        // Keep original order
+        filteredVenues = allVenues.filter(venue => {
+          if (filters.holidayTypes.size > 0 && !filters.holidayTypes.has(venue.holidayType)) return false;
+          if (filters.countries.size > 0 && !filters.countries.has(venue.country)) return false;
+          if (filters.priceMin !== null && venue.price < filters.priceMin) return false;
+          if (filters.priceMax !== null && venue.price > filters.priceMax) return false;
+          if (filters.dateFrom && venue.dateFrom && new Date(venue.dateFrom) < new Date(filters.dateFrom)) return false;
+          if (filters.dateTo && venue.dateUntil && new Date(venue.dateUntil) > new Date(filters.dateTo)) return false;
+          return true;
+        });
+        break;
+    }
+
+    currentPage = 1;
+    displayedVenues = filteredVenues.slice(0, pageSize);
+    hasMoreVenues = filteredVenues.length > displayedVenues.length;
+    renderVenues();
+    updateFilterCount();
+    updateURL();
+  }
+
+  // Apply filters
+  function applyFilters() {
+    filteredVenues = allVenues.filter(venue => {
+      // Holiday type filter
+      if (filters.holidayTypes.size > 0 && !filters.holidayTypes.has(venue.holidayType)) {
+        return false;
+      }
+
+      // Country filter
+      if (filters.countries.size > 0 && !filters.countries.has(venue.country)) {
+        return false;
+      }
+
+      // Price range filter
+      if (filters.priceMin !== null && venue.price < filters.priceMin) {
+        return false;
+      }
+      if (filters.priceMax !== null && venue.price > filters.priceMax) {
+        return false;
+      }
+
+      // Date range filter
+      if (filters.dateFrom && venue.dateFrom) {
+        if (new Date(venue.dateFrom) < new Date(filters.dateFrom)) {
+          return false;
+        }
+      }
+      if (filters.dateTo && venue.dateUntil) {
+        if (new Date(venue.dateUntil) > new Date(filters.dateTo)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    // Apply current sorting
+    const currentSort = sortBySelect?.value || 'recommended';
+    if (currentSort !== 'recommended') {
+      applySorting(currentSort);
+      return; // applySorting handles rendering
+    }
+
+    currentPage = 1;
+    displayedVenues = filteredVenues.slice(0, pageSize);
+    hasMoreVenues = filteredVenues.length > displayedVenues.length;
+    
+    renderVenues();
+    updateFilterCount();
+    updateURL();
+  }
+
+  // Render venues
+  function renderVenues() {
+    const cards = venuesGrid.querySelectorAll('.venue-card');
+    
+    // Hide all cards first
+    cards.forEach(card => {
+      card.classList.add('hidden');
+    });
+
+    // Show filtered cards
+    displayedVenues.forEach(venue => {
+      const card = venuesGrid.querySelector(`[data-venue-id="${venue.id}"]`);
+      if (card) {
+        card.classList.remove('hidden');
+      }
+    });
+
+    // Update counts
+    filteredCountEl.textContent = filteredVenues.length;
+
+    // Show/hide empty state
+    if (filteredVenues.length === 0) {
+      emptyState.classList.remove('hidden');
+      endMessage.classList.add('hidden');
+    } else {
+      emptyState.classList.add('hidden');
+      if (!hasMoreVenues) {
+        endMessage.classList.remove('hidden');
+      } else {
+        endMessage.classList.add('hidden');
+      }
+    }
+  }
+
+  // Update filter count badge
+  function updateFilterCount() {
+    let count = 0;
+    if (filters.holidayTypes.size > 0) count++;
+    if (filters.countries.size > 0) count++;
+    if (filters.priceMin !== null || filters.priceMax !== null) count++;
+    if (filters.dateFrom !== null || filters.dateTo !== null) count++;
+
+    if (count > 0) {
+      activeFilterCountEl.textContent = count;
+      activeFilterCountEl.classList.remove('hidden');
+      filterStatusEl.textContent = `${count} filter${count > 1 ? 's' : ''} selected`;
+    } else {
+      activeFilterCountEl.classList.add('hidden');
+      filterStatusEl.textContent = '0 filters selected';
+    }
+  }
+
+  // Clear all filters
+  function clearAllFilters() {
+    filters.holidayTypes.clear();
+    filters.countries.clear();
+    filters.priceMin = null;
+    filters.priceMax = null;
+    filters.dateFrom = null;
+    filters.dateTo = null;
+
+    // Clear checkboxes
+    document.querySelectorAll('input[name="holidayType"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('input[name="country"]').forEach(cb => cb.checked = false);
+    
+    // Clear inputs
+    document.getElementById('priceMin').value = '';
+    document.getElementById('priceMax').value = '';
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+
+    // Reset sort to recommended
+    sortBySelect.value = 'recommended';
+
+    applyFilters();
+  }
+
+  // Setup infinite scroll
+  function setupInfiniteScroll() {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMoreVenues && !isLoading) {
+          loadMoreVenues();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+
+    if (scrollSentinel) {
+      observer.observe(scrollSentinel);
+    }
+  }
+
+  // Load more venues
+  function loadMoreVenues() {
+    if (isLoading || !hasMoreVenues) return;
+
+    isLoading = true;
+    loadingIndicator.classList.remove('hidden');
+
+    // Simulate loading delay for better UX
+    setTimeout(() => {
+      currentPage++;
+      const startIndex = (currentPage - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      const newVenues = filteredVenues.slice(startIndex, endIndex);
+
+      displayedVenues = [...displayedVenues, ...newVenues];
+      hasMoreVenues = filteredVenues.length > displayedVenues.length;
+
+      renderVenues();
+      
+      isLoading = false;
+      loadingIndicator.classList.add('hidden');
+
+      if (!hasMoreVenues) {
+        endMessage.classList.remove('hidden');
+      }
+    }, 500);
+  }
+
+  // Update URL with filter params
+  function updateURL() {
+    const params = new URLSearchParams();
+    
+    if (filters.holidayTypes.size > 0) {
+      params.set('types', [...filters.holidayTypes].join(','));
+    }
+    if (filters.countries.size > 0) {
+      params.set('countries', [...filters.countries].join(','));
+    }
+    if (filters.priceMin !== null) {
+      params.set('minPrice', filters.priceMin);
+    }
+    if (filters.priceMax !== null) {
+      params.set('maxPrice', filters.priceMax);
+    }
+    if (filters.dateFrom !== null) {
+      params.set('dateFrom', filters.dateFrom);
+    }
+    if (filters.dateTo !== null) {
+      params.set('dateTo', filters.dateTo);
+    }
+
+    const newURL = params.toString() ? `${window.location.pathname}?${params}` : window.location.pathname;
+    window.history.replaceState({}, '', newURL);
+  }
+
+  // Restore filters from URL
+  function restoreFiltersFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    
+    // Restore holiday types
+    const types = params.get('types');
+    if (types) {
+      types.split(',').forEach(type => {
+        filters.holidayTypes.add(type);
+        const checkbox = document.querySelector(`input[name="holidayType"][value="${type}"]`);
+        if (checkbox) checkbox.checked = true;
+      });
+      updateHolidayTypeButton();
+    }
+
+    // Restore countries
+    const countries = params.get('countries');
+    if (countries) {
+      countries.split(',').forEach(country => {
+        filters.countries.add(country);
+        const checkbox = document.querySelector(`input[name="country"][value="${country}"]`);
+        if (checkbox) checkbox.checked = true;
+      });
+      updateCountryButton();
+    }
+
+    // Restore price range
+    const minPrice = params.get('minPrice');
+    const maxPrice = params.get('maxPrice');
+    if (minPrice) {
+      filters.priceMin = parseInt(minPrice);
+      document.getElementById('priceMin').value = minPrice;
+    }
+    if (maxPrice) {
+      filters.priceMax = parseInt(maxPrice);
+      document.getElementById('priceMax').value = maxPrice;
+    }
+
+    // Restore dates
+    const dateFrom = params.get('dateFrom');
+    const dateTo = params.get('dateTo');
+    if (dateFrom) {
+      filters.dateFrom = dateFrom;
+      document.getElementById('dateFrom').value = dateFrom;
+    }
+    if (dateTo) {
+      filters.dateTo = dateTo;
+      document.getElementById('dateTo').value = dateTo;
+    }
+
+    // Apply filters if any were restored
+    if (types || countries || minPrice || maxPrice || dateFrom || dateTo) {
+      applyFilters();
+    }
+  }
+
+  // Debounce utility
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  // Initialize on page load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+</script>
+</BaseLayout>
+
