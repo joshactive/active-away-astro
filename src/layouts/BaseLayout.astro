@@ -2,20 +2,83 @@
 export interface Props {
   title: string;
   description?: string;
+  // SEO fields
+  metaTitle?: string;
+  metaDescription?: string;
+  metaImage?: string;
+  keywords?: string;
+  metaRobots?: string;
+  canonicalURL?: string;
+  // Open Graph
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
+  ogUrl?: string;
+  ogType?: string;
+  // Structured Data
+  structuredData?: any;
 }
 
-const { title, description = "Active Away - Your trusted travel companion" } = Astro.props;
+const { 
+  title, 
+  description = "Active Away - Your trusted travel companion",
+  metaTitle,
+  metaDescription,
+  metaImage,
+  keywords,
+  metaRobots = "index, follow",
+  canonicalURL,
+  ogTitle,
+  ogDescription,
+  ogImage,
+  ogUrl,
+  ogType = "website",
+  structuredData
+} = Astro.props;
+
+// Use metaTitle/metaDescription if provided, otherwise fall back to title/description
+const finalTitle = metaTitle || title;
+const finalDescription = metaDescription || description;
+const finalOgTitle = ogTitle || finalTitle;
+const finalOgDescription = ogDescription || finalDescription;
+const finalOgUrl = ogUrl || canonicalURL || Astro.url.href;
+const finalOgImage = ogImage || metaImage;
 ---
 
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="description" content={description} />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
-    <title>{title}</title>
+    
+    <!-- Primary Meta Tags -->
+    <title>{finalTitle}</title>
+    <meta name="title" content={finalTitle} />
+    <meta name="description" content={finalDescription} />
+    {keywords && <meta name="keywords" content={keywords} />}
+    {metaRobots && <meta name="robots" content={metaRobots} />}
+    {canonicalURL && <link rel="canonical" href={canonicalURL} />}
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content={ogType} />
+    <meta property="og:url" content={finalOgUrl} />
+    <meta property="og:title" content={finalOgTitle} />
+    <meta property="og:description" content={finalOgDescription} />
+    {finalOgImage && <meta property="og:image" content={finalOgImage} />}
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={finalOgUrl} />
+    <meta property="twitter:title" content={finalOgTitle} />
+    <meta property="twitter:description" content={finalOgDescription} />
+    {finalOgImage && <meta property="twitter:image" content={finalOgImage} />}
+    
+    <!-- Structured Data / Schema.org -->
+    {structuredData && (
+      <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+    )}
     
     <!-- Preconnect to external domains for faster loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

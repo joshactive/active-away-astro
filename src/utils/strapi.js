@@ -684,6 +684,21 @@ export async function getHomeData() {
 
     // Return structured data
     return {
+      // SEO data
+      seo: {
+        metaTitle: data.metaTitle || data.ogTitle || null,
+        metaDescription: data.metaDescription || data.ogDescription || null,
+        metaImage: data.metaImage ? getStrapiImageData(data.metaImage) : null,
+        keywords: data.keywords || null,
+        metaRobots: data.metaRobots || null,
+        canonicalURL: data.canonicalURL || null,
+        ogTitle: data.ogTitle || null,
+        ogDescription: data.ogDescription || null,
+        ogImage: data.ogImage ? getStrapiImageData(data.ogImage) : null,
+        ogUrl: data.ogUrl || null,
+        ogType: data.ogType || 'website',
+        structuredData: data.structuredData || null
+      },
       hero: {
         heading: data.main_heading,
         subHeading: data.main_sub_heading,
@@ -994,9 +1009,19 @@ export async function getPreOrdersPage() {
         kicker: pageData.heroKicker || 'EXCLUSIVE OPPORTUNITIES',
         backgroundImage: pageData.heroBackgroundImage ? getStrapiImageData(pageData.heroBackgroundImage) : null
       },
-      meta: {
-        title: pageData.metaTitle || 'Pre-Orders - Active Away',
-        description: pageData.metaDescription || 'Explore our exclusive pre-order opportunities. Be the first to secure your spot for upcoming events, tours, and special experiences.'
+      seo: {
+        metaTitle: pageData.metaTitle || 'Pre-Orders - Active Away',
+        metaDescription: pageData.metaDescription || 'Explore our exclusive pre-order opportunities. Be the first to secure your spot for upcoming events, tours, and special experiences.',
+        metaImage: pageData.metaImage ? getStrapiImageData(pageData.metaImage) : null,
+        keywords: pageData.keywords || null,
+        metaRobots: pageData.metaRobots || null,
+        canonicalURL: pageData.canonicalURL || null,
+        ogTitle: pageData.ogTitle || null,
+        ogDescription: pageData.ogDescription || null,
+        ogImage: pageData.ogImage ? getStrapiImageData(pageData.ogImage) : null,
+        ogUrl: pageData.ogUrl || null,
+        ogType: pageData.ogType || 'website',
+        structuredData: pageData.structuredData || null
       }
     };
 
@@ -1029,9 +1054,19 @@ export async function getVenuesPage() {
         kicker: pageData.heroKicker || 'ALL DESTINATIONS',
         backgroundImage: pageData.heroBackgroundImage ? getStrapiImageData(pageData.heroBackgroundImage) : null
       },
-      meta: {
-        title: pageData.pageTitle || 'All Venues - Active Away',
-        description: pageData.metaDescription || 'Explore all our tennis, padel, pickleball, and ski holiday destinations.'
+      seo: {
+        metaTitle: pageData.pageTitle || pageData.metaTitle || 'All Venues - Active Away',
+        metaDescription: pageData.metaDescription || 'Explore all our tennis, padel, pickleball, and ski holiday destinations.',
+        metaImage: pageData.metaImage ? getStrapiImageData(pageData.metaImage) : null,
+        keywords: pageData.keywords || null,
+        metaRobots: pageData.metaRobots || null,
+        canonicalURL: pageData.canonicalURL || null,
+        ogTitle: pageData.ogTitle || null,
+        ogDescription: pageData.ogDescription || null,
+        ogImage: pageData.ogImage ? getStrapiImageData(pageData.ogImage) : null,
+        ogUrl: pageData.ogUrl || null,
+        ogType: pageData.ogType || 'website',
+        structuredData: pageData.structuredData || null
       },
       featured: {
         title: pageData.featuredSectionTitle || null,
