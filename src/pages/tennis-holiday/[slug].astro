@@ -1,0 +1,113 @@
+---
+// Dynamic route for individual tennis holidays
+export const prerender = true;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getTennisHolidays, getTennisHolidayBySlug } from '../../utils/strapi.js';
+
+// Generate static paths for all tennis holidays
+export async function getStaticPaths() {
+  const tennisHolidays = await getTennisHolidays(1, 100);
+  
+  return tennisHolidays.map((holiday) => ({
+    params: { slug: holiday.slug },
+    props: { 
+      slug: holiday.slug,
+      id: holiday.strapiId,
+      documentId: holiday.documentId
+    }
+  }));
+}
+
+const { slug } = Astro.params;
+const { id, documentId } = Astro.props;
+const fallbackIdentifiers = { id, documentId };
+console.log(`🎾 [${slug}] Static props identifiers:`, fallbackIdentifiers);
+
+// Fetch the specific tennis holiday data
+let holidayData = null;
+try {
+  holidayData = await getTennisHolidayBySlug(slug, fallbackIdentifiers);
+  if (holidayData) {
+    console.log(`🎾 [${slug}] Tennis holiday data fetched successfully`);
+  } else {
+    console.warn(`🎾 [${slug}] Tennis holiday data not found after lookup`);
+  }
+} catch (error) {
+  console.error(`[${slug}] Error fetching tennis holiday:`, error.message);
+}
+
+// If no data found, show 404
+if (!holidayData) {
+  return Astro.redirect('/404');
+}
+
+// Extract data with fallbacks
+const heroTitle = holidayData.mainHeader || holidayData.mainHeader;
+const heroSubtitle = holidayData.headingText || holidayData.headingText || '';
+const heroKicker = holidayData.country || holidayData.country || '';
+const heroBackgroundImage = holidayData.headerImage?.url || 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/45b69090-1c22-46cd-7f98-086ba71efc00/public';
+const heroBackgroundImageAlt = holidayData.headerImage?.alt || heroTitle;
+
+// Extract SEO fields with fallbacks
+const pageTitle = holidayData.seo?.metaTitle || `${holidayData.title} - Active Away`;
+const pageDescription = holidayData.seo?.metaDescription || holidayData.excerpt || `Experience ${holidayData.title} with Active Away`;
+const metaImage = holidayData.seo?.metaImage || holidayData.headerImage?.url || null;
+const metaImageAlt = holidayData.seo?.metaImageAlt || null;
+const keywords = holidayData.seo?.keywords || null;
+const canonicalURL = holidayData.seo?.canonicalURL || `https://activeaway.com/tennis-holiday/${slug}`;
+---
+
+<BaseLayout 
+  title={pageTitle}
+  description={pageDescription}
+  metaImage={metaImage}
+  metaImageAlt={metaImageAlt}
+  keywords={keywords}
+  canonicalURL={canonicalURL}
+>
+  <!-- Hero Header Section with Background Image -->
+  <section class="relative w-full h-[400px] sm:h-[500px] lg:h-[600px] overflow-hidden">
+    <!-- Background Image with Centered Gradient Overlay -->
+    <div class="absolute inset-0 bg-gradient-to-b from-[#0D1C4E]/75 via-[#0D1C4E]/60 to-[#0D1C4E]/60 z-10"></div>
+    <img 
+      src={heroBackgroundImage}
+      alt={heroBackgroundImageAlt}
+      class="absolute inset-0 w-full h-full object-cover"
+      loading="eager"
+    />
+    
+    <!-- Centered Content -->
+    <div class="relative z-20 container mx-auto max-w-[1400px] px-4 sm:px-10 h-full flex flex-col justify-center items-center text-center">
+      <div class="text-xs sm:text-sm font-inter font-semibold text-gold tracking-[0.2em] uppercase mb-4 sm:mb-6 border-t border-b border-gold/50 py-2 px-6">
+        {heroKicker}
+      </div>
+      <h1 class="text-4xl sm:text-5xl lg:text-7xl font-playfair font-bold text-white mb-6 sm:mb-8 leading-tight max-w-4xl">
+        {heroTitle}
+      </h1>
+      {heroSubtitle && (
+        <p class="text-lg sm:text-xl lg:text-2xl font-inter text-gray-100 max-w-3xl leading-relaxed">
+          {heroSubtitle}
+        </p>
+      )}
+    </div>
+  </section>
+
+  <!-- Breadcrumb Navigation -->
+  <section class="w-full bg-gray-50 py-4 border-b border-gray-200">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      <nav class="flex items-center gap-2 text-sm font-inter">
+        <a href="/" class="text-gray-600 hover:text-[#ad986c] transition-colors">Home</a>
+        <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+        <a href="/venues" class="text-gray-600 hover:text-[#ad986c] transition-colors">Tennis Holidays</a>
+        <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+        <span class="text-gray-900 font-medium">{holidayData.title}</span>
+      </nav>
+    </div>
+  </section>
+
+</BaseLayout>

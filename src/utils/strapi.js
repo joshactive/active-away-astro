@@ -1457,6 +1457,7 @@ export async function getNavigationMenu() {
  */
 function normalizeVenueData(item, holidayType) {
   const venue = item.attributes || item;
+  const documentId = item.documentId || null;
   
   // Get header image
   const headerImage = venue.headerImage ? getStrapiImageData(venue.headerImage) : null;
@@ -1464,9 +1465,18 @@ function normalizeVenueData(item, holidayType) {
   // Get price - try different field names
   const price = venue.priceFrom || venue.singleOccupancyFrom || venue.singleOccupancyShort || null;
   
+  // Generate a slug if Strapi does not provide one
+  const slug = venue.slug ||
+    (venue.title
+      ? venue.title.toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '')
+      : `${holidayType}-${item.id}`);
+
   return {
     id: `${holidayType}-${item.id}`,
     strapiId: item.id,
+    documentId,
     title: venue.title || 'Untitled Venue',
     country: venue.country || '',
     holidayType: holidayType,
@@ -1479,7 +1489,7 @@ function normalizeVenueData(item, holidayType) {
     dateUntil: venue.dateUntil || null,
     image: headerImage?.url || GENERIC_PLACEHOLDER_URL,
     imageAlt: headerImage?.alt || venue.title || 'Venue image',
-    slug: venue.slug || '',
+    slug: slug,
     createdAt: venue.createdAt || item.createdAt || new Date().toISOString(),
     // Additional useful fields
     description: venue.description || venue.blogExcerpt || '',
@@ -1652,6 +1662,298 @@ export async function getTennisHolidays(page = 1, pageSize = 25) {
   } catch (error) {
     console.error('❌ Error fetching tennis holidays:', error);
     return [];
+  }
+}
+
+/**
+ * Fetch a single tennis holiday by slug with all content
+ * @param {string} slug - Tennis holiday slug
+ * @returns {Promise<Object|null>} Complete tennis holiday data
+ */
+function transformTennisHolidayDetail(item) {
+  if (!item) {
+    return null;
+  }
+
+  const holiday = item.attributes || item;
+
+  // Get header image
+  const headerImage = holiday.headerImage ? getStrapiImageData(holiday.headerImage) : null;
+  
+  // Get main gallery images
+  const mainGallery = holiday.mainGallery ? getStrapiImagesData(holiday.mainGallery) : [];
+  
+  // Get room options
+  const roomOptions = [];
+  if (holiday.roomOptions && Array.isArray(holiday.roomOptions)) {
+    holiday.roomOptions.forEach(room => {
+      const roomImage = room.roomImage ? getStrapiImageData(room.roomImage) : null;
+      const amenities = room.amenities || [];
+      
+      roomOptions.push({
+        id: room.id,
+        roomType: room.roomType,
+        description: room.description,
+        priceFrom: room.priceFrom,
+        maxOccupancy: room.maxOccupancy,
+        image: roomImage?.url || null,
+        imageAlt: roomImage?.alt || room.roomType,
+        amenities: amenities
+      });
+    });
+  }
+
+  // Get SEO data if available
+  let seoData = null;
+  if (holiday.seo) {
+    const seo = holiday.seo;
+    const metaImageData = seo.metaImage ? getStrapiImageData(seo.metaImage) : null;
+    
+    seoData = {
+      metaTitle: seo.metaTitle || null,
+      metaDescription: seo.metaDescription || null,
+      metaImage: metaImageData?.url || null,
+      metaImageAlt: metaImageData?.alt || null,
+      keywords: seo.keywords || null,
+      canonicalURL: seo.canonicalURL || null
+    };
+  }
+
+  const slug = holiday.slug ||
+    (holiday.title
+      ? holiday.title.toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '')
+      : `tennis-holiday-${item.id}`);
+
+  return {
+    id: item.id,
+    documentId: item.documentId || item.id,
+    wpId: holiday.wpId,
+    title: holiday.title,
+    slug: slug,
+    excerpt: holiday.excerpt || '',
+    mainHeader: holiday.mainHeader || holiday.title,
+    headingText: holiday.headingText || '',
+    belowHeadingText: holiday.belowHeadingText || '',
+    
+    // Images
+    headerImage: headerImage,
+    mainGallery: mainGallery,
+    featuredImageLg: holiday.featuredImageLg ? getStrapiImageData(holiday.featuredImageLg) : null,
+    
+    // Location info
+    venue: holiday.venue,
+    shortLocationName: holiday.shortLocationName,
+    country: holiday.country,
+    countryLg: holiday.countryLg,
+    airport: holiday.airport,
+    lengthOfTrip: holiday.lengthOfTrip,
+    
+    // Pricing
+    priceFrom: holiday.priceFrom,
+    singleOccupancyFrom: holiday.singleOccupancyFrom,
+    singleOccupancyRange: holiday.singleOccupancyRange,
+    boardBasisLg: holiday.boardBasisLg,
+    
+    // Ratings
+    internalRating: holiday.internalRating,
+    ourRating: holiday.ourRating,
+    guestRating: holiday.guestRating,
+    tennisCourtRating: holiday.tennisCourtRating,
+    diningRating: holiday.diningRating,
+    
+    // Why we love it
+    whyWeLoveVenue1: holiday.whyWeLoveVenue1,
+    whyWeLoveVenue2: holiday.whyWeLoveVenue2,
+    whyWeLoveVenue3: holiday.whyWeLoveVenue3,
+    whyWeLoveVenue4: holiday.whyWeLoveVenue4,
+    uniqueValue: holiday.uniqueValue,
+    uniqueValueForGrid: holiday.uniqueValueForGrid,
+    
+    // Venue details (rich text)
+    setting: holiday.setting,
+    boardBasis: holiday.boardBasis,
+    restaurants: holiday.restaurants,
+    bars: holiday.bars,
+    tennisCourts: holiday.tennisCourts,
+    topTips: holiday.topTips,
+    gettingThere: holiday.gettingThere,
+    whereWeStay: holiday.whereWeStay,
+    howWeGetAround: holiday.howWeGetAround,
+    
+    // Tennis details
+    tennisCourtSurface: holiday.tennisCourtSurface,
+    airportTransfer: holiday.airportTransfer,
+    padelCourtsInfo: holiday.padelCourtsInfo,
+    
+    // Additional info
+    cafeInformation: holiday.cafeInformation,
+    carParkingInformation: holiday.carParkingInformation,
+    lunchInfo: holiday.lunchInfo,
+    eventInformation: holiday.eventInformation,
+    residentialType: holiday.residentialType,
+    maximumGroupSize: holiday.maximumGroupSize,
+    typicalGroupSize: holiday.typicalGroupSize,
+    
+    // Components
+    itinerary: holiday.itinerary || [],
+    faqs: holiday.faqs || [],
+    whatsIncluded: holiday.whatsIncluded || [],
+    whatsNotIncluded: holiday.whatsNotIncluded || [],
+    facilities: holiday.facilities || [],
+    keyInformation: holiday.keyInformation || [],
+    roomOptions: roomOptions,
+    
+    // Booking sections
+    bookCourtsInfo: holiday.bookCourtsInfo,
+    bookCourtsLink: holiday.bookCourtsLink,
+    bookCourtsImage: holiday.bookCourtsImage ? getStrapiImageData(holiday.bookCourtsImage) : null,
+    bookLessonsInfo: holiday.bookLessonsInfo,
+    bookLessonsLink: holiday.bookLessonsLink,
+    bookLessonsImage: holiday.bookLessonsImage ? getStrapiImageData(holiday.bookLessonsImage) : null,
+    bookRacketsInfo: holiday.bookRacketsInfo,
+    bookRacketsLink: holiday.bookRacketsLink,
+    bookRacketsImage: holiday.bookRacketsImage ? getStrapiImageData(holiday.bookRacketsImage) : null,
+    bookCardioInfo: holiday.bookCardioInfo,
+    bookCardioLink: holiday.bookCardioLink,
+    bookCardioImage: holiday.bookCardioImage ? getStrapiImageData(holiday.bookCardioImage) : null,
+    
+    // Coach/Organiser info
+    tennisCoachName: holiday.tennisCoachName,
+    tennisCoachWhatsappUrl: holiday.tennisCoachWhatsappUrl,
+    tennisCoachImage: holiday.tennisCoachImage ? getStrapiImageData(holiday.tennisCoachImage) : null,
+    tennisCoachInfo: holiday.tennisCoachInfo,
+    groupOrganiserName: holiday.groupOrganiserName,
+    groupOrganiserName2: holiday.groupOrganiserName2,
+    groupOrganiserProduct: holiday.groupOrganiserProduct,
+    groupOrganiserImage: holiday.groupOrganiserImage ? getStrapiImageData(holiday.groupOrganiserImage) : null,
+    groupOrganiserWhatsappUrl: holiday.groupOrganiserWhatsappUrl,
+    groupOrganiserOtherUrl: holiday.groupOrganiserOtherUrl,
+    
+    // Downloads/Links
+    itineraryDownloadUrl: holiday.itineraryDownloadUrl,
+    itineraryDownloadUrl2: holiday.itineraryDownloadUrl2,
+    otherFaqsUrl: holiday.otherFaqsUrl,
+    googleMapsSearchTerm: holiday.googleMapsSearchTerm,
+    fullScreenVideo: holiday.fullScreenVideo,
+    emailAddress: holiday.emailAddress,
+    
+    // Meta
+    productType: holiday.productType,
+    displayOnFrontEnd: holiday.displayOnFrontEnd,
+    ordering: holiday.ordering,
+    featured: holiday.featured,
+    seo: seoData,
+    createdAt: holiday.createdAt || item.createdAt,
+    publishedAt: holiday.publishedAt || item.publishedAt
+  };
+}
+
+async function fetchSingleTennisHoliday(filterQuery, logContext = 'query') {
+  const data = await fetchAPI(`/tennis-holidays?${filterQuery}&populate=*`);
+
+  if (!data || !data.data || data.data.length === 0) {
+    console.log(`🎾 No tennis holiday found for ${logContext}`);
+    return null;
+  }
+
+  const transformed = transformTennisHolidayDetail(data.data[0]);
+  if (transformed) {
+    console.log(`🎾 Tennis holiday fetched (${logContext}): ${transformed.title}`);
+  }
+  return transformed;
+}
+
+async function resolveTennisHolidayFallback(identifiers = {}) {
+  const { documentId, id } = identifiers || {};
+
+  if (documentId) {
+    console.log(`🎾 Attempting fallback lookup by documentId: ${documentId}`);
+    const byDocumentId = await getTennisHolidayByDocumentId(documentId);
+    if (byDocumentId) {
+      return byDocumentId;
+    }
+  }
+
+  if (id !== undefined && id !== null) {
+    const numericId = typeof id === 'string' ? Number(id) : id;
+    if (!Number.isNaN(numericId)) {
+      console.log(`🎾 Attempting fallback lookup by id: ${numericId}`);
+      const byId = await getTennisHolidayById(numericId);
+      if (byId) {
+        return byId;
+      }
+    } else {
+      console.warn(`⚠️ Provided fallback tennis holiday id is not numeric: ${id}`);
+    }
+  }
+
+  return null;
+}
+
+export async function getTennisHolidayBySlug(slug, fallbackIdentifiers) {
+  const identifiers = typeof fallbackIdentifiers === 'object' && fallbackIdentifiers !== null
+    ? fallbackIdentifiers
+    : { id: fallbackIdentifiers };
+
+  if (!slug) {
+    console.warn('No slug provided to getTennisHolidayBySlug');
+    return await resolveTennisHolidayFallback(identifiers);
+  }
+
+  try {
+    const holiday = await fetchSingleTennisHoliday(
+      `filters[slug][$eq]=${encodeURIComponent(slug)}`,
+      `slug=${slug}`
+    );
+
+    if (holiday) {
+      return holiday;
+    }
+
+  } catch (error) {
+    console.error(`❌ Error fetching tennis holiday by slug (${slug}):`, error);
+  }
+
+  return await resolveTennisHolidayFallback(identifiers);
+}
+
+export async function getTennisHolidayByDocumentId(documentId) {
+  if (!documentId) {
+    return null;
+  }
+
+  try {
+    return await fetchSingleTennisHoliday(
+      `filters[documentId][$eq]=${encodeURIComponent(documentId)}`,
+      `documentId=${documentId}`
+    );
+  } catch (error) {
+    console.error(`❌ Error fetching tennis holiday by documentId (${documentId}):`, error);
+    return null;
+  }
+}
+
+export async function getTennisHolidayById(identifier) {
+  if (identifier === undefined || identifier === null) {
+    return null;
+  }
+
+  const numericId = typeof identifier === 'string' ? Number(identifier) : identifier;
+  if (Number.isNaN(numericId)) {
+    console.warn(`Cannot fetch tennis holiday by id, identifier is not numeric: ${identifier}`);
+    return null;
+  }
+
+  try {
+    return await fetchSingleTennisHoliday(
+      `filters[id][$eq]=${numericId}`,
+      `id=${numericId}`
+    );
+  } catch (error) {
+    console.error(`❌ Error fetching tennis holiday by id (${numericId}):`, error);
+    return null;
   }
 }
 
