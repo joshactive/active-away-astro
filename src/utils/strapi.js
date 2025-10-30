@@ -918,6 +918,75 @@ export async function getBlogs(limit = 8) {
 }
 
 /**
+ * Fetch Home SEO data from Strapi (separate call for SEO fields)
+ * @returns {Promise<Object|null>} SEO data including meta image
+ */
+export async function getHomeSEO() {
+  try {
+    const response = await fetch('https://strapi-production-b96d.up.railway.app/api/home?populate=seo.metaImage');
+    
+    if (!response.ok) {
+      console.warn('⚠️ Could not fetch home SEO data:', response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    
+    if (!data || !data.data) {
+      console.log('📄 No home SEO data found');
+      return null;
+    }
+
+    const homeData = data.data;
+    const seoData = homeData.seo;
+    
+    if (!seoData) {
+      console.log('📄 No SEO component found in home data');
+      return null;
+    }
+
+    console.log('✅ Home SEO data fetched successfully');
+
+    // Extract meta image data with Cloudflare Images optimization
+    let metaImageUrl = null;
+    let metaImageAlt = null;
+    let metaImageWidth = 1640;
+    let metaImageHeight = 856;
+    
+    if (seoData.metaImage) {
+      const imageData = getStrapiImageData(seoData.metaImage);
+      
+      if (imageData?.url) {
+        // Use Cloudflare Images with explicit dimensions for Open Graph
+        const baseUrl = imageData.url.split('?')[0]; // Remove any existing query params
+        metaImageUrl = `${baseUrl}?width=${metaImageWidth}&height=${metaImageHeight}&fit=cover&format=auto&quality=85`;
+        metaImageAlt = imageData.alt || 'Active Away - Tennis, Padel & Pickleball Holidays';
+        
+        console.log('📸 Meta image URL (optimized):', metaImageUrl);
+      }
+    }
+
+    return {
+      metaTitle: seoData.metaTitle || null,
+      metaDescription: seoData.metaDescription || null,
+      metaImage: metaImageUrl,
+      metaImageAlt: metaImageAlt,
+      metaImageWidth: metaImageUrl ? metaImageWidth : null,
+      metaImageHeight: metaImageUrl ? metaImageHeight : null,
+      keywords: seoData.keywords || null,
+      metaRobots: seoData.metaRobots || null,
+      metaViewport: seoData.metaViewport || null,
+      canonicalURL: seoData.canonicalURL || null,
+      structuredData: seoData.structuredData || null
+    };
+
+  } catch (error) {
+    console.error('❌ Error fetching home SEO data:', error);
+    return null;
+  }
+}
+
+/**
  * Fetch Pre-Orders from Strapi
  * @param {number} page - Page number
  * @param {number} pageSize - Number of items per page

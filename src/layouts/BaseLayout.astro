@@ -2,9 +2,31 @@
 export interface Props {
   title: string;
   description?: string;
+  metaImage?: string | null;
+  metaImageAlt?: string | null;
+  metaImageWidth?: number | null;
+  metaImageHeight?: number | null;
+  keywords?: string | null;
+  canonicalURL?: string | null;
 }
 
-const { title, description = "Active Away - Your trusted travel companion" } = Astro.props;
+const { 
+  title, 
+  description = "Active Away - Your trusted travel companion",
+  metaImage = null,
+  metaImageAlt = null,
+  metaImageWidth = null,
+  metaImageHeight = null,
+  keywords = null,
+  canonicalURL = null
+} = Astro.props;
+
+// Construct full URLs for Open Graph
+const siteUrl = "https://activeaway.com";
+const currentUrl = canonicalURL || `${siteUrl}${Astro.url.pathname}`;
+const ogImage = metaImage || `${siteUrl}/og-default.jpg`;
+const ogImageWidth = metaImageWidth || 1640;
+const ogImageHeight = metaImageHeight || 856;
 ---
 
 <!DOCTYPE html>
@@ -16,6 +38,31 @@ const { title, description = "Active Away - Your trusted travel companion" } = A
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
+    
+    <!-- Keywords -->
+    {keywords && <meta name="keywords" content={keywords} />}
+    
+    <!-- Canonical URL -->
+    {canonicalURL && <link rel="canonical" href={canonicalURL} />}
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={currentUrl} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content={ogImageWidth.toString()} />
+    <meta property="og:image:height" content={ogImageHeight.toString()} />
+    {metaImageAlt && <meta property="og:image:alt" content={metaImageAlt} />}
+    <meta property="og:site_name" content="Active Away" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={currentUrl} />
+    <meta property="twitter:title" content={title} />
+    <meta property="twitter:description" content={description} />
+    <meta property="twitter:image" content={ogImage} />
+    {metaImageAlt && <meta property="twitter:image:alt" content={metaImageAlt} />}
     
     <!-- Preconnect to external domains for faster loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

@@ -19,7 +19,7 @@ import InstagramTailwind from '../components/InstagramTailwind.astro';
 import GalleryTailwind from '../components/GalleryTailwind.astro';
 import HolidayExpertsTailwind from '../components/HolidayExpertsTailwind.astro';
 import FooterTailwind from '../components/FooterTailwind.astro';
-import { getHomeData, getHomePage } from '../utils/strapi.js';
+import { getHomeData, getHomePage, getHomeSEO } from '../utils/strapi.js';
 
 // 🚀 SINGLE API CALL - Fetch all homepage data once
 let homeData = null;
@@ -46,9 +46,39 @@ try {
     console.error('[index.astro] Both getHomeData and getHomePage failed:', fallbackError.message);
   }
 }
+
+// 📄 Fetch SEO data separately
+let seoData = null;
+try {
+  seoData = await getHomeSEO();
+  if (seoData) {
+    console.log('📄 [index.astro] SEO data fetched successfully');
+  }
+} catch (error) {
+  console.warn('[index.astro] Could not fetch SEO data:', error.message);
+}
+
+// Extract SEO fields with fallbacks
+const pageTitle = seoData?.metaTitle || "Active Away - Exceptional Tennis, Padel & Pickleball Experiences";
+const pageDescription = seoData?.metaDescription || "Unique Racket Experiences that unite like-minded individuals, through impeccable service delivered by truly knowledgeable hosts in excellent locations.";
+const metaImage = seoData?.metaImage || null;
+const metaImageAlt = seoData?.metaImageAlt || null;
+const metaImageWidth = seoData?.metaImageWidth || null;
+const metaImageHeight = seoData?.metaImageHeight || null;
+const keywords = seoData?.keywords || null;
+const canonicalURL = seoData?.canonicalURL || "https://activeaway.com/";
 ---
 
-<BaseLayout title="Active Away - Exceptional Tennis, Padel & Pickleball Experiences" description="Unique Racket Experiences that unite like-minded individuals, through impeccable service delivered by truly knowledgeable hosts in excellent locations.">
+<BaseLayout 
+  title={pageTitle}
+  description={pageDescription}
+  metaImage={metaImage}
+  metaImageAlt={metaImageAlt}
+  metaImageWidth={metaImageWidth}
+  metaImageHeight={metaImageHeight}
+  keywords={keywords}
+  canonicalURL={canonicalURL}
+>
     <HeroTailwind homeData={homeData} />
   <LocationsTailwind />
   <AboutUsTailwind homeData={homeData} />
