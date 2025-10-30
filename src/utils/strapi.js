@@ -918,40 +918,42 @@ export async function getBlogs(limit = 8) {
 }
 
 /**
- * Fetch Home SEO data from Strapi (separate call for SEO fields)
- * @returns {Promise<Object|null>} SEO data including meta image
+ * Fetch SEO data from any Strapi single type page
+ * Generic function that works for all pages (home, venues-page, pre-orders-page, etc.)
+ * @param {string} endpoint - The endpoint name (e.g., 'home', 'venues-page', 'pre-orders-page')
+ * @returns {Promise<Object|null>} SEO data object with all meta tags
  */
-export async function getHomeSEO() {
+export async function getPageSEO(endpoint) {
   try {
-    const response = await fetch('https://strapi-production-b96d.up.railway.app/api/home?populate=seo.metaImage');
+    const response = await fetch(`${STRAPI_URL}/api/${endpoint}?populate=seo.metaImage`);
     
     if (!response.ok) {
-      console.warn('⚠️ Could not fetch home SEO data:', response.status);
+      console.warn(`⚠️ Could not fetch ${endpoint} SEO data:`, response.status);
       return null;
     }
 
     const data = await response.json();
     
     if (!data || !data.data) {
-      console.log('📄 No home SEO data found');
+      console.log(`📄 No ${endpoint} data found`);
       return null;
     }
 
-    const homeData = data.data;
-    const seoData = homeData.seo;
+    const pageData = data.data;
+    const seoData = pageData.seo;
     
     if (!seoData) {
-      console.log('📄 No SEO component found in home data');
+      console.log(`📄 No SEO component found for ${endpoint}`);
       return null;
     }
 
-    console.log('✅ Home SEO data fetched successfully');
+    console.log(`✅ ${endpoint} SEO data fetched successfully`);
 
     // Extract meta image data with Cloudflare Images optimization
     let metaImageUrl = null;
     let metaImageAlt = null;
-    let metaImageWidth = 1200;
-    let metaImageHeight = 630;
+    const metaImageWidth = 1200;
+    const metaImageHeight = 630;
     
     if (seoData.metaImage) {
       const imageData = getStrapiImageData(seoData.metaImage);
@@ -960,9 +962,9 @@ export async function getHomeSEO() {
         // Use Cloudflare Images with explicit dimensions for Open Graph
         const baseUrl = imageData.url.split('?')[0]; // Remove any existing query params
         metaImageUrl = `${baseUrl}?width=${metaImageWidth}&height=${metaImageHeight}&fit=cover&format=auto&quality=85`;
-        metaImageAlt = imageData.alt || 'Active Away - Tennis, Padel & Pickleball Holidays';
+        metaImageAlt = imageData.alt || 'Active Away';
         
-        console.log('📸 Meta image URL (optimized):', metaImageUrl);
+        console.log(`📸 ${endpoint} meta image URL (optimized):`, metaImageUrl);
       }
     }
 
@@ -981,9 +983,17 @@ export async function getHomeSEO() {
     };
 
   } catch (error) {
-    console.error('❌ Error fetching home SEO data:', error);
+    console.error(`❌ Error fetching ${endpoint} SEO data:`, error);
     return null;
   }
+}
+
+/**
+ * Fetch Home SEO data from Strapi (wrapper using generic function)
+ * @returns {Promise<Object|null>} SEO data including meta image
+ */
+export async function getHomeSEO() {
+  return await getPageSEO('home');
 }
 
 /**
@@ -1071,6 +1081,235 @@ export async function getPreOrdersPage() {
 
   } catch (error) {
     console.error('Error fetching pre-orders page data:', error);
+    return null;
+  }
+}
+
+/**
+ * Normalize a pre-order record returned by Strapi so we can reuse the parsing logic
+ * between different fetching strategies (slug, id, documentId, etc.).
+ * @param {Object} item - Raw item from Strapi response
+ * @returns {Object|null} Structured pre-order data ready for rendering
+ */
+function transformPreOrderDetail(item) {
+  if (!item) {
+    return null;
+  }
+
+  const preOrder = item.attributes || item;
+
+  // Parse menu files
+  const menuFiles = [];
+  if (preOrder.menuFiles) {
+    const filesData = preOrder.menuFiles.data || preOrder.menuFiles;
+    if (Array.isArray(filesData)) {
+      filesData.forEach(file => {
+        const fileAttrs = file.attributes || file;
+        let fileUrl = fileAttrs.url;
+        
+        // Transform URL if needed
+        if (fileUrl && !fileUrl.startsWith('http')) {
+          fileUrl = `${STRAPI_URL}${fileUrl}`;
+        }
+        
+        menuFiles.push({
+          id: file.id,
+          name: fileAttrs.name,
+          url: fileUrl,
+          size: fileAttrs.size,
+          ext: fileAttrs.ext,
+          mime: fileAttrs.mime
+        });
+      });
+    }
+  }
+
+  // Parse form fields from JSON
+  let formFields = [];
+  if (preOrder.formFields) {
+    try {
+      const parsedFields = typeof preOrder.formFields === 'string' 
+        ? JSON.parse(preOrder.formFields) 
+        : preOrder.formFields;
+      formFields = parsedFields.fields || [];
+    } catch (error) {
+      console.error('Error parsing form fields:', error);
+    }
+  }
+
+  // Get SEO data if available
+  let seoData = null;
+  if (preOrder.seo) {
+    const seo = preOrder.seo;
+    const metaImageData = seo.metaImage ? getStrapiImageData(seo.metaImage) : null;
+    
+    seoData = {
+      metaTitle: seo.metaTitle || null,
+      metaDescription: seo.metaDescription || null,
+      metaImage: metaImageData?.url || null,
+      metaImageAlt: metaImageData?.alt || null,
+      keywords: seo.keywords || null,
+      canonicalURL: seo.canonicalURL || null
+    };
+  }
+
+  return {
+    id: item.id,
+    documentId: item.documentId || item.id,
+    title: preOrder.title || 'Untitled Pre-Order',
+    slug: preOrder.slug,
+    excerpt: preOrder.excerpt || '',
+    description: preOrder.description || '',
+    hero: {
+      title: preOrder.heroTitle || preOrder.title || 'Pre-Order',
+      subtitle: preOrder.heroSubtitle || preOrder.excerpt || '',
+      kicker: preOrder.heroKicker || 'EXCLUSIVE OPPORTUNITY',
+      backgroundImage: preOrder.heroBackgroundImage ? getStrapiImageData(preOrder.heroBackgroundImage) : null
+    },
+    menuFiles: menuFiles,
+    formFields: formFields,
+    formWebhookUrl: preOrder.formWebhookUrl || null,
+    seo: seoData,
+    createdAt: preOrder.createdAt || item.createdAt,
+    publishedAt: preOrder.publishedAt || item.publishedAt
+  };
+}
+
+/**
+ * Attempt to fetch a pre-order using fallback identifiers in priority order.
+ * @param {Object} identifiers
+ * @param {string} [identifiers.documentId]
+ * @param {number|string} [identifiers.id]
+ * @returns {Promise<Object|null>}
+ */
+async function resolvePreOrderFallback(identifiers = {}) {
+  const { documentId, id } = identifiers || {};
+
+  if (documentId) {
+    console.log(`📦 Attempting fallback lookup by documentId: ${documentId}`);
+    const byDocumentId = await getPreOrderByDocumentId(documentId);
+    if (byDocumentId) {
+      return byDocumentId;
+    }
+  }
+
+  if (id !== undefined && id !== null) {
+    const numericId = typeof id === 'string' ? Number(id) : id;
+    if (!Number.isNaN(numericId)) {
+      console.log(`📦 Attempting fallback lookup by id filter: ${numericId}`);
+      const byId = await getPreOrderById(numericId);
+      if (byId) {
+        return byId;
+      }
+    } else {
+      console.warn(`⚠️ Provided fallback id is not numeric: ${id}`);
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Fetch a single pre-order by slug
+ * @param {string} slug - Pre-order slug
+ * @param {Object} [fallbackIdentifiers] - Optional Strapi identifiers (documentId and/or id) to use if slug lookup fails
+ * @returns {Promise<Object|null>} Pre-order data with all fields
+ */
+export async function getPreOrderBySlug(slug, fallbackIdentifiers) {
+  const identifiers = typeof fallbackIdentifiers === 'object' && fallbackIdentifiers !== null
+    ? fallbackIdentifiers
+    : { id: fallbackIdentifiers };
+
+  if (!slug) {
+    console.warn('No slug provided to getPreOrderBySlug');
+    return await resolvePreOrderFallback(identifiers);
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/pre-orders?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=*`
+    );
+    
+    if (!data || !data.data || data.data.length === 0) {
+      console.log(`📦 No pre-order found with slug: ${slug}`);
+      return await resolvePreOrderFallback(identifiers);
+    }
+
+    const item = data.data[0];
+    const transformed = transformPreOrderDetail(item);
+    if (transformed) {
+      console.log(`📦 Pre-order fetched: ${transformed.title}`);
+    }
+    return transformed;
+
+  } catch (error) {
+    console.error(`❌ Error fetching pre-order by slug (${slug}):`, error);
+    return await resolvePreOrderFallback(identifiers);
+  }
+}
+
+/**
+ * Fetch a single pre-order by Strapi documentId
+ * @param {string} documentId - Strapi documentId
+ * @returns {Promise<Object|null>} Pre-order data with full details
+ */
+export async function getPreOrderByDocumentId(documentId) {
+  if (!documentId) {
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/pre-orders?filters[documentId][$eq]=${encodeURIComponent(documentId)}&populate=*`
+    );
+
+    if (!data || !data.data || data.data.length === 0) {
+      console.log(`📦 No pre-order found with documentId: ${documentId}`);
+      return null;
+    }
+
+    const item = data.data[0];
+    const transformed = transformPreOrderDetail(item);
+    if (transformed) {
+      console.log(`📦 Pre-order fetched by documentId ${documentId}: ${transformed.title}`);
+    }
+    return transformed;
+
+  } catch (error) {
+    console.error(`❌ Error fetching pre-order by documentId (${documentId}):`, error);
+    return null;
+  }
+}
+
+/**
+ * Fetch a single pre-order by Strapi numeric identifier using filters
+ * @param {number} identifier - Strapi numeric id
+ * @returns {Promise<Object|null>} Pre-order data with full details
+ */
+export async function getPreOrderById(identifier) {
+  if (identifier === undefined || identifier === null) {
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/pre-orders?filters[id][$eq]=${identifier}&populate=*`
+    );
+
+    if (!data || !data.data || data.data.length === 0) {
+      console.log(`📦 No pre-order found with id filter: ${identifier}`);
+      return null;
+    }
+
+    const item = data.data[0];
+    const transformed = transformPreOrderDetail(item);
+    if (transformed) {
+      console.log(`📦 Pre-order fetched by id ${identifier}: ${transformed.title}`);
+    }
+    return transformed;
+
+  } catch (error) {
+    console.error(`❌ Error fetching pre-order by id (${identifier}):`, error);
     return null;
   }
 }

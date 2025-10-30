@@ -3,7 +3,7 @@
 export const prerender = true;
 
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { getAllVenues, getVenuesPage } from '../utils/strapi.js';
+import { getAllVenues, getVenuesPage, getPageSEO } from '../utils/strapi.js';
 import { getStrapiImageAttrs } from '../utils/cloudflareImages.js';
 import MapPinIcon from '../components/ui/icons/MapPinIcon.astro';
 import TagIcon from '../components/ui/icons/TagIcon.astro';
@@ -16,6 +16,17 @@ try {
   console.log('🏨 [venues.astro] Venues page content fetched successfully');
 } catch (error) {
   console.warn('[venues.astro] Could not fetch venues page content, using defaults:', error.message);
+}
+
+// Fetch SEO data from Strapi
+let seoData = null;
+try {
+  seoData = await getPageSEO('venues-page');
+  if (seoData) {
+    console.log('📄 [venues.astro] SEO data fetched successfully');
+  }
+} catch (error) {
+  console.warn('[venues.astro] Could not fetch SEO data:', error.message);
 }
 
 // Fetch initial venues data
@@ -37,13 +48,27 @@ const heroSubtitle = pageContent?.hero?.subtitle || 'Discover our complete colle
 const heroKicker = pageContent?.hero?.kicker || 'ALL DESTINATIONS';
 const heroBackgroundImage = pageContent?.hero?.backgroundImage?.url || 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/45b69090-1c22-46cd-7f98-086ba71efc00/public';
 const heroBackgroundImageAlt = pageContent?.hero?.backgroundImage?.alt || 'Tennis courts and resort';
-const pageTitle = pageContent?.meta?.title || 'All Venues - Active Away';
-const pageDescription = pageContent?.meta?.description || 'Explore all our tennis, padel, pickleball, and ski holiday destinations. Find your perfect vacation with expert hosts and exceptional service.';
+
+// Extract SEO fields with fallbacks
+const pageTitle = seoData?.metaTitle || pageContent?.meta?.title || 'All Venues - Active Away';
+const pageDescription = seoData?.metaDescription || pageContent?.meta?.description || 'Explore all our tennis, padel, pickleball, and ski holiday destinations. Find your perfect vacation with expert hosts and exceptional service.';
+const metaImage = seoData?.metaImage || null;
+const metaImageAlt = seoData?.metaImageAlt || null;
+const metaImageWidth = seoData?.metaImageWidth || null;
+const metaImageHeight = seoData?.metaImageHeight || null;
+const keywords = seoData?.keywords || null;
+const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
 ---
 
 <BaseLayout 
   title={pageTitle}
   description={pageDescription}
+  metaImage={metaImage}
+  metaImageAlt={metaImageAlt}
+  metaImageWidth={metaImageWidth}
+  metaImageHeight={metaImageHeight}
+  keywords={keywords}
+  canonicalURL={canonicalURL}
 >
   <!-- Hero Header Section with Background Image -->
   <section class="relative w-full h-[300px] sm:h-[400px] lg:h-[500px] overflow-hidden">

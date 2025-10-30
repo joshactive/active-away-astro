@@ -1,0 +1,505 @@
+---
+// Dynamic route for individual pre-orders
+export const prerender = true;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getPreOrders, getPreOrderBySlug } from '../../utils/strapi.js';
+
+// Generate static paths for all pre-orders
+export async function getStaticPaths() {
+  const preOrders = await getPreOrders(1, 100);
+  
+  return preOrders.map((preOrder) => ({
+    params: { slug: preOrder.slug },
+    props: { 
+      slug: preOrder.slug,
+      id: preOrder.id,
+      documentId: preOrder.documentId
+    }
+  }));
+}
+
+const { slug } = Astro.params;
+const { id, documentId } = Astro.props;
+const fallbackIdentifiers = { id, documentId };
+console.log(`📦 [${slug}] Static props identifiers:`, fallbackIdentifiers);
+
+// Fetch the specific pre-order data
+let preOrderData = null;
+try {
+  preOrderData = await getPreOrderBySlug(slug, fallbackIdentifiers);
+  if (preOrderData) {
+    console.log(`📦 [${slug}] Pre-order data fetched successfully`);
+  } else {
+    console.warn(`📦 [${slug}] Pre-order data not found after lookup`);
+  }
+} catch (error) {
+  console.error(`[${slug}] Error fetching pre-order:`, error.message);
+}
+
+// If no data found, show 404
+if (!preOrderData) {
+  return Astro.redirect('/404');
+}
+
+// Extract data with fallbacks
+const heroTitle = preOrderData.hero?.title || preOrderData.title || 'Pre-Order';
+const heroSubtitle = preOrderData.hero?.subtitle || preOrderData.excerpt || '';
+const heroKicker = preOrderData.hero?.kicker || 'EXCLUSIVE OPPORTUNITY';
+const heroBackgroundImage = preOrderData.hero?.backgroundImage?.url || 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/45b69090-1c22-46cd-7f98-086ba71efc00/public';
+const heroBackgroundImageAlt = preOrderData.hero?.backgroundImage?.alt || heroTitle;
+
+const menuFiles = preOrderData.menuFiles || [];
+const formFields = preOrderData.formFields || [];
+const webhookUrl = preOrderData.formWebhookUrl || '';
+
+// Extract SEO fields with fallbacks
+const pageTitle = preOrderData.seo?.metaTitle || `${preOrderData.title} - Active Away`;
+const pageDescription = preOrderData.seo?.metaDescription || preOrderData.excerpt || `Pre-order your spot for ${preOrderData.title}`;
+const metaImage = preOrderData.seo?.metaImage || null;
+const metaImageAlt = preOrderData.seo?.metaImageAlt || null;
+const keywords = preOrderData.seo?.keywords || null;
+const canonicalURL = preOrderData.seo?.canonicalURL || `https://activeaway.com/pre-orders/${slug}`;
+---
+
+<BaseLayout 
+  title={pageTitle}
+  description={pageDescription}
+  metaImage={metaImage}
+  metaImageAlt={metaImageAlt}
+  keywords={keywords}
+  canonicalURL={canonicalURL}
+>
+  <!-- Hero Header Section with Background Image -->
+  <section class="relative w-full h-[400px] sm:h-[500px] lg:h-[600px] overflow-hidden">
+    <!-- Background Image with Centered Gradient Overlay -->
+    <div class="absolute inset-0 bg-gradient-to-b from-[#0D1C4E]/95 via-[#0D1C4E]/80 to-[#0D1C4E]/60 z-10"></div>
+    <img 
+      src={heroBackgroundImage}
+      alt={heroBackgroundImageAlt}
+      class="absolute inset-0 w-full h-full object-cover"
+      loading="eager"
+    />
+    
+    <!-- Centered Content -->
+    <div class="relative z-20 container mx-auto max-w-[1400px] px-4 sm:px-10 h-full flex flex-col justify-center items-center text-center">
+      <div class="text-xs sm:text-sm font-inter font-semibold text-gold tracking-[0.2em] uppercase mb-4 sm:mb-6 border-t border-b border-gold/50 py-2 px-6">
+        {heroKicker}
+      </div>
+      <h1 class="text-4xl sm:text-5xl lg:text-7xl font-playfair font-bold text-white mb-6 sm:mb-8 leading-tight max-w-4xl">
+        {heroTitle}
+      </h1>
+      <p class="text-lg sm:text-xl lg:text-2xl font-inter text-gray-100 max-w-3xl leading-relaxed">
+        {heroSubtitle}
+      </p>
+    </div>
+  </section>
+
+  <!-- Breadcrumb Navigation -->
+  <section class="w-full bg-gray-50 py-4 border-b border-gray-200">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      <nav class="flex items-center gap-2 text-sm font-inter">
+        <a href="/" class="text-gray-600 hover:text-gold transition-colors">Home</a>
+        <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+        <a href="/pre-orders" class="text-gray-600 hover:text-gold transition-colors">Pre-Orders</a>
+        <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+        <span class="text-gray-900 font-medium">{preOrderData.title}</span>
+      </nav>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="w-full bg-white py-12 sm:py-16 lg:py-20">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      
+      <!-- Introduction / Description -->
+      {preOrderData.description && (
+        <div class="max-w-4xl mx-auto mb-12 sm:mb-16">
+          <div class="prose prose-lg max-w-none font-inter text-gray-700 leading-relaxed">
+            <p>{preOrderData.description}</p>
+          </div>
+        </div>
+      )}
+
+      <!-- Menu Download Section -->
+      {menuFiles.length > 0 && (
+        <div class="max-w-4xl mx-auto mb-12 sm:mb-16">
+          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-bold text-gray-900 mb-6 text-center">
+            Download Your Menu
+          </h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {menuFiles.map((menu) => (
+              <a 
+                href={menu.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex items-center gap-4 bg-white border-2 border-gray-200 rounded-xl p-6 shadow-md hover:shadow-xl hover:border-gold transition-all duration-300 group"
+              >
+                <!-- File Icon -->
+                <svg class="w-10 h-10 text-gold flex-shrink-0 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                
+                <!-- File Info -->
+                <div class="flex-1 min-w-0">
+                  <p class="font-inter font-semibold text-gray-900 truncate group-hover:text-gold transition-colors">
+                    {menu.name.replace(/\.[^/.]+$/, '')}
+                  </p>
+                  <p class="text-sm text-gray-500 font-inter">
+                    {menu.ext.toUpperCase()}
+                  </p>
+                </div>
+
+                <!-- Download Arrow -->
+                <svg class="w-5 h-5 text-gold flex-shrink-0 group-hover:translate-y-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <!-- Form Section - Full Width -->
+      {formFields.length > 0 && (
+        <div class="w-full space-y-6">
+          <!-- Section Header -->
+          <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold font-playfair text-gray-900 mb-2">
+              Submit Your Choice
+            </h2>
+            <p class="text-sm text-gray-600 font-inter">
+              Complete the form below to submit your preferences
+            </p>
+          </div>
+
+          <form id="preOrderForm" class="space-y-6">
+            <!-- Card: Basic Information -->
+            <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+              <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 font-playfair">Your Information</h3>
+                <p class="text-xs text-gray-500 mt-1 font-inter">Please provide your contact details</p>
+              </div>
+              <div class="p-6 space-y-4">
+                <div class="grid gap-4 sm:grid-cols-2">
+                  {formFields.filter(f => ['firstName', 'surname', 'email', 'dateOfAttendance'].includes(f.name)).map((field) => (
+                    <div class={`space-y-2 ${field.type === 'email' ? 'sm:col-span-2' : ''}`}>
+                      <label 
+                        for={field.name} 
+                        class="text-sm font-medium text-gray-700 font-inter block"
+                      >
+                        {field.label}
+                        {field.required && <span class="text-red-600 ml-1">*</span>}
+                      </label>
+                      {field.type === 'date' ? (
+                        <input
+                          type="date"
+                          id={field.name}
+                          name={field.name}
+                          required={field.required}
+                          class="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-inter text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ad986c] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        />
+                      ) : (
+                        <input
+                          type={field.type}
+                          id={field.name}
+                          name={field.name}
+                          required={field.required}
+                          placeholder={field.placeholder}
+                          class="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-inter text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ad986c] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <!-- Card: Dining Preferences -->
+            {formFields.some(f => ['restaurant', 'starter', 'mainCourse', 'dessert'].includes(f.name)) && (
+              <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+                <div class="px-6 py-4 border-b border-gray-200">
+                  <h3 class="text-lg font-semibold text-gray-900 font-playfair">Dining Preferences</h3>
+                  <p class="text-xs text-gray-500 mt-1 font-inter">Select your restaurant and menu choices</p>
+                </div>
+                <div class="p-6 space-y-4">
+                  {formFields.filter(f => f.name === 'restaurant').map((field) => (
+                    <div class="space-y-2">
+                      <label 
+                        for={field.name} 
+                        class="text-sm font-medium text-gray-700 font-inter block"
+                      >
+                        {field.label}
+                        {field.required && <span class="text-red-600 ml-1">*</span>}
+                      </label>
+                      <select
+                        id={field.name}
+                        name={field.name}
+                        required={field.required}
+                        class="flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-inter text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#ad986c] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <option value="">Select a restaurant</option>
+                        {field.options && field.options.map((option) => (
+                          <option value={option}>{option}</option>
+                        ))}
+                      </select>
+                      <p class="text-xs text-gray-500 font-inter">Choose your preferred dining venue</p>
+                    </div>
+                  ))}
+                  
+                  <div class="grid gap-4 sm:grid-cols-3">
+                    {formFields.filter(f => ['starter', 'mainCourse', 'dessert'].includes(f.name)).map((field) => (
+                      <div class="space-y-2">
+                        <label 
+                          for={field.name} 
+                          class="text-sm font-medium text-gray-700 font-inter block"
+                        >
+                          {field.label}
+                        </label>
+                        <input
+                          type="text"
+                          id={field.name}
+                          name={field.name}
+                          required={field.required}
+                          placeholder={field.placeholder}
+                          class="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-inter text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ad986c] focus-visible:ring-offset-2"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <!-- Card: Additional Information -->
+            {formFields.some(f => ['dietaryRequirements', 'otherInformation'].includes(f.name)) && (
+              <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+                <div class="px-6 py-4 border-b border-gray-200">
+                  <h3 class="text-lg font-semibold text-gray-900 font-playfair">Additional Information</h3>
+                  <p class="text-xs text-gray-500 mt-1 font-inter">Let us know about any special requirements</p>
+                </div>
+                <div class="p-6 space-y-4">
+                  {formFields.filter(f => ['dietaryRequirements', 'otherInformation'].includes(f.name)).map((field) => (
+                    <div class="space-y-2">
+                      <label 
+                        for={field.name} 
+                        class="text-sm font-medium text-gray-700 font-inter block"
+                      >
+                        {field.label}
+                      </label>
+                      <textarea
+                        id={field.name}
+                        name={field.name}
+                        required={field.required}
+                        rows="3"
+                        placeholder={field.placeholder}
+                        class="flex min-h-[80px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-inter text-gray-900 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ad986c] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      ></textarea>
+                      <p class="text-xs text-gray-500 font-inter">
+                        {field.name === 'dietaryRequirements' ? 'Please specify any allergies or dietary restrictions' : 'Any additional notes or special requests'}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <!-- Submit Card -->
+            <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+              <div class="p-6">
+                <!-- Cloudflare Turnstile -->
+                {import.meta.env.PUBLIC_TURNSTILE_SITE_KEY && (
+                  <div class="flex justify-center mb-4">
+                    <div class="cf-turnstile" data-sitekey={import.meta.env.PUBLIC_TURNSTILE_SITE_KEY} data-theme="light"></div>
+                  </div>
+                )}
+                
+                <div class="flex justify-center">
+                  <button
+                    type="submit"
+                    id="submitButton"
+                    class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ad986c] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-[#ad986c] text-white hover:bg-[#8d7a56] h-10 px-8 py-2 font-inter font-semibold w-full sm:w-auto sm:min-w-[240px]"
+                  >
+                    <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span id="buttonText">Submit</span>
+                  </button>
+                </div>
+                
+                <!-- Status Messages -->
+                <div id="statusMessage" class="hidden mt-4"></div>
+              </div>
+            </div>
+          </form>
+        </div>
+      )}
+
+      <!-- Host Only Section (if no form) -->
+      {formFields.length === 0 && (
+        <div class="max-w-4xl mx-auto">
+          <div class="bg-gray-50 rounded-2xl p-8 sm:p-12 text-center shadow-lg">
+            <h2 class="text-2xl sm:text-3xl font-playfair font-bold text-gray-900 mb-4">
+            Coming Soon.
+            </h2>
+            <p class="text-base sm:text-lg font-inter text-gray-600">
+             This form is coming soon!
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+
+  /* Custom styling for select dropdown arrow */
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.25rem;
+    padding-right: 2.5rem;
+  }
+</style>
+
+<script define:vars={{ preOrderSlug: slug, preOrderTitle: preOrderData.title }}>
+  // Form submission handling - NO webhook URL exposed to client
+  const form = document.getElementById('preOrderForm');
+  const submitButton = document.getElementById('submitButton');
+  const buttonText = document.getElementById('buttonText');
+  const statusMessage = document.getElementById('statusMessage');
+
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Get Turnstile token - but allow submission without it in development
+      let turnstileToken = null;
+      try {
+        if (typeof window.turnstile !== 'undefined' && window.turnstile) {
+          turnstileToken = window.turnstile.getResponse();
+        }
+      } catch (err) {
+        console.warn('Turnstile not available:', err);
+      }
+
+      // Disable button and show loading
+      submitButton.disabled = true;
+      buttonText.innerHTML = '<svg class="mr-2 h-4 w-4 animate-spin inline-block" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Submitting...';
+      statusMessage.classList.add('hidden');
+
+      try {
+        // Collect form data
+        const formData = new FormData(form);
+        const data = {};
+        formData.forEach((value, key) => {
+          data[key] = value;
+        });
+
+        console.log('📤 Submitting pre-order form');
+
+        // Submit to API endpoint with slug (API will fetch webhook URL server-side)
+        const response = await fetch('/api/submit-pre-order.json', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            preOrderSlug: preOrderSlug,
+            preOrderTitle: preOrderTitle,
+            formData: data,
+            turnstileToken: turnstileToken
+          })
+        });
+
+        console.log('📥 Response status:', response.status);
+        const result = await response.json();
+        console.log('📦 Response data:', result);
+
+        if (response.ok) {
+          // Success - following guide's success message pattern
+          statusMessage.innerHTML = `
+            <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div class="flex items-start gap-2">
+                <svg class="h-5 w-5 text-green-700 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div class="text-sm text-green-900">
+                  <p class="font-semibold">Success!</p>
+                  <p class="text-green-700 mt-1">${result.message || 'Your preferences have been submitted successfully.'}</p>
+                </div>
+              </div>
+            </div>
+          `;
+          statusMessage.classList.remove('hidden');
+          
+          // Clear form
+          form.reset();
+          
+          // Reset Turnstile if available
+          try {
+            if (typeof window.turnstile !== 'undefined' && window.turnstile) {
+              window.turnstile.reset();
+            }
+          } catch (err) {
+            console.warn('Could not reset Turnstile:', err);
+          }
+          
+          // Reset button
+          buttonText.innerHTML = '<svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Submit';
+          submitButton.disabled = false;
+          
+          // Scroll to success message
+          statusMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+          // Error
+          throw new Error(result.error || 'Something went wrong');
+        }
+      } catch (error) {
+        console.error('❌ Submission error:', error);
+        
+        // Error message - following guide's error pattern
+        statusMessage.innerHTML = `
+          <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p class="text-sm text-red-900 flex items-center gap-2">
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              ${error.message || 'Failed to submit form. Please try again.'}
+            </p>
+          </div>
+        `;
+        statusMessage.classList.remove('hidden');
+        
+        // Reset Turnstile on error if available
+        try {
+          if (typeof window.turnstile !== 'undefined' && window.turnstile) {
+            window.turnstile.reset();
+          }
+        } catch (err) {
+          console.warn('Could not reset Turnstile:', err);
+        }
+        
+        // Re-enable button
+        buttonText.innerHTML = '<svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Submit';
+        submitButton.disabled = false;
+      }
+    });
+  }
+</script>
