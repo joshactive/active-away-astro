@@ -950,8 +950,8 @@ export async function getHomeSEO() {
     // Extract meta image data with Cloudflare Images optimization
     let metaImageUrl = null;
     let metaImageAlt = null;
-    let metaImageWidth = 1640;
-    let metaImageHeight = 856;
+    let metaImageWidth = 1200;
+    let metaImageHeight = 630;
     
     if (seoData.metaImage) {
       const imageData = getStrapiImageData(seoData.metaImage);

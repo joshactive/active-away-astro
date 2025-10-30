@@ -8,6 +8,12 @@ export interface Props {
   metaImageHeight?: number | null;
   keywords?: string | null;
   canonicalURL?: string | null;
+  aggregateRating?: {
+    ratingValue: number;
+    reviewCount: number;
+    bestRating?: number;
+    worstRating?: number;
+  } | null;
 }
 
 const { 
@@ -18,15 +24,16 @@ const {
   metaImageWidth = null,
   metaImageHeight = null,
   keywords = null,
-  canonicalURL = null
+  canonicalURL = null,
+  aggregateRating = null
 } = Astro.props;
 
 // Construct full URLs for Open Graph
 const siteUrl = "https://activeaway.com";
 const currentUrl = canonicalURL || `${siteUrl}${Astro.url.pathname}`;
 const ogImage = metaImage || `${siteUrl}/og-default.jpg`;
-const ogImageWidth = metaImageWidth || 1640;
-const ogImageHeight = metaImageHeight || 856;
+const ogImageWidth = metaImageWidth || 1200;
+const ogImageHeight = metaImageHeight || 630;
 ---
 
 <!DOCTYPE html>
@@ -50,7 +57,9 @@ const ogImageHeight = metaImageHeight || 856;
     <meta property="og:url" content={currentUrl} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
+    <meta property="og:locale" content="en_GB" />
     <meta property="og:image" content={ogImage} />
+    <meta property="og:image:secure_url" content={ogImage} />
     <meta property="og:image:width" content={ogImageWidth.toString()} />
     <meta property="og:image:height" content={ogImageHeight.toString()} />
     {metaImageAlt && <meta property="og:image:alt" content={metaImageAlt} />}
@@ -58,11 +67,36 @@ const ogImageHeight = metaImageHeight || 856;
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:site" content="@ActiveAway" />
     <meta property="twitter:url" content={currentUrl} />
     <meta property="twitter:title" content={title} />
     <meta property="twitter:description" content={description} />
     <meta property="twitter:image" content={ogImage} />
     {metaImageAlt && <meta property="twitter:image:alt" content={metaImageAlt} />}
+    
+    <!-- Structured Data (JSON-LD) for Rich Snippets -->
+    {aggregateRating && (
+      <script type="application/ld+json" set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Active Away",
+        "url": siteUrl,
+        "logo": `${siteUrl}/favicon.svg`,
+        "description": description,
+        "sameAs": [
+          "https://twitter.com/ActiveAway",
+          "https://www.facebook.com/activeaway",
+          "https://www.instagram.com/activeaway"
+        ],
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": aggregateRating.ratingValue,
+          "reviewCount": aggregateRating.reviewCount,
+          "bestRating": aggregateRating.bestRating || 5,
+          "worstRating": aggregateRating.worstRating || 1
+        }
+      })} />
+    )}
     
     <!-- Preconnect to external domains for faster loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

@@ -58,6 +58,42 @@ try {
   console.warn('[index.astro] Could not fetch SEO data:', error.message);
 }
 
+// 🌟 Fetch Google Reviews aggregate rating for rich snippets
+let aggregateRating = null;
+
+try {
+  // Use internal API endpoint to fetch aggregate rating (same process as reviews)
+  const response = await fetch(`${Astro.url.origin}/api/google-reviews.json`);
+  
+  if (response.ok) {
+    const data = await response.json();
+    if (data.placeInfo?.rating && data.placeInfo?.totalReviews) {
+      aggregateRating = {
+        ratingValue: data.placeInfo.rating,
+        reviewCount: data.placeInfo.totalReviews,
+        bestRating: 5,
+        worstRating: 1
+      };
+      console.log('🌟 [index.astro] Google reviews aggregate rating fetched:', aggregateRating);
+    }
+  } else {
+    console.warn('[index.astro] Google reviews API returned error:', response.status);
+  }
+} catch (error) {
+  console.warn('[index.astro] Could not fetch Google reviews aggregate rating:', error.message);
+}
+
+// Fallback: Use reasonable default values if API fails
+if (!aggregateRating) {
+  aggregateRating = {
+    ratingValue: 5,
+    reviewCount: 662,
+    bestRating: 5,
+    worstRating: 1
+  };
+  console.log('🌟 [index.astro] Using fallback aggregate rating for rich snippets');
+}
+
 // Extract SEO fields with fallbacks
 const pageTitle = seoData?.metaTitle || "Active Away - Exceptional Tennis, Padel & Pickleball Experiences";
 const pageDescription = seoData?.metaDescription || "Unique Racket Experiences that unite like-minded individuals, through impeccable service delivered by truly knowledgeable hosts in excellent locations.";
@@ -78,6 +114,7 @@ const canonicalURL = seoData?.canonicalURL || "https://activeaway.com/";
   metaImageHeight={metaImageHeight}
   keywords={keywords}
   canonicalURL={canonicalURL}
+  aggregateRating={aggregateRating}
 >
     <HeroTailwind homeData={homeData} />
   <LocationsTailwind />

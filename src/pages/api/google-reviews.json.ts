@@ -41,7 +41,7 @@ export const GET: APIRoute = async ({ locals }) => {
   try {
     // Use the new Google Places API
     const response = await fetch(
-      `https://places.googleapis.com/v1/places/${PLACE_ID}?fields=displayName,rating,reviews,userRatingCount&languageCode=en`,
+      `https://places.googleapis.com/v1/places/${PLACE_ID}`,
       {
         headers: {
           'Content-Type': 'application/json',
