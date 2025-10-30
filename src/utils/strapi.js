@@ -37,7 +37,7 @@ export async function fetchAPI(endpoint, options = {}) {
     },
   };
 
-  // Add authorization header if token is available
+  // Add authorization header if token is available.
   if (STRAPI_TOKEN) {
     defaultOptions.headers['Authorization'] = `Bearer ${STRAPI_TOKEN}`;
   }
