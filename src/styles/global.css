@@ -1,0 +1,117 @@
+/* Active Away - Global Typography & Prose Styles */
+
+/* Ensure consistent text colors across all pages */
+.prose {
+  color: #1f2937; /* text-gray-800 - matches homepage */
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  font-family: 'Playfair Display', serif;
+  color: #111827; /* text-gray-900 */
+  font-weight: 600;
+}
+
+.prose p {
+  margin-bottom: 1em;
+  color: #1f2937; /* text-gray-800 */
+  line-height: 1.6;
+}
+
+.prose strong,
+.prose b {
+  color: #111827; /* text-gray-900 */
+  font-weight: 600;
+}
+
+.prose a {
+  color: #ad986c; /* gold */
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.prose a:hover {
+  color: #8d7a56; /* dark gold */
+  text-decoration: underline;
+}
+
+.prose ul,
+.prose ol {
+  margin-left: 1.5em;
+  margin-bottom: 1em;
+  color: #1f2937; /* text-gray-800 */
+}
+
+.prose li {
+  margin-bottom: 0.5em;
+  color: #1f2937; /* text-gray-800 */
+  line-height: 1.6;
+}
+
+.prose li:last-child {
+  margin-bottom: 0;
+}
+
+.prose em,
+.prose i {
+  font-style: italic;
+}
+
+.prose blockquote {
+  border-left: 4px solid #ad986c;
+  padding-left: 1em;
+  margin: 1.5em 0;
+  font-style: italic;
+  color: #374151; /* text-gray-700 */
+}
+
+/* Font families */
+.font-inter {
+  font-family: 'Inter', sans-serif;
+}
+
+.font-playfair {
+  font-family: 'Playfair Display', serif;
+}
+
+/* Section heading styles - consistent across site */
+.section-heading {
+  font-family: 'Playfair Display', serif;
+  font-weight: 600;
+  color: #111827; /* text-gray-900 */
+}
+
+.section-heading-xl {
+  @apply text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900;
+}
+
+.section-heading-lg {
+  @apply text-2xl sm:text-3xl font-playfair font-semibold text-gray-900;
+}
+
+.section-heading-md {
+  @apply text-xl sm:text-2xl font-playfair font-semibold text-gray-900;
+}
+
+/* Body text styles */
+.body-text {
+  @apply text-base sm:text-lg font-inter text-gray-800 leading-relaxed;
+}
+
+.body-text-sm {
+  @apply text-sm font-inter text-gray-800 leading-relaxed;
+}
+
+/* Secondary/helper text */
+.text-helper {
+  @apply text-sm text-gray-600 font-inter;
+}
+
+.text-label {
+  @apply text-sm font-medium text-gray-700 font-inter;
+}
+

@@ -4,6 +4,7 @@ export const prerender = true;
 
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getTennisHolidays, getTennisHolidayBySlug } from '../../utils/strapi.js';
+import { getStrapiImageAttrs } from '../../utils/cloudflareImages.js';
 
 // Generate static paths for all tennis holidays
 export async function getStaticPaths() {
@@ -70,12 +71,35 @@ const canonicalURL = holidayData.seo?.canonicalURL || `https://activeaway.com/te
   <section class="relative w-full h-[400px] sm:h-[500px] lg:h-[600px] overflow-hidden">
     <!-- Background Image with Centered Gradient Overlay -->
     <div class="absolute inset-0 bg-gradient-to-b from-[#0D1C4E]/75 via-[#0D1C4E]/60 to-[#0D1C4E]/60 z-10"></div>
-    <img 
-      src={heroBackgroundImage}
-      alt={heroBackgroundImageAlt}
-      class="absolute inset-0 w-full h-full object-cover"
-      loading="eager"
-    />
+    {(() => {
+      const heroAttrs = getStrapiImageAttrs(holidayData.headerImage, {
+        displayWidth: 1920,
+        displayHeight: 1080,
+        fit: 'cover',
+        quality: 85,
+        sizes: '100vw'
+      });
+      
+      return heroAttrs ? (
+        <img 
+          src={heroAttrs.src}
+          srcset={heroAttrs.srcset}
+          sizes={heroAttrs.sizes}
+          alt={heroAttrs.alt || heroBackgroundImageAlt}
+          width={heroAttrs.width}
+          height={heroAttrs.height}
+          class="absolute inset-0 w-full h-full object-cover"
+          loading="eager"
+        />
+      ) : (
+        <img 
+          src={heroBackgroundImage}
+          alt={heroBackgroundImageAlt}
+          class="absolute inset-0 w-full h-full object-cover"
+          loading="eager"
+        />
+      );
+    })()}
     
     <!-- Centered Content -->
     <div class="relative z-20 container mx-auto max-w-[1400px] px-4 sm:px-10 h-full flex flex-col justify-center items-center text-center">
@@ -91,23 +115,673 @@ const canonicalURL = holidayData.seo?.canonicalURL || `https://activeaway.com/te
         </p>
       )}
     </div>
+    
+    <!-- Map Pin Button - Bottom Right -->
+    {holidayData.googleMapsSearchTerm && (
+      <button
+        id="openMapButton"
+        class="absolute bottom-6 right-6 z-20 w-14 h-14 bg-[#ad986c] hover:bg-[#8d7a56] text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-all duration-300 hover:scale-110"
+        aria-label="View on map"
+      >
+        <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      </button>
+    )}
   </section>
 
   <!-- Breadcrumb Navigation -->
   <section class="w-full bg-gray-50 py-4 border-b border-gray-200">
     <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
-      <nav class="flex items-center gap-2 text-sm font-inter">
-        <a href="/" class="text-gray-600 hover:text-[#ad986c] transition-colors">Home</a>
-        <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <nav class="flex items-center gap-2 text-sm font-inter min-w-0">
+        <a href="/" class="text-gray-600 hover:text-[#ad986c] transition-colors flex-shrink-0">Home</a>
+        <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
-        <a href="/venues" class="text-gray-600 hover:text-[#ad986c] transition-colors">Tennis Holidays</a>
-        <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <a href="/venues" class="text-gray-600 hover:text-[#ad986c] transition-colors flex-shrink-0">Tennis Holidays</a>
+        <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
-        <span class="text-gray-900 font-medium">{holidayData.title}</span>
+        <span class="text-gray-900 font-medium truncate min-w-0">{holidayData.title}</span>
       </nav>
     </div>
   </section>
 
+  <!-- Tab Navigation - Sticky -->
+  <nav class="sticky top-0 z-30 w-full bg-white border-b border-gray-200">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      <div class="flex items-center justify-center gap-2 overflow-x-auto scrollbar-hide py-2">
+        <button 
+          class="page-nav-tab active px-6 py-3 text-sm font-medium font-inter rounded-full whitespace-nowrap transition-all"
+          data-section="info"
+        >
+          Info
+        </button>
+        <button 
+          class="page-nav-tab px-6 py-3 text-sm font-medium font-inter rounded-full whitespace-nowrap transition-all"
+          data-section="dates"
+        >
+          Itinerary
+        </button>
+        <button 
+          class="page-nav-tab px-6 py-3 text-sm font-medium font-inter rounded-full whitespace-nowrap transition-all"
+          data-section="resort"
+        >
+          Resort Information
+        </button>
+        <button 
+          class="page-nav-tab px-6 py-3 text-sm font-medium font-inter rounded-full whitespace-nowrap transition-all"
+          data-section="faqs"
+        >
+          FAQs
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <section class="w-full bg-white py-8 sm:py-12 lg:py-16">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      
+      <!-- Info Section -->
+      <div id="info" class="scroll-mt-20">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+          
+          <!-- Left Column - Main Content (8 cols) -->
+          <div class="lg:col-span-8">
+            {holidayData.belowHeadingText ? (
+              <div class="prose prose-lg max-w-none font-inter text-gray-800" set:html={holidayData.belowHeadingText}></div>
+            ) : (
+              <div class="prose prose-lg max-w-none font-inter text-gray-800">
+                <p>Join us for an unforgettable tennis holiday at <strong>{holidayData.venue}</strong>.</p>
+                {holidayData.excerpt && <p>{holidayData.excerpt}</p>}
+              </div>
+            )}
+            
+            <!-- Why We Love It Box -->
+            {(holidayData.whyWeLoveVenue1 || holidayData.whyWeLoveVenue2 || holidayData.whyWeLoveVenue3 || holidayData.whyWeLoveVenue4) && (
+              <div class="mt-8 bg-gray-50 border border-gray-200 rounded-xl p-6 sm:p-8">
+                <h3 class="text-2xl sm:text-3xl font-playfair font-semibold text-gray-900 mb-6">
+                  Why We Love {holidayData.venue || holidayData.title}
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[holidayData.whyWeLoveVenue1, holidayData.whyWeLoveVenue2, holidayData.whyWeLoveVenue3, holidayData.whyWeLoveVenue4].filter(Boolean).map((reason) => (
+                    <div class="flex items-start gap-3">
+                      <svg class="w-5 h-5 text-[#ad986c] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      <p class="text-sm font-inter text-gray-800">{reason}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <!-- Right Column - Key Information (4 cols) -->
+          <div class="lg:col-span-4">
+            <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm lg:sticky lg:top-24">
+              <div class="space-y-6">
+                
+                {/* Our Rating */}
+                {holidayData.ourRating && (
+                  <div class="flex items-start gap-3">
+                    <svg class="w-6 h-6 text-[#ad986c] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    </svg>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-gray-900 font-inter">Our Rating</p>
+                      <p class="text-sm text-gray-600 font-inter">{holidayData.ourRating}/5 Stars</p>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Tennis Courts */}
+                {holidayData.tennisCourtSurface && (
+                  <div class="flex items-start gap-3">
+                    <svg class="w-6 h-6 text-[#ad986c] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+                    </svg>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-gray-900 font-inter">Tennis Courts</p>
+                      <p class="text-sm text-gray-600 font-inter">{holidayData.tennisCourtSurface}</p>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Board Basis */}
+                {holidayData.boardBasisLg && (
+                  <div class="flex items-start gap-3">
+                    <svg class="w-6 h-6 text-[#ad986c] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                    </svg>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-gray-900 font-inter">Board Basis</p>
+                      <p class="text-sm text-gray-600 font-inter">{holidayData.boardBasisLg}</p>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Pricing */}
+                {holidayData.singleOccupancyFrom && (
+                  <div class="flex items-start gap-3">
+                    <svg class="w-6 h-6 text-[#ad986c] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-gray-900 font-inter">Pricing</p>
+                      <p class="text-sm text-gray-600 font-inter">from £{holidayData.singleOccupancyFrom}pp</p>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Airport Transfers */}
+                {holidayData.airportTransfer && (
+                  <div class="flex items-start gap-3">
+                    <svg class="w-6 h-6 text-[#ad986c] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-gray-900 font-inter">Airport Transfers</p>
+                      <p class="text-sm text-gray-600 font-inter">{holidayData.airportTransfer}</p>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Single Occupancy Range */}
+                {holidayData.singleOccupancyRange && (
+                  <div class="flex items-start gap-3">
+                    <svg class="w-6 h-6 text-[#ad986c] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-gray-900 font-inter">Single Occupancy</p>
+                      <p class="text-sm text-gray-600 font-inter">{holidayData.singleOccupancyRange}</p>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Typical Group Size */}
+                {holidayData.typicalGroupSize && (
+                  <div class="flex items-start gap-3">
+                    <svg class="w-6 h-6 text-[#ad986c] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-gray-900 font-inter">Typical Group Size</p>
+                      <p class="text-sm text-gray-600 font-inter">{holidayData.typicalGroupSize}</p>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Rating Bars */}
+                {(holidayData.guestRating || holidayData.tennisCourtRating || holidayData.diningRating) && (
+                  <div class="pt-6 border-t border-gray-200 space-y-4">
+                    {holidayData.guestRating && (
+                      <div>
+                        <div class="flex items-center justify-between mb-2">
+                          <p class="text-sm font-medium text-gray-700 font-inter">Guest Rating</p>
+                          <p class="text-sm font-bold text-[#ad986c] font-inter">{holidayData.guestRating}/10</p>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                          <div class="bg-[#ad986c] h-2 rounded-full transition-all" style={`width: ${(holidayData.guestRating / 10) * 100}%`}></div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {holidayData.tennisCourtRating && (
+                      <div>
+                        <div class="flex items-center justify-between mb-2">
+                          <p class="text-sm font-medium text-gray-700 font-inter">Tennis Courts</p>
+                          <p class="text-sm font-bold text-[#ad986c] font-inter">{holidayData.tennisCourtRating}/10</p>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                          <div class="bg-[#ad986c] h-2 rounded-full transition-all" style={`width: ${(holidayData.tennisCourtRating / 10) * 100}%`}></div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {holidayData.diningRating && (
+                      <div>
+                        <div class="flex items-center justify-between mb-2">
+                          <p class="text-sm font-medium text-gray-700 font-inter">Dining Experience</p>
+                          <p class="text-sm font-bold text-[#ad986c] font-inter">{holidayData.diningRating}/10</p>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                          <div class="bg-[#ad986c] h-2 rounded-full transition-all" style={`width: ${(holidayData.diningRating / 10) * 100}%`}></div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+      
+    </div>
+  </section>
+
+  <!-- Gallery Section - Full Width to Browser Edges -->
+  {holidayData.mainGallery && holidayData.mainGallery.length > 0 && (
+    <section class="relative w-full border-t border-gray-200 py-8 sm:py-12 lg:py-16">
+      <div class="container mx-auto max-w-[1400px] px-4 sm:px-10 mb-8 sm:mb-12">
+        <h2 class="text-3xl sm:text-4xl font-playfair font-semibold text-gray-900 text-center">Gallery</h2>
+      </div>
+      
+      <div class="relative flex items-stretch">
+        <!-- Left Image - Extends to Left Edge -->
+        {holidayData.mainGallery[1] && (() => {
+          const imgAttrs = getStrapiImageAttrs(holidayData.mainGallery[1], {
+            displayWidth: 400,
+            displayHeight: 600,
+            fit: 'cover',
+            quality: 80,
+            sizes: '15vw'
+          });
+          
+          return (
+            <button
+              type="button"
+              class="gallery-image hidden lg:block w-[15vw] relative overflow-hidden bg-gray-100 group cursor-pointer flex-shrink-0"
+              data-index="1"
+            >
+              <img 
+                src={imgAttrs?.src || holidayData.mainGallery[1].url}
+                srcset={imgAttrs?.srcset}
+                sizes={imgAttrs?.sizes}
+                alt={imgAttrs?.alt || holidayData.mainGallery[1].alt || 'Gallery image'}
+                width={imgAttrs?.width}
+                height={imgAttrs?.height}
+                class="w-full h-full min-h-[600px] object-cover group-hover:scale-105 transition-transform duration-500"
+                loading="lazy"
+              />
+              <div class="absolute inset-0 bg-white/40 group-hover:bg-white/20 transition-all duration-300"></div>
+            </button>
+          );
+        })()}
+        
+        <!-- Center Main Image - Container Width -->
+        <div class="flex-1 flex justify-center px-4 sm:px-10">
+          {(() => {
+            const mainAttrs = getStrapiImageAttrs(holidayData.mainGallery[0], {
+              displayWidth: 1200,
+              displayHeight: 800,
+              fit: 'cover',
+              quality: 85,
+              sizes: '(max-width: 1024px) 100vw, 1200px'
+            });
+            
+            return (
+              <button
+                type="button"
+                class="gallery-image relative w-full max-w-[1400px] h-[400px] sm:h-[500px] lg:h-[600px] overflow-hidden rounded-xl bg-gray-100 group cursor-pointer"
+                data-index="0"
+              >
+                <img 
+                  src={mainAttrs?.src || holidayData.mainGallery[0]?.url}
+                  srcset={mainAttrs?.srcset}
+                  sizes={mainAttrs?.sizes}
+                  alt={mainAttrs?.alt || holidayData.mainGallery[0]?.alt || 'Main gallery image'}
+                  width={mainAttrs?.width}
+                  height={mainAttrs?.height}
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  loading="eager"
+                />
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <div class="bg-black/50 backdrop-blur-sm hover:bg-black/60 text-white font-inter font-medium py-3 px-5 rounded-full transition-all flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    View gallery
+                  </div>
+                </div>
+              </button>
+            );
+          })()}
+        </div>
+        
+        <!-- Right Image - Extends to Right Edge -->
+        {holidayData.mainGallery[2] && (() => {
+          const imgAttrs = getStrapiImageAttrs(holidayData.mainGallery[2], {
+            displayWidth: 400,
+            displayHeight: 600,
+            fit: 'cover',
+            quality: 80,
+            sizes: '15vw'
+          });
+          
+          return (
+            <button
+              type="button"
+              class="gallery-image hidden lg:block w-[15vw] relative overflow-hidden bg-gray-100 group cursor-pointer flex-shrink-0"
+              data-index="2"
+            >
+              <img 
+                src={imgAttrs?.src || holidayData.mainGallery[2].url}
+                srcset={imgAttrs?.srcset}
+                sizes={imgAttrs?.sizes}
+                alt={imgAttrs?.alt || holidayData.mainGallery[2].alt || 'Gallery image'}
+                width={imgAttrs?.width}
+                height={imgAttrs?.height}
+                class="w-full h-full min-h-[600px] object-cover group-hover:scale-105 transition-transform duration-500"
+                loading="lazy"
+              />
+              <div class="absolute inset-0 bg-white/40 group-hover:bg-white/20 transition-all duration-300"></div>
+            </button>
+          );
+        })()}
+      </div>
+    </section>
+  )}
+
+  <!-- Gallery Lightbox Modal -->
+  <div id="galleryLightbox" class="hidden fixed inset-0 z-50 bg-black/95 flex items-center justify-center">
+    <div class="relative w-full h-full flex items-center justify-center p-4">
+      <!-- Close Button -->
+      <button
+        id="closeGalleryButton"
+        class="absolute top-4 right-4 z-10 w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors"
+        aria-label="Close gallery"
+      >
+        <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      
+      <!-- Previous Button -->
+      <button
+        id="prevGalleryButton"
+        class="absolute left-4 z-10 w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors"
+        aria-label="Previous image"
+      >
+        <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+      
+      <!-- Image Container -->
+      <div class="max-w-6xl max-h-[90vh] w-full h-full flex items-center justify-center">
+        <img 
+          id="galleryLightboxImage"
+          src=""
+          alt=""
+          class="max-w-full max-h-full object-contain rounded-lg"
+        />
+      </div>
+      
+      <!-- Next Button -->
+      <button
+        id="nextGalleryButton"
+        class="absolute right-4 z-10 w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors"
+        aria-label="Next image"
+      >
+        <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+      
+      <!-- Image Counter -->
+      <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-inter">
+        <span id="galleryCounter">1</span> / <span id="galleryTotal">1</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Map Lightbox Modal -->
+  <div id="mapLightbox" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+    <div class="relative w-full max-w-6xl h-[80vh] bg-white rounded-2xl overflow-hidden shadow-2xl">
+      <!-- Close Button -->
+      <button
+        id="closeMapButton"
+        class="absolute top-4 right-4 z-10 w-10 h-10 bg-white hover:bg-gray-100 rounded-full shadow-lg flex items-center justify-center transition-colors"
+        aria-label="Close map"
+      >
+        <svg class="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      
+      <!-- Google Maps Embed -->
+      <iframe
+        id="mapIframe"
+        class="w-full h-full"
+        frameborder="0"
+        style="border:0"
+        allowfullscreen
+        loading="lazy"
+      ></iframe>
+    </div>
+  </div>
+
 </BaseLayout>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+
+  /* Hide scrollbar for horizontal scroll */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Tab Navigation Styles */
+  .page-nav-tab {
+    background-color: transparent;
+    color: #6b7280;
+  }
+
+  .page-nav-tab:hover {
+    background-color: #f3f4f6;
+    color: #111827;
+  }
+
+  .page-nav-tab.active {
+    background-color: #ad986c;
+    color: #ffffff;
+  }
+</style>
+
+<script define:vars={{ mapSearchTerm: holidayData.googleMapsSearchTerm }}>
+  // Smooth scroll to sections when tabs are clicked
+  document.addEventListener('DOMContentLoaded', () => {
+    const navTabs = document.querySelectorAll('.page-nav-tab');
+    
+    navTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const sectionId = tab.dataset.section;
+        const section = document.getElementById(sectionId);
+        
+        // Update active tab
+        navTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // Scroll to section if it exists
+        if (section) {
+          const navHeight = document.querySelector('nav.sticky')?.offsetHeight || 0;
+          const sectionTop = section.getBoundingClientRect().top + window.pageYOffset - navHeight - 20;
+          
+          window.scrollTo({
+            top: sectionTop,
+            behavior: 'smooth'
+          });
+        }
+      });
+    });
+
+    // Update active tab on scroll
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const sectionId = entry.target.id;
+            const correspondingTab = document.querySelector(`[data-section="${sectionId}"]`);
+            
+            if (correspondingTab) {
+              navTabs.forEach(t => t.classList.remove('active'));
+              correspondingTab.classList.add('active');
+            }
+          }
+        });
+      },
+      { threshold: 0.3, rootMargin: '-100px 0px -50% 0px' }
+    );
+
+    // Observe sections when they're added
+    const sections = document.querySelectorAll('[id]');
+    sections.forEach(section => {
+      if (['info', 'dates', 'itinerary', 'resort', 'faqs'].includes(section.id)) {
+        observer.observe(section);
+      }
+    });
+
+    // Map lightbox functionality
+    const openMapButton = document.getElementById('openMapButton');
+    const mapLightbox = document.getElementById('mapLightbox');
+    const closeMapButton = document.getElementById('closeMapButton');
+    const mapIframe = document.getElementById('mapIframe');
+
+    if (openMapButton && mapLightbox && mapSearchTerm) {
+      // Open map lightbox
+      openMapButton.addEventListener('click', () => {
+        // Set iframe src when opening
+        const mapsUrl = `https://www.google.com/maps?q=${encodeURIComponent(mapSearchTerm)}&output=embed`;
+        mapIframe.src = mapsUrl;
+        
+        // Show lightbox
+        mapLightbox.classList.remove('hidden');
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+      });
+
+      // Close map lightbox
+      const closeLightbox = () => {
+        mapLightbox.classList.add('hidden');
+        document.body.style.overflow = ''; // Restore scrolling
+        mapIframe.src = ''; // Clear iframe to stop loading
+      };
+
+      closeMapButton.addEventListener('click', closeLightbox);
+      
+      // Close on background click
+      mapLightbox.addEventListener('click', (e) => {
+        if (e.target === mapLightbox) {
+          closeLightbox();
+        }
+      });
+
+      // Close on Escape key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !mapLightbox.classList.contains('hidden')) {
+          closeLightbox();
+        }
+      });
+    }
+
+    // Gallery lightbox functionality
+    const galleryImages = document.querySelectorAll('.gallery-image');
+    const galleryLightbox = document.getElementById('galleryLightbox');
+    const galleryLightboxImage = document.getElementById('galleryLightboxImage');
+    const closeGalleryButton = document.getElementById('closeGalleryButton');
+    const prevGalleryButton = document.getElementById('prevGalleryButton');
+    const nextGalleryButton = document.getElementById('nextGalleryButton');
+    const galleryCounter = document.getElementById('galleryCounter');
+    const galleryTotal = document.getElementById('galleryTotal');
+
+    // Build gallery data from main gallery
+    const galleryData = [];
+    document.querySelectorAll('.gallery-image img').forEach(img => {
+      galleryData.push({
+        url: img.src,
+        alt: img.alt
+      });
+    });
+
+    let currentGalleryIndex = 0;
+
+    if (galleryImages.length > 0 && galleryLightbox) {
+      // Set total count
+      galleryTotal.textContent = galleryData.length;
+
+      // Open gallery lightbox
+      const openGallery = (index) => {
+        currentGalleryIndex = index;
+        showGalleryImage(index);
+        galleryLightbox.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      };
+
+      // Show specific image
+      const showGalleryImage = (index) => {
+        if (galleryData[index]) {
+          galleryLightboxImage.src = galleryData[index].url;
+          galleryLightboxImage.alt = galleryData[index].alt;
+          galleryCounter.textContent = index + 1;
+          currentGalleryIndex = index;
+        }
+      };
+
+      // Close gallery
+      const closeGallery = () => {
+        galleryLightbox.classList.add('hidden');
+        document.body.style.overflow = '';
+      };
+
+      // Next image
+      const nextImage = () => {
+        const nextIndex = (currentGalleryIndex + 1) % galleryData.length;
+        showGalleryImage(nextIndex);
+      };
+
+      // Previous image
+      const prevImage = () => {
+        const prevIndex = (currentGalleryIndex - 1 + galleryData.length) % galleryData.length;
+        showGalleryImage(prevIndex);
+      };
+
+      // Attach event listeners
+      galleryImages.forEach(button => {
+        button.addEventListener('click', () => {
+          const index = parseInt(button.dataset.index);
+          openGallery(index);
+        });
+      });
+
+      closeGalleryButton?.addEventListener('click', closeGallery);
+      prevGalleryButton?.addEventListener('click', prevImage);
+      nextGalleryButton?.addEventListener('click', nextImage);
+
+      // Close on background click
+      galleryLightbox.addEventListener('click', (e) => {
+        if (e.target === galleryLightbox) {
+          closeGallery();
+        }
+      });
+
+      // Keyboard navigation
+      document.addEventListener('keydown', (e) => {
+        if (!galleryLightbox.classList.contains('hidden')) {
+          if (e.key === 'Escape') {
+            closeGallery();
+          } else if (e.key === 'ArrowRight') {
+            nextImage();
+          } else if (e.key === 'ArrowLeft') {
+            prevImage();
+          }
+        }
+      });
+    }
+  });
+</script>

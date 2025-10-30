@@ -168,34 +168,66 @@ export function getStrapiImageUrls(imagesData) {
 
 /**
  * Get multiple image data objects from Strapi
- * @param {Object} imagesData - Strapi images data object
+ * Handles both Strapi v4 (data.attributes) and v5 (direct object) formats
+ * @param {Object|Array} imagesData - Strapi images data object or array
  * @returns {Array<Object>} Array of image data objects
  */
 export function getStrapiImagesData(imagesData) {
-  if (!imagesData || !imagesData.data) return [];
+  if (!imagesData) return [];
   
-  return imagesData.data.map(img => {
-    let url = img.attributes.url;
-    
-    // Transform imagedelivery.net URLs
-    if (url.includes('imagedelivery.net')) {
-      url = url.replace(
-        'https://imagedelivery.net/-aT8Z2F9gGvZ9fdofZcCaQ/',
-        'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/'
-      );
-    } else if (!url.startsWith('http')) {
-      url = `${STRAPI_URL}${url}`;
-    }
-    
-    return {
-      url,
-      alt: img.attributes.alternativeText || img.attributes.caption || img.attributes.name || '',
-      width: img.attributes.width,
-      height: img.attributes.height,
-      name: img.attributes.name,
-      mime: img.attributes.mime
-    };
-  });
+  // Strapi v5: Direct array of image objects
+  if (Array.isArray(imagesData)) {
+    return imagesData.map(img => {
+      let url = img.url;
+      
+      // Transform imagedelivery.net URLs
+      if (url && url.includes('imagedelivery.net')) {
+        url = url.replace(
+          'https://imagedelivery.net/-aT8Z2F9gGvZ9fdofZcCaQ/',
+          'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/'
+        );
+      } else if (url && !url.startsWith('http')) {
+        url = `${STRAPI_URL}${url}`;
+      }
+      
+      return {
+        url,
+        alt: img.alternativeText || img.caption || img.name || '',
+        width: img.width,
+        height: img.height,
+        name: img.name,
+        mime: img.mime
+      };
+    });
+  }
+  
+  // Strapi v4: data.data structure
+  if (imagesData.data) {
+    return imagesData.data.map(img => {
+      let url = img.attributes.url;
+      
+      // Transform imagedelivery.net URLs
+      if (url.includes('imagedelivery.net')) {
+        url = url.replace(
+          'https://imagedelivery.net/-aT8Z2F9gGvZ9fdofZcCaQ/',
+          'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/'
+        );
+      } else if (!url.startsWith('http')) {
+        url = `${STRAPI_URL}${url}`;
+      }
+      
+      return {
+        url,
+        alt: img.attributes.alternativeText || img.attributes.caption || img.attributes.name || '',
+        width: img.attributes.width,
+        height: img.attributes.height,
+        name: img.attributes.name,
+        mime: img.attributes.mime
+      };
+    });
+  }
+  
+  return [];
 }
 
 /**
@@ -1861,6 +1893,7 @@ async function fetchSingleTennisHoliday(filterQuery, logContext = 'query') {
   const transformed = transformTennisHolidayDetail(data.data[0]);
   if (transformed) {
     console.log(`🎾 Tennis holiday fetched (${logContext}): ${transformed.title}`);
+    console.log(`📸 Gallery images: ${transformed.mainGallery?.length || 0}`);
   }
   return transformed;
 }
@@ -1903,13 +1936,18 @@ export async function getTennisHolidayBySlug(slug, fallbackIdentifiers) {
   }
 
   try {
-    const holiday = await fetchSingleTennisHoliday(
-      `filters[slug][$eq]=${encodeURIComponent(slug)}`,
-      `slug=${slug}`
+    // Use populate=* to get ALL fields including mainGallery
+    const data = await fetchAPI(
+      `/tennis-holidays?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=*`
     );
-
-    if (holiday) {
-      return holiday;
+    
+    if (data && data.data && data.data.length > 0) {
+      const transformed = transformTennisHolidayDetail(data.data[0]);
+      if (transformed) {
+        console.log(`🎾 Tennis holiday fetched (slug=${slug}): ${transformed.title}`);
+        console.log(`📸 Gallery images found: ${transformed.mainGallery?.length || 0}`);
+      }
+      return transformed;
     }
 
   } catch (error) {
@@ -1925,10 +1963,12 @@ export async function getTennisHolidayByDocumentId(documentId) {
   }
 
   try {
-    return await fetchSingleTennisHoliday(
-      `filters[documentId][$eq]=${encodeURIComponent(documentId)}`,
-      `documentId=${documentId}`
-    );
+    const data = await fetchAPI(`/tennis-holidays?filters[documentId][$eq]=${encodeURIComponent(documentId)}&populate=*`);
+    
+    if (data && data.data && data.data.length > 0) {
+      return transformTennisHolidayDetail(data.data[0]);
+    }
+    return null;
   } catch (error) {
     console.error(`❌ Error fetching tennis holiday by documentId (${documentId}):`, error);
     return null;
@@ -1947,10 +1987,12 @@ export async function getTennisHolidayById(identifier) {
   }
 
   try {
-    return await fetchSingleTennisHoliday(
-      `filters[id][$eq]=${numericId}`,
-      `id=${numericId}`
-    );
+    const data = await fetchAPI(`/tennis-holidays?filters[id][$eq]=${numericId}&populate=*`);
+    
+    if (data && data.data && data.data.length > 0) {
+      return transformTennisHolidayDetail(data.data[0]);
+    }
+    return null;
   } catch (error) {
     console.error(`❌ Error fetching tennis holiday by id (${numericId}):`, error);
     return null;
