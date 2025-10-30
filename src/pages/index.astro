@@ -48,22 +48,7 @@ try {
 }
 ---
 
-<BaseLayout 
-  title={homeData?.seo?.metaTitle || "Active Away - Exceptional Tennis, Padel & Pickleball Experiences"}
-  description={homeData?.seo?.metaDescription || "Unique Racket Experiences that unite like-minded individuals, through impeccable service delivered by truly knowledgeable hosts in excellent locations."}
-  metaTitle={homeData?.seo?.metaTitle}
-  metaDescription={homeData?.seo?.metaDescription}
-  metaImage={homeData?.seo?.metaImage?.url}
-  keywords={homeData?.seo?.keywords}
-  metaRobots={homeData?.seo?.metaRobots}
-  canonicalURL={homeData?.seo?.canonicalURL || "https://activeaway.com"}
-  ogTitle={homeData?.seo?.ogTitle}
-  ogDescription={homeData?.seo?.ogDescription}
-  ogImage={homeData?.seo?.ogImage?.url}
-  ogUrl={homeData?.seo?.ogUrl || "https://activeaway.com"}
-  ogType={homeData?.seo?.ogType}
-  structuredData={homeData?.seo?.structuredData}
->
+<BaseLayout title="Active Away - Exceptional Tennis, Padel & Pickleball Experiences" description="Unique Racket Experiences that unite like-minded individuals, through impeccable service delivered by truly knowledgeable hosts in excellent locations.">
     <HeroTailwind homeData={homeData} />
   <LocationsTailwind />
   <AboutUsTailwind homeData={homeData} />

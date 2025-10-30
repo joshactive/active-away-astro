@@ -33,23 +33,13 @@ const heroSubtitle = pageContent?.hero?.subtitle || 'Be the first to secure your
 const heroKicker = pageContent?.hero?.kicker || 'EXCLUSIVE OPPORTUNITIES';
 const heroBackgroundImage = pageContent?.hero?.backgroundImage?.url || 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/45b69090-1c22-46cd-7f98-086ba71efc00/public';
 const heroBackgroundImageAlt = pageContent?.hero?.backgroundImage?.alt || 'Tennis courts and resort';
+const pageTitle = pageContent?.meta?.title || 'Pre-Orders - Active Away';
+const pageDescription = pageContent?.meta?.description || 'Explore our exclusive pre-order opportunities. Be the first to secure your spot for upcoming events, tours, and special experiences.';
 ---
 
 <BaseLayout 
-  title={pageContent?.seo?.metaTitle || 'Pre-Orders - Active Away'}
-  description={pageContent?.seo?.metaDescription || 'Explore our exclusive pre-order opportunities.'}
-  metaTitle={pageContent?.seo?.metaTitle}
-  metaDescription={pageContent?.seo?.metaDescription}
-  metaImage={pageContent?.seo?.metaImage?.url}
-  keywords={pageContent?.seo?.keywords}
-  metaRobots={pageContent?.seo?.metaRobots}
-  canonicalURL={pageContent?.seo?.canonicalURL || "https://activeaway.com/pre-orders"}
-  ogTitle={pageContent?.seo?.ogTitle}
-  ogDescription={pageContent?.seo?.ogDescription}
-  ogImage={pageContent?.seo?.ogImage?.url}
-  ogUrl={pageContent?.seo?.ogUrl || "https://activeaway.com/pre-orders"}
-  ogType={pageContent?.seo?.ogType}
-  structuredData={pageContent?.seo?.structuredData}
+  title={pageTitle}
+  description={pageDescription}
 >
   <!-- Hero Header Section with Background Image -->
   <section class="relative w-full h-[300px] sm:h-[400px] lg:h-[500px] overflow-hidden">
