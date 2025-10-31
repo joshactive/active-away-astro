@@ -157,9 +157,13 @@ console.log('📝 Blog Data:', blogData.blogs.map(b => b.title));
             }
 
             return (
-            <a href={`/blog/${blog.slug || blog.id}`} class="blog-card flex-shrink-0 w-[calc(100vw-5rem)] sm:w-[calc(100vw-8rem)] lg:w-[calc((100%-3rem)/3)] snap-start relative" data-index={index} data-total={blogData.blogs.length}>
+            <a 
+              href={`/blog/${blog.slug || blog.id}`} 
+              class="blog-card flex-shrink-0 w-[calc(100vw-5rem)] sm:w-[calc(100vw-8rem)] lg:w-[calc((100%-3rem)/3)] snap-start group bg-white border-2 border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 hover:-translate-y-1" 
+              data-index={index}
+            >
               {/* Card Image */}
-              <div class="relative overflow-hidden rounded-2xl bg-gray-900 z-0">
+              <div class="aspect-video overflow-hidden bg-gray-100 relative">
                 <img 
                   src={imgAttrs.src}
                   {...(imgAttrs.srcset && { srcset: imgAttrs.srcset })}
@@ -168,34 +172,35 @@ console.log('📝 Blog Data:', blogData.blogs.map(b => b.title));
                   height={imgAttrs.height || 256}
                   alt={imgAttrs.alt || imageAlt}
                   loading={imgAttrs.loading || 'lazy'}
-                  class="w-full h-48 sm:h-56 lg:h-64 object-cover" 
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                 />
+                <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
               
               {/* Card Content */}
-              <div class="relative -mt-6 sm:-mt-8 lg:-mt-12 z-20 px-3 sm:px-6 pb-3 sm:pb-6">
-                <div class="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 shadow-xl flex flex-col transition-all duration-300 group-hover:-translate-y-1">
-                  {/* Tags */}
-                  <div class="flex flex-wrap gap-2 mb-3 sm:mb-4">
-                    <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs sm:text-sm font-inter rounded-full">{blog.author}</span>
-                    <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs sm:text-sm font-inter rounded-full">{blog.date}</span>
-                  </div>
+              <div class="p-6">
+                {/* Tags */}
+                <div class="flex flex-wrap gap-2 mb-3">
+                  <span class="px-3 py-1 bg-[#ad986c]/10 text-[#ad986c] text-xs font-inter font-semibold rounded-full">{blog.author}</span>
+                  <span class="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-inter font-medium rounded-full">{blog.date}</span>
+                </div>
 
-                  {/* Title and Description */}
-                  <h3 class="text-base sm:text-xl lg:text-2xl font-playfair font-bold text-gray-900 mb-2 sm:mb-4 leading-tight line-clamp-2">
-                    {blog.title}
-                  </h3>
-                  <p class="text-sm sm:text-base font-inter text-gray-800 leading-relaxed mb-4 sm:mb-6 line-clamp-3">
-                    {blog.description}
-                  </p>
+                {/* Title */}
+                <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3 group-hover:text-[#ad986c] transition-colors leading-tight line-clamp-2">
+                  {blog.title}
+                </h3>
+                
+                {/* Description */}
+                <p class="text-base font-inter text-gray-800 leading-relaxed mb-4 line-clamp-3">
+                  {blog.description}
+                </p>
 
-                  {/* Read More Button */}
-                  <div class="flex items-center gap-2 text-[#ad986c] hover:text-[#8a7454] font-inter font-medium text-sm sm:text-base transition-colors mt-auto">
-                    <span>Read More</span>
-                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
-                      <path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </div>
+                {/* Read More Arrow */}
+                <div class="flex items-center gap-2 text-[#ad986c] font-inter font-semibold text-sm group-hover:gap-3 transition-all mt-auto">
+                  <span>Read More</span>
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
                 </div>
               </div>
             </a>
@@ -203,20 +208,20 @@ console.log('📝 Blog Data:', blogData.blogs.map(b => b.title));
           })}
 
           <!-- View All Posts Card -->
-          <a href="/blog" class="blog-card flex-shrink-0 w-[calc(100vw-5rem)] sm:w-[calc(100vw-8rem)] lg:w-[calc((100%-3rem)/3)] snap-start relative group" data-index={blogData.blogs.length}>
-            <!-- Single Card -->
-            <div class="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 lg:p-10 shadow-xl flex flex-col items-center justify-center h-full min-h-[320px] sm:min-h-[360px] lg:min-h-[400px] transition-transform duration-300 group-hover:-translate-y-1">
-              <h3 class="text-xl sm:text-2xl lg:text-3xl font-playfair font-bold text-gray-900 mb-3 sm:mb-4">
+          <a href="/blog" class="blog-card flex-shrink-0 w-[calc(100vw-5rem)] sm:w-[calc(100vw-8rem)] lg:w-[calc((100%-3rem)/3)] snap-start group bg-white border-2 border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 hover:-translate-y-1" data-index={blogData.blogs.length}>
+            <div class="p-8 lg:p-12 flex flex-col items-center justify-center text-center min-h-[400px]">
+              <h3 class="text-2xl sm:text-3xl font-playfair font-semibold text-gray-900 mb-4 group-hover:text-[#ad986c] transition-colors">
                 View All Posts
               </h3>
-              <p class="text-gray-700 font-inter text-center mb-6 text-sm sm:text-base">
+              
+              <p class="text-base sm:text-lg font-inter text-gray-800 mb-6">
                 Explore all our blog articles and stories
               </p>
               
-              <div class="flex items-center gap-3 bg-[#ad986c] hover:bg-[#8a7454] text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-full font-inter font-medium text-sm transition-all duration-300 hover:-translate-y-0.5">
-                <span>View All Posts</span>
-                <svg class="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none">
-                  <path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <div class="inline-flex items-center gap-2 bg-[#ad986c] hover:bg-[#8d7a56] text-white px-6 py-3 rounded-full font-inter font-semibold text-sm transition-all duration-300 shadow-md">
+                <span>View All</span>
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
               </div>
             </div>
@@ -281,19 +286,6 @@ console.log('📝 Blog Data:', blogData.blogs.map(b => b.title));
   /* Show overlay on cards outside main view */
   .blog-card.card-hidden::after {
     opacity: 1;
-  }
-  
-  /* Desktop only: Active/Inactive card states */
-  @media (min-width: 1024px) {
-    .blog-card.active-desktop {
-      transform: scale(1.08);
-      z-index: 10;
-    }
-    
-    .blog-card.inactive-desktop {
-      opacity: 0.65;
-      transform: scale(0.90);
-    }
   }
   
   /* Hide pagination dots on mobile */

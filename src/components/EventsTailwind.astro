@@ -150,81 +150,91 @@ if (!events || events.length === 0) {
             }
 
             return (
-            <div class="event-card flex-shrink-0 w-[calc(100vw-5rem)] sm:w-[calc(100vw-8rem)] lg:w-[calc((100%-3rem)/3)] snap-start relative" data-index={index}>
-            {/* Card Image */}
-            <div class="relative overflow-hidden rounded-2xl bg-gray-900 z-0">
-              <img 
-                src={imgAttrs.src}
-                {...(imgAttrs.srcset && { srcset: imgAttrs.srcset })}
-                sizes={imgAttrs.sizes || EVENT_IMAGE_SIZES}
-                width={imgAttrs.width || 402}
-                height={imgAttrs.height || 268}
-                alt={imgAttrs.alt || imageAlt}
-                loading={imgAttrs.loading || 'lazy'}
-                class="w-full h-48 sm:h-56 lg:h-64 object-cover" 
-              />
-            </div>
-            
-            {/* Card Content */}
-            <div class="relative -mt-6 sm:-mt-8 lg:-mt-12 z-20 px-3 sm:px-6 pb-3 sm:pb-6">
-              <div class="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 shadow-xl flex flex-col">
-                <h3 class="text-base sm:text-xl lg:text-2xl font-playfair font-bold text-gray-900 mb-2 sm:mb-4 leading-tight line-clamp-2">
+            <a 
+              href={event.slug ? `/events/${event.slug}` : '#'}
+              class="event-card flex-shrink-0 w-[calc(100vw-5rem)] sm:w-[calc(100vw-8rem)] lg:w-[calc((100%-3rem)/3)] snap-start group bg-white border-2 border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 hover:-translate-y-1" 
+              data-index={index}
+            >
+              {/* Card Image */}
+              <div class="aspect-video overflow-hidden bg-gray-100 relative">
+                <img 
+                  src={imgAttrs.src}
+                  {...(imgAttrs.srcset && { srcset: imgAttrs.srcset })}
+                  sizes={imgAttrs.sizes || EVENT_IMAGE_SIZES}
+                  width={imgAttrs.width || 402}
+                  height={imgAttrs.height || 268}
+                  alt={imgAttrs.alt || imageAlt}
+                  loading={imgAttrs.loading || 'lazy'}
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                />
+                <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </div>
+              
+              {/* Card Content */}
+              <div class="p-6">
+                <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3 group-hover:text-[#ad986c] transition-colors leading-tight">
                   {event.title}
                 </h3>
                 
-                <div class="space-y-1.5 sm:space-y-3 mb-3 sm:mb-6">
-                  {/* Country */}
-                  <div class="flex items-center gap-2">
-                    <MapPinIcon class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" />
-                    <span class="text-sm sm:text-base font-inter text-gray-700">{event.location}</span>
+                {/* Location */}
+                {event.location && (
+                  <div class="flex items-center gap-2 text-sm text-gray-600 font-inter mb-4">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    {event.location}
                   </div>
-                  
-                  {/* Event Type/Product */}
-                  <div class="flex items-center gap-2">
-                    <TagIcon class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" />
-                    <span class="text-sm sm:text-base font-inter text-gray-700">{event.type}</span>
-                  </div>
-                  
-                  {/* Date */}
-                  <div class="flex items-center gap-2">
-                    <CalendarIcon class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" />
-                    <span class="text-sm sm:text-base font-inter text-gray-700">{event.date}</span>
-                  </div>
-                </div>
+                )}
                 
-                <div class="flex items-center justify-between gap-3 mt-auto">
-                  {event.amount && (
-                    <div class="font-inter text-gray-900">
-                      <span class="text-xs sm:text-base font-normal text-gray-600">from </span>
-                      <span class="text-xl sm:text-3xl lg:text-4xl font-bold">{event.amount}</span><span class="text-base sm:text-xl lg:text-2xl font-semibold">pp</span>
-                    </div>
-                  )}
-                  <button class="px-4 sm:px-6 py-2 sm:py-3 bg-gold hover:bg-gold-700 text-white font-inter font-medium text-xs sm:text-base rounded-full transition-all duration-300 hover:-translate-y-0.5 whitespace-nowrap">
-                    Book Now
-                  </button>
+                {/* Date */}
+                {event.date && (
+                  <div class="flex items-center gap-2 text-sm text-gray-600 font-inter mb-4">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    {event.date}
+                  </div>
+                )}
+                
+                {/* Price Display */}
+                {event.amount && (
+                  <div class="mb-4">
+                    <p class="text-sm text-gray-600 font-inter mb-1">From</p>
+                    <p class="text-3xl font-bold text-[#ad986c] font-playfair">£{event.amount.replace('£', '')}<span class="text-lg">pp</span></p>
+                    {!event.type?.toLowerCase().includes('clinic') && (
+                      <p class="text-xs text-gray-500 font-inter mt-1">Based on 2 sharing</p>
+                    )}
+                  </div>
+                )}
+                
+                {/* View Details Arrow */}
+                <div class="mt-4 flex items-center gap-2 text-[#ad986c] font-inter font-semibold text-sm group-hover:gap-3 transition-all">
+                  <span>View Details</span>
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
                 </div>
               </div>
-            </div>
-          </div>
+            </a>
             );
           })}
           
           <!-- View More Card -->
-          <a href="/events" class="event-card flex-shrink-0 w-[calc(100vw-5rem)] sm:w-[calc(100vw-8rem)] lg:w-[calc((100%-3rem)/3)] snap-start relative group" data-index={events.length}>
-            <!-- Single Card -->
-            <div class="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 lg:p-10 shadow-xl flex flex-col items-center justify-center h-full min-h-[320px] sm:min-h-[360px] lg:min-h-[400px] transition-transform duration-300 group-hover:-translate-y-1">
-              <h3 class="text-xl sm:text-2xl lg:text-3xl font-playfair font-bold text-gray-900 mb-3 sm:mb-4">
+          <a href="/events" class="event-card flex-shrink-0 w-[calc(100vw-5rem)] sm:w-[calc(100vw-8rem)] lg:w-[calc((100%-3rem)/3)] snap-start group bg-white border-2 border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 hover:-translate-y-1" data-index={events.length}>
+            <div class="p-8 lg:p-12 flex flex-col items-center justify-center text-center min-h-[400px]">
+              <h3 class="text-2xl sm:text-3xl font-playfair font-semibold text-gray-900 mb-4 group-hover:text-[#ad986c] transition-colors">
                 View All Events
               </h3>
               
-              <p class="text-gray-700 font-inter text-center mb-6 text-sm sm:text-base">
+              <p class="text-base sm:text-lg font-inter text-gray-800 mb-6">
                 Discover more exciting events and activities
               </p>
               
-              <div class="flex items-center gap-3 bg-[#ad986c] hover:bg-[#8a7454] text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-full font-inter font-medium text-sm transition-all duration-300 hover:-translate-y-0.5">
-                <span>View All Events</span>
-                <svg class="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none">
-                  <path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <div class="inline-flex items-center gap-2 bg-[#ad986c] hover:bg-[#8d7a56] text-white px-6 py-3 rounded-full font-inter font-semibold text-sm transition-all duration-300 shadow-md">
+                <span>View All</span>
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
               </div>
             </div>
@@ -289,19 +299,6 @@ if (!events || events.length === 0) {
   /* Show overlay on cards outside main view */
   .event-card.card-hidden::after {
     opacity: 1;
-  }
-  
-  /* Desktop only: Active/Inactive card states */
-  @media (min-width: 1024px) {
-    .event-card.active-desktop {
-      transform: scale(1.08);
-      z-index: 10;
-    }
-    
-    .event-card.inactive-desktop {
-      opacity: 0.65;
-      transform: scale(0.90);
-    }
   }
   
   /* Hide pagination dots on mobile */

@@ -1715,7 +1715,10 @@ function transformTennisHolidayDetail(item) {
   // Get main gallery images
   const mainGallery = holiday.mainGallery ? getStrapiImagesData(holiday.mainGallery) : [];
   
-  // Get room options
+  // Get tripImages (for What's Included section)
+  const tripImages = holiday.tripImages ? getStrapiImagesData(holiday.tripImages) : [];
+  
+  // Get room options (old structure - keeping for backwards compatibility)
   const roomOptions = [];
   if (holiday.roomOptions && Array.isArray(holiday.roomOptions)) {
     holiday.roomOptions.forEach(room => {
@@ -1731,6 +1734,23 @@ function transformTennisHolidayDetail(item) {
         image: roomImage?.url || null,
         imageAlt: roomImage?.alt || room.roomType,
         amenities: amenities
+      });
+    });
+  }
+  
+  // Get rooms (new structure with nested roomGallery)
+  const rooms = [];
+  if (holiday.rooms && Array.isArray(holiday.rooms)) {
+    holiday.rooms.forEach(room => {
+      const roomGallery = room.roomGallery ? getStrapiImagesData(room.roomGallery) : [];
+      
+      rooms.push({
+        id: room.id,
+        roomTitle: room.roomTitle,
+        roomSize: room.roomSize,
+        roomBedConfig: room.roomBedConfig,
+        roomText: room.roomText,
+        roomGallery: roomGallery
       });
     });
   }
@@ -1772,6 +1792,7 @@ function transformTennisHolidayDetail(item) {
     // Images
     headerImage: headerImage,
     mainGallery: mainGallery,
+    tripImages: tripImages,
     featuredImageLg: holiday.featuredImageLg ? getStrapiImageData(holiday.featuredImageLg) : null,
     
     // Location info
@@ -1836,6 +1857,8 @@ function transformTennisHolidayDetail(item) {
     facilities: holiday.facilities || [],
     keyInformation: holiday.keyInformation || [],
     roomOptions: roomOptions,
+    rooms: rooms,
+    roomsSubheading: holiday.roomsSubheading || null,
     
     // Booking sections
     bookCourtsInfo: holiday.bookCourtsInfo,
@@ -1923,6 +1946,64 @@ async function resolveTennisHolidayFallback(identifiers = {}) {
   }
 
   return null;
+}
+
+/**
+ * SEPARATE API CALL: Fetch nested data for tennis holiday (rooms.roomGallery, tripImages)
+ * This is called separately to handle Strapi v5's nested population requirements
+ * @param {string} slug - Tennis holiday slug
+ * @returns {Promise<Object|null>} Object with rooms and tripImages, or null
+ */
+export async function getTennisHolidayNestedData(slug) {
+  if (!slug) {
+    console.warn('No slug provided to getTennisHolidayNestedData');
+    return null;
+  }
+
+  try {
+    // Strapi v5 requires explicit nested population for deep relations
+    // Using the exact syntax from the working API test
+    const data = await fetchAPI(
+      `/tennis-holidays?filters[slug][$eq]=${encodeURIComponent(slug)}&populate[rooms][populate]=*&populate=tripImages`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const item = data.data[0];
+      const holiday = item.attributes || item;
+      
+      // Process rooms with nested roomGallery
+      const rooms = [];
+      if (holiday.rooms && Array.isArray(holiday.rooms)) {
+        holiday.rooms.forEach((room, index) => {
+          const roomGallery = room.roomGallery ? getStrapiImagesData(room.roomGallery) : [];
+          
+          rooms.push({
+            id: room.id,
+            roomTitle: room.roomTitle,
+            roomSize: room.roomSize,
+            roomBedConfig: room.roomBedConfig,
+            roomText: room.roomText,
+            roomGallery: roomGallery
+          });
+        });
+      }
+      
+      // Process tripImages
+      const tripImages = holiday.tripImages ? getStrapiImagesData(holiday.tripImages) : [];
+      
+      console.log(`🏨 Nested data fetched for ${slug}: ${rooms.length} rooms, ${tripImages.length} trip images`);
+      
+      return {
+        rooms,
+        tripImages
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching nested data for tennis holiday (${slug}):`, error);
+    return null;
+  }
 }
 
 export async function getTennisHolidayBySlug(slug, fallbackIdentifiers) {

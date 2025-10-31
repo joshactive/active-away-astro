@@ -20,6 +20,13 @@
   margin-bottom: 1em;
   color: #1f2937; /* text-gray-800 */
   line-height: 1.6;
+  font-size: 1rem; /* 16px base */
+}
+
+@media (min-width: 640px) {
+  .prose p {
+    font-size: 1.125rem; /* 18px on tablet+ */
+  }
 }
 
 .prose strong,
@@ -50,6 +57,13 @@
   margin-bottom: 0.5em;
   color: #1f2937; /* text-gray-800 */
   line-height: 1.6;
+  font-size: 1rem; /* 16px base */
+}
+
+@media (min-width: 640px) {
+  .prose li {
+    font-size: 1.125rem; /* 18px on tablet+ */
+  }
 }
 
 .prose li:last-child {

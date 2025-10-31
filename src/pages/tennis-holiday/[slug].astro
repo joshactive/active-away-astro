@@ -3,7 +3,7 @@
 export const prerender = true;
 
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getTennisHolidays, getTennisHolidayBySlug } from '../../utils/strapi.js';
+import { getTennisHolidays, getTennisHolidayBySlug, getTennisHolidayNestedData } from '../../utils/strapi.js';
 import { getStrapiImageAttrs } from '../../utils/cloudflareImages.js';
 
 // Generate static paths for all tennis holidays
@@ -43,6 +43,24 @@ if (!holidayData) {
   return Astro.redirect('/404');
 }
 
+// SEPARATE API CALL: Fetch nested data (rooms.roomGallery, tripImages)
+// This is required for Strapi v5's nested population
+try {
+  const nestedData = await getTennisHolidayNestedData(slug);
+  if (nestedData) {
+    // Merge nested data into holidayData
+    if (nestedData.rooms && nestedData.rooms.length > 0) {
+      holidayData.rooms = nestedData.rooms;
+    }
+    if (nestedData.tripImages && nestedData.tripImages.length > 0) {
+      holidayData.tripImages = nestedData.tripImages;
+    }
+    console.log(`🏨 [${slug}] Nested data merged: ${nestedData.rooms?.length || 0} rooms, ${nestedData.tripImages?.length || 0} trip images`);
+  }
+} catch (error) {
+  console.error(`[${slug}] Error fetching nested data:`, error.message);
+}
+
 // Extract data with fallbacks
 const heroTitle = holidayData.mainHeader || holidayData.mainHeader;
 const heroSubtitle = holidayData.headingText || holidayData.headingText || '';
@@ -57,6 +75,15 @@ const metaImage = holidayData.seo?.metaImage || holidayData.headerImage?.url || 
 const metaImageAlt = holidayData.seo?.metaImageAlt || null;
 const keywords = holidayData.seo?.keywords || null;
 const canonicalURL = holidayData.seo?.canonicalURL || `https://activeaway.com/tennis-holiday/${slug}`;
+
+// Fetch similar holidays (excluding current one)
+let similarHolidays = [];
+try {
+  const allHolidays = await getTennisHolidays(1, 6);
+  similarHolidays = allHolidays.filter(h => h.slug !== slug).slice(0, 3);
+} catch (error) {
+  console.error('Error fetching similar holidays:', error);
+}
 ---
 
 <BaseLayout 
@@ -160,7 +187,7 @@ const canonicalURL = holidayData.seo?.canonicalURL || `https://activeaway.com/te
         </button>
         <button 
           class="page-nav-tab px-6 py-3 text-sm font-medium font-inter rounded-full whitespace-nowrap transition-all"
-          data-section="dates"
+          data-section="itinerary"
         >
           Itinerary
         </button>
@@ -191,9 +218,9 @@ const canonicalURL = holidayData.seo?.canonicalURL || `https://activeaway.com/te
           <!-- Left Column - Main Content (8 cols) -->
           <div class="lg:col-span-8">
             {holidayData.belowHeadingText ? (
-              <div class="prose prose-lg max-w-none font-inter text-gray-800" set:html={holidayData.belowHeadingText}></div>
+              <div class="prose max-w-none font-inter" set:html={holidayData.belowHeadingText}></div>
             ) : (
-              <div class="prose prose-lg max-w-none font-inter text-gray-800">
+              <div class="prose max-w-none font-inter">
                 <p>Join us for an unforgettable tennis holiday at <strong>{holidayData.venue}</strong>.</p>
                 {holidayData.excerpt && <p>{holidayData.excerpt}</p>}
               </div>
@@ -211,7 +238,7 @@ const canonicalURL = holidayData.seo?.canonicalURL || `https://activeaway.com/te
                       <svg class="w-5 h-5 text-[#ad986c] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                       </svg>
-                      <p class="text-sm font-inter text-gray-800">{reason}</p>
+                      <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed">{reason}</p>
                     </div>
                   ))}
                 </div>
@@ -240,8 +267,11 @@ const canonicalURL = holidayData.seo?.canonicalURL || `https://activeaway.com/te
                 {/* Tennis Courts */}
                 {holidayData.tennisCourtSurface && (
                   <div class="flex items-start gap-3">
-                    <svg class="w-6 h-6 text-[#ad986c] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+                    <svg class="w-6 h-6 text-[#ad986c] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z"/>
+                      <path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z"/>
+                      <path d="M16 17h4"/>
+                      <path d="M4 13h4"/>
                     </svg>
                     <div class="flex-1 min-w-0">
                       <p class="text-sm font-medium text-gray-900 font-inter">Tennis Courts</p>
@@ -253,8 +283,10 @@ const canonicalURL = holidayData.seo?.canonicalURL || `https://activeaway.com/te
                 {/* Board Basis */}
                 {holidayData.boardBasisLg && (
                   <div class="flex items-start gap-3">
-                    <svg class="w-6 h-6 text-[#ad986c] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                    <svg class="w-6 h-6 text-[#ad986c] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
+                      <path d="M7 2v20"/>
+                      <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>
                     </svg>
                     <div class="flex-1 min-w-0">
                       <p class="text-sm font-medium text-gray-900 font-inter">Board Basis</p>
@@ -266,8 +298,11 @@ const canonicalURL = holidayData.seo?.canonicalURL || `https://activeaway.com/te
                 {/* Pricing */}
                 {holidayData.singleOccupancyFrom && (
                   <div class="flex items-start gap-3">
-                    <svg class="w-6 h-6 text-[#ad986c] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg class="w-6 h-6 text-[#ad986c] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M18 7c0-5.333-8-5.333-8 0"/>
+                      <path d="M10 7v14"/>
+                      <path d="M6 21h12"/>
+                      <path d="M6 13h10"/>
                     </svg>
                     <div class="flex-1 min-w-0">
                       <p class="text-sm font-medium text-gray-900 font-inter">Pricing</p>
@@ -478,6 +513,767 @@ const canonicalURL = holidayData.seo?.canonicalURL || `https://activeaway.com/te
     </section>
   )}
 
+  <!-- The Tennis Section - Carousel -->
+  <section class="w-full bg-gray-50 py-12 sm:py-16 lg:py-20">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      <!-- Header -->
+      <div class="mb-8 sm:mb-12 text-center">
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900">
+          The Tennis
+        </h2>
+      </div>
+
+      <!-- Carousel Container -->
+      <div class="relative">
+        <!-- Navigation Arrows -->
+        <button 
+          id="prevTennisSlide"
+          class="hidden lg:flex absolute left-4 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-[#ad986c] hover:bg-[#8d7a56] rounded-full shadow-lg items-center justify-center transition-all duration-300"
+          aria-label="Previous slide"
+        >
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" stroke="#FFFFFF"/>
+          </svg>
+        </button>
+        
+        <button 
+          id="nextTennisSlide"
+          class="hidden lg:flex absolute right-4 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-[#ad986c] hover:bg-[#8d7a56] rounded-full shadow-lg items-center justify-center transition-all duration-300"
+          aria-label="Next slide"
+        >
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" stroke="#FFFFFF"/>
+          </svg>
+        </button>
+
+        <!-- Slides Container -->
+        <div class="overflow-x-auto lg:overflow-visible snap-x snap-mandatory lg:snap-none scrollbar-hide">
+          <div id="tennisCarousel" class="flex transition-transform duration-500 ease-out gap-6 lg:pl-[calc((100%-900px)/2)]">
+            
+            <!-- Slide 1: Jamie Murray Tennis Programme -->
+            <div class="tennis-slide flex-shrink-0 w-[85%] sm:w-[90%] lg:w-[900px] snap-start relative">
+              <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 h-full">
+                <div class="aspect-video relative overflow-hidden bg-gray-100">
+                  <button 
+                    type="button"
+                    class="lite-youtube-tennis group"
+                    data-video-id="5wDDq_iM0xM"
+                    aria-label="Play Jamie Murray Tennis Programme video"
+                  >
+                    <img 
+                      src="https://i.ytimg.com/vi/5wDDq_iM0xM/hqdefault.jpg"
+                      alt="Jamie Murray Tennis Programme video"
+                      loading="lazy"
+                      decoding="async"
+                      class="absolute inset-0 w-full h-full object-cover"
+                    />
+                    <span class="lite-youtube__play"></span>
+                  </button>
+                </div>
+                <div class="p-4 sm:p-6 lg:p-8">
+                  <h3 class="text-2xl sm:text-3xl font-playfair font-semibold text-gray-900 mb-3 sm:mb-4 leading-tight">
+                    The Jamie Murray Tennis Programme
+                  </h3>
+                  <div class="space-y-3">
+                    <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed"><strong>The Tennis Programme</strong> – Curated to make you a more skilled and self assured doubles player. Designed by Jamie Murray.</p>
+                    <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed"><strong>Tennis Ability</strong> – This trip is bookable by anyone with a rating of 2-6 in our <a href="#" class="text-[#ad986c] hover:underline">Self Rating Guide</a>.</p>
+                    <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed"><strong>Non-Players</strong> – Are welcome. They receive a £200 Discount off the prices listed.</p>
+                    <p class="text-base sm:text-lg text-gray-600 font-inter leading-relaxed">No other Discount can be used in conjunction with this £200 Discount.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Slide 2: A Tennis Holiday in Action -->
+            <div class="tennis-slide flex-shrink-0 w-[85%] sm:w-[90%] lg:w-[900px] snap-start relative">
+              <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 h-full">
+                <div class="aspect-video relative overflow-hidden bg-gray-100">
+                  <button 
+                    type="button"
+                    class="lite-youtube-tennis group"
+                    data-video-id="zpshRTMdTxo"
+                    aria-label="Play A Tennis Holiday in Action video"
+                  >
+                    <img 
+                      src="https://i.ytimg.com/vi/zpshRTMdTxo/hqdefault.jpg"
+                      alt="A Tennis Holiday in Action video"
+                      loading="lazy"
+                      decoding="async"
+                      class="absolute inset-0 w-full h-full object-cover"
+                    />
+                    <span class="lite-youtube__play"></span>
+                  </button>
+                </div>
+                <div class="p-4 sm:p-6 lg:p-8">
+                  <h3 class="text-2xl sm:text-3xl font-playfair font-semibold text-gray-900 mb-3 sm:mb-4 leading-tight">
+                    A Tennis Holiday in Action
+                  </h3>
+                  <div class="space-y-3">
+                    <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed"><strong>Since 2006</strong> – We've been hosting adult tennis holidays since 2006. Having designed the perfect itinerary, we believe we have a recipe for the most incredible experience!</p>
+                    <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed"><strong>Incredible Community</strong> – Our community is truly what sets us apart from the competition. Our unique blend of fun and friendship connects likeminded individuals.</p>
+                    <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed"><strong>Rebooking Rate</strong> – With an outstanding rebook rate of 85%, our guests' loyalty speaks for itself. We're committed to creating exceptional tennis holidays that keep guests coming back year after year.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Slide 3: The Active Away Experience -->
+            <div class="tennis-slide flex-shrink-0 w-[85%] sm:w-[90%] lg:w-[900px] snap-start relative">
+              <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 h-full">
+                <div class="aspect-video relative overflow-hidden bg-gray-100">
+                  <img 
+                    src="https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/d38de289-0836-4a6b-d3ad-3cdd4aa27000/public?width=1200&height=675&fit=cover&format=auto&quality=85"
+                    srcset="https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/d38de289-0836-4a6b-d3ad-3cdd4aa27000/public?width=1200&height=675&fit=cover&format=auto&quality=85 1200w,
+                            https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/d38de289-0836-4a6b-d3ad-3cdd4aa27000/public?width=1800&height=1012&fit=cover&format=auto&quality=85 1800w,
+                            https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/d38de289-0836-4a6b-d3ad-3cdd4aa27000/public?width=2400&height=1350&fit=cover&format=auto&quality=85 2400w"
+                    sizes="(max-width: 1024px) 100vw, 900px"
+                    alt="Active Away tennis coaching experience"
+                    width="1200"
+                    height="675"
+                    class="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+                <div class="p-4 sm:p-6 lg:p-8">
+                  <h3 class="text-2xl sm:text-3xl font-playfair font-semibold text-gray-900 mb-3 sm:mb-4 leading-tight">
+                    The Active Away Experience
+                  </h3>
+                  <div class="space-y-3">
+                    <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed"><strong>Our USP</strong> – What sets Active Away apart is our genuine dedication to creating an amazing experience, both on and off the court. From personalised coaching to memorable shared dinners, we're passionate about making your holiday everything you hope for and more.</p>
+                    <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed"><strong>Your Tennis</strong> – If for any reason you feel over or under challenged on your holiday from a tennis perspective - please speak to your host and they will accommodate your request to ensure you are appropriately challenged.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Pagination Dots - Desktop Only -->
+        <div class="hidden lg:flex justify-center items-center gap-2 mt-8">
+          <button class="tennis-dot w-8 h-2 rounded-full bg-[#ad986c] transition-all duration-300" data-slide="0" aria-label="Go to slide 1"></button>
+          <button class="tennis-dot w-2 h-2 rounded-full bg-gray-300 transition-all duration-300" data-slide="1" aria-label="Go to slide 2"></button>
+          <button class="tennis-dot w-2 h-2 rounded-full bg-gray-300 transition-all duration-300" data-slide="2" aria-label="Go to slide 3"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Facilities/Resort Information Section with Tabs -->
+  <section id="resort" class="w-full bg-white py-12 sm:py-16 lg:py-20 scroll-mt-20">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      
+      <!-- Section Heading -->
+      <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-8 text-center">
+        Resort Information
+      </h2>
+
+      <!-- Tab Navigation -->
+      <div class="border-b border-gray-200 mb-8">
+        <div class="flex flex-wrap gap-2 sm:gap-4 justify-center">
+          {holidayData.restaurants && (
+            <button class="facility-tab active px-6 py-3 text-sm font-medium font-inter whitespace-nowrap transition-all relative inline-flex items-center gap-2" data-tab="restaurants">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
+                <path d="M7 2v20"/>
+                <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>
+              </svg>
+              Restaurants & bars
+            </button>
+          )}
+          {holidayData.boardBasis && (
+            <button class="facility-tab px-6 py-3 text-sm font-medium font-inter whitespace-nowrap transition-all relative inline-flex items-center gap-2" data-tab="board">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+              Board
+            </button>
+          )}
+          {holidayData.setting && (
+            <button class="facility-tab px-6 py-3 text-sm font-medium font-inter whitespace-nowrap transition-all relative inline-flex items-center gap-2" data-tab="setting">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Setting
+            </button>
+          )}
+          {holidayData.tennisCourts && (
+            <button class="facility-tab px-6 py-3 text-sm font-medium font-inter whitespace-nowrap transition-all relative inline-flex items-center gap-2" data-tab="tennis">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z"/>
+                <path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z"/>
+                <path d="M16 17h4"/>
+                <path d="M4 13h4"/>
+              </svg>
+              Tennis Courts
+            </button>
+          )}
+          {holidayData.facilities && holidayData.facilities.length > 0 && (
+            <button class="facility-tab px-6 py-3 text-sm font-medium font-inter whitespace-nowrap transition-all relative inline-flex items-center gap-2" data-tab="facilities">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              Amenities
+            </button>
+          )}
+          {holidayData.topTips && (
+            <button class="facility-tab px-6 py-3 text-sm font-medium font-inter whitespace-nowrap transition-all relative inline-flex items-center gap-2" data-tab="tips">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+              Top Tips
+            </button>
+          )}
+        </div>
+      </div>
+
+      <!-- Tab Content - Full Width -->
+      <div class="w-full">
+        {holidayData.restaurants && (
+          <div class="facility-tab-content active" data-tab-content="restaurants">
+            <h4 class="text-xl font-playfair font-semibold text-gray-900 mb-4">Restaurants</h4>
+            <div class="prose max-w-none font-inter" set:html={holidayData.restaurants}></div>
+            {holidayData.bars && (
+              <div class="mt-8 pt-8 border-t border-gray-200">
+                <h4 class="text-xl font-playfair font-semibold text-gray-900 mb-4">Bars</h4>
+                <div class="prose max-w-none font-inter" set:html={holidayData.bars}></div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {holidayData.boardBasis && (
+          <div class="facility-tab-content hidden" data-tab-content="board">
+            <div class="prose max-w-none font-inter" set:html={holidayData.boardBasis}></div>
+          </div>
+        )}
+
+        {holidayData.setting && (
+          <div class="facility-tab-content hidden" data-tab-content="setting">
+            <div class="prose max-w-none font-inter" set:html={holidayData.setting}></div>
+          </div>
+        )}
+
+        {holidayData.tennisCourts && (
+          <div class="facility-tab-content hidden" data-tab-content="tennis">
+            <div class="prose max-w-none font-inter" set:html={holidayData.tennisCourts}></div>
+          </div>
+        )}
+
+        {holidayData.facilities && holidayData.facilities.length > 0 && (
+          <div class="facility-tab-content hidden" data-tab-content="facilities">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {holidayData.facilities.filter(f => f.included !== false).map((facility) => (
+                <div class="flex items-center gap-3">
+                  <svg class="w-5 h-5 text-[#ad986c] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed">{facility.item || facility.text || facility.title}</span>
+                </div>
+              ))}
+            </div>
+            {holidayData.facilitiesExtraInfo && (
+              <p class="text-sm text-gray-600 font-inter mt-6 pt-6 border-t border-gray-200">{holidayData.facilitiesExtraInfo}</p>
+            )}
+          </div>
+        )}
+
+        {holidayData.topTips && (
+          <div class="facility-tab-content hidden" data-tab-content="tips">
+            <div class="prose max-w-none font-inter" set:html={holidayData.topTips}></div>
+          </div>
+        )}
+      </div>
+    </div>
+  </section>
+
+  <!-- What's Included/Not Included Section -->
+  {(holidayData.whatsIncluded.length > 0 || holidayData.whatsNotIncluded.length > 0) && (
+    <section class="w-full bg-gray-50 py-12 sm:py-16 lg:py-20 border-t border-gray-200">
+      <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          
+          <!-- Left: Images -->
+          <div class="relative h-[400px] sm:h-[500px]">
+            <div class="absolute top-0 right-0 w-[75%] h-[85%] rounded-3xl overflow-hidden shadow-xl">
+              {(holidayData.tripImages?.[0] || holidayData.mainGallery[6]) && (() => {
+                const image = holidayData.tripImages?.[0] || holidayData.mainGallery[6];
+                const imgAttrs = getStrapiImageAttrs(image, {
+                  displayWidth: 800,
+                  displayHeight: 600,
+                  fit: 'cover',
+                  quality: 85,
+                  sizes: '(max-width: 1024px) 75vw, 600px'
+                });
+                
+                return (
+                  <img 
+                    src={imgAttrs?.src || image.url}
+                    srcset={imgAttrs?.srcset}
+                    sizes={imgAttrs?.sizes}
+                    alt={imgAttrs?.alt || image.alt || 'Resort amenities'}
+                    width={imgAttrs?.width}
+                    height={imgAttrs?.height}
+                    class="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                );
+              })()}
+            </div>
+            
+            <div class="absolute bottom-0 left-0 w-[60%] h-[65%] rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
+              {(holidayData.tripImages?.[1] || holidayData.mainGallery[7]) && (() => {
+                const image = holidayData.tripImages?.[1] || holidayData.mainGallery[7];
+                const imgAttrs = getStrapiImageAttrs(image, {
+                  displayWidth: 600,
+                  displayHeight: 450,
+                  fit: 'cover',
+                  quality: 85,
+                  sizes: '(max-width: 1024px) 60vw, 500px'
+                });
+                
+                return (
+                  <img 
+                    src={imgAttrs?.src || image.url}
+                    srcset={imgAttrs?.srcset}
+                    sizes={imgAttrs?.sizes}
+                    alt={imgAttrs?.alt || image.alt || 'Holiday experience'}
+                    width={imgAttrs?.width}
+                    height={imgAttrs?.height}
+                    class="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                );
+              })()}
+            </div>
+          </div>
+          
+          <!-- Right: Content -->
+          <div class="space-y-8">
+            {holidayData.whatsIncluded.length > 0 && (
+              <div>
+                <h3 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-6">
+                  What's Included
+                </h3>
+                <div class="space-y-3">
+                  {holidayData.whatsIncluded.filter(f => f.included !== false).map((item) => (
+                    <div class="flex items-start gap-3">
+                      <svg class="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed">{item.item || item.text || item.title}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {holidayData.whatsNotIncluded.length > 0 && (
+              <div class="pt-8 border-t border-gray-300">
+                <h3 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-6">
+                  What's Not Included
+                </h3>
+                <div class="space-y-3">
+                  {holidayData.whatsNotIncluded.filter(f => f.included !== false).map((item) => (
+                    <div class="flex items-start gap-3">
+                      <svg class="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed">{item.item || item.text || item.title}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- Rooms Section -->
+  <section id="rooms" class="w-full bg-white py-12 sm:py-16 lg:py-20 border-t border-gray-200 scroll-mt-20">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <div class="lg:col-span-3 flex flex-col justify-center text-center lg:text-left">
+          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-4">
+            ROOMS
+          </h2>
+          <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed">
+            {holidayData.roomsSubheading || 'Choose from our selection of beautifully appointed rooms and suites.'}
+          </p>
+        </div>
+
+        <div class="lg:col-span-9">
+          <div class="relative">
+            <button id="prevRoomSlide" class="hidden lg:flex absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-6 z-10 w-12 h-12 bg-[#ad986c] hover:bg-[#8d7a56] rounded-full shadow-lg items-center justify-center transition-all duration-300">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" stroke="#FFFFFF"/>
+              </svg>
+            </button>
+            
+            <button id="nextRoomSlide" class="hidden lg:flex absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-6 z-10 w-12 h-12 bg-[#ad986c] hover:bg-[#8d7a56] rounded-full shadow-lg items-center justify-center transition-all duration-300">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" stroke="#FFFFFF"/>
+              </svg>
+            </button>
+
+            <div class="overflow-x-auto lg:overflow-visible snap-x snap-mandatory scrollbar-hide">
+              <div id="roomsCarousel" class="flex gap-6 transition-transform duration-500 ease-out">
+                {holidayData.rooms && holidayData.rooms.length > 0 ? (
+                  holidayData.rooms.map((room, roomIndex) => {
+                    const firstImage = room.roomGallery?.[0];
+                    const hasMultipleImages = room.roomGallery && room.roomGallery.length > 1;
+                    const roomGalleryJson = room.roomGallery ? JSON.stringify(room.roomGallery) : '[]';
+                    return (
+                      <div class="room-card flex-shrink-0 w-[85%] sm:w-[90%] lg:w-[48%] snap-start">
+                        <div class="bg-white border-2 border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 h-full">
+                          <button 
+                            type="button"
+                            class={`relative h-48 sm:h-56 overflow-hidden bg-gray-100 w-full ${hasMultipleImages ? 'cursor-pointer group' : ''}`}
+                            data-room-gallery={roomGalleryJson}
+                            data-room-title={room.roomTitle}
+                            data-has-gallery={hasMultipleImages}
+                            onclick={hasMultipleImages ? 'openRoomGallery(this)' : undefined}
+                          >
+                            {firstImage ? (() => {
+                              const imgAttrs = getStrapiImageAttrs(firstImage, {
+                                displayWidth: 800,
+                                displayHeight: 600,
+                                fit: 'cover',
+                                quality: 85,
+                                sizes: '(max-width: 1024px) 85vw, 500px'
+                              });
+                              return (
+                                <img 
+                                  src={imgAttrs?.src || firstImage.url}
+                                  srcset={imgAttrs?.srcset}
+                                  sizes={imgAttrs?.sizes}
+                                  width={imgAttrs?.width}
+                                  height={imgAttrs?.height}
+                                  alt={imgAttrs?.alt || room.roomTitle}
+                                  class="w-full h-full object-cover"
+                                  loading="lazy"
+                                />
+                              );
+                            })() : (
+                              <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+                                <svg class="w-12 h-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                              </div>
+                            )}
+                            
+                            {/* View More overlay when there are multiple images */}
+                            {hasMultipleImages && (
+                              <div class="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                <div class="bg-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2">
+                                  <svg class="w-5 h-5 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                  <span class="text-sm font-inter font-semibold text-gray-900">View More ({room.roomGallery.length})</span>
+                                </div>
+                              </div>
+                            )}
+                          </button>
+                          <div class="p-6">
+                            <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-2 leading-tight uppercase">
+                              {room.roomTitle}
+                            </h3>
+                            {(room.roomSize || room.roomBedConfig) && (
+                              <div class="flex items-center gap-4 mb-4 text-sm text-gray-600 font-inter">
+                                {room.roomSize && <span>{room.roomSize}</span>}
+                                {room.roomSize && room.roomBedConfig && <span>•</span>}
+                                {room.roomBedConfig && <span>{room.roomBedConfig}</span>}
+                              </div>
+                            )}
+                            {room.roomText && (
+                              <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed">{room.roomText}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div class="room-card flex-shrink-0 w-[85%] sm:w-[90%] lg:w-[48%] snap-start">
+                    <div class="bg-white border-2 border-gray-200 rounded-2xl p-6 text-center">
+                      <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-2">Room Options</h3>
+                      <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed">Contact us for accommodation details.</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Itinerary Section -->
+  {holidayData.itinerary && holidayData.itinerary.length > 0 && (
+    <section id="itinerary" class="w-full bg-gray-50 py-12 sm:py-16 lg:py-20 border-t border-gray-200 scroll-mt-20">
+      <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-8 sm:mb-12 text-center">
+          Itinerary
+        </h2>
+        <div class="max-w-4xl mx-auto space-y-3">
+          {holidayData.itinerary.map((item, index) => (
+            <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+              <button type="button" class="itinerary-accordion-btn w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors">
+                <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 bg-[#ad986c] text-white rounded-full flex items-center justify-center font-bold font-playfair text-base flex-shrink-0">
+                    {index + 1}
+                  </div>
+                  <h3 class="text-base sm:text-lg font-playfair font-semibold text-gray-900">{item.day || `Day ${index + 1}`}</h3>
+                </div>
+                <svg class="w-5 h-5 text-gray-600 transition-transform duration-300 itinerary-chevron flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div class="itinerary-accordion-content hidden border-t border-gray-200">
+                <div class="p-6">
+                  <div class="prose max-w-none font-inter" set:html={item.content}></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- Dates & Prices Section -->
+  <section id="dates-prices" class="w-full bg-white py-12 sm:py-16 lg:py-20 border-t border-gray-200 scroll-mt-20">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      
+      <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-8 sm:mb-12 text-center">
+        Dates & Prices
+      </h2>
+
+      <div id="eventsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        
+        {/* Temporary Event Cards */}
+        <div class="bg-white border-2 border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+          <div class="mb-4">
+            <div class="inline-block bg-[#ad986c]/10 text-[#ad986c] px-3 py-1 rounded-full text-xs font-inter font-semibold mb-3">AVAILABLE</div>
+            <h3 class="text-base sm:text-lg font-playfair font-semibold text-gray-900 mb-4">Sat 16 May - Sat 23 May 2026</h3>
+          </div>
+          <div class="mb-4 pb-4 border-b border-gray-200">
+            <p class="text-sm text-gray-600 font-inter mb-1">From</p>
+            <p class="text-3xl font-bold text-[#ad986c] font-playfair">£1499<span class="text-lg">pp</span></p>
+            <p class="text-xs text-gray-500 font-inter mt-1">Based on 2 sharing</p>
+          </div>
+          <a href="#" class="block w-full text-center bg-[#ad986c] hover:bg-[#8d7a56] text-white font-inter font-semibold py-3 px-4 rounded-full transition-colors">
+            Book Now
+          </a>
+        </div>
+
+        <div class="bg-white border-2 border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+          <div class="mb-4">
+            <div class="inline-block bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-inter font-semibold mb-3">EARLY BIRD</div>
+            <h3 class="text-base sm:text-lg font-playfair font-semibold text-gray-900 mb-4">Sat 19 Sep - Sat 26 Sep 2026</h3>
+          </div>
+          <div class="mb-4 pb-4 border-b border-gray-200">
+            <p class="text-sm text-gray-600 font-inter mb-1">From</p>
+            <p class="text-3xl font-bold text-[#ad986c] font-playfair">£1599<span class="text-lg">pp</span></p>
+            <p class="text-xs text-gray-500 font-inter mt-1">Based on 2 sharing</p>
+          </div>
+          <a href="#" class="block w-full text-center bg-[#ad986c] hover:bg-[#8d7a56] text-white font-inter font-semibold py-3 px-4 rounded-full transition-colors">
+            Book Now
+          </a>
+        </div>
+
+        <div class="bg-white border-2 border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+          <div class="mb-4">
+            <div class="inline-block bg-amber-50 text-amber-700 px-3 py-1 rounded-full text-xs font-inter font-semibold mb-3">LAST SPACES</div>
+            <h3 class="text-base sm:text-lg font-playfair font-semibold text-gray-900 mb-4">Sat 10 Oct - Sat 17 Oct 2026</h3>
+          </div>
+          <div class="mb-4 pb-4 border-b border-gray-200">
+            <p class="text-sm text-gray-600 font-inter mb-1">From</p>
+            <p class="text-3xl font-bold text-[#ad986c] font-playfair">£1399<span class="text-lg">pp</span></p>
+            <p class="text-xs text-gray-500 font-inter mt-1">Based on 2 sharing</p>
+          </div>
+          <a href="#" class="block w-full text-center bg-[#ad986c] hover:bg-[#8d7a56] text-white font-inter font-semibold py-3 px-4 rounded-full transition-colors">
+            Book Now
+          </a>
+        </div>
+
+        {/* Hidden Cards for Load More */}
+        <div class="event-card hidden bg-white border-2 border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+          <div class="mb-4">
+            <div class="inline-block bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-inter font-semibold mb-3">POPULAR</div>
+            <h3 class="text-base sm:text-lg font-playfair font-semibold text-gray-900 mb-4">Sat 13 Jun - Sat 20 Jun 2026</h3>
+          </div>
+          <div class="mb-4 pb-4 border-b border-gray-200">
+            <p class="text-sm text-gray-600 font-inter mb-1">From</p>
+            <p class="text-3xl font-bold text-[#ad986c] font-playfair">£1699<span class="text-lg">pp</span></p>
+            <p class="text-xs text-gray-500 font-inter mt-1">Based on 2 sharing</p>
+          </div>
+          <a href="#" class="block w-full text-center bg-[#ad986c] hover:bg-[#8d7a56] text-white font-inter font-semibold py-3 px-4 rounded-full transition-colors">
+            Book Now
+          </a>
+        </div>
+
+        <div class="event-card hidden bg-white border-2 border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+          <div class="mb-4">
+            <div class="inline-block bg-[#ad986c]/10 text-[#ad986c] px-3 py-1 rounded-full text-xs font-inter font-semibold mb-3">AVAILABLE</div>
+            <h3 class="text-base sm:text-lg font-playfair font-semibold text-gray-900 mb-4">Sat 18 Jul - Sat 25 Jul 2026</h3>
+          </div>
+          <div class="mb-4 pb-4 border-b border-gray-200">
+            <p class="text-sm text-gray-600 font-inter mb-1">From</p>
+            <p class="text-3xl font-bold text-[#ad986c] font-playfair">£1799<span class="text-lg">pp</span></p>
+            <p class="text-xs text-gray-500 font-inter mt-1">Based on 2 sharing</p>
+          </div>
+          <a href="#" class="block w-full text-center bg-[#ad986c] hover:bg-[#8d7a56] text-white font-inter font-semibold py-3 px-4 rounded-full transition-colors">
+            Book Now
+          </a>
+        </div>
+
+        <div class="event-card hidden bg-white border-2 border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+          <div class="mb-4">
+            <div class="inline-block bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-inter font-semibold mb-3">EARLY BIRD</div>
+            <h3 class="text-base sm:text-lg font-playfair font-semibold text-gray-900 mb-4">Sat 22 Aug - Sat 29 Aug 2026</h3>
+          </div>
+          <div class="mb-4 pb-4 border-b border-gray-200">
+            <p class="text-sm text-gray-600 font-inter mb-1">From</p>
+            <p class="text-3xl font-bold text-[#ad986c] font-playfair">£1899<span class="text-lg">pp</span></p>
+            <p class="text-xs text-gray-500 font-inter mt-1">Based on 2 sharing</p>
+          </div>
+          <a href="#" class="block w-full text-center bg-[#ad986c] hover:bg-[#8d7a56] text-white font-inter font-semibold py-3 px-4 rounded-full transition-colors">
+            Book Now
+          </a>
+        </div>
+
+      </div>
+
+      <div class="text-center mt-8">
+        <button id="loadMoreDates" class="inline-flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-inter font-semibold py-3 px-8 rounded-full transition-all duration-300 shadow-md hover:shadow-lg">
+          <span id="loadMoreText">Load More Dates</span>
+          <svg id="loadMoreIcon" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="mt-12 text-center bg-gray-50 border border-gray-200 rounded-2xl p-8">
+        <p class="text-base sm:text-lg font-inter text-gray-800 mb-4">
+          Considering other dates? Explore our dates in full on the link below.
+        </p>
+        <a href="/events" class="inline-flex items-center gap-2 bg-[#ad986c] hover:bg-[#8d7a56] text-white font-inter font-semibold py-3 px-8 rounded-full transition-all duration-300 shadow-md hover:shadow-lg">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 2v4"/>
+            <path d="M16 2v4"/>
+            <rect width="18" height="18" x="3" y="4" rx="2"/>
+            <path d="M3 10h18"/>
+          </svg>
+          View All Active Away Dates
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQs Section -->
+  {holidayData.faqs && holidayData.faqs.length > 0 && (
+    <section id="faqs" class="w-full bg-gray-50 py-12 sm:py-16 lg:py-20 border-t border-gray-200 scroll-mt-20">
+      <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-8 sm:mb-12 text-center">
+          FAQs
+        </h2>
+        <div class="max-w-4xl mx-auto space-y-3">
+          {holidayData.faqs.map((faq) => (
+            <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+              <button type="button" class="faq-accordion-btn w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors">
+                <h3 class="text-base sm:text-lg font-playfair font-semibold text-gray-900 pr-4 flex-1">{faq.question}</h3>
+                <svg class="w-5 h-5 text-gray-600 transition-transform duration-300 faq-chevron flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div class="faq-accordion-content hidden border-t border-gray-200">
+                <div class="p-6">
+                  <div class="prose max-w-none font-inter" set:html={faq.answer}></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- Other Destinations Section -->
+  {similarHolidays.length > 0 && (
+    <section class="w-full bg-white py-12 sm:py-16 lg:py-20 border-t border-gray-200">
+      <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-8 sm:mb-12 text-center">
+          Other Destinations
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {similarHolidays.map((holiday) => (
+            <a href={`/tennis-holiday/${holiday.slug}`} class="group bg-white border-2 border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 hover:-translate-y-1">
+              {holiday.image && (
+                <div class="aspect-video overflow-hidden bg-gray-100 relative">
+                  <img src={holiday.image} alt={holiday.imageAlt || holiday.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </div>
+              )}
+              <div class="p-6">
+                <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3 group-hover:text-[#ad986c] transition-colors leading-tight">{holiday.title}</h3>
+                {holiday.country && (
+                  <div class="flex items-center gap-2 text-sm text-gray-600 font-inter mb-4">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    {holiday.country}
+                  </div>
+                )}
+                {holiday.priceText && (
+                  <div class="mb-4">
+                    <p class="text-sm text-gray-600 font-inter mb-1">From</p>
+                    <p class="text-3xl font-bold text-[#ad986c] font-playfair">{holiday.priceText.replace('from ', '').replace('pp', '')}<span class="text-lg">pp</span></p>
+                    {!holiday.productType?.toLowerCase().includes('clinic') && (
+                      <p class="text-xs text-gray-500 font-inter mt-1">Based on 2 sharing</p>
+                    )}
+                  </div>
+                )}
+                <div class="mt-4 flex items-center gap-2 text-[#ad986c] font-inter font-semibold text-sm group-hover:gap-3 transition-all">
+                  <span>View Details</span>
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+
+        {/* Contact Section */}
+        <div class="mt-12 text-center bg-gray-50 border border-gray-200 rounded-2xl p-8">
+          <p class="text-base sm:text-lg font-inter text-gray-800 mb-4">
+            Explore some of our other handpicked destinations!
+          </p>
+          <a 
+            href="/venues"
+            class="inline-flex items-center gap-2 bg-[#ad986c] hover:bg-[#8d7a56] text-white font-inter font-semibold py-3 px-8 rounded-full transition-all duration-300 shadow-md hover:shadow-lg"
+          >
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 22a1 1 0 0 1-1-1v-4a1 1 0 0 1 .445-.832l3-2a1 1 0 0 1 1.11 0l3 2A1 1 0 0 1 22 17v4a1 1 0 0 1-1 1z"/>
+              <path d="M18 10a8 8 0 0 0-16 0c0 4.993 5.539 10.193 7.399 11.799a1 1 0 0 0 .601.2"/>
+              <path d="M18 22v-3"/>
+              <circle cx="10" cy="10" r="3"/>
+            </svg>
+            All Destinations
+          </a>
+        </div>
+      </div>
+    </section>
+  )}
+
   <!-- Gallery Lightbox Modal -->
   <div id="galleryLightbox" class="hidden fixed inset-0 z-50 bg-black/95 flex items-center justify-center">
     <div class="relative w-full h-full flex items-center justify-center p-4">
@@ -557,6 +1353,19 @@ const canonicalURL = holidayData.seo?.canonicalURL || `https://activeaway.com/te
     </div>
   </div>
 
+  <!-- Persistent Dates & Prices Button -->
+  <div id="persistentDatesButton" class="fixed bottom-6 right-6 z-40 transition-all duration-300 opacity-0 pointer-events-none">
+    <button
+      onclick="scrollToSection('dates-prices')"
+      class="bg-[#ad986c] hover:bg-[#8d7a56] text-white font-inter font-medium py-2.5 px-5 rounded-full transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl text-sm"
+    >
+      <span>Dates & Prices</span>
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+      </svg>
+    </button>
+  </div>
+
 </BaseLayout>
 
 <style>
@@ -593,6 +1402,101 @@ const canonicalURL = holidayData.seo?.canonicalURL || `https://activeaway.com/te
     background-color: #ad986c;
     color: #ffffff;
   }
+
+  /* Tennis carousel styles */
+  .tennis-slide::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.7);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 5;
+    border-radius: 1rem;
+  }
+
+  .tennis-slide.slide-hidden::after {
+    opacity: 1;
+  }
+
+  /* Lite YouTube styles for performance */
+  .lite-youtube-tennis {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+  }
+
+  .lite-youtube-tennis img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .lite-youtube__play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 68px;
+    height: 48px;
+    transform: translate(-50%, -50%);
+    background: rgba(33, 33, 33, 0.8);
+    border-radius: 14px;
+    transition: background 0.3s ease;
+    z-index: 1;
+  }
+
+  .lite-youtube__play::before {
+    content: '';
+    position: absolute;
+    left: 22px;
+    top: 14px;
+    border-style: solid;
+    border-width: 10px 0 10px 16px;
+    border-color: transparent transparent transparent #fff;
+  }
+
+  .lite-youtube-tennis:hover .lite-youtube__play {
+    background: rgba(214, 0, 0, 0.9);
+  }
+
+  /* Facility tabs styling */
+  .facility-tab {
+    background-color: transparent;
+    color: #6b7280;
+    border-bottom: 3px solid transparent;
+  }
+
+  .facility-tab:hover {
+    color: #111827;
+  }
+
+  .facility-tab.active {
+    background-color: #ad986c;
+    color: #ffffff;
+    border-bottom-color: #ad986c;
+    border-radius: 0.5rem 0.5rem 0 0;
+  }
+  
+  .facility-tab.active svg {
+    color: #ffffff;
+  }
+
+  .facility-tab-content {
+    display: none;
+  }
+
+  .facility-tab-content.active {
+    display: block;
+  }
 </style>
 
 <script define:vars={{ mapSearchTerm: holidayData.googleMapsSearchTerm }}>
@@ -603,22 +1507,13 @@ const canonicalURL = holidayData.seo?.canonicalURL || `https://activeaway.com/te
     navTabs.forEach(tab => {
       tab.addEventListener('click', () => {
         const sectionId = tab.dataset.section;
-        const section = document.getElementById(sectionId);
         
         // Update active tab
         navTabs.forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         
-        // Scroll to section if it exists
-        if (section) {
-          const navHeight = document.querySelector('nav.sticky')?.offsetHeight || 0;
-          const sectionTop = section.getBoundingClientRect().top + window.pageYOffset - navHeight - 20;
-          
-          window.scrollTo({
-            top: sectionTop,
-            behavior: 'smooth'
-          });
-        }
+        // Scroll to section using global function
+        window.scrollToSection(sectionId);
       });
     });
 
@@ -643,10 +1538,270 @@ const canonicalURL = holidayData.seo?.canonicalURL || `https://activeaway.com/te
     // Observe sections when they're added
     const sections = document.querySelectorAll('[id]');
     sections.forEach(section => {
-      if (['info', 'dates', 'itinerary', 'resort', 'faqs'].includes(section.id)) {
+      if (['info', 'resort', 'rooms', 'itinerary', 'faqs'].includes(section.id)) {
         observer.observe(section);
       }
     });
+
+    // Tennis carousel functionality  
+    let currentTennisSlide = 0;
+    const totalTennisSlides = 3;
+    const tennisCarousel = document.getElementById('tennisCarousel');
+    const prevTennisBtn = document.getElementById('prevTennisSlide');
+    const nextTennisBtn = document.getElementById('nextTennisSlide');
+    const tennisDots = document.querySelectorAll('.tennis-dot');
+
+    const updateTennisCarousel = () => {
+      if (!tennisCarousel) return;
+      
+      const isDesktop = window.innerWidth >= 1024;
+      
+      if (isDesktop) {
+        const slideWidth = 900;
+        const gap = 24;
+        const offset = currentTennisSlide * (slideWidth + gap);
+        tennisCarousel.style.transform = `translateX(-${offset}px)`;
+        
+        const slides = document.querySelectorAll('.tennis-slide');
+        slides.forEach((slide, index) => {
+          if (index === currentTennisSlide) {
+            slide.classList.remove('slide-hidden');
+          } else if (index === currentTennisSlide - 1 || index === currentTennisSlide + 1) {
+            slide.classList.add('slide-hidden');
+          } else {
+            slide.classList.add('slide-hidden');
+          }
+        });
+      } else {
+        tennisCarousel.style.transform = 'translateX(0)';
+        const slides = document.querySelectorAll('.tennis-slide');
+        slides.forEach(slide => slide.classList.remove('slide-hidden'));
+      }
+      
+      tennisDots.forEach((dot, index) => {
+        if (index === currentTennisSlide) {
+          dot.classList.remove('w-2', 'bg-gray-300');
+          dot.classList.add('w-8');
+          dot.style.backgroundColor = '#ad986c';
+        } else {
+          dot.classList.remove('w-8');
+          dot.classList.add('w-2', 'bg-gray-300');
+          dot.style.backgroundColor = '';
+        }
+      });
+      
+      if (prevTennisBtn) {
+        prevTennisBtn.style.opacity = currentTennisSlide === 0 ? '0.3' : '1';
+        prevTennisBtn.style.pointerEvents = currentTennisSlide === 0 ? 'none' : 'auto';
+      }
+      if (nextTennisBtn) {
+        nextTennisBtn.style.opacity = currentTennisSlide === totalTennisSlides - 1 ? '0.3' : '1';
+        nextTennisBtn.style.pointerEvents = currentTennisSlide === totalTennisSlides - 1 ? 'none' : 'auto';
+      }
+    };
+
+    prevTennisBtn?.addEventListener('click', () => {
+      if (currentTennisSlide > 0) {
+        currentTennisSlide--;
+        updateTennisCarousel();
+      }
+    });
+
+    nextTennisBtn?.addEventListener('click', () => {
+      if (currentTennisSlide < totalTennisSlides - 1) {
+        currentTennisSlide++;
+        updateTennisCarousel();
+      }
+    });
+
+    tennisDots.forEach((dot, index) => {
+      dot.addEventListener('click', () => {
+        currentTennisSlide = index;
+        updateTennisCarousel();
+      });
+    });
+
+    updateTennisCarousel();
+    
+    let tennisResizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(tennisResizeTimeout);
+      tennisResizeTimeout = setTimeout(() => {
+        updateTennisCarousel();
+      }, 100);
+    });
+
+    // Lite YouTube embed optimization
+    document.querySelectorAll('.lite-youtube-tennis').forEach((trigger) => {
+      trigger.addEventListener('click', () => {
+        const videoId = trigger.getAttribute('data-video-id');
+        if (!videoId) return;
+        
+        const iframe = document.createElement('iframe');
+        iframe.setAttribute('allowfullscreen', '');
+        iframe.setAttribute('loading', 'lazy');
+        iframe.setAttribute('title', 'YouTube video player');
+        iframe.setAttribute('src', `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`);
+        iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+        iframe.style.position = 'absolute';
+        iframe.style.inset = '0';
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.border = 'none';
+
+        const wrapper = document.createElement('div');
+        wrapper.style.position = 'relative';
+        wrapper.style.width = '100%';
+        wrapper.style.height = '100%';
+        wrapper.appendChild(iframe);
+
+        trigger.replaceWith(wrapper);
+      }, { once: true });
+    });
+
+    // Facility tabs functionality
+    const facilityTabs = document.querySelectorAll('.facility-tab');
+    const facilityTabContents = document.querySelectorAll('.facility-tab-content');
+
+    facilityTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabName = tab.dataset.tab;
+        
+        facilityTabs.forEach(t => t.classList.remove('active'));
+        facilityTabContents.forEach(c => {
+          c.classList.remove('active');
+          c.classList.add('hidden');
+        });
+        
+        tab.classList.add('active');
+        
+        const content = document.querySelector(`[data-tab-content="${tabName}"]`);
+        if (content) {
+          content.classList.remove('hidden');
+          content.classList.add('active');
+        }
+      });
+    });
+
+    // Rooms carousel functionality
+    const roomsCarousel = document.getElementById('roomsCarousel');
+    const prevRoomBtn = document.getElementById('prevRoomSlide');
+    const nextRoomBtn = document.getElementById('nextRoomSlide');
+    const roomCards = document.querySelectorAll('.room-card');
+    let currentRoomSlide = 0;
+
+    const updateRoomsCarousel = () => {
+      if (!roomsCarousel || roomCards.length === 0) return;
+      const isDesktop = window.innerWidth >= 1024;
+      
+      if (isDesktop) {
+        const cardWidth = roomCards[0]?.offsetWidth || 0;
+        const gap = 24;
+        const offset = currentRoomSlide * (cardWidth + gap);
+        roomsCarousel.style.transform = `translateX(-${offset}px)`;
+        
+        roomCards.forEach((card, index) => {
+          if (currentRoomSlide > 0 && index === 0) {
+            card.style.opacity = '0';
+          } else {
+            card.style.opacity = '1';
+          }
+        });
+      } else {
+        roomsCarousel.style.transform = 'translateX(0)';
+        roomCards.forEach(card => card.style.opacity = '1');
+      }
+      
+      if (prevRoomBtn) {
+        prevRoomBtn.style.opacity = currentRoomSlide === 0 ? '0.3' : '1';
+      }
+      if (nextRoomBtn) {
+        const maxSlide = roomCards.length - (isDesktop ? 2 : 1);
+        nextRoomBtn.style.opacity = currentRoomSlide >= maxSlide ? '0.3' : '1';
+      }
+    };
+
+    prevRoomBtn?.addEventListener('click', () => {
+      if (currentRoomSlide > 0) {
+        currentRoomSlide--;
+        updateRoomsCarousel();
+      }
+    });
+
+    nextRoomBtn?.addEventListener('click', () => {
+      const isDesktop = window.innerWidth >= 1024;
+      const maxSlide = roomCards.length - (isDesktop ? 2 : 1);
+      if (currentRoomSlide < maxSlide) {
+        currentRoomSlide++;
+        updateRoomsCarousel();
+      }
+    });
+
+    updateRoomsCarousel();
+
+    // Itinerary accordion
+    document.querySelectorAll('.itinerary-accordion-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        const content = button.nextElementSibling;
+        const chevron = button.querySelector('.itinerary-chevron');
+        const isOpen = !content.classList.contains('hidden');
+        
+        if (isOpen) {
+          content.classList.add('hidden');
+          chevron.style.transform = 'rotate(0deg)';
+        } else {
+          content.classList.remove('hidden');
+          chevron.style.transform = 'rotate(180deg)';
+        }
+      });
+    });
+
+    // FAQ accordion
+    document.querySelectorAll('.faq-accordion-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        const content = button.nextElementSibling;
+        const chevron = button.querySelector('.faq-chevron');
+        const isOpen = !content.classList.contains('hidden');
+        
+        if (isOpen) {
+          content.classList.add('hidden');
+          chevron.style.transform = 'rotate(0deg)';
+        } else {
+          content.classList.remove('hidden');
+          chevron.style.transform = 'rotate(180deg)';
+        }
+      });
+    });
+
+    // Load More Dates functionality
+    const loadMoreBtn = document.getElementById('loadMoreDates');
+    const loadMoreText = document.getElementById('loadMoreText');
+    const loadMoreIcon = document.getElementById('loadMoreIcon');
+    const hiddenEventCards = document.querySelectorAll('.event-card.hidden');
+    let allEventsShown = false;
+
+    if (loadMoreBtn && hiddenEventCards.length > 0) {
+      loadMoreBtn.addEventListener('click', () => {
+        if (!allEventsShown) {
+          hiddenEventCards.forEach(card => card.classList.remove('hidden'));
+          allEventsShown = true;
+          loadMoreText.textContent = 'Show Less';
+          loadMoreIcon.style.transform = 'rotate(180deg)';
+        } else {
+          hiddenEventCards.forEach(card => card.classList.add('hidden'));
+          allEventsShown = false;
+          loadMoreText.textContent = 'Load More Dates';
+          loadMoreIcon.style.transform = 'rotate(0deg)';
+          
+          const eventsGrid = document.getElementById('eventsGrid');
+          if (eventsGrid) {
+            eventsGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }
+      });
+    } else if (loadMoreBtn && hiddenEventCards.length === 0) {
+      loadMoreBtn.style.display = 'none';
+    }
 
     // Map lightbox functionality
     const openMapButton = document.getElementById('openMapButton');
@@ -690,7 +1845,7 @@ const canonicalURL = holidayData.seo?.canonicalURL || `https://activeaway.com/te
       });
     }
 
-    // Gallery lightbox functionality
+    // Gallery lightbox functionality (works for both main gallery and room galleries)
     const galleryImages = document.querySelectorAll('.gallery-image');
     const galleryLightbox = document.getElementById('galleryLightbox');
     const galleryLightboxImage = document.getElementById('galleryLightboxImage');
@@ -701,7 +1856,7 @@ const canonicalURL = holidayData.seo?.canonicalURL || `https://activeaway.com/te
     const galleryTotal = document.getElementById('galleryTotal');
 
     // Build gallery data from main gallery
-    const galleryData = [];
+    let galleryData = [];
     document.querySelectorAll('.gallery-image img').forEach(img => {
       galleryData.push({
         url: img.src,
@@ -711,53 +1866,62 @@ const canonicalURL = holidayData.seo?.canonicalURL || `https://activeaway.com/te
 
     let currentGalleryIndex = 0;
 
-    if (galleryImages.length > 0 && galleryLightbox) {
-      // Set total count
-      galleryTotal.textContent = galleryData.length;
-
-      // Open gallery lightbox
-      const openGallery = (index) => {
+    // Show specific image
+    const showGalleryImage = (index) => {
+      if (galleryData[index]) {
+        galleryLightboxImage.src = galleryData[index].url;
+        galleryLightboxImage.alt = galleryData[index].alt;
+        galleryCounter.textContent = index + 1;
+        galleryTotal.textContent = galleryData.length;
         currentGalleryIndex = index;
-        showGalleryImage(index);
-        galleryLightbox.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-      };
+      }
+    };
 
-      // Show specific image
-      const showGalleryImage = (index) => {
-        if (galleryData[index]) {
-          galleryLightboxImage.src = galleryData[index].url;
-          galleryLightboxImage.alt = galleryData[index].alt;
-          galleryCounter.textContent = index + 1;
-          currentGalleryIndex = index;
-        }
-      };
+    // Open gallery lightbox with specific data
+    const openGalleryWithData = (data, startIndex = 0) => {
+      galleryData = data;
+      currentGalleryIndex = startIndex;
+      showGalleryImage(startIndex);
+      galleryLightbox.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    };
 
-      // Close gallery
-      const closeGallery = () => {
-        galleryLightbox.classList.add('hidden');
-        document.body.style.overflow = '';
-      };
+    // Close gallery
+    const closeGallery = () => {
+      galleryLightbox.classList.add('hidden');
+      document.body.style.overflow = '';
+    };
 
-      // Next image
-      const nextImage = () => {
-        const nextIndex = (currentGalleryIndex + 1) % galleryData.length;
-        showGalleryImage(nextIndex);
-      };
+    // Next image
+    const nextImage = () => {
+      const nextIndex = (currentGalleryIndex + 1) % galleryData.length;
+      showGalleryImage(nextIndex);
+    };
 
-      // Previous image
-      const prevImage = () => {
-        const prevIndex = (currentGalleryIndex - 1 + galleryData.length) % galleryData.length;
-        showGalleryImage(prevIndex);
-      };
+    // Previous image
+    const prevImage = () => {
+      const prevIndex = (currentGalleryIndex - 1 + galleryData.length) % galleryData.length;
+      showGalleryImage(prevIndex);
+    };
 
-      // Attach event listeners
-      galleryImages.forEach(button => {
-        button.addEventListener('click', () => {
-          const index = parseInt(button.dataset.index);
-          openGallery(index);
+    if (galleryLightbox) {
+      // Main gallery images click handlers
+      if (galleryImages.length > 0) {
+        galleryImages.forEach(button => {
+          button.addEventListener('click', () => {
+            const index = parseInt(button.dataset.index);
+            // Build main gallery data
+            const mainGalleryData = [];
+            document.querySelectorAll('.gallery-image img').forEach(img => {
+              mainGalleryData.push({
+                url: img.src,
+                alt: img.alt
+              });
+            });
+            openGalleryWithData(mainGalleryData, index);
+          });
         });
-      });
+      }
 
       closeGalleryButton?.addEventListener('click', closeGallery);
       prevGalleryButton?.addEventListener('click', prevImage);
@@ -783,5 +1947,87 @@ const canonicalURL = holidayData.seo?.canonicalURL || `https://activeaway.com/te
         }
       });
     }
+
+    // Room Gallery functionality - opens room images in the gallery lightbox
+    window.openRoomGallery = function(button) {
+      try {
+        const roomGalleryJson = button.getAttribute('data-room-gallery');
+        const roomTitle = button.getAttribute('data-room-title');
+        
+        if (!roomGalleryJson) return;
+        
+        const roomGallery = JSON.parse(roomGalleryJson);
+        
+        if (roomGallery && roomGallery.length > 0) {
+          // Format room gallery data for the lightbox
+          const roomGalleryData = roomGallery.map(img => ({
+            url: img.url,
+            alt: img.alt || roomTitle
+          }));
+          
+          // Open lightbox with room gallery images
+          openGalleryWithData(roomGalleryData, 0);
+        }
+      } catch (error) {
+        console.error('Error opening room gallery:', error);
+      }
+    };
+
+    // Persistent Dates & Prices button functionality
+    const persistentButton = document.getElementById('persistentDatesButton');
+    const datesSection = document.getElementById('dates-prices');
+    
+    if (persistentButton && datesSection) {
+      let isButtonVisible = false;
+      
+      const showButton = () => {
+        if (!isButtonVisible) {
+          persistentButton.classList.remove('opacity-0', 'pointer-events-none');
+          persistentButton.classList.add('opacity-100', 'pointer-events-auto');
+          isButtonVisible = true;
+        }
+      };
+      
+      const hideButton = () => {
+        if (isButtonVisible) {
+          persistentButton.classList.remove('opacity-100', 'pointer-events-auto');
+          persistentButton.classList.add('opacity-0', 'pointer-events-none');
+          isButtonVisible = false;
+        }
+      };
+      
+      // Check button visibility on scroll
+      const checkButtonVisibility = () => {
+        const scrollY = window.scrollY;
+        const windowHeight = window.innerHeight;
+        const datesSectionTop = datesSection.offsetTop;
+        const datesSectionBottom = datesSectionTop + datesSection.offsetHeight;
+        
+        // Show button when scrolled past hero section, hide when dates section is visible
+        const shouldShow = scrollY > 600 && (scrollY + windowHeight < datesSectionTop || scrollY > datesSectionBottom);
+        
+        if (shouldShow) {
+          showButton();
+        } else {
+          hideButton();
+        }
+      };
+      
+      // Initial check
+      checkButtonVisibility();
+      
+      // Check on scroll
+      window.addEventListener('scroll', checkButtonVisibility, { passive: true });
+    }
   });
+
+  // Global function to scroll to section (used by persistent button and nav tabs)
+  window.scrollToSection = function(sectionId) {
+    const section = document.getElementById(sectionId);
+    if (section) {
+      const yOffset = -100; // Offset for fixed header
+      const y = section.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+  };
 </script>
