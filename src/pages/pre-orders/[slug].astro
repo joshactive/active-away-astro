@@ -99,11 +99,11 @@ const canonicalURL = preOrderData.seo?.canonicalURL || `https://activeaway.com/p
   <section class="w-full bg-gray-50 py-4 border-b border-gray-200">
     <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
       <nav class="flex items-center gap-2 text-sm font-inter">
-        <a href="/" class="text-gray-600 hover:text-gold transition-colors">Home</a>
+        <a href="/" class="text-gray-600 hover:text-[#ad986c] transition-colors">Home</a>
         <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
-        <a href="/pre-orders" class="text-gray-600 hover:text-gold transition-colors">Pre-Orders</a>
+        <a href="/pre-orders" class="text-gray-600 hover:text-[#ad986c] transition-colors">Pre-Orders</a>
         <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
@@ -128,7 +128,7 @@ const canonicalURL = preOrderData.seo?.canonicalURL || `https://activeaway.com/p
       <!-- Menu Download Section -->
       {menuFiles.length > 0 && (
         <div class="max-w-4xl mx-auto mb-12 sm:mb-16">
-          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-6 text-center">
+          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-8 text-center">
             Download Your Menu
           </h2>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -146,7 +146,7 @@ const canonicalURL = preOrderData.seo?.canonicalURL || `https://activeaway.com/p
                 
                 <!-- File Info -->
                 <div class="flex-1 min-w-0">
-                  <p class="font-inter font-semibold text-gray-900 truncate group-hover:text-gold transition-colors">
+                  <p class="font-inter font-semibold text-gray-900 truncate group-hover:text-[#ad986c] transition-colors">
                     {menu.name.replace(/\.[^/.]+$/, '')}
                   </p>
                   <p class="text-sm text-gray-500 font-inter">
@@ -169,10 +169,10 @@ const canonicalURL = preOrderData.seo?.canonicalURL || `https://activeaway.com/p
         <div class="w-full space-y-6">
           <!-- Section Header -->
           <div class="text-center mb-8">
-            <h2 class="text-3xl font-semibold font-playfair text-gray-900 mb-2">
+            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-4">
               Submit Your Choice
             </h2>
-            <p class="text-sm text-gray-600 font-inter">
+            <p class="text-base font-inter text-gray-800 leading-relaxed">
               Complete the form below to submit your preferences
             </p>
           </div>
@@ -343,11 +343,11 @@ const canonicalURL = preOrderData.seo?.canonicalURL || `https://activeaway.com/p
       {formFields.length === 0 && (
         <div class="max-w-4xl mx-auto">
           <div class="bg-gray-50 rounded-2xl p-8 sm:p-12 text-center shadow-lg">
-            <h2 class="text-2xl sm:text-3xl font-playfair font-semibold text-gray-900 mb-4">
-             Coming Soon.
+            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-4">
+              Coming Soon
             </h2>
-            <p class="text-base sm:text-lg font-inter text-gray-800">
-             This form is coming soon!
+            <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed">
+              This form is coming soon!
             </p>
           </div>
         </div>

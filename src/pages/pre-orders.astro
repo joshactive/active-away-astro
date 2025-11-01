@@ -77,15 +77,15 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/pre-orders
       loading="eager"
     />
     
-    <!-- Content -->
-    <div class="relative z-20 container mx-auto max-w-[1400px] px-4 sm:px-10 h-full flex flex-col justify-center">
-      <div class="text-sm sm:text-base font-inter font-medium text-gold tracking-widest uppercase mb-3">
+    <!-- Centered Content -->
+    <div class="relative z-20 container mx-auto max-w-[1400px] px-4 sm:px-10 h-full flex flex-col justify-center items-center text-center">
+      <div class="text-xs sm:text-sm font-inter font-semibold text-gold tracking-[0.2em] uppercase mb-4 sm:mb-6 border-t border-b border-gold/50 py-2 px-6">
         {heroKicker}
       </div>
-      <h1 class="text-3xl sm:text-4xl lg:text-6xl font-playfair font-bold text-white mb-4 sm:mb-6">
+      <h1 class="text-4xl sm:text-5xl lg:text-7xl font-playfair font-bold text-white mb-6 sm:mb-8 leading-tight max-w-4xl">
         {heroTitle}
       </h1>
-      <p class="text-base sm:text-lg lg:text-xl font-inter text-gray-100 max-w-3xl">
+      <p class="text-lg sm:text-xl lg:text-2xl font-inter text-gray-100 max-w-3xl leading-relaxed">
         {heroSubtitle}
       </p>
     </div>
@@ -133,18 +133,18 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/pre-orders
             >
               <!-- Content -->
               <div>
-                <h2 class="text-2xl sm:text-3xl font-playfair font-bold text-gray-900 mb-4 leading-tight group-hover:text-gold transition-colors">
+                <h2 class="text-xl font-playfair font-semibold text-gray-900 mb-3 leading-tight group-hover:text-[#ad986c] transition-colors">
                   {preOrder.title}
                 </h2>
                 
                 {preOrder.excerpt && (
-                  <p class="text-base font-inter text-gray-600 leading-relaxed line-clamp-4">
+                  <p class="text-base font-inter text-gray-800 leading-relaxed line-clamp-4">
                     {preOrder.excerpt}
                   </p>
                 )}
                 
                 <!-- Read More Arrow -->
-                <div class="mt-6 flex items-center gap-2 text-gold font-inter font-semibold">
+                <div class="mt-6 flex items-center gap-2 text-[#ad986c] font-inter font-semibold">
                   <span>Learn More</span>
                   <svg class="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -160,8 +160,8 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/pre-orders
           <svg class="w-24 h-24 mx-auto text-gray-300 mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
           </svg>
-          <h3 class="text-2xl font-playfair font-semibold text-gray-900 mb-2">No pre-orders available</h3>
-          <p class="text-gray-600 font-inter mb-6">Check back soon for exclusive pre-order opportunities</p>
+          <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3">No pre-orders available</h3>
+          <p class="text-base font-inter text-gray-800 leading-relaxed mb-6">Check back soon for exclusive pre-order opportunities</p>
         </div>
       )}
     </div>
