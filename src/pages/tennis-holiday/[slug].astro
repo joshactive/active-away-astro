@@ -184,8 +184,9 @@ try {
 
   <!-- Tab Navigation - Sticky -->
   <nav class="sticky top-0 z-30 w-full bg-white border-b border-gray-200">
-    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
-      <div class="flex items-center justify-center gap-2 overflow-x-auto scrollbar-hide py-2">
+    <div class="w-full overflow-x-auto scrollbar-hide">
+      <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+        <div class="flex items-center justify-start sm:justify-center gap-2 py-2">
         <button 
           class="page-nav-tab active px-6 py-3 text-sm font-medium font-inter rounded-full whitespace-nowrap transition-all"
           data-section="info"
@@ -210,6 +211,7 @@ try {
         >
           FAQs
         </button>
+        </div>
       </div>
     </div>
   </nav>
@@ -411,7 +413,7 @@ try {
   {holidayData.mainGallery && holidayData.mainGallery.length > 0 && (
     <section class="relative w-full border-t border-gray-200 py-8 sm:py-12 lg:py-16">
       <div class="container mx-auto max-w-[1400px] px-4 sm:px-10 mb-8 sm:mb-12">
-        <h2 class="text-3xl sm:text-4xl font-playfair font-semibold text-gray-900 text-center">Gallery</h2>
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 text-center">Gallery</h2>
       </div>
       
       <div class="relative flex items-stretch">
@@ -577,8 +579,8 @@ try {
                     <span class="lite-youtube__play"></span>
                   </button>
                 </div>
-                <div class="p-4 sm:p-6 lg:p-8">
-                  <h3 class="text-2xl sm:text-3xl font-playfair font-semibold text-gray-900 mb-3 sm:mb-4 leading-tight">
+                <div class="px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6 lg:pb-8">
+                  <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-4 sm:mb-6 leading-tight">
                     The Jamie Murray Tennis Programme
                   </h3>
                   <div class="space-y-3">
@@ -611,8 +613,8 @@ try {
                     <span class="lite-youtube__play"></span>
                   </button>
                 </div>
-                <div class="p-4 sm:p-6 lg:p-8">
-                  <h3 class="text-2xl sm:text-3xl font-playfair font-semibold text-gray-900 mb-3 sm:mb-4 leading-tight">
+                <div class="px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6 lg:pb-8">
+                  <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-4 sm:mb-6 leading-tight">
                     A Tennis Holiday in Action
                   </h3>
                   <div class="space-y-3">
@@ -641,8 +643,8 @@ try {
                     loading="lazy"
                   />
                 </div>
-                <div class="p-4 sm:p-6 lg:p-8">
-                  <h3 class="text-2xl sm:text-3xl font-playfair font-semibold text-gray-900 mb-3 sm:mb-4 leading-tight">
+                <div class="px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6 lg:pb-8">
+                  <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-4 sm:mb-6 leading-tight">
                     The Active Away Experience
                   </h3>
                   <div class="space-y-3">
@@ -907,7 +909,7 @@ try {
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
         <div class="lg:col-span-3 flex flex-col justify-center text-center lg:text-left">
           <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-4">
-            ROOMS
+            Rooms
           </h2>
           <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed">
             {holidayData.roomsSubheading || 'Choose from our selection of beautifully appointed rooms and suites.'}
@@ -987,7 +989,7 @@ try {
                             )}
                           </button>
                           <div class="p-6">
-                            <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-2 leading-tight uppercase">
+                            <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-2 leading-tight">
                               {room.roomTitle}
                             </h3>
                             {(room.roomSize || room.roomBedConfig) && (
@@ -1036,7 +1038,7 @@ try {
                   <div class="w-12 h-12 bg-[#ad986c] text-white rounded-full flex items-center justify-center font-bold font-playfair text-base flex-shrink-0">
                     {index + 1}
                   </div>
-                  <h3 class="text-base sm:text-lg font-playfair font-semibold text-gray-900">{item.day || `Day ${index + 1}`}</h3>
+                  <h3 class="text-base lg:text-lg font-inter font-medium text-gray-900">{item.day || `Day ${index + 1}`}</h3>
                 </div>
                 <svg class="w-5 h-5 text-gray-600 transition-transform duration-300 itinerary-chevron flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
@@ -1068,7 +1070,7 @@ try {
         <div class="bg-white border-2 border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
           <div class="mb-4">
             <div class="inline-block bg-[#ad986c]/10 text-[#ad986c] px-3 py-1 rounded-full text-xs font-inter font-semibold mb-3">AVAILABLE</div>
-            <h3 class="text-base sm:text-lg font-playfair font-semibold text-gray-900 mb-4">Sat 16 May - Sat 23 May 2026</h3>
+            <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3 leading-tight">Sat 16 May - Sat 23 May 2026</h3>
           </div>
           <div class="mb-4 pb-4 border-b border-gray-200">
             <p class="text-sm text-gray-600 font-inter mb-1">From</p>
@@ -1083,7 +1085,7 @@ try {
         <div class="bg-white border-2 border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
           <div class="mb-4">
             <div class="inline-block bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-inter font-semibold mb-3">EARLY BIRD</div>
-            <h3 class="text-base sm:text-lg font-playfair font-semibold text-gray-900 mb-4">Sat 19 Sep - Sat 26 Sep 2026</h3>
+            <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3 leading-tight">Sat 19 Sep - Sat 26 Sep 2026</h3>
           </div>
           <div class="mb-4 pb-4 border-b border-gray-200">
             <p class="text-sm text-gray-600 font-inter mb-1">From</p>
@@ -1098,7 +1100,7 @@ try {
         <div class="bg-white border-2 border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
           <div class="mb-4">
             <div class="inline-block bg-amber-50 text-amber-700 px-3 py-1 rounded-full text-xs font-inter font-semibold mb-3">LAST SPACES</div>
-            <h3 class="text-base sm:text-lg font-playfair font-semibold text-gray-900 mb-4">Sat 10 Oct - Sat 17 Oct 2026</h3>
+            <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3 leading-tight">Sat 10 Oct - Sat 17 Oct 2026</h3>
           </div>
           <div class="mb-4 pb-4 border-b border-gray-200">
             <p class="text-sm text-gray-600 font-inter mb-1">From</p>
@@ -1114,7 +1116,7 @@ try {
         <div class="event-card hidden bg-white border-2 border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
           <div class="mb-4">
             <div class="inline-block bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-inter font-semibold mb-3">POPULAR</div>
-            <h3 class="text-base sm:text-lg font-playfair font-semibold text-gray-900 mb-4">Sat 13 Jun - Sat 20 Jun 2026</h3>
+            <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3 leading-tight">Sat 13 Jun - Sat 20 Jun 2026</h3>
           </div>
           <div class="mb-4 pb-4 border-b border-gray-200">
             <p class="text-sm text-gray-600 font-inter mb-1">From</p>
@@ -1129,7 +1131,7 @@ try {
         <div class="event-card hidden bg-white border-2 border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
           <div class="mb-4">
             <div class="inline-block bg-[#ad986c]/10 text-[#ad986c] px-3 py-1 rounded-full text-xs font-inter font-semibold mb-3">AVAILABLE</div>
-            <h3 class="text-base sm:text-lg font-playfair font-semibold text-gray-900 mb-4">Sat 18 Jul - Sat 25 Jul 2026</h3>
+            <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3 leading-tight">Sat 18 Jul - Sat 25 Jul 2026</h3>
           </div>
           <div class="mb-4 pb-4 border-b border-gray-200">
             <p class="text-sm text-gray-600 font-inter mb-1">From</p>
@@ -1144,7 +1146,7 @@ try {
         <div class="event-card hidden bg-white border-2 border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
           <div class="mb-4">
             <div class="inline-block bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-inter font-semibold mb-3">EARLY BIRD</div>
-            <h3 class="text-base sm:text-lg font-playfair font-semibold text-gray-900 mb-4">Sat 22 Aug - Sat 29 Aug 2026</h3>
+            <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3 leading-tight">Sat 22 Aug - Sat 29 Aug 2026</h3>
           </div>
           <div class="mb-4 pb-4 border-b border-gray-200">
             <p class="text-sm text-gray-600 font-inter mb-1">From</p>
@@ -1178,7 +1180,7 @@ try {
             <rect width="18" height="18" x="3" y="4" rx="2"/>
             <path d="M3 10h18"/>
           </svg>
-          View All Active Away Dates
+          View All Dates
         </a>
       </div>
     </div>
@@ -1195,7 +1197,7 @@ try {
           {holidayData.faqs.map((faq) => (
             <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
               <button type="button" class="faq-accordion-btn w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors">
-                <h3 class="text-base sm:text-lg font-playfair font-semibold text-gray-900 pr-4 flex-1">{faq.question}</h3>
+                <h3 class="text-base lg:text-lg font-inter font-medium text-gray-900 pr-4 flex-1">{faq.question}</h3>
                 <svg class="w-5 h-5 text-gray-600 transition-transform duration-300 faq-chevron flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
@@ -2010,8 +2012,8 @@ try {
         const datesSectionTop = datesSection.offsetTop;
         const datesSectionBottom = datesSectionTop + datesSection.offsetHeight;
         
-        // Show button when scrolled past hero section, hide when dates section is visible
-        const shouldShow = scrollY > 600 && (scrollY + windowHeight < datesSectionTop || scrollY > datesSectionBottom);
+        // Show button when scrolled past hero section, hide when dates section is visible or already passed
+        const shouldShow = scrollY > 600 && scrollY + windowHeight < datesSectionTop;
         
         if (shouldShow) {
           showButton();

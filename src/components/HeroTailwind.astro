@@ -539,6 +539,29 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
     }
   }
 
+  function toggleDestinationCategory(categoryIndex) {
+    const hiddenDestinations = document.getElementById(`mobile-dest-hidden-${categoryIndex}`);
+    const toggleButton = document.querySelector(`[data-category="${categoryIndex}"]`);
+    
+    if (hiddenDestinations && toggleButton) {
+      const isHidden = hiddenDestinations.classList.contains('hidden');
+      const toggleText = toggleButton.querySelector('.toggle-text');
+      const toggleChevron = toggleButton.querySelector('.toggle-chevron');
+      
+      if (isHidden) {
+        // Show hidden destinations
+        hiddenDestinations.classList.remove('hidden');
+        if (toggleText) toggleText.textContent = 'Show less';
+        if (toggleChevron) toggleChevron.style.transform = 'rotate(180deg)';
+      } else {
+        // Hide destinations
+        hiddenDestinations.classList.add('hidden');
+        if (toggleText) toggleText.textContent = 'Show more';
+        if (toggleChevron) toggleChevron.style.transform = 'rotate(0deg)';
+      }
+    }
+  }
+
   // Expose functions globally
   if (typeof window !== 'undefined') {
     window.toggleMobileMenu = toggleMobileMenu;
@@ -547,6 +570,7 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
     window.hideMegaMenuDelayed = hideMegaMenuDelayed;
     window.switchDestinationsTab = switchDestinationsTab;
     window.toggleMobileSubmenu = toggleMobileSubmenu;
+    window.toggleDestinationCategory = toggleDestinationCategory;
   }
 </script>
 
@@ -993,7 +1017,7 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
                     )}
                     {item.megaMenuId === 'destinations' && (
                       <div class="space-y-3 pt-3">
-                        {destinationsCategories.map((category) => (
+                        {destinationsCategories.map((category, categoryIndex) => (
                           <div>
                             <h4 class="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2 px-2">{category.label}</h4>
                             <div class="space-y-1">
@@ -1003,9 +1027,26 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
                                 </a>
                               ))}
                               {category.destinations.length > 5 && (
-                                <a href="#all-destinations" onclick="closeMobileMenu()" class="block py-2 px-3 text-xs text-gold-700 font-medium hover:bg-white rounded-lg transition-colors">
-                                  View all {category.destinations.length} destinations →
-                                </a>
+                                <>
+                                  <div id={`mobile-dest-hidden-${categoryIndex}`} class="hidden space-y-1">
+                                    {category.destinations.slice(5).map((dest) => (
+                                      <a href={dest.href} onclick="closeMobileMenu()" class="block py-2 px-3 text-sm text-gray-700 hover:text-gold-700 hover:bg-white rounded-lg transition-colors">
+                                        {dest.name}
+                                      </a>
+                                    ))}
+                                  </div>
+                                  <button 
+                                    type="button"
+                                    onclick={`toggleDestinationCategory(${categoryIndex})`}
+                                    class="mobile-dest-toggle w-full py-2 px-3 text-sm text-gold-700 font-medium hover:bg-white rounded-lg transition-colors text-left flex items-center justify-between"
+                                    data-category={categoryIndex}
+                                  >
+                                    <span class="toggle-text">Show more</span>
+                                    <svg class="toggle-chevron w-4 h-4 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                  </button>
+                                </>
                               )}
                             </div>
                           </div>
