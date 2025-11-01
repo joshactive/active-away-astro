@@ -101,6 +101,15 @@ try {
   keywords={keywords}
   canonicalURL={canonicalURL}
 >
+  <!-- Preload LCP Hero Image -->
+  <link 
+    slot="head" 
+    rel="preload" 
+    as="image" 
+    href={heroBackgroundImage}
+    fetchpriority="high"
+  />
+
   <!-- Hero Header Section with Background Image -->
   <section class="relative w-full h-[400px] sm:h-[500px] lg:h-[600px] overflow-hidden">
     <!-- Background Image with Centered Gradient Overlay -->
@@ -123,14 +132,14 @@ try {
           width={heroAttrs.width}
           height={heroAttrs.height}
           class="absolute inset-0 w-full h-full object-cover"
-          loading="eager"
+          fetchpriority="high"
         />
       ) : (
         <img 
           src={heroBackgroundImage}
           alt={heroBackgroundImageAlt}
           class="absolute inset-0 w-full h-full object-cover"
-          loading="eager"
+          fetchpriority="high"
         />
       );
     })()}

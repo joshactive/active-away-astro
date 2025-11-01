@@ -114,6 +114,9 @@ const ogImageHeight = metaImageHeight || 630;
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <!-- End Cloudflare Turnstile -->
     
+    <!-- Allow pages to inject additional head content (e.g., preload links) -->
+    <slot name="head" />
+    
     <style is:inline>
       @tailwind base;
       @tailwind components;
