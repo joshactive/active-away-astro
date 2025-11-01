@@ -12,6 +12,8 @@
     "@astrojs/cloudflare": "^12.6.10",
     "@astrojs/react": "^4.4.0",
     "@astrojs/tailwind": "^6.0.2",
+    "@fontsource/inter": "^5.2.8",
+    "@fontsource/playfair-display": "^5.2.8",
     "@radix-ui/react-slot": "^1.2.3",
     "astro": "^5.15.1",
     "class-variance-authority": "^0.7.1",

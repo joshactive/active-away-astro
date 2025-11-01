@@ -430,8 +430,8 @@ try {
         <!-- Left Image - Extends to Left Edge -->
         {holidayData.mainGallery[1] && (() => {
           const imgAttrs = getStrapiImageAttrs(holidayData.mainGallery[1], {
-            displayWidth: 400,
-            displayHeight: 600,
+            displayWidth: 300,
+            displayHeight: 450,
             fit: 'cover',
             quality: 70,
             sizes: '15vw'
@@ -501,8 +501,8 @@ try {
         <!-- Right Image - Extends to Right Edge -->
         {holidayData.mainGallery[2] && (() => {
           const imgAttrs = getStrapiImageAttrs(holidayData.mainGallery[2], {
-            displayWidth: 400,
-            displayHeight: 600,
+            displayWidth: 300,
+            displayHeight: 450,
             fit: 'cover',
             quality: 70,
             sizes: '15vw'
@@ -818,8 +818,8 @@ try {
               {(holidayData.tripImages?.[0] || holidayData.mainGallery[6]) && (() => {
                 const image = holidayData.tripImages?.[0] || holidayData.mainGallery[6];
                 const imgAttrs = getStrapiImageAttrs(image, {
-                  displayWidth: 800,
-                  displayHeight: 600,
+                  displayWidth: 600,
+                  displayHeight: 450,
                   fit: 'cover',
                   quality: 70,
                   sizes: '(max-width: 1024px) 75vw, 600px'
@@ -844,8 +844,8 @@ try {
               {(holidayData.tripImages?.[1] || holidayData.mainGallery[7]) && (() => {
                 const image = holidayData.tripImages?.[1] || holidayData.mainGallery[7];
                 const imgAttrs = getStrapiImageAttrs(image, {
-                  displayWidth: 600,
-                  displayHeight: 450,
+                  displayWidth: 500,
+                  displayHeight: 375,
                   fit: 'cover',
                   quality: 70,
                   sizes: '(max-width: 1024px) 60vw, 500px'
@@ -959,8 +959,8 @@ try {
                           >
                             {firstImage ? (() => {
                               const imgAttrs = getStrapiImageAttrs(firstImage, {
-                                displayWidth: 800,
-                                displayHeight: 600,
+                                displayWidth: 600,
+                                displayHeight: 450,
                                 fit: 'cover',
                                 quality: 70,
                                 sizes: '(max-width: 1024px) 85vw, 500px'
