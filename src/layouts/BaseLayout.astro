@@ -104,12 +104,8 @@ const ogImageHeight = metaImageHeight || 630;
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     
-    <!-- Load fonts asynchronously to keep the render path clear -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800;900&display=swap" as="style">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800;900&display=swap" media="print" onload="this.media='all'">
-    <noscript>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800;900&display=swap">
-    </noscript>
+    <!-- Load fonts with optimized loading strategy -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800;900&display=swap">
     
     <!-- TrustBox script -->
     <script type="text/javascript" src="//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js" async></script>
@@ -161,23 +157,31 @@ const ogImageHeight = metaImageHeight || 630;
 </html>
 
 <style is:global>
-  /* Font fallback system to prevent layout shifts */
+  /* Font fallback system to prevent layout shifts on mobile */
   @font-face {
     font-family: 'Inter Fallback';
     src: local('Arial');
-    ascent-override: 90%;
-    descent-override: 22%;
+    ascent-override: 90.2%;
+    descent-override: 22.4%;
     line-gap-override: 0%;
-    size-adjust: 107%;
+    size-adjust: 107.4%;
   }
   
   @font-face {
     font-family: 'Playfair Fallback';
     src: local('Georgia');
-    ascent-override: 88%;
-    descent-override: 23%;
+    ascent-override: 90%;
+    descent-override: 24%;
     line-gap-override: 0%;
-    size-adjust: 103%;
+    size-adjust: 105%;
+  }
+  
+  /* Ensure stable layout during font loading */
+  body {
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   html {

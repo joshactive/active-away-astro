@@ -217,6 +217,7 @@ try {
   </nav>
 
   <!-- Main Content -->
+  <main>
   <section class="w-full bg-white py-8 sm:py-12 lg:py-16">
     <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
       
@@ -238,9 +239,9 @@ try {
             <!-- Why We Love It Box -->
             {(holidayData.whyWeLoveVenue1 || holidayData.whyWeLoveVenue2 || holidayData.whyWeLoveVenue3 || holidayData.whyWeLoveVenue4) && (
               <div class="mt-8 bg-gray-50 border border-gray-200 rounded-xl p-6 sm:p-8">
-                <h3 class="text-2xl sm:text-3xl font-playfair font-semibold text-gray-900 mb-6">
+                <h2 class="text-2xl sm:text-3xl font-playfair font-semibold text-gray-900 mb-6">
                   Why We Love {holidayData.venue || holidayData.title}
-                </h3>
+                </h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {[holidayData.whyWeLoveVenue1, holidayData.whyWeLoveVenue2, holidayData.whyWeLoveVenue3, holidayData.whyWeLoveVenue4].filter(Boolean).map((reason) => (
                     <div class="flex items-start gap-3">
@@ -740,11 +741,11 @@ try {
       <div class="w-full">
         {holidayData.restaurants && (
           <div class="facility-tab-content active" data-tab-content="restaurants">
-            <h4 class="text-xl font-playfair font-semibold text-gray-900 mb-4">Restaurants</h4>
+            <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-4">Restaurants</h3>
             <div class="prose max-w-none font-inter" set:html={holidayData.restaurants}></div>
             {holidayData.bars && (
               <div class="mt-8 pt-8 border-t border-gray-200">
-                <h4 class="text-xl font-playfair font-semibold text-gray-900 mb-4">Bars</h4>
+                <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-4">Bars</h3>
                 <div class="prose max-w-none font-inter" set:html={holidayData.bars}></div>
               </div>
             )}
@@ -1334,6 +1335,8 @@ try {
       </div>
     </div>
   </div>
+
+  </main>
 
   <!-- Map Lightbox Modal -->
   <div id="mapLightbox" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
