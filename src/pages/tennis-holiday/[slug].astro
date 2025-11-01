@@ -5,6 +5,13 @@ export const prerender = true;
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getTennisHolidays, getTennisHolidayBySlug, getTennisHolidayNestedData } from '../../utils/strapi.js';
 import { getStrapiImageAttrs } from '../../utils/cloudflareImages.js';
+import { marked } from 'marked';
+
+// Configure marked for safe markdown parsing
+marked.setOptions({
+  breaks: true,
+  gfm: true
+});
 
 // Generate static paths for all tennis holidays
 export async function getStaticPaths() {
@@ -218,7 +225,7 @@ try {
           <!-- Left Column - Main Content (8 cols) -->
           <div class="lg:col-span-8">
             {holidayData.belowHeadingText ? (
-              <div class="prose max-w-none font-inter" set:html={holidayData.belowHeadingText}></div>
+              <div class="prose max-w-none font-inter" set:html={marked.parse(holidayData.belowHeadingText)}></div>
             ) : (
               <div class="prose max-w-none font-inter">
                 <p>Join us for an unforgettable tennis holiday at <strong>{holidayData.venue}</strong>.</p>

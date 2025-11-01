@@ -114,7 +114,7 @@ const holidayExpertsData = {
         {holidayExpertsData.accordions.slice(0, 6).map((accordion) => (
           <div class={`accordion bg-white border border-gray-200 rounded-xl overflow-hidden transition-all duration-300 ${accordion.isOpen ? 'shadow-lg' : 'shadow-sm hover:shadow-md'}`}>
             <div class="accordion-header flex items-center justify-between p-4 sm:p-6 cursor-pointer hover:bg-gray-50 transition-colors" onclick="toggleAccordion(this)">
-              <h3 class="text-sm sm:text-base lg:text-lg font-inter font-medium text-gray-900 pr-4">
+              <h3 class="text-base lg:text-lg font-inter font-medium text-gray-900 pr-4">
                 {accordion.title}
               </h3>
               <div class="expand-icon flex-shrink-0">
@@ -127,7 +127,7 @@ const holidayExpertsData = {
             </div>
             <div class={`accordion-content overflow-hidden transition-all duration-300 ${accordion.isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
               <div class="px-4 pb-4 sm:px-6 sm:pb-6 pt-0">
-                <div class="text-sm sm:text-base font-inter text-gray-800 leading-relaxed" set:html={accordion.content} />
+                <div class="text-base font-inter text-gray-800 leading-relaxed" set:html={accordion.content} />
               </div>
             </div>
           </div>
@@ -139,7 +139,7 @@ const holidayExpertsData = {
         {holidayExpertsData.accordions.slice(6, 12).map((accordion) => (
           <div class={`accordion bg-white border border-gray-200 rounded-xl overflow-hidden transition-all duration-300 ${accordion.isOpen ? 'shadow-lg' : 'shadow-sm hover:shadow-md'}`}>
             <div class="accordion-header flex items-center justify-between p-4 sm:p-6 cursor-pointer hover:bg-gray-50 transition-colors" onclick="toggleAccordion(this)">
-              <h3 class="text-sm sm:text-base lg:text-lg font-inter font-medium text-gray-900 pr-4">
+              <h3 class="text-base lg:text-lg font-inter font-medium text-gray-900 pr-4">
                 {accordion.title}
               </h3>
               <div class="expand-icon flex-shrink-0">
@@ -152,7 +152,7 @@ const holidayExpertsData = {
             </div>
             <div class={`accordion-content overflow-hidden transition-all duration-300 ${accordion.isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
               <div class="px-4 pb-4 sm:px-6 sm:pb-6 pt-0">
-                <div class="text-sm sm:text-base font-inter text-gray-800 leading-relaxed" set:html={accordion.content} />
+                <div class="text-base font-inter text-gray-800 leading-relaxed" set:html={accordion.content} />
               </div>
             </div>
           </div>

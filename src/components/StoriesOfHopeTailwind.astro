@@ -196,9 +196,9 @@ console.log('Stories Reviews:', storiesData.reviews.length);
           
           <!-- User Info (No Avatar) -->
           <div class="mb-4">
-            <h4 class="text-sm sm:text-base font-inter font-semibold text-gray-900">{testimonial.name}</h4>
+            <h4 class="text-base font-inter font-semibold text-gray-900">{testimonial.name}</h4>
             <div class="flex items-center gap-1 mt-1">
-              <span class="text-xs sm:text-sm font-inter text-gray-600">{testimonial.date}</span>
+              <span class="text-sm font-inter text-gray-600">{testimonial.date}</span>
             </div>
           </div>
           
@@ -213,11 +213,11 @@ console.log('Stories Reviews:', storiesData.reviews.length);
           
           <!-- Review Text -->
           <div>
-            <p class="review-text text-xs sm:text-sm font-inter text-gray-800 leading-relaxed line-clamp-4" data-review-id={index}>
+            <p class="review-text text-sm font-inter text-gray-800 leading-relaxed line-clamp-4" data-review-id={index}>
               {testimonial.text}
             </p>
             <button 
-              class="read-more-btn mt-2 text-xs sm:text-sm font-inter font-semibold text-[#ad986c] hover:text-[#8a7454] transition-colors hidden"
+              class="read-more-btn mt-2 text-sm font-inter font-semibold text-[#ad986c] hover:text-[#8a7454] transition-colors hidden"
               data-review-id={index}
               type="button"
             >

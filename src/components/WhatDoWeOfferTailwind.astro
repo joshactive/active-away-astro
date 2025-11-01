@@ -146,7 +146,7 @@ const offerData = {
             return (
             <div class="product-card flex-shrink-0 w-[calc(100vw-5rem)] sm:w-[calc(100vw-8rem)] lg:w-[calc((100%-1.5rem)/2)] snap-start relative" data-index={index}>
             <!-- Flat Card -->
-            <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-lg h-full flex flex-col">
+            <div class="group bg-white border border-gray-200 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-lg h-full flex flex-col">
               <!-- Card Image -->
               <div class="relative overflow-hidden">
                 <img 
@@ -163,17 +163,17 @@ const offerData = {
               
               <!-- Card Content -->
               <div class="p-4 sm:p-6 flex flex-col flex-grow">
-                <h3 class="text-base sm:text-xl lg:text-2xl font-playfair font-bold text-gray-900 mb-2 sm:mb-4 leading-tight line-clamp-2">
+                <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3 group-hover:text-[#ad986c] transition-colors leading-tight">
                   {product.title}
                 </h3>
                 
-                <p class="text-sm sm:text-base font-inter text-gray-800 leading-relaxed mb-4 sm:mb-6 flex-grow">
+                <p class="text-base font-inter text-gray-800 leading-relaxed mb-4 sm:mb-6 flex-grow">
                   {product.description}
                 </p>
                 
                 <!-- Button -->
                 <div class="mt-auto">
-                  <a href={product.url} class="inline-flex items-center gap-2 bg-gold hover:bg-gold-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full font-inter font-medium text-xs sm:text-base transition-all duration-300 hover:-translate-y-0.5 whitespace-nowrap">
+                  <a href={product.url} class="inline-flex items-center gap-2 bg-gold hover:bg-gold-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full font-inter font-medium text-sm sm:text-base transition-all duration-300 hover:-translate-y-0.5 whitespace-nowrap">
                     <span>Discover More</span>
                     <svg class="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none">
                       <path d="M7 17L17 7M17 7H7M17 7V17" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
