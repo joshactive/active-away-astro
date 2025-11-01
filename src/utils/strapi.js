@@ -231,6 +231,26 @@ export function getStrapiImagesData(imagesData) {
 }
 
 /**
+ * Normalize Strapi repeatable components / relations into plain arrays
+ * Handles Strapi v4 (data/attributes) and v5 (direct objects)
+ * @param {any} value - Raw value from Strapi response
+ * @returns {Array<Object>} Normalized array
+ */
+function normalizeComponentArray(value) {
+  if (!value) return [];
+  
+  if (Array.isArray(value)) {
+    return value.map(item => item?.attributes ? item.attributes : item);
+  }
+  
+  if (Array.isArray(value.data)) {
+    return value.data.map(item => item?.attributes ? item.attributes : item);
+  }
+  
+  return [];
+}
+
+/**
  * Extract Cloudflare Image ID from URL
  * Works with both imagedelivery.net and activeaway.com URLs
  * Returns null if not a Cloudflare Images URL
@@ -1720,40 +1740,38 @@ function transformTennisHolidayDetail(item) {
   
   // Get room options (old structure - keeping for backwards compatibility)
   const roomOptions = [];
-  if (holiday.roomOptions && Array.isArray(holiday.roomOptions)) {
-    holiday.roomOptions.forEach(room => {
-      const roomImage = room.roomImage ? getStrapiImageData(room.roomImage) : null;
-      const amenities = room.amenities || [];
-      
-      roomOptions.push({
-        id: room.id,
-        roomType: room.roomType,
-        description: room.description,
-        priceFrom: room.priceFrom,
-        maxOccupancy: room.maxOccupancy,
-        image: roomImage?.url || null,
-        imageAlt: roomImage?.alt || room.roomType,
-        amenities: amenities
-      });
+  const roomOptionsSource = normalizeComponentArray(holiday.roomOptions);
+  roomOptionsSource.forEach(room => {
+    const roomImage = room.roomImage ? getStrapiImageData(room.roomImage) : null;
+    const amenities = room.amenities || [];
+    
+    roomOptions.push({
+      id: room.id,
+      roomType: room.roomType,
+      description: room.description,
+      priceFrom: room.priceFrom,
+      maxOccupancy: room.maxOccupancy,
+      image: roomImage?.url || null,
+      imageAlt: roomImage?.alt || room.roomType,
+      amenities: amenities
     });
-  }
+  });
   
   // Get rooms (new structure with nested roomGallery)
   const rooms = [];
-  if (holiday.rooms && Array.isArray(holiday.rooms)) {
-    holiday.rooms.forEach(room => {
-      const roomGallery = room.roomGallery ? getStrapiImagesData(room.roomGallery) : [];
-      
-      rooms.push({
-        id: room.id,
-        roomTitle: room.roomTitle,
-        roomSize: room.roomSize,
-        roomBedConfig: room.roomBedConfig,
-        roomText: room.roomText,
-        roomGallery: roomGallery
-      });
+  const roomsSource = normalizeComponentArray(holiday.rooms);
+  roomsSource.forEach(room => {
+    const roomGallery = room.roomGallery ? getStrapiImagesData(room.roomGallery) : [];
+    
+    rooms.push({
+      id: room.id,
+      roomTitle: room.roomTitle,
+      roomSize: room.roomSize,
+      roomBedConfig: room.roomBedConfig,
+      roomText: room.roomText,
+      roomGallery: roomGallery
     });
-  }
+  });
 
   // Get SEO data if available
   let seoData = null;
@@ -1973,20 +1991,19 @@ export async function getTennisHolidayNestedData(slug) {
       
       // Process rooms with nested roomGallery
       const rooms = [];
-      if (holiday.rooms && Array.isArray(holiday.rooms)) {
-        holiday.rooms.forEach((room, index) => {
-          const roomGallery = room.roomGallery ? getStrapiImagesData(room.roomGallery) : [];
-          
-          rooms.push({
-            id: room.id,
-            roomTitle: room.roomTitle,
-            roomSize: room.roomSize,
-            roomBedConfig: room.roomBedConfig,
-            roomText: room.roomText,
-            roomGallery: roomGallery
-          });
+      const roomsSource = normalizeComponentArray(holiday.rooms);
+      roomsSource.forEach(room => {
+        const roomGallery = room.roomGallery ? getStrapiImagesData(room.roomGallery) : [];
+        
+        rooms.push({
+          id: room.id,
+          roomTitle: room.roomTitle,
+          roomSize: room.roomSize,
+          roomBedConfig: room.roomBedConfig,
+          roomText: room.roomText,
+          roomGallery: roomGallery
         });
-      }
+      });
       
       // Process tripImages
       const tripImages = holiday.tripImages ? getStrapiImagesData(holiday.tripImages) : [];

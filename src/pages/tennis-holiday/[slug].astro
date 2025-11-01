@@ -111,7 +111,7 @@ try {
   />
 
   <!-- Hero Header Section with Background Image -->
-  <section class="relative w-full h-[400px] sm:h-[500px] lg:h-[600px] overflow-hidden">
+  <section id="hero" class="relative w-full h-[400px] sm:h-[500px] lg:h-[600px] overflow-hidden">
     <!-- Background Image with Centered Gradient Overlay -->
     <div class="absolute inset-0 bg-gradient-to-b from-[#0D1C4E]/75 via-[#0D1C4E]/60 to-[#0D1C4E]/60 z-10"></div>
     {(() => {
@@ -1999,6 +1999,8 @@ try {
     
     if (persistentButton && datesSection) {
       let isButtonVisible = false;
+      let heroOutOfView = false;
+      let datesVisible = false;
       
       const showButton = () => {
         if (!isButtonVisible) {
@@ -2016,16 +2018,8 @@ try {
         }
       };
       
-      // Check button visibility on scroll
-      const checkButtonVisibility = () => {
-        const scrollY = window.scrollY;
-        const windowHeight = window.innerHeight;
-        const datesSectionTop = datesSection.offsetTop;
-        const datesSectionBottom = datesSectionTop + datesSection.offsetHeight;
-        
-        // Show button when scrolled past hero section, hide when dates section is visible or already passed
-        const shouldShow = scrollY > 600 && scrollY + windowHeight < datesSectionTop;
-        
+      const evaluateButtonState = () => {
+        const shouldShow = heroOutOfView && !datesVisible;
         if (shouldShow) {
           showButton();
         } else {
@@ -2033,11 +2027,34 @@ try {
         }
       };
       
-      // Initial check
-      checkButtonVisibility();
+      const heroSection = document.getElementById('hero');
+      if (heroSection) {
+        const heroObserver = new IntersectionObserver((entries) => {
+          heroOutOfView = entries.length > 0 ? !entries[0].isIntersecting : heroOutOfView;
+          evaluateButtonState();
+        }, { threshold: 0, rootMargin: '-80px 0px 0px 0px' });
+        heroObserver.observe(heroSection);
+      } else {
+        // Fallback if hero section not found: use scroll position
+        const handleScrollFallback = () => {
+          const currentlyOutOfView = window.scrollY > 600;
+          if (currentlyOutOfView !== heroOutOfView) {
+            heroOutOfView = currentlyOutOfView;
+            evaluateButtonState();
+          }
+        };
+        handleScrollFallback();
+        window.addEventListener('scroll', handleScrollFallback, { passive: true });
+      }
       
-      // Check on scroll
-      window.addEventListener('scroll', checkButtonVisibility, { passive: true });
+      const datesObserver = new IntersectionObserver((entries) => {
+        datesVisible = entries.length > 0 ? entries[0].isIntersecting : datesVisible;
+        evaluateButtonState();
+      }, { threshold: 0, rootMargin: '0px 0px -40% 0px' });
+      datesObserver.observe(datesSection);
+      
+      // Ensure initial state is set
+      evaluateButtonState();
     }
   });
 
@@ -2045,9 +2062,12 @@ try {
   window.scrollToSection = function(sectionId) {
     const section = document.getElementById(sectionId);
     if (section) {
-      const yOffset = -100; // Offset for fixed header
-      const y = section.getBoundingClientRect().top + window.pageYOffset + yOffset;
-      window.scrollTo({ top: y, behavior: 'smooth' });
+      // Use requestAnimationFrame to batch the read operation
+      requestAnimationFrame(() => {
+        const yOffset = -100; // Offset for fixed header
+        const y = section.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      });
     }
   };
 </script>
