@@ -1,0 +1,959 @@
+---
+// Global Navigation Header Component - Extracted from HeroTailwind
+import { getImageByName } from '../utils/cloudflareImages.js';
+import { getNavigationMenu } from '../utils/strapi.js';
+
+// Get current URL path for dynamic active state
+const currentPath = Astro.url.pathname;
+
+// Fetch navigation menu data from Strapi
+let navMenuData = null;
+try {
+  navMenuData = await getNavigationMenu();
+  console.log('📋 Navigation menu data fetched from Strapi');
+} catch (error) {
+  console.warn('⚠️  Failed to fetch navigation menu, using fallback');
+}
+
+// Default menu items (fallback) - isActive will be determined dynamically
+const defaultMenuItems = [
+  { id: 1, label: 'Home', href: '/', hasMegaMenu: false, megaMenuId: null },
+  { id: 2, label: 'Dates', href: '/dates', hasMegaMenu: true, megaMenuId: 'dates' },
+  { id: 3, label: 'Rackets', href: '/rackets', hasMegaMenu: true, megaMenuId: 'rackets' },
+  { id: 4, label: 'About Us', href: '/about', hasMegaMenu: true, megaMenuId: 'about' },
+  { id: 5, label: 'Destinations', href: '/destinations', hasMegaMenu: true, megaMenuId: 'destinations' },
+];
+
+// Default Dates mega menu data (text-based, two columns)
+const defaultDatesMenuData = {
+  findYourNext: [
+    { id: 1, name: 'Tennis Holiday', href: '#tennis-holiday' },
+    { id: 2, name: 'UK Tennis Clinic', href: '#uk-tennis-clinic' },
+    { id: 3, name: 'Padel Holiday', href: '#padel-holiday' },
+    { id: 4, name: 'Pickleball Holiday', href: '#pickleball-holiday' },
+    { id: 5, name: 'Play & Watch Event', href: '#play-watch-event' },
+    { id: 6, name: 'School Tennis Tour', href: '#school-tennis-tour' },
+    { id: 7, name: 'Ski Holiday', href: '#ski-holiday' },
+    { id: 8, name: 'View All Destinations', href: '#all-destinations' }
+  ],
+  usefulLinks: [
+    { id: 9, name: 'Active Away Itineraries', href: '#itineraries' },
+    { id: 10, name: 'Airport Transfers', href: '#airport-transfers' },
+    { id: 11, name: 'Book Now', href: '#book-now' },
+    { id: 12, name: 'FAQs', href: '#faqs' },
+    { id: 13, name: 'Flights', href: '#flights' },
+    { id: 14, name: 'Self Rating Guide', href: '#self-rating-guide' },
+    { id: 15, name: 'The Booking Process', href: '#booking-process' },
+    { id: 16, name: 'View All Dates', href: '#all-dates' }
+  ]
+};
+
+// Default mega menu items for Rackets (fallback)
+const defaultRacketsMegaMenuItems = [
+  {
+    id: 4,
+    title: 'Adult Tennis Holidays',
+    description: 'Premium tennis holidays for adults',
+    href: '#adult-tennis-holidays',
+    image: { url: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=400&h=300&fit=crop', alt: 'Adult Tennis Holidays' },
+    gradient: 'from-blue-500 to-blue-600',
+    menuType: 'rackets'
+  },
+  {
+    id: 5,
+    title: 'Family Tennis Holidays',
+    description: 'Fun tennis holidays for the whole family',
+    href: '#family-tennis-holidays',
+    image: { url: 'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=400&h=300&fit=crop', alt: 'Family Tennis Holidays' },
+    gradient: 'from-green-500 to-green-600',
+    menuType: 'rackets'
+  },
+  {
+    id: 6,
+    title: 'Tennis Clinics',
+    description: 'Intensive tennis coaching clinics',
+    href: '#tennis-clinics',
+    image: { url: 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=400&h=300&fit=crop', alt: 'Tennis Clinics' },
+    gradient: 'from-purple-500 to-purple-600',
+    menuType: 'rackets'
+  },
+  {
+    id: 7,
+    title: 'Padel',
+    description: 'Exciting padel experiences',
+    href: '#padel',
+    image: { url: 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=400&h=300&fit=crop', alt: 'Padel' },
+    gradient: 'from-cyan-500 to-cyan-600',
+    menuType: 'rackets'
+  },
+  {
+    id: 8,
+    title: 'Pickleball',
+    description: 'Popular pickleball holidays',
+    href: '#pickleball',
+    image: { url: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=400&h=300&fit=crop', alt: 'Pickleball' },
+    gradient: 'from-lime-500 to-lime-600',
+    menuType: 'rackets'
+  },
+  {
+    id: 9,
+    title: 'Junior Tennis Camps',
+    description: 'Tennis camps for young players',
+    href: '#junior-tennis-camps',
+    image: { url: 'https://images.unsplash.com/photo-1551958219-acbc608c6377?w=400&h=300&fit=crop', alt: 'Junior Tennis Camps' },
+    gradient: 'from-orange-500 to-orange-600',
+    menuType: 'rackets'
+  },
+  {
+    id: 10,
+    title: 'Play & Watch',
+    description: 'Combine playing with watching the pros',
+    href: '#play-watch',
+    image: { url: 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=400&h=300&fit=crop', alt: 'Play & Watch' },
+    gradient: 'from-red-500 to-red-600',
+    menuType: 'rackets'
+  },
+  {
+    id: 11,
+    title: 'School Tennis Tours',
+    description: 'Educational tennis tours for schools',
+    href: '#school-tennis-tours',
+    image: { url: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=300&fit=crop', alt: 'School Tennis Tours' },
+    gradient: 'from-indigo-500 to-indigo-600',
+    menuType: 'rackets'
+  },
+  {
+    id: 12,
+    title: 'Ski Holidays',
+    description: 'Winter ski and snow experiences',
+    href: '#ski-holidays',
+    image: { url: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop', alt: 'Ski Holidays' },
+    gradient: 'from-sky-500 to-sky-600',
+    menuType: 'rackets'
+  }
+];
+
+// Default mega menu items for About Us (fallback)
+const defaultAboutMegaMenuItems = [
+  {
+    id: 7,
+    title: 'Our Story',
+    description: 'Learn about our journey and mission',
+    href: '#our-story',
+    image: { url: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&h=300&fit=crop', alt: 'Our Story' },
+    gradient: 'from-blue-500 to-indigo-600',
+    menuType: 'about'
+  },
+  {
+    id: 8,
+    title: 'Meet the Team',
+    description: 'Get to know our passionate experts',
+    href: '#team',
+    image: { url: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=300&fit=crop', alt: 'Meet the Team' },
+    gradient: 'from-teal-500 to-teal-600',
+    menuType: 'about'
+  },
+  {
+    id: 9,
+    title: 'Contact Us',
+    description: 'Get in touch with our team',
+    href: '#contact',
+    image: { url: 'https://images.unsplash.com/photo-1423666639041-f56000c27a9a?w=400&h=300&fit=crop', alt: 'Contact Us' },
+    gradient: 'from-pink-500 to-rose-600',
+    menuType: 'about'
+  }
+];
+
+// Default destinations mega menu data (text-based with categories)
+const defaultDestinationsCategories = [
+  {
+    id: 'tennis-holidays',
+    label: 'Tennis Holidays',
+    destinations: [
+      { id: 1, name: 'Algarve Tennis Week', country: 'Portugal', href: '#algarve-tennis' },
+      { id: 2, name: 'Barcelona Tennis Camp', country: 'Spain', href: '#barcelona-tennis' },
+      { id: 3, name: 'Marbella Tennis Academy', country: 'Spain', href: '#marbella-tennis' },
+      { id: 4, name: 'Athens Tennis Holiday', country: 'Greece', href: '#athens-tennis' },
+      { id: 5, name: 'Crete Tennis Retreat', country: 'Greece', href: '#crete-tennis' },
+      { id: 6, name: 'Sicily Tennis Week', country: 'Italy', href: '#sicily-tennis' },
+      { id: 7, name: 'Costa del Sol Tennis Break', country: 'Spain', href: '#costa-sol-tennis' },
+      { id: 8, name: 'Lisbon Tennis Experience', country: 'Portugal', href: '#lisbon-tennis' },
+      { id: 9, name: 'Mallorca Tennis Retreat', country: 'Spain', href: '#mallorca-tennis' },
+      { id: 10, name: 'Corfu Tennis Holiday', country: 'Greece', href: '#corfu-tennis' },
+      { id: 11, name: 'Tuscany Tennis Week', country: 'Italy', href: '#tuscany-tennis' },
+      { id: 12, name: 'Andalusia Tennis Camp', country: 'Spain', href: '#andalusia-tennis' },
+      { id: 13, name: 'Rhodes Tennis Experience', country: 'Greece', href: '#rhodes-tennis' },
+      { id: 14, name: 'Sardinia Tennis Holiday', country: 'Italy', href: '#sardinia-tennis' },
+      { id: 15, name: 'Madeira Tennis Retreat', country: 'Portugal', href: '#madeira-tennis' },
+      { id: 16, name: 'Valencia Tennis Week', country: 'Spain', href: '#valencia-tennis' },
+      { id: 17, name: 'Amalfi Coast Tennis Break', country: 'Italy', href: '#amalfi-tennis' },
+      { id: 18, name: 'Santorini Tennis Holiday', country: 'Greece', href: '#santorini-tennis' },
+      { id: 19, name: 'Ibiza Tennis Experience', country: 'Spain', href: '#ibiza-tennis' },
+      { id: 20, name: 'Porto Tennis Week', country: 'Portugal', href: '#porto-tennis' }
+    ]
+  },
+  {
+    id: 'tennis-clinics',
+    label: 'Tennis Clinics',
+    destinations: [
+      { id: 7, name: 'Intensive Performance Clinic - Spain', country: 'Spain', href: '#performance-spain' },
+      { id: 8, name: 'Adult Improvement Clinic - Portugal', country: 'Portugal', href: '#adult-portugal' },
+      { id: 9, name: 'Advanced Skills Clinic - Greece', country: 'Greece', href: '#advanced-greece' }
+    ]
+  },
+  {
+    id: 'junior-tennis',
+    label: 'Junior Tennis Camps',
+    destinations: [
+      { id: 10, name: 'Junior Summer Camp - Algarve', country: 'Portugal', href: '#junior-algarve' },
+      { id: 11, name: 'Junior Easter Camp - Marbella', country: 'Spain', href: '#junior-marbella' },
+      { id: 12, name: 'Junior Development Camp - Athens', country: 'Greece', href: '#junior-athens' }
+    ]
+  },
+  {
+    id: 'padel',
+    label: 'Padel',
+    destinations: [
+      { id: 13, name: 'Marbella Padel Experience', country: 'Spain', href: '#marbella-padel' },
+      { id: 14, name: 'Algarve Padel Holiday', country: 'Portugal', href: '#algarve-padel' },
+      { id: 15, name: 'Barcelona Padel Week', country: 'Spain', href: '#barcelona-padel' }
+    ]
+  },
+  {
+    id: 'pickleball',
+    label: 'Pickleball',
+    destinations: [
+      { id: 16, name: 'Algarve Pickleball Holiday', country: 'Portugal', href: '#algarve-pickleball' },
+      { id: 17, name: 'Costa del Sol Pickleball Week', country: 'Spain', href: '#costa-pickleball' }
+    ]
+  },
+  {
+    id: 'play-watch',
+    label: 'Play & Watch',
+    destinations: [
+      { id: 18, name: 'French Open Experience', country: 'France', href: '#french-open' },
+      { id: 19, name: 'Wimbledon Tour Package', country: 'UK', href: '#wimbledon' },
+      { id: 20, name: 'US Open Experience', country: 'USA', href: '#us-open' },
+      { id: 21, name: 'Australian Open Package', country: 'Australia', href: '#australian-open' }
+    ]
+  },
+  {
+    id: 'school-tours',
+    label: 'School Tennis Tours',
+    destinations: [
+      { id: 22, name: 'School Group Tour - Spain', country: 'Spain', href: '#school-spain' },
+      { id: 23, name: 'School Group Tour - Portugal', country: 'Portugal', href: '#school-portugal' }
+    ]
+  },
+  {
+    id: 'ski',
+    label: 'Ski Holidays',
+    destinations: [
+      { id: 24, name: 'Val d\'Isère Ski Week', country: 'France', href: '#val-disere' },
+      { id: 25, name: 'Courchevel Ski Holiday', country: 'France', href: '#courchevel' },
+      { id: 26, name: 'St. Anton Ski Experience', country: 'Austria', href: '#st-anton' },
+      { id: 27, name: 'Ischgl Ski Week', country: 'Austria', href: '#ischgl' }
+    ]
+  }
+];
+
+// Helper function to determine if a menu item is active based on current path
+const isMenuItemActive = (href) => {
+  // Normalize paths (remove trailing slashes, handle index)
+  const normalizedPath = currentPath.replace(/\/$/, '') || '/';
+  const normalizedHref = href.replace(/\/$/, '') || '/';
+  
+  // Home page - match /, /index, /index.html, or empty
+  if (normalizedHref === '/') {
+    return normalizedPath === '/' || normalizedPath === '' || normalizedPath === '/index' || normalizedPath === '/index.html';
+  }
+  
+  // For other pages, check if current path starts with the href
+  if (normalizedPath.startsWith(normalizedHref)) {
+    return true;
+  }
+  
+  // Handle hash links on the same page (for single-page sections)
+  if (href.startsWith('#') && normalizedPath === '/') {
+    return href === '#home';
+  }
+  
+  return false;
+};
+
+// Use Strapi data or fallback
+let menuItems = navMenuData?.menuItems || defaultMenuItems;
+
+// Hardcode: Home is always active, others are not
+menuItems = menuItems.map(item => ({
+  ...item,
+  isActive: item.label === 'Home'
+}));
+
+const datesMenuData = navMenuData?.datesMenuData || defaultDatesMenuData;
+const racketsMegaMenuItems = navMenuData?.racketsMegaMenuItems || defaultRacketsMegaMenuItems;
+const aboutMegaMenuItems = navMenuData?.aboutMegaMenuItems || defaultAboutMegaMenuItems;
+const destinationsCategories = navMenuData?.destinationsCategories || defaultDestinationsCategories;
+const megaMenuTitle = navMenuData?.megaMenuTitle || 'Explore all our amazing holiday dates';
+const megaMenuCTA = navMenuData?.megaMenuCTA || 'Browse All Dates';
+const megaMenuCTAUrl = navMenuData?.megaMenuCTAUrl || '#all-dates';
+const racketsMegaMenuTitle = navMenuData?.racketsMegaMenuTitle || 'Explore our racket sports collection';
+const racketsMegaMenuCTA = navMenuData?.racketsMegaMenuCTA || 'Browse All Rackets';
+const racketsMegaMenuCTAUrl = navMenuData?.racketsMegaMenuCTAUrl || '#all-rackets';
+const aboutMegaMenuTitle = navMenuData?.aboutMegaMenuTitle || 'Learn more about Active Away';
+const aboutMegaMenuCTA = navMenuData?.aboutMegaMenuCTA || 'Get in Touch';
+const aboutMegaMenuCTAUrl = navMenuData?.aboutMegaMenuCTAUrl || '#contact';
+const destinationsMegaMenuTitle = navMenuData?.destinationsMegaMenuTitle || 'Find your perfect destination';
+const destinationsMegaMenuCTA = navMenuData?.destinationsMegaMenuCTA || 'View All Destinations';
+const destinationsMegaMenuCTAUrl = navMenuData?.destinationsMegaMenuCTAUrl || '#all-destinations';
+
+const logoUrl = getImageByName('logo', { width: 180, height: 50, fit: 'cover', format: 'auto', quality: 80 });
+---
+
+<script is:inline>
+  // Mobile menu toggle
+  function toggleMobileMenu() {
+    const menu = document.getElementById('mobile-menu');
+    const backdrop = document.getElementById('mobile-menu-backdrop');
+    const trigger = document.getElementById('mobile-menu-trigger');
+    if (menu && backdrop) {
+      menu.classList.toggle('translate-y-full');
+      const isOpen = !menu.classList.contains('translate-y-full');
+      
+      if (isOpen) {
+        backdrop.classList.remove('opacity-0', 'pointer-events-none');
+        backdrop.classList.add('opacity-100');
+      } else {
+        backdrop.classList.add('opacity-0', 'pointer-events-none');
+        backdrop.classList.remove('opacity-100');
+      }
+      
+      if (trigger) {
+        trigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      }
+      document.body.style.overflow = isOpen ? 'hidden' : '';
+    }
+  }
+
+  function closeMobileMenu() {
+    const menu = document.getElementById('mobile-menu');
+    const backdrop = document.getElementById('mobile-menu-backdrop');
+    const trigger = document.getElementById('mobile-menu-trigger');
+    if (menu && backdrop) {
+      menu.classList.add('translate-y-full');
+      backdrop.classList.add('opacity-0', 'pointer-events-none');
+      backdrop.classList.remove('opacity-100');
+      
+      if (trigger) {
+        trigger.setAttribute('aria-expanded', 'false');
+      }
+      document.body.style.overflow = '';
+    }
+  }
+
+  // Mega menu functionality
+  let megaMenuTimeouts = {};
+  
+  function showMegaMenu(menuId) {
+    clearTimeout(megaMenuTimeouts[menuId]);
+    const megaMenu = document.getElementById(`${menuId}-mega-menu`);
+    const arrow = document.getElementById(`${menuId}-arrow`);
+    if (megaMenu) {
+      megaMenu.classList.remove('hidden');
+    }
+    if (arrow) {
+      arrow.style.transform = 'rotate(180deg)';
+    }
+  }
+  
+  function hideMegaMenuDelayed(menuId) {
+    megaMenuTimeouts[menuId] = setTimeout(() => {
+      const megaMenu = document.getElementById(`${menuId}-mega-menu`);
+      const arrow = document.getElementById(`${menuId}-arrow`);
+      if (megaMenu) {
+        megaMenu.classList.add('hidden');
+      }
+      if (arrow) {
+        arrow.style.transform = 'rotate(0deg)';
+      }
+    }, 150);
+  }
+
+  // Destinations tab switching functionality
+  function switchDestinationsTab(tabId) {
+    // Hide all content panels
+    const allContent = document.querySelectorAll('.destinations-content');
+    allContent.forEach(content => {
+      content.classList.add('hidden');
+    });
+
+    // Remove active state from all tabs
+    const allTabs = document.querySelectorAll('.destinations-tab');
+    allTabs.forEach(tab => {
+      tab.classList.remove('bg-white', 'text-gold-700', 'shadow-sm');
+      tab.classList.add('text-gray-700');
+    });
+
+    // Show selected content
+    const selectedContent = document.getElementById(`destinations-content-${tabId}`);
+    if (selectedContent) {
+      selectedContent.classList.remove('hidden');
+    }
+
+    // Activate selected tab
+    const selectedTab = document.querySelector(`[data-tab="${tabId}"]`);
+    if (selectedTab) {
+      selectedTab.classList.add('bg-white', 'text-gold-700', 'shadow-sm');
+      selectedTab.classList.remove('text-gray-700');
+    }
+  }
+
+  // Mobile submenu accordion toggle
+  function toggleMobileSubmenu(menuId) {
+    const submenu = document.getElementById(`mobile-submenu-${menuId}`);
+    const button = submenu ? submenu.previousElementSibling : null;
+    const chevron = button ? button.querySelector('.mobile-chevron') : null;
+    
+    if (submenu) {
+      const isHidden = submenu.classList.contains('hidden');
+      submenu.classList.toggle('hidden');
+      
+      if (chevron) {
+        if (isHidden) {
+          chevron.style.transform = 'rotate(180deg)';
+        } else {
+          chevron.style.transform = 'rotate(0deg)';
+        }
+      }
+    }
+  }
+
+  function toggleDestinationCategory(categoryIndex) {
+    const hiddenDestinations = document.getElementById(`mobile-dest-hidden-${categoryIndex}`);
+    const toggleButton = document.querySelector(`[data-category="${categoryIndex}"]`);
+    
+    if (hiddenDestinations && toggleButton) {
+      const isHidden = hiddenDestinations.classList.contains('hidden');
+      const toggleText = toggleButton.querySelector('.toggle-text');
+      const toggleChevron = toggleButton.querySelector('.toggle-chevron');
+      
+      if (isHidden) {
+        // Show hidden destinations
+        hiddenDestinations.classList.remove('hidden');
+        if (toggleText) toggleText.textContent = 'Show less';
+        if (toggleChevron) toggleChevron.style.transform = 'rotate(180deg)';
+      } else {
+        // Hide destinations
+        hiddenDestinations.classList.add('hidden');
+        if (toggleText) toggleText.textContent = 'Show more';
+        if (toggleChevron) toggleChevron.style.transform = 'rotate(0deg)';
+      }
+    }
+  }
+
+  // Expose functions globally
+  if (typeof window !== 'undefined') {
+    window.toggleMobileMenu = toggleMobileMenu;
+    window.closeMobileMenu = closeMobileMenu;
+    window.showMegaMenu = showMegaMenu;
+    window.hideMegaMenuDelayed = hideMegaMenuDelayed;
+    window.switchDestinationsTab = switchDestinationsTab;
+    window.toggleMobileSubmenu = toggleMobileSubmenu;
+    window.toggleDestinationCategory = toggleDestinationCategory;
+  }
+</script>
+
+<!-- Navigation Bar -->
+<nav class="absolute w-full top-0 z-50 py-4">
+  <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+    <div class="flex justify-between items-center h-14">
+      <!-- Logo -->
+      <div class="w-40 h-11 sm:w-40 sm:h-12 lg:w-40 lg:h-14">
+        <a href="/">
+          <img 
+            src={logoUrl} 
+            alt="Active Away Logo" 
+            width="200"
+            height="56"
+            class="w-full h-full object-contain" 
+            loading="eager"
+          />
+        </a>
+      </div>
+
+      <!-- Center Navigation - Desktop Only -->
+      <nav class="hidden xl:block absolute left-1/2 -translate-x-1/2 max-w-[90vw]" style="width: clamp(38rem, 60vw, 42rem);">
+        <div class="flex flex-row justify-center items-center px-2 h-14 w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-full gap-1">
+          {menuItems.map((item) => (
+            item.hasMegaMenu ? (
+              <!-- Mega Menu Item -->
+              <div class="relative mega-menu-container">
+                <button 
+                  type="button"
+                  class={`flex flex-row justify-center items-center px-3 lg:px-4 xl:px-6 py-2.5 gap-1 h-11 rounded-full font-inter text-sm leading-6 text-white transition-all duration-300 cursor-pointer whitespace-nowrap ${item.isActive ? 'bg-white/30 backdrop-blur-md border border-white/30 font-medium shadow-lg' : 'font-normal hover:bg-white/10'}`}
+                  onmouseenter={`showMegaMenu('${item.megaMenuId || 'dates'}')`}
+                  onmouseleave={`hideMegaMenuDelayed('${item.megaMenuId || 'dates'}')`}
+                >
+                  {item.label}
+                  <svg class={`w-4 h-4 ml-1 transition-transform duration-200`} id={`${item.megaMenuId || 'dates'}-arrow`} viewBox="0 0 24 24" fill="none">
+                    <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            ) : (
+              <!-- Regular Menu Item -->
+              <a 
+                href={item.href} 
+                class={`flex flex-row justify-center items-center px-3 lg:px-4 xl:px-6 py-2.5 gap-1 h-11 rounded-full font-inter text-sm leading-6 text-white transition-all duration-300 cursor-pointer whitespace-nowrap ${item.isActive ? 'bg-white/30 backdrop-blur-md border border-white/30 font-medium shadow-lg' : 'font-normal hover:bg-white/10'}`}
+              >
+                {item.label}
+              </a>
+            )
+          ))}
+        </div>
+      </nav>
+      
+      <!-- Dates Mega Menu Dropdown (Two-Column Text Layout) -->
+      <div 
+        id="dates-mega-menu"
+        class="hidden absolute left-1/2 transform -translate-x-1/2 w-[95vw] max-w-[700px] bg-white rounded-3xl shadow-2xl border border-gray-200 overflow-hidden z-[60]"
+        style="top: 5rem;"
+        onmouseenter="showMegaMenu('dates')"
+        onmouseleave="hideMegaMenuDelayed('dates')"
+      >
+        <div class="p-8">
+          <div class="grid grid-cols-2 gap-8">
+            <!-- Left Column: Find Your Next -->
+            <div>
+              <h3 class="text-lg font-playfair font-semibold text-gray-900 mb-4">Find your next...</h3>
+              <nav class="space-y-2">
+                {datesMenuData.findYourNext.map((item) => (
+                  <a
+                    href={item.href}
+                    class="group flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-all duration-200"
+                  >
+                    <div class="w-1.5 h-1.5 rounded-full bg-gold group-hover:scale-150 transition-transform duration-200 flex-shrink-0"></div>
+                    <span class="text-sm text-gray-700 group-hover:text-gold-700 font-medium transition-colors duration-200">
+                      {item.name}
+                    </span>
+                    <svg class="w-3.5 h-3.5 ml-auto text-gray-400 group-hover:text-gold-700 group-hover:translate-x-1 transition-all duration-200 flex-shrink-0" viewBox="0 0 24 24" fill="none">
+                      <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </a>
+                ))}
+              </nav>
+            </div>
+
+            <!-- Right Column: Useful Links -->
+            <div>
+              <h3 class="text-lg font-playfair font-semibold text-gray-900 mb-4">Useful Links</h3>
+              <nav class="space-y-2">
+                {datesMenuData.usefulLinks.map((item) => (
+                  <a
+                    href={item.href}
+                    class="group flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-all duration-200"
+                  >
+                    <div class="w-1.5 h-1.5 rounded-full bg-gold group-hover:scale-150 transition-transform duration-200 flex-shrink-0"></div>
+                    <span class="text-sm text-gray-700 group-hover:text-gold-700 font-medium transition-colors duration-200">
+                      {item.name}
+                    </span>
+                    <svg class="w-3.5 h-3.5 ml-auto text-gray-400 group-hover:text-gold-700 group-hover:translate-x-1 transition-all duration-200 flex-shrink-0" viewBox="0 0 24 24" fill="none">
+                      <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </a>
+                ))}
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rackets Mega Menu Dropdown -->
+      <div 
+        id="rackets-mega-menu"
+        class="hidden absolute left-1/2 transform -translate-x-1/2 w-[95vw] max-w-[1000px] bg-white rounded-3xl shadow-2xl border border-gray-200 overflow-hidden z-[60]"
+        style="top: 5rem;"
+        onmouseenter="showMegaMenu('rackets')"
+        onmouseleave="hideMegaMenuDelayed('rackets')"
+      >
+        <div class="p-6">
+          <div class="grid grid-cols-3 gap-4">
+            {racketsMegaMenuItems.map((megaItem) => (
+              <a href={megaItem.href} class="group cursor-pointer block">
+                <div class={`relative overflow-hidden rounded-xl h-36 bg-gradient-to-br ${megaItem.gradient}`}>
+                  {megaItem.image && megaItem.image.url && (
+                    <img 
+                      src={megaItem.image.url} 
+                      alt={megaItem.image.alt || megaItem.title} 
+                      class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" 
+                    />
+                  )}
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                  <div class="absolute bottom-2 left-2 text-white">
+                    <h3 class="font-semibold text-sm leading-tight">{megaItem.title}</h3>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <!-- About Us Mega Menu Dropdown -->
+      <div 
+        id="about-mega-menu"
+        class="hidden absolute left-1/2 transform -translate-x-1/2 w-[95vw] max-w-[900px] bg-white rounded-3xl shadow-2xl border border-gray-200 overflow-hidden z-[60]"
+        style="top: 5rem;"
+        onmouseenter="showMegaMenu('about')"
+        onmouseleave="hideMegaMenuDelayed('about')"
+      >
+        <div class="p-8">
+          <div class="grid grid-cols-3 gap-6">
+            {aboutMegaMenuItems.map((megaItem) => (
+              <div class="group cursor-pointer">
+                <div class={`relative overflow-hidden rounded-2xl mb-4 aspect-video bg-gradient-to-br ${megaItem.gradient}`}>
+                  {megaItem.image && megaItem.image.url && (
+                    <img 
+                      src={megaItem.image.url} 
+                      alt={megaItem.image.alt || megaItem.title} 
+                      class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" 
+                    />
+                  )}
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                  <div class="absolute bottom-3 left-3 text-white">
+                    <h3 class="font-semibold text-lg">{megaItem.title}</h3>
+                  </div>
+                </div>
+                <p class="text-sm text-gray-600 mb-2">{megaItem.description}</p>
+                <a href={megaItem.href} class="text-sm text-gold hover:text-gold-700 font-medium inline-flex items-center gap-1">
+                  Learn More
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                    <path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </a>
+              </div>
+            ))}
+          </div>
+          
+          <!-- Bottom CTA -->
+          <div class="mt-6 pt-6 border-t border-gray-200 text-center">
+            <p class="text-sm text-gray-600 mb-3">{aboutMegaMenuTitle}</p>
+            <a href={aboutMegaMenuCTAUrl} class="inline-flex items-center gap-2 bg-gold hover:bg-gold-700 text-white px-6 py-3 rounded-full font-medium text-sm transition-all duration-300">
+              {aboutMegaMenuCTA}
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                <path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Destinations Mega Menu Dropdown (Tabbed Interface) -->
+      <div 
+        id="destinations-mega-menu"
+        class="hidden absolute left-1/2 transform -translate-x-1/2 w-[95vw] max-w-[1100px] bg-white rounded-3xl shadow-2xl border border-gray-200 overflow-hidden z-[60]"
+        style="top: 5rem;"
+        onmouseenter="showMegaMenu('destinations')"
+        onmouseleave="hideMegaMenuDelayed('destinations')"
+      >
+        <div class="flex">
+          <!-- Left Sidebar - Category Tabs -->
+          <div class="w-48 lg:w-56 bg-gray-50 p-3 lg:p-4 border-r border-gray-200 flex-shrink-0">
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 px-3">Holiday Types</h3>
+            <nav class="space-y-1">
+              {destinationsCategories.map((category, index) => (
+                <button
+                  type="button"
+                  class={`destinations-tab w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${index === 0 ? 'bg-white text-gold-700 shadow-sm' : 'text-gray-700 hover:bg-white hover:text-gold-700'}`}
+                  data-tab={category.id}
+                  data-item-count={category.destinations.length}
+                  onclick={`switchDestinationsTab('${category.id}')`}
+                >
+                  {category.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          <!-- Right Content - Destinations List -->
+          <div class="flex-1 p-4 lg:p-6 overflow-y-auto max-h-[60vh]">
+            {destinationsCategories.map((category, index) => {
+              // Dynamic column logic based on item count
+              const itemCount = category.destinations.length;
+              let gridCols = 'grid-cols-1';
+              let itemsPerColumn = itemCount;
+              
+              if (itemCount > 24) {
+                gridCols = 'grid-cols-4';
+                itemsPerColumn = Math.ceil(itemCount / 4);
+              } else if (itemCount > 16) {
+                gridCols = 'grid-cols-3';
+                itemsPerColumn = Math.ceil(itemCount / 3);
+              } else if (itemCount > 8) {
+                gridCols = 'grid-cols-2';
+                itemsPerColumn = Math.ceil(itemCount / 2);
+              }
+              
+              return (
+                <div
+                  id={`destinations-content-${category.id}`}
+                  class={`destinations-content ${index === 0 ? '' : 'hidden'}`}
+                  data-columns={gridCols}
+                >
+                  <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-4">{category.label}</h3>
+                  <div class={`grid ${gridCols} gap-x-6 gap-y-1`}>
+                    {category.destinations.map((destination) => (
+                      <a
+                        href={destination.href}
+                        class="group flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-all duration-200"
+                      >
+                        <div class="w-1.5 h-1.5 rounded-full bg-gold group-hover:scale-150 transition-transform duration-200 flex-shrink-0"></div>
+                        <span class="text-sm text-gray-700 group-hover:text-gold-700 font-medium transition-colors duration-200">
+                          {destination.name}
+                        </span>
+                        <svg class="w-3.5 h-3.5 ml-auto text-gray-400 group-hover:text-gold-700 group-hover:translate-x-1 transition-all duration-200 flex-shrink-0" viewBox="0 0 24 24" fill="none">
+                          <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+
+            <!-- Bottom CTA -->
+            <div class="mt-6 pt-6 border-t border-gray-200">
+              <p class="text-sm text-gray-600 mb-3">{destinationsMegaMenuTitle}</p>
+              <a href={destinationsMegaMenuCTAUrl} class="inline-flex items-center gap-2 bg-gold hover:bg-gold-700 text-white px-6 py-3 rounded-full font-medium text-sm transition-all duration-300 shadow-lg hover:shadow-xl">
+                {destinationsMegaMenuCTA}
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                  <path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right CTA Buttons - Desktop Only -->
+      <div class="hidden xl:flex flex-row justify-end items-center p-0 gap-3 w-80 h-14">
+        <button class="inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-medium transition-all focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 bg-white/30 backdrop-blur-md border border-white/30 text-white hover:bg-white/40 px-6 py-3 h-14 shadow-lg">
+          Login
+        </button>
+        <button class="inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-medium transition-all focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 bg-gold backdrop-blur-md text-white hover:bg-gold-700 px-6 py-3 h-14">
+          Book Now
+        </button>
+      </div>
+
+      <!-- Mobile Menu Button -->
+      <div class="xl:hidden">
+        <button 
+          type="button"
+          id="mobile-menu-trigger"
+          class="bg-none border-none cursor-pointer p-2 rounded-lg transition-colors duration-300 hover:bg-gold/20"
+          onclick="toggleMobileMenu()"
+          aria-controls="mobile-menu"
+          aria-expanded="false"
+          aria-haspopup="true"
+        >
+          <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M4 5h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+            <path d="M4 12h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+            <path d="M4 19h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+          </svg>
+          <span class="sr-only">Open main menu</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile Menu - Full Screen Bottom Sheet -->
+<!-- Backdrop Overlay -->
+<div 
+  id="mobile-menu-backdrop"
+  class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[80] opacity-0 pointer-events-none transition-opacity duration-300 xl:hidden"
+  onclick="closeMobileMenu()"
+></div>
+
+<!-- Bottom Sheet Menu - Full Screen -->
+<div 
+  id="mobile-menu" 
+  class="fixed inset-0 z-[90] bg-white transform translate-y-full transition-transform duration-500 ease-out xl:hidden"
+>
+  <div class="flex flex-col h-full">
+    <!-- Header -->
+    <div class="flex items-center justify-between pt-6 pb-4 px-6 border-b border-gray-200">
+      <div class="w-32 h-10">
+        <img 
+          src={logoUrl} 
+          alt="Active Away Logo" 
+          class="w-full h-full object-contain" 
+        />
+      </div>
+      <button 
+        type="button" 
+        class="p-2 rounded-full hover:bg-gray-100 transition-colors"
+        onclick="closeMobileMenu()"
+        aria-label="Close menu"
+      >
+        <svg class="w-6 h-6 text-gray-600" viewBox="0 0 24 24" fill="none">
+          <path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Menu Items - Scrollable with Expandable Sections -->
+    <nav class="flex-1 overflow-y-auto px-4 py-3">
+      <div class="space-y-1">
+        {menuItems.map((item) => {
+          if (!item.hasMegaMenu) {
+            // Simple menu item without mega menu
+            return (
+              <a 
+                href={item.href} 
+                onclick="closeMobileMenu()" 
+                class={`group flex items-center justify-between py-4 px-4 rounded-xl hover:bg-gray-50 transition-all duration-200 ${item.isActive ? 'bg-gold/5' : ''}`}
+              >
+                <span class={`text-lg font-semibold ${item.isActive ? 'text-gold-700' : 'text-gray-900'} group-hover:text-gold-700 transition-colors`}>
+                  {item.label}
+                </span>
+                <svg class="w-5 h-5 text-gray-400 group-hover:text-gold-700 group-hover:translate-x-1 transition-all duration-200" viewBox="0 0 24 24" fill="none">
+                  <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </a>
+            );
+          } else {
+            // Expandable menu item with mega menu content
+            return (
+              <div class="border border-gray-200 rounded-xl overflow-hidden">
+                <button
+                  type="button"
+                  class="mobile-menu-toggle w-full flex items-center justify-between py-4 px-4 hover:bg-gray-50 transition-all duration-200"
+                  onclick={`toggleMobileSubmenu('${item.megaMenuId}')`}
+                >
+                  <span class="text-lg font-semibold text-gray-900">{item.label}</span>
+                  <svg class="mobile-chevron w-5 h-5 text-gray-400 transition-transform duration-200" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div id={`mobile-submenu-${item.megaMenuId}`} class="hidden bg-gray-50 px-4 pb-4">
+                  {item.megaMenuId === 'dates' && (
+                    <div class="space-y-4 pt-3">
+                      <div>
+                        <h4 class="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2 px-2">Find your next...</h4>
+                        <div class="space-y-1">
+                          {datesMenuData.findYourNext.map((link) => (
+                            <a href={link.href} onclick="closeMobileMenu()" class="block py-2 px-3 text-sm text-gray-700 hover:text-gold-700 hover:bg-white rounded-lg transition-colors">
+                              {link.name}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <h4 class="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2 px-2">Useful Links</h4>
+                        <div class="space-y-1">
+                          {datesMenuData.usefulLinks.map((link) => (
+                            <a href={link.href} onclick="closeMobileMenu()" class="block py-2 px-3 text-sm text-gray-700 hover:text-gold-700 hover:bg-white rounded-lg transition-colors">
+                              {link.name}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {item.megaMenuId === 'rackets' && (
+                    <div class="grid grid-cols-2 gap-2 pt-3">
+                      {racketsMegaMenuItems.map((rItem) => (
+                        <a href={rItem.href} onclick="closeMobileMenu()" class="block">
+                          <div class={`relative overflow-hidden rounded-lg h-24 bg-gradient-to-br ${rItem.gradient}`}>
+                            {rItem.image && rItem.image.url && (
+                              <img src={rItem.image.url} alt={rItem.image.alt || rItem.title} class="w-full h-full object-cover" />
+                            )}
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+                            <div class="absolute bottom-1.5 left-1.5 text-white">
+                              <h5 class="font-semibold text-xs leading-tight">{rItem.title}</h5>
+                            </div>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                  {item.megaMenuId === 'about' && (
+                    <div class="space-y-2 pt-3">
+                      {aboutMegaMenuItems.map((aItem) => (
+                        <a href={aItem.href} onclick="closeMobileMenu()" class="block p-3 rounded-lg hover:bg-white transition-colors">
+                          <h5 class="font-semibold text-sm text-gray-900 mb-1">{aItem.title}</h5>
+                          <p class="text-xs text-gray-600">{aItem.description}</p>
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                  {item.megaMenuId === 'destinations' && (
+                    <div class="space-y-3 pt-3">
+                      {destinationsCategories.map((category, categoryIndex) => (
+                        <div>
+                          <h4 class="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2 px-2">{category.label}</h4>
+                          <div class="space-y-1">
+                            {category.destinations.slice(0, 5).map((dest) => (
+                              <a href={dest.href} onclick="closeMobileMenu()" class="block py-2 px-3 text-sm text-gray-700 hover:text-gold-700 hover:bg-white rounded-lg transition-colors">
+                                {dest.name}
+                              </a>
+                            ))}
+                            {category.destinations.length > 5 && (
+                              <>
+                                <div id={`mobile-dest-hidden-${categoryIndex}`} class="hidden space-y-1">
+                                  {category.destinations.slice(5).map((dest) => (
+                                    <a href={dest.href} onclick="closeMobileMenu()" class="block py-2 px-3 text-sm text-gray-700 hover:text-gold-700 hover:bg-white rounded-lg transition-colors">
+                                      {dest.name}
+                                    </a>
+                                  ))}
+                                </div>
+                                <button 
+                                  type="button"
+                                  onclick={`toggleDestinationCategory(${categoryIndex})`}
+                                  class="mobile-dest-toggle w-full py-2 px-3 text-sm text-gold-700 font-medium hover:bg-white rounded-lg transition-colors text-left flex items-center justify-between"
+                                  data-category={categoryIndex}
+                                >
+                                  <span class="toggle-text">Show more</span>
+                                  <svg class="toggle-chevron w-4 h-4 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                  </svg>
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          }
+        })}
+      </div>
+    </nav>
+
+    <!-- Action Buttons - Fixed at Bottom -->
+    <div class="p-4 bg-gray-50 border-t border-gray-200 space-y-2">
+      <button class="w-full py-3.5 rounded-full bg-white border-2 border-gray-300 text-gray-900 font-semibold text-base hover:bg-gray-50 transition-all duration-200 shadow-sm">
+        Login
+      </button>
+      <button class="w-full py-3.5 rounded-full bg-gold text-white font-semibold text-base hover:bg-gold-700 transition-all duration-200 shadow-lg">
+        Book Now
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+</style>
+

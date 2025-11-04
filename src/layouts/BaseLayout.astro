@@ -13,6 +13,10 @@ import '@fontsource/playfair-display/700.css';
 import '@fontsource/playfair-display/800.css';
 import '@fontsource/playfair-display/900.css';
 
+// Import global navigation and footer
+import NavigationHeader from '../components/NavigationHeader.astro';
+import FooterTailwind from '../components/FooterTailwind.astro';
+
 export interface Props {
   title: string;
   description?: string;
@@ -162,7 +166,11 @@ const ogImageHeight = metaImageHeight || 630;
     </style>
   </head>
   <body class="font-sans bg-white text-gray-900 antialiased">
-    <slot />
+    <div class="relative">
+      <NavigationHeader />
+      <slot />
+    </div>
+    <FooterTailwind />
   </body>
 </html>
 

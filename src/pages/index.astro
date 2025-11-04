@@ -18,7 +18,6 @@ import OurBlogTailwind from '../components/OurBlogTailwind.astro';
 import InstagramTailwind from '../components/InstagramTailwind.astro';
 import GalleryTailwind from '../components/GalleryTailwind.astro';
 import HolidayExpertsTailwind from '../components/HolidayExpertsTailwind.astro';
-import FooterTailwind from '../components/FooterTailwind.astro';
 import { getHomeData, getHomePage, getHomeSEO } from '../utils/strapi.js';
 
 // 🚀 SINGLE API CALL - Fetch all homepage data once
@@ -129,5 +128,4 @@ const canonicalURL = seoData?.canonicalURL || "https://activeaway.com/";
   <OurBlogTailwind />
   <InstagramTailwind homeData={homeData} />
   <HolidayExpertsTailwind homeData={homeData} />
-  <FooterTailwind />
 </BaseLayout>
