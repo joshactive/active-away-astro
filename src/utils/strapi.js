@@ -406,6 +406,99 @@ export async function getUpcomingEvents() {
 }
 
 /**
+ * Fetch events by uniqueValue
+ * @param {string} uniqueValue - The unique value to filter events by
+ * @returns {Promise<Array>} Array of formatted event data matching the uniqueValue
+ */
+export async function getEventsByUniqueValue(uniqueValue) {
+  try {
+    if (!uniqueValue) {
+      console.warn('⚠️ No uniqueValue provided to getEventsByUniqueValue');
+      return [];
+    }
+
+    // Get today's date at midnight to ensure we only get future events
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayISO = today.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    
+    // Filter by uniqueValue AND dateUntil >= today (event hasn't ended yet)
+    const endpoint = `/events?filters[uniqueValue][$eq]=${encodeURIComponent(uniqueValue)}&filters[dateUntil][$gte]=${todayISO}&populate=*&sort=dateFrom:asc&pagination[pageSize]=100`;
+    
+    console.log(`🔍 Fetching future events for uniqueValue: "${uniqueValue}" (dateUntil >= ${todayISO})`);
+    const data = await fetchAPI(endpoint);
+    
+    if (!data || !data.data || data.data.length === 0) {
+      console.log(`ℹ️ No future events found for uniqueValue: "${uniqueValue}"`);
+      return [];
+    }
+    
+    console.log(`✅ Found ${data.data.length} future event(s) for uniqueValue: "${uniqueValue}"`);
+    
+    // Map the data to the format expected by the frontend
+    const events = data.data.map((item, index) => {
+      const event = item.attributes || item;
+      
+      // Format dates as "Sat 16 May - Sat 23 May 2026"
+      let formattedDate = '';
+      if (event.dateFrom && event.dateUntil) {
+        const fromDate = new Date(event.dateFrom);
+        const untilDate = new Date(event.dateUntil);
+        
+        const dayFrom = fromDate.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit' });
+        const monthFrom = fromDate.toLocaleDateString('en-GB', { month: 'short' });
+        const dayUntil = untilDate.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit' });
+        const monthUntil = untilDate.toLocaleDateString('en-GB', { month: 'short' });
+        const year = untilDate.toLocaleDateString('en-GB', { year: 'numeric' });
+        
+        if (monthFrom === monthUntil) {
+          formattedDate = `${dayFrom} ${monthFrom} - ${dayUntil} ${monthUntil} ${year}`;
+        } else {
+          formattedDate = `${dayFrom} ${monthFrom} - ${dayUntil} ${monthUntil} ${year}`;
+        }
+      }
+      
+      // Determine status badge
+      let statusBadge = 'AVAILABLE';
+      let statusClass = 'bg-[#ad986c]/10 text-[#ad986c]';
+      
+      if (event.isSoldOut) {
+        statusBadge = 'SOLD OUT';
+        statusClass = 'bg-red-50 text-red-700';
+      } else if (event.featured) {
+        statusBadge = 'FEATURED';
+        statusClass = 'bg-green-50 text-green-700';
+      }
+      
+      return {
+        id: item.id || index + 1,
+        documentId: item.documentId,
+        title: event.title || formattedDate,
+        dateText: event.dateText || formattedDate,
+        dateFrom: event.dateFrom,
+        dateUntil: event.dateUntil,
+        price: event.price || null,
+        singleOccupancyPrice: event.singleOccupancyPriceEvent || null,
+        bookingLink: event.bookingLink || '#',
+        buttonText: event.buttonText || 'Book Now',
+        buttonColour: event.buttonColour || '#ad986c',
+        isSoldOut: event.isSoldOut || false,
+        statusBadge: statusBadge,
+        statusClass: statusClass,
+        product: event.product || '',
+        uniqueValue: event.uniqueValue || ''
+      };
+    });
+    
+    return events;
+    
+  } catch (error) {
+    console.error(`❌ Error fetching events by uniqueValue "${uniqueValue}":`, error);
+    return [];
+  }
+}
+
+/**
  * Fetch all products (for "What Do We Offer" section)
  * @returns {Promise<Array>} Array of formatted product data
  */
@@ -1545,7 +1638,10 @@ function normalizeVenueData(item, holidayType) {
     createdAt: venue.createdAt || item.createdAt || new Date().toISOString(),
     // Additional useful fields
     description: venue.description || venue.blogExcerpt || '',
-    location: venue.location || venue.country || ''
+    location: venue.location || venue.country || '',
+    displayOnFrontEnd: venue.displayOnFrontEnd !== undefined ? venue.displayOnFrontEnd : true,
+    ordering: venue.ordering || 0,
+    featured: venue.featured || false
   };
 }
 
