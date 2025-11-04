@@ -1745,23 +1745,70 @@ try {
         roomsCarousel.style.transform = `translateX(-${offset}px)`;
         
         roomCards.forEach((card, index) => {
-          if (currentRoomSlide > 0 && index === 0) {
+          const cardInner = card.querySelector('.bg-white');
+          
+          // Calculate which cards should be visible
+          // Show cards: currentSlide, currentSlide + 1, currentSlide + 2 (preview with overlay)
+          if (index < currentRoomSlide) {
+            // Cards before current - completely hidden
+            card.style.visibility = 'hidden';
             card.style.opacity = '0';
-          } else {
+            if (cardInner) {
+              const overlay = cardInner.querySelector('.room-overlay');
+              if (overlay) overlay.remove();
+            }
+          } else if (index === currentRoomSlide || index === currentRoomSlide + 1) {
+            // Current and next card - fully visible, no overlay
+            card.style.visibility = 'visible';
             card.style.opacity = '1';
+            if (cardInner) {
+              const overlay = cardInner.querySelector('.room-overlay');
+              if (overlay) overlay.remove();
+            }
+          } else if (index === currentRoomSlide + 2) {
+            // Preview card (3rd visible) - show with white overlay
+            card.style.visibility = 'visible';
+            card.style.opacity = '1';
+            if (cardInner) {
+              let overlay = cardInner.querySelector('.room-overlay');
+              if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.className = 'room-overlay absolute inset-0 bg-white/70 pointer-events-none z-10 rounded-2xl';
+                cardInner.style.position = 'relative';
+                cardInner.appendChild(overlay);
+              }
+            }
+          } else {
+            // Cards after preview - hidden
+            card.style.visibility = 'hidden';
+            card.style.opacity = '0';
+            if (cardInner) {
+              const overlay = cardInner.querySelector('.room-overlay');
+              if (overlay) overlay.remove();
+            }
           }
         });
       } else {
         roomsCarousel.style.transform = 'translateX(0)';
-        roomCards.forEach(card => card.style.opacity = '1');
+        roomCards.forEach(card => {
+          card.style.visibility = 'visible';
+          card.style.opacity = '1';
+          const cardInner = card.querySelector('.bg-white');
+          if (cardInner) {
+            const overlay = cardInner.querySelector('.room-overlay');
+            if (overlay) overlay.remove();
+          }
+        });
       }
       
       if (prevRoomBtn) {
         prevRoomBtn.style.opacity = currentRoomSlide === 0 ? '0.3' : '1';
+        prevRoomBtn.style.pointerEvents = currentRoomSlide === 0 ? 'none' : 'auto';
       }
       if (nextRoomBtn) {
-        const maxSlide = roomCards.length - (isDesktop ? 2 : 1);
+        const maxSlide = roomCards.length - 2; // Stop when only 2 cards left
         nextRoomBtn.style.opacity = currentRoomSlide >= maxSlide ? '0.3' : '1';
+        nextRoomBtn.style.pointerEvents = currentRoomSlide >= maxSlide ? 'none' : 'auto';
       }
     };
 
