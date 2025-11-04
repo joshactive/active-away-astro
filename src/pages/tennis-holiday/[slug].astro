@@ -490,7 +490,7 @@ try {
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    View gallery
+                    View gallery ({holidayData.mainGallery.length})
                   </div>
                 </div>
               </button>
@@ -498,36 +498,72 @@ try {
           })()}
         </div>
         
-        <!-- Right Image - Extends to Right Edge -->
-        {holidayData.mainGallery[2] && (() => {
-          const imgAttrs = getStrapiImageAttrs(holidayData.mainGallery[2], {
-            displayWidth: 300,
-            displayHeight: 450,
-            fit: 'cover',
-            quality: 70,
-            sizes: '15vw'
-          });
-          
-          return (
-            <button
-              type="button"
-              class="gallery-image hidden lg:block w-[15vw] relative overflow-hidden bg-gray-100 group cursor-pointer flex-shrink-0"
-              data-index="2"
-            >
-              <img 
-                src={imgAttrs?.src || holidayData.mainGallery[2].url}
-                srcset={imgAttrs?.srcset}
-                sizes={imgAttrs?.sizes}
-                alt={imgAttrs?.alt || holidayData.mainGallery[2].alt || 'Gallery image'}
-                width={imgAttrs?.width}
-                height={imgAttrs?.height}
-                class="w-full h-full min-h-[600px] object-cover group-hover:scale-105 transition-transform duration-500"
-                loading="lazy"
-              />
-              <div class="absolute inset-0 bg-white/40 group-hover:bg-white/20 transition-all duration-300"></div>
-            </button>
-          );
-        })()}
+        <!-- Right Images - Horizontal Scroll -->
+        <div class="hidden lg:block w-[15vw] relative overflow-x-auto overflow-y-hidden scrollbar-hide flex-shrink-0">
+          <div class="flex gap-3 h-full min-h-[600px]">
+            {/* First right image (mainGallery[2]) */}
+            {holidayData.mainGallery[2] && (() => {
+              const imgAttrs = getStrapiImageAttrs(holidayData.mainGallery[2], {
+                displayWidth: 300,
+                displayHeight: 450,
+                fit: 'cover',
+                quality: 70,
+                sizes: '15vw'
+              });
+              
+              return (
+                <button
+                  type="button"
+                  class="gallery-image w-[15vw] relative overflow-hidden bg-gray-100 group cursor-pointer flex-shrink-0"
+                  data-index="2"
+                >
+                  <img 
+                    src={imgAttrs?.src || holidayData.mainGallery[2].url}
+                    srcset={imgAttrs?.srcset}
+                    sizes={imgAttrs?.sizes}
+                    alt={imgAttrs?.alt || holidayData.mainGallery[2].alt || 'Gallery image'}
+                    width={imgAttrs?.width}
+                    height={imgAttrs?.height}
+                    class="w-full h-full min-h-[600px] object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
+                  <div class="absolute inset-0 bg-white/40 group-hover:bg-white/20 transition-all duration-300"></div>
+                </button>
+              );
+            })()}
+            
+            {/* Additional images (mainGallery[3] onwards) */}
+            {holidayData.mainGallery.slice(3).map((image, index) => {
+              const imgAttrs = getStrapiImageAttrs(image, {
+                displayWidth: 300,
+                displayHeight: 450,
+                fit: 'cover',
+                quality: 70,
+                sizes: '15vw'
+              });
+              
+              return (
+                <button
+                  type="button"
+                  class="gallery-image w-[15vw] relative overflow-hidden bg-gray-100 group cursor-pointer flex-shrink-0"
+                  data-index={index + 3}
+                >
+                  <img 
+                    src={imgAttrs?.src || image.url}
+                    srcset={imgAttrs?.srcset}
+                    sizes={imgAttrs?.sizes}
+                    alt={imgAttrs?.alt || image.alt || `Gallery image ${index + 4}`}
+                    width={imgAttrs?.width}
+                    height={imgAttrs?.height}
+                    class="w-full h-full min-h-[600px] object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
+                  <div class="absolute inset-0 bg-white/40 group-hover:bg-white/20 transition-all duration-300"></div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </section>
   )}
