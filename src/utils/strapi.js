@@ -1954,6 +1954,12 @@ function transformTennisHolidayDetail(item) {
     airportTransfer: holiday.airportTransfer,
     padelCourtsInfo: holiday.padelCourtsInfo,
     
+    // Padel-specific fields
+    numberOfPadelCourts: holiday.numberOfPadelCourts,
+    padelCourtSurface: holiday.padelCourtSurface,
+    distanceFromAirport: holiday.distanceFromAirport,
+    singleOccupancy: holiday.singleOccupancy,
+    
     // Additional info
     cafeInformation: holiday.cafeInformation,
     carParkingInformation: holiday.carParkingInformation,
@@ -2240,6 +2246,212 @@ export async function getTennisHolidayById(identifier) {
     return null;
   } catch (error) {
     console.error(`❌ Error fetching tennis holiday by id (${numericId}):`, error);
+    return null;
+  }
+}
+
+/**
+ * PADEL HOLIDAY FUNCTIONS
+ * These follow the same pattern as tennis holidays but query the padel-tennis-holidays endpoint
+ */
+
+/**
+ * SEPARATE API CALL: Fetch nested data for padel holiday (rooms.roomGallery, tripImages)
+ * @param {string} slug - Padel holiday slug
+ * @returns {Promise<Object|null>} Object with rooms and tripImages, or null
+ */
+export async function getPadelHolidayNestedData(slug) {
+  if (!slug) {
+    console.warn('No slug provided to getPadelHolidayNestedData');
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/padel-tennis-holidays?filters[slug][$eq]=${encodeURIComponent(slug)}&populate[rooms][populate]=*&populate=tripImages`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const item = data.data[0];
+      const holiday = item.attributes || item;
+      
+      const rooms = [];
+      const roomsSource = normalizeComponentArray(holiday.rooms);
+      roomsSource.forEach(room => {
+        const roomGallery = room.roomGallery ? getStrapiImagesData(room.roomGallery) : [];
+        
+        rooms.push({
+          id: room.id,
+          roomTitle: room.roomTitle,
+          roomSize: room.roomSize,
+          roomBedConfig: room.roomBedConfig,
+          roomText: room.roomText,
+          roomGallery: roomGallery
+        });
+      });
+      
+      const tripImages = holiday.tripImages ? getStrapiImagesData(holiday.tripImages) : [];
+      
+      console.log(`🏨 Nested data fetched for padel ${slug}: ${rooms.length} rooms, ${tripImages.length} trip images`);
+      
+      return {
+        rooms,
+        tripImages
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching nested data for padel holiday (${slug}):`, error);
+    return null;
+  }
+}
+
+/**
+ * SEPARATE API CALL: Fetch SEO data with metaImage for padel holiday
+ * @param {string} slug - Padel holiday slug
+ * @returns {Promise<Object|null>} SEO data object or null
+ */
+export async function getPadelHolidaySEO(slug) {
+  if (!slug) {
+    console.warn('No slug provided to getPadelHolidaySEO');
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/padel-tennis-holidays?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=seo.metaImage`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const item = data.data[0];
+      const holiday = item.attributes || item;
+      
+      if (holiday.seo) {
+        const seo = holiday.seo;
+        const metaImageData = seo.metaImage ? getStrapiImageData(seo.metaImage) : null;
+        
+        const seoData = {
+          metaTitle: seo.metaTitle || null,
+          metaDescription: seo.metaDescription || null,
+          metaImage: metaImageData?.url || null,
+          metaImageAlt: metaImageData?.alt || null,
+          keywords: seo.keywords || null,
+          canonicalURL: seo.canonicalURL || null
+        };
+        
+        console.log(`📄 SEO data fetched for padel ${slug}:`, {
+          hasMetaImage: !!seoData.metaImage,
+          metaTitle: seoData.metaTitle
+        });
+        
+        return seoData;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching SEO data for padel holiday (${slug}):`, error);
+    return null;
+  }
+}
+
+async function resolvePadelHolidayFallback(identifiers = {}) {
+  const { documentId, id } = identifiers || {};
+
+  if (documentId) {
+    console.log(`🏸 Attempting fallback lookup by documentId: ${documentId}`);
+    const byDocumentId = await getPadelHolidayByDocumentId(documentId);
+    if (byDocumentId) {
+      return byDocumentId;
+    }
+  }
+
+  if (id !== undefined && id !== null) {
+    const numericId = typeof id === 'string' ? Number(id) : id;
+    if (!Number.isNaN(numericId)) {
+      console.log(`🏸 Attempting fallback lookup by id: ${numericId}`);
+      const byId = await getPadelHolidayById(numericId);
+      if (byId) {
+        return byId;
+      }
+    } else {
+      console.warn(`⚠️ Provided fallback padel holiday id is not numeric: ${id}`);
+    }
+  }
+
+  return null;
+}
+
+export async function getPadelHolidayBySlug(slug, fallbackIdentifiers) {
+  const identifiers = typeof fallbackIdentifiers === 'object' && fallbackIdentifiers !== null
+    ? fallbackIdentifiers
+    : { id: fallbackIdentifiers };
+
+  if (!slug) {
+    console.warn('No slug provided to getPadelHolidayBySlug');
+    return await resolvePadelHolidayFallback(identifiers);
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/padel-tennis-holidays?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=*`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const transformed = transformTennisHolidayDetail(data.data[0]);
+      if (transformed) {
+        console.log(`🏸 Padel holiday fetched (slug=${slug}): ${transformed.title}`);
+        console.log(`📸 Gallery images found: ${transformed.mainGallery?.length || 0}`);
+      }
+      return transformed;
+    }
+
+  } catch (error) {
+    console.error(`❌ Error fetching padel holiday by slug (${slug}):`, error);
+  }
+
+  return await resolvePadelHolidayFallback(identifiers);
+}
+
+export async function getPadelHolidayByDocumentId(documentId) {
+  if (!documentId) {
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(`/padel-tennis-holidays?filters[documentId][$eq]=${encodeURIComponent(documentId)}&populate=*`);
+    
+    if (data && data.data && data.data.length > 0) {
+      return transformTennisHolidayDetail(data.data[0]);
+    }
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching padel holiday by documentId (${documentId}):`, error);
+    return null;
+  }
+}
+
+export async function getPadelHolidayById(identifier) {
+  if (identifier === undefined || identifier === null) {
+    return null;
+  }
+
+  const numericId = typeof identifier === 'string' ? Number(identifier) : identifier;
+  if (Number.isNaN(numericId)) {
+    console.warn(`Cannot fetch padel holiday by id, identifier is not numeric: ${identifier}`);
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(`/padel-tennis-holidays?filters[id][$eq]=${numericId}&populate=*`);
+    
+    if (data && data.data && data.data.length > 0) {
+      return transformTennisHolidayDetail(data.data[0]);
+    }
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching padel holiday by id (${numericId}):`, error);
     return null;
   }
 }

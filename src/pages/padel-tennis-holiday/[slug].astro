@@ -1,15 +1,15 @@
 ---
-// Dynamic route for individual tennis holidays
+// Dynamic route for individual padel holidays
 export const prerender = true;
 
 import HolidayDetail from '../../components/HolidayDetail.astro';
-import { getTennisHolidays, getTennisHolidayBySlug, getTennisHolidayNestedData, getTennisHolidaySEO, getEventsByUniqueValue } from '../../utils/strapi.js';
+import { getPadelTennisHolidays, getPadelHolidayBySlug, getPadelHolidayNestedData, getPadelHolidaySEO, getEventsByUniqueValue } from '../../utils/strapi.js';
 
-// Generate static paths for all tennis holidays
+// Generate static paths for all padel holidays
 export async function getStaticPaths() {
-  const tennisHolidays = await getTennisHolidays(1, 100);
+  const padelHolidays = await getPadelTennisHolidays(1, 100);
   
-  return tennisHolidays.map((holiday) => ({
+  return padelHolidays.map((holiday) => ({
     params: { slug: holiday.slug },
     props: { 
       slug: holiday.slug,
@@ -22,19 +22,19 @@ export async function getStaticPaths() {
 const { slug } = Astro.params;
 const { id, documentId } = Astro.props;
 const fallbackIdentifiers = { id, documentId };
-console.log(`🎾 [${slug}] Static props identifiers:`, fallbackIdentifiers);
+console.log(`🏸 [${slug}] Static props identifiers:`, fallbackIdentifiers);
 
-// Fetch the specific tennis holiday data
+// Fetch the specific padel holiday data
 let holidayData = null;
 try {
-  holidayData = await getTennisHolidayBySlug(slug, fallbackIdentifiers);
+  holidayData = await getPadelHolidayBySlug(slug, fallbackIdentifiers);
   if (holidayData) {
-    console.log(`🎾 [${slug}] Tennis holiday data fetched successfully`);
+    console.log(`🏸 [${slug}] Padel holiday data fetched successfully`);
   } else {
-    console.warn(`🎾 [${slug}] Tennis holiday data not found after lookup`);
+    console.warn(`🏸 [${slug}] Padel holiday data not found after lookup`);
   }
 } catch (error) {
-  console.error(`[${slug}] Error fetching tennis holiday:`, error.message);
+  console.error(`[${slug}] Error fetching padel holiday:`, error.message);
 }
 
 // If no data found, show 404
@@ -43,11 +43,9 @@ if (!holidayData) {
 }
 
 // SEPARATE API CALL: Fetch nested data (rooms.roomGallery, tripImages)
-// This is required for Strapi v5's nested population
 try {
-  const nestedData = await getTennisHolidayNestedData(slug);
+  const nestedData = await getPadelHolidayNestedData(slug);
   if (nestedData) {
-    // Merge nested data into holidayData
     if (nestedData.rooms && nestedData.rooms.length > 0) {
       holidayData.rooms = nestedData.rooms;
     }
@@ -61,11 +59,9 @@ try {
 }
 
 // SEPARATE API CALL: Fetch SEO data with metaImage
-// This is required for Strapi v5's nested population of seo.metaImage
 try {
-  const seoData = await getTennisHolidaySEO(slug);
+  const seoData = await getPadelHolidaySEO(slug);
   if (seoData) {
-    // Merge SEO data into holidayData
     holidayData.seo = seoData;
     console.log(`📄 [${slug}] SEO data merged: ${seoData.metaTitle || 'No title'}, metaImage: ${seoData.metaImage ? 'Yes' : 'No'}`);
   }
@@ -73,10 +69,10 @@ try {
   console.error(`[${slug}] Error fetching SEO data:`, error.message);
 }
 
-// Fetch random other tennis destinations (excluding current one)
+// Fetch random other padel destinations (excluding current one)
 let similarHolidays = [];
 try {
-  const allHolidays = await getTennisHolidays(1, 50);
+  const allHolidays = await getPadelTennisHolidays(1, 50);
   
   // Filter: exclude current holiday AND only show those with displayOnFrontEnd = true
   const otherHolidays = allHolidays.filter(h => 
@@ -91,31 +87,32 @@ try {
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     similarHolidays = shuffled.slice(0, 3);
-    console.log(`🎲 Selected ${similarHolidays.length} random tennis destinations from ${otherHolidays.length} available`);
+    console.log(`🎲 Selected ${similarHolidays.length} random padel destinations from ${otherHolidays.length} available`);
   }
 } catch (error) {
-  console.error('Error fetching other tennis destinations:', error);
+  console.error('Error fetching other padel destinations:', error);
 }
 
-// Fetch events matching this tennis holiday's uniqueValue
+// Fetch events matching this padel holiday's uniqueValue
 let matchingEvents = [];
 try {
   if (holidayData.uniqueValue) {
-    console.log(`🎾 Fetching events for tennis holiday uniqueValue: "${holidayData.uniqueValue}"`);
+    console.log(`🏸 Fetching events for padel holiday uniqueValue: "${holidayData.uniqueValue}"`);
     matchingEvents = await getEventsByUniqueValue(holidayData.uniqueValue);
-    console.log(`🎾 Found ${matchingEvents.length} matching event(s)`);
+    console.log(`🏸 Found ${matchingEvents.length} matching event(s)`);
   } else {
-    console.warn(`⚠️ Tennis holiday "${slug}" has no uniqueValue set`);
+    console.warn(`⚠️ Padel holiday "${slug}" has no uniqueValue set`);
   }
 } catch (error) {
-  console.error('Error fetching events for tennis holiday:', error);
+  console.error('Error fetching events for padel holiday:', error);
 }
 ---
 
 <HolidayDetail 
   holidayData={holidayData}
-  holidayType="tennis-holiday"
+  holidayType="padel-tennis-holiday"
   matchingEvents={matchingEvents}
   similarHolidays={similarHolidays}
   slug={slug}
 />
+
