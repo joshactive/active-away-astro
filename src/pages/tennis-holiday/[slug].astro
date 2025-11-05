@@ -3,7 +3,7 @@
 export const prerender = true;
 
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getTennisHolidays, getTennisHolidayBySlug, getTennisHolidayNestedData, getEventsByUniqueValue } from '../../utils/strapi.js';
+import { getTennisHolidays, getTennisHolidayBySlug, getTennisHolidayNestedData, getTennisHolidaySEO, getEventsByUniqueValue } from '../../utils/strapi.js';
 import { getStrapiImageAttrs } from '../../utils/cloudflareImages.js';
 import { marked } from 'marked';
 
@@ -66,6 +66,19 @@ try {
   }
 } catch (error) {
   console.error(`[${slug}] Error fetching nested data:`, error.message);
+}
+
+// SEPARATE API CALL: Fetch SEO data with metaImage
+// This is required for Strapi v5's nested population of seo.metaImage
+try {
+  const seoData = await getTennisHolidaySEO(slug);
+  if (seoData) {
+    // Merge SEO data into holidayData
+    holidayData.seo = seoData;
+    console.log(`📄 [${slug}] SEO data merged: ${seoData.metaTitle || 'No title'}, metaImage: ${seoData.metaImage ? 'Yes' : 'No'}`);
+  }
+} catch (error) {
+  console.error(`[${slug}] Error fetching SEO data:`, error.message);
 }
 
 // Extract data with fallbacks

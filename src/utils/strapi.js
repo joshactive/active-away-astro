@@ -2119,6 +2119,57 @@ export async function getTennisHolidayNestedData(slug) {
   }
 }
 
+/**
+ * SEPARATE API CALL: Fetch SEO data with metaImage for tennis holiday
+ * This is called separately to ensure proper population of nested SEO fields
+ * @param {string} slug - Tennis holiday slug
+ * @returns {Promise<Object|null>} SEO data object or null
+ */
+export async function getTennisHolidaySEO(slug) {
+  if (!slug) {
+    console.warn('No slug provided to getTennisHolidaySEO');
+    return null;
+  }
+
+  try {
+    // Explicitly populate seo.metaImage
+    const data = await fetchAPI(
+      `/tennis-holidays?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=seo.metaImage`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const item = data.data[0];
+      const holiday = item.attributes || item;
+      
+      if (holiday.seo) {
+        const seo = holiday.seo;
+        const metaImageData = seo.metaImage ? getStrapiImageData(seo.metaImage) : null;
+        
+        const seoData = {
+          metaTitle: seo.metaTitle || null,
+          metaDescription: seo.metaDescription || null,
+          metaImage: metaImageData?.url || null,
+          metaImageAlt: metaImageData?.alt || null,
+          keywords: seo.keywords || null,
+          canonicalURL: seo.canonicalURL || null
+        };
+        
+        console.log(`📄 SEO data fetched for ${slug}:`, {
+          hasMetaImage: !!seoData.metaImage,
+          metaTitle: seoData.metaTitle
+        });
+        
+        return seoData;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching SEO data for tennis holiday (${slug}):`, error);
+    return null;
+  }
+}
+
 export async function getTennisHolidayBySlug(slug, fallbackIdentifiers) {
   const identifiers = typeof fallbackIdentifiers === 'object' && fallbackIdentifiers !== null
     ? fallbackIdentifiers
