@@ -1,0 +1,115 @@
+---
+// Dynamic route for individual tennis clinics
+export const prerender = true;
+
+import HolidayDetail from '../../components/HolidayDetail.astro';
+import { getTennisClinics, getTennisClinicBySlug, getTennisClinicNestedData, getTennisClinicSEO, getEventsByUniqueValue } from '../../utils/strapi.js';
+
+// Generate static paths for all tennis clinics
+export async function getStaticPaths() {
+  const tennisClinics = await getTennisClinics(1, 100);
+  
+  return tennisClinics.map((clinic) => ({
+    params: { slug: clinic.slug },
+    props: { 
+      slug: clinic.slug,
+      id: clinic.strapiId,
+      documentId: clinic.documentId
+    }
+  }));
+}
+
+const { slug } = Astro.params;
+const { id, documentId } = Astro.props;
+const fallbackIdentifiers = { id, documentId };
+console.log(`🎾 [${slug}] Static props identifiers:`, fallbackIdentifiers);
+
+// Fetch the specific tennis clinic data
+let holidayData = null;
+try {
+  holidayData = await getTennisClinicBySlug(slug, fallbackIdentifiers);
+  if (holidayData) {
+    console.log(`🎾 [${slug}] Tennis clinic data fetched successfully`);
+  } else {
+    console.warn(`🎾 [${slug}] Tennis clinic data not found after lookup`);
+  }
+} catch (error) {
+  console.error(`[${slug}] Error fetching tennis clinic:`, error.message);
+}
+
+// If no data found, show 404
+if (!holidayData) {
+  return Astro.redirect('/404');
+}
+
+// SEPARATE API CALL: Fetch nested data (tripImages)
+try {
+  const nestedData = await getTennisClinicNestedData(slug);
+  if (nestedData) {
+    if (nestedData.tripImages && nestedData.tripImages.length > 0) {
+      holidayData.tripImages = nestedData.tripImages;
+    }
+    console.log(`🎾 [${slug}] Nested data merged: ${nestedData.tripImages?.length || 0} trip images`);
+  }
+} catch (error) {
+  console.error(`[${slug}] Error fetching nested data:`, error.message);
+}
+
+// SEPARATE API CALL: Fetch SEO data with metaImage
+try {
+  const seoData = await getTennisClinicSEO(slug);
+  if (seoData) {
+    holidayData.seo = seoData;
+    console.log(`📄 [${slug}] SEO data merged: ${seoData.metaTitle || 'No title'}, metaImage: ${seoData.metaImage ? 'Yes' : 'No'}`);
+  }
+} catch (error) {
+  console.error(`[${slug}] Error fetching SEO data:`, error.message);
+}
+
+// Fetch random other tennis clinic destinations (excluding current one)
+let similarHolidays = [];
+try {
+  const allClinics = await getTennisClinics(1, 50);
+  
+  // Filter: exclude current clinic AND only show those with displayOnFrontEnd = true
+  const otherClinics = allClinics.filter(c => 
+    c.slug !== slug && c.displayOnFrontEnd === true
+  );
+  
+  // Randomize and select 3 destinations
+  if (otherClinics.length > 0) {
+    const shuffled = [...otherClinics];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    similarHolidays = shuffled.slice(0, 3);
+    console.log(`🎲 Selected ${similarHolidays.length} random tennis clinics from ${otherClinics.length} available`);
+  }
+} catch (error) {
+  console.error('Error fetching other tennis clinics:', error);
+}
+
+// Fetch events matching this tennis clinic's uniqueValue
+let matchingEvents = [];
+try {
+  if (holidayData.uniqueValue) {
+    console.log(`🎾 Fetching events for tennis clinic uniqueValue: "${holidayData.uniqueValue}"`);
+    matchingEvents = await getEventsByUniqueValue(holidayData.uniqueValue);
+    console.log(`🎾 Found ${matchingEvents.length} matching event(s)`);
+  } else {
+    console.warn(`⚠️ Tennis clinic "${slug}" has no uniqueValue set`);
+  }
+} catch (error) {
+  console.error('Error fetching events for tennis clinic:', error);
+}
+---
+
+<HolidayDetail 
+  holidayData={holidayData}
+  holidayType="tennis-clinic"
+  matchingEvents={matchingEvents}
+  similarHolidays={similarHolidays}
+  slug={slug}
+/>
+

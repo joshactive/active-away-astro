@@ -2667,6 +2667,196 @@ export async function getPickleballHolidayById(identifier) {
 }
 
 /**
+ * TENNIS CLINIC FUNCTIONS
+ * These follow the same pattern as other holiday types but query the tennis-clinics endpoint
+ */
+
+/**
+ * SEPARATE API CALL: Fetch nested data for tennis clinic (tripImages)
+ * @param {string} slug - Tennis clinic slug
+ * @returns {Promise<Object|null>} Object with tripImages, or null
+ */
+export async function getTennisClinicNestedData(slug) {
+  if (!slug) {
+    console.warn('No slug provided to getTennisClinicNestedData');
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/tennis-clinics?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=tripImages`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const item = data.data[0];
+      const holiday = item.attributes || item;
+      
+      const tripImages = holiday.tripImages ? getStrapiImagesData(holiday.tripImages) : [];
+      
+      console.log(`🎾 Nested data fetched for tennis clinic ${slug}: ${tripImages.length} trip images`);
+      
+      return {
+        tripImages
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching nested data for tennis clinic (${slug}):`, error);
+    return null;
+  }
+}
+
+/**
+ * SEPARATE API CALL: Fetch SEO data with metaImage for tennis clinic
+ * @param {string} slug - Tennis clinic slug
+ * @returns {Promise<Object|null>} SEO data object or null
+ */
+export async function getTennisClinicSEO(slug) {
+  if (!slug) {
+    console.warn('No slug provided to getTennisClinicSEO');
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/tennis-clinics?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=seo.metaImage`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const item = data.data[0];
+      const holiday = item.attributes || item;
+      
+      if (holiday.seo) {
+        const seo = holiday.seo;
+        const metaImageData = seo.metaImage ? getStrapiImageData(seo.metaImage) : null;
+        
+        const seoData = {
+          metaTitle: seo.metaTitle || null,
+          metaDescription: seo.metaDescription || null,
+          metaImage: metaImageData?.url || null,
+          metaImageAlt: metaImageData?.alt || null,
+          keywords: seo.keywords || null,
+          canonicalURL: seo.canonicalURL || null
+        };
+        
+        console.log(`📄 SEO data fetched for tennis clinic ${slug}:`, {
+          hasMetaImage: !!seoData.metaImage,
+          metaTitle: seoData.metaTitle
+        });
+        
+        return seoData;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching SEO data for tennis clinic (${slug}):`, error);
+    return null;
+  }
+}
+
+async function resolveTennisClinicFallback(identifiers = {}) {
+  const { documentId, id } = identifiers || {};
+
+  if (documentId) {
+    console.log(`🎾 Attempting fallback lookup by documentId: ${documentId}`);
+    const byDocumentId = await getTennisClinicByDocumentId(documentId);
+    if (byDocumentId) {
+      return byDocumentId;
+    }
+  }
+
+  if (id !== undefined && id !== null) {
+    const numericId = typeof id === 'string' ? Number(id) : id;
+    if (!Number.isNaN(numericId)) {
+      console.log(`🎾 Attempting fallback lookup by id: ${numericId}`);
+      const byId = await getTennisClinicById(numericId);
+      if (byId) {
+        return byId;
+      }
+    } else {
+      console.warn(`⚠️ Provided fallback tennis clinic id is not numeric: ${id}`);
+    }
+  }
+
+  return null;
+}
+
+export async function getTennisClinicBySlug(slug, fallbackIdentifiers) {
+  const identifiers = typeof fallbackIdentifiers === 'object' && fallbackIdentifiers !== null
+    ? fallbackIdentifiers
+    : { id: fallbackIdentifiers };
+
+  if (!slug) {
+    console.warn('No slug provided to getTennisClinicBySlug');
+    return await resolveTennisClinicFallback(identifiers);
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/tennis-clinics?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=*`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const transformed = transformTennisHolidayDetail(data.data[0]);
+      if (transformed) {
+        console.log(`🎾 Tennis clinic fetched (slug=${slug}): ${transformed.title}`);
+        console.log(`📸 Gallery images found: ${transformed.mainGallery?.length || 0}`);
+      }
+      return transformed;
+    }
+
+  } catch (error) {
+    console.error(`❌ Error fetching tennis clinic by slug (${slug}):`, error);
+  }
+
+  return await resolveTennisClinicFallback(identifiers);
+}
+
+export async function getTennisClinicByDocumentId(documentId) {
+  if (!documentId) {
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(`/tennis-clinics?filters[documentId][$eq]=${encodeURIComponent(documentId)}&populate=*`);
+    
+    if (data && data.data && data.data.length > 0) {
+      return transformTennisHolidayDetail(data.data[0]);
+    }
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching tennis clinic by documentId (${documentId}):`, error);
+    return null;
+  }
+}
+
+export async function getTennisClinicById(identifier) {
+  if (identifier === undefined || identifier === null) {
+    return null;
+  }
+
+  const numericId = typeof identifier === 'string' ? Number(identifier) : identifier;
+  if (Number.isNaN(numericId)) {
+    console.warn(`Cannot fetch tennis clinic by id, identifier is not numeric: ${identifier}`);
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(`/tennis-clinics?filters[id][$eq]=${numericId}&populate=*`);
+    
+    if (data && data.data && data.data.length > 0) {
+      return transformTennisHolidayDetail(data.data[0]);
+    }
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching tennis clinic by id (${numericId}):`, error);
+    return null;
+  }
+}
+
+/**
  * Fetch all venues from all 8 collection types
  * @param {Object} options - Options object
  * @param {number} options.pageSize - Items per page (default: 18)
