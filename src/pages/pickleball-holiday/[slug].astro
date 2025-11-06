@@ -1,0 +1,118 @@
+---
+// Dynamic route for individual pickleball holidays
+export const prerender = true;
+
+import HolidayDetail from '../../components/HolidayDetail.astro';
+import { getPickleballHolidays, getPickleballHolidayBySlug, getPickleballHolidayNestedData, getPickleballHolidaySEO, getEventsByUniqueValue } from '../../utils/strapi.js';
+
+// Generate static paths for all pickleball holidays
+export async function getStaticPaths() {
+  const pickleballHolidays = await getPickleballHolidays(1, 100);
+  
+  return pickleballHolidays.map((holiday) => ({
+    params: { slug: holiday.slug },
+    props: { 
+      slug: holiday.slug,
+      id: holiday.strapiId,
+      documentId: holiday.documentId
+    }
+  }));
+}
+
+const { slug } = Astro.params;
+const { id, documentId } = Astro.props;
+const fallbackIdentifiers = { id, documentId };
+console.log(`🏓 [${slug}] Static props identifiers:`, fallbackIdentifiers);
+
+// Fetch the specific pickleball holiday data
+let holidayData = null;
+try {
+  holidayData = await getPickleballHolidayBySlug(slug, fallbackIdentifiers);
+  if (holidayData) {
+    console.log(`🏓 [${slug}] Pickleball holiday data fetched successfully`);
+  } else {
+    console.warn(`🏓 [${slug}] Pickleball holiday data not found after lookup`);
+  }
+} catch (error) {
+  console.error(`[${slug}] Error fetching pickleball holiday:`, error.message);
+}
+
+// If no data found, show 404
+if (!holidayData) {
+  return Astro.redirect('/404');
+}
+
+// SEPARATE API CALL: Fetch nested data (rooms.roomGallery, tripImages)
+try {
+  const nestedData = await getPickleballHolidayNestedData(slug);
+  if (nestedData) {
+    if (nestedData.rooms && nestedData.rooms.length > 0) {
+      holidayData.rooms = nestedData.rooms;
+    }
+    if (nestedData.tripImages && nestedData.tripImages.length > 0) {
+      holidayData.tripImages = nestedData.tripImages;
+    }
+    console.log(`🏨 [${slug}] Nested data merged: ${nestedData.rooms?.length || 0} rooms, ${nestedData.tripImages?.length || 0} trip images`);
+  }
+} catch (error) {
+  console.error(`[${slug}] Error fetching nested data:`, error.message);
+}
+
+// SEPARATE API CALL: Fetch SEO data with metaImage
+try {
+  const seoData = await getPickleballHolidaySEO(slug);
+  if (seoData) {
+    holidayData.seo = seoData;
+    console.log(`📄 [${slug}] SEO data merged: ${seoData.metaTitle || 'No title'}, metaImage: ${seoData.metaImage ? 'Yes' : 'No'}`);
+  }
+} catch (error) {
+  console.error(`[${slug}] Error fetching SEO data:`, error.message);
+}
+
+// Fetch random other pickleball destinations (excluding current one)
+let similarHolidays = [];
+try {
+  const allHolidays = await getPickleballHolidays(1, 50);
+  
+  // Filter: exclude current holiday AND only show those with displayOnFrontEnd = true
+  const otherHolidays = allHolidays.filter(h => 
+    h.slug !== slug && h.displayOnFrontEnd === true
+  );
+  
+  // Randomize and select 3 destinations
+  if (otherHolidays.length > 0) {
+    const shuffled = [...otherHolidays];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    similarHolidays = shuffled.slice(0, 3);
+    console.log(`🎲 Selected ${similarHolidays.length} random pickleball destinations from ${otherHolidays.length} available`);
+  }
+} catch (error) {
+  console.error('Error fetching other pickleball destinations:', error);
+}
+
+// Fetch events matching this pickleball holiday's uniqueValue
+let matchingEvents = [];
+try {
+  if (holidayData.uniqueValue) {
+    console.log(`🏓 Fetching events for pickleball holiday uniqueValue: "${holidayData.uniqueValue}"`);
+    matchingEvents = await getEventsByUniqueValue(holidayData.uniqueValue);
+    console.log(`🏓 Found ${matchingEvents.length} matching event(s)`);
+  } else {
+    console.warn(`⚠️ Pickleball holiday "${slug}" has no uniqueValue set`);
+  }
+} catch (error) {
+  console.error('Error fetching events for pickleball holiday:', error);
+}
+---
+
+<HolidayDetail 
+  holidayData={holidayData}
+  holidayType="pickleball-holiday"
+  matchingEvents={matchingEvents}
+  similarHolidays={similarHolidays}
+  slug={slug}
+/>
+

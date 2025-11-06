@@ -1960,6 +1960,10 @@ function transformTennisHolidayDetail(item) {
     distanceFromAirport: holiday.distanceFromAirport,
     singleOccupancy: holiday.singleOccupancy,
     
+    // Pickleball-specific fields
+    numberOfPickleballCourts: holiday.numberOfPickleballCourts,
+    pickleballCourtSurface: holiday.pickleballCourtSurface,
+    
     // Additional info
     cafeInformation: holiday.cafeInformation,
     carParkingInformation: holiday.carParkingInformation,
@@ -2452,6 +2456,212 @@ export async function getPadelHolidayById(identifier) {
     return null;
   } catch (error) {
     console.error(`❌ Error fetching padel holiday by id (${numericId}):`, error);
+    return null;
+  }
+}
+
+/**
+ * PICKLEBALL HOLIDAY FUNCTIONS
+ * These follow the same pattern as tennis/padel holidays but query the pickleball-holidays endpoint
+ */
+
+/**
+ * SEPARATE API CALL: Fetch nested data for pickleball holiday (rooms.roomGallery, tripImages)
+ * @param {string} slug - Pickleball holiday slug
+ * @returns {Promise<Object|null>} Object with rooms and tripImages, or null
+ */
+export async function getPickleballHolidayNestedData(slug) {
+  if (!slug) {
+    console.warn('No slug provided to getPickleballHolidayNestedData');
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/pickleball-holidays?filters[slug][$eq]=${encodeURIComponent(slug)}&populate[rooms][populate]=*&populate=tripImages`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const item = data.data[0];
+      const holiday = item.attributes || item;
+      
+      const rooms = [];
+      const roomsSource = normalizeComponentArray(holiday.rooms);
+      roomsSource.forEach(room => {
+        const roomGallery = room.roomGallery ? getStrapiImagesData(room.roomGallery) : [];
+        
+        rooms.push({
+          id: room.id,
+          roomTitle: room.roomTitle,
+          roomSize: room.roomSize,
+          roomBedConfig: room.roomBedConfig,
+          roomText: room.roomText,
+          roomGallery: roomGallery
+        });
+      });
+      
+      const tripImages = holiday.tripImages ? getStrapiImagesData(holiday.tripImages) : [];
+      
+      console.log(`🏨 Nested data fetched for pickleball ${slug}: ${rooms.length} rooms, ${tripImages.length} trip images`);
+      
+      return {
+        rooms,
+        tripImages
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching nested data for pickleball holiday (${slug}):`, error);
+    return null;
+  }
+}
+
+/**
+ * SEPARATE API CALL: Fetch SEO data with metaImage for pickleball holiday
+ * @param {string} slug - Pickleball holiday slug
+ * @returns {Promise<Object|null>} SEO data object or null
+ */
+export async function getPickleballHolidaySEO(slug) {
+  if (!slug) {
+    console.warn('No slug provided to getPickleballHolidaySEO');
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/pickleball-holidays?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=seo.metaImage`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const item = data.data[0];
+      const holiday = item.attributes || item;
+      
+      if (holiday.seo) {
+        const seo = holiday.seo;
+        const metaImageData = seo.metaImage ? getStrapiImageData(seo.metaImage) : null;
+        
+        const seoData = {
+          metaTitle: seo.metaTitle || null,
+          metaDescription: seo.metaDescription || null,
+          metaImage: metaImageData?.url || null,
+          metaImageAlt: metaImageData?.alt || null,
+          keywords: seo.keywords || null,
+          canonicalURL: seo.canonicalURL || null
+        };
+        
+        console.log(`📄 SEO data fetched for pickleball ${slug}:`, {
+          hasMetaImage: !!seoData.metaImage,
+          metaTitle: seoData.metaTitle
+        });
+        
+        return seoData;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching SEO data for pickleball holiday (${slug}):`, error);
+    return null;
+  }
+}
+
+async function resolvePickleballHolidayFallback(identifiers = {}) {
+  const { documentId, id } = identifiers || {};
+
+  if (documentId) {
+    console.log(`🏓 Attempting fallback lookup by documentId: ${documentId}`);
+    const byDocumentId = await getPickleballHolidayByDocumentId(documentId);
+    if (byDocumentId) {
+      return byDocumentId;
+    }
+  }
+
+  if (id !== undefined && id !== null) {
+    const numericId = typeof id === 'string' ? Number(id) : id;
+    if (!Number.isNaN(numericId)) {
+      console.log(`🏓 Attempting fallback lookup by id: ${numericId}`);
+      const byId = await getPickleballHolidayById(numericId);
+      if (byId) {
+        return byId;
+      }
+    } else {
+      console.warn(`⚠️ Provided fallback pickleball holiday id is not numeric: ${id}`);
+    }
+  }
+
+  return null;
+}
+
+export async function getPickleballHolidayBySlug(slug, fallbackIdentifiers) {
+  const identifiers = typeof fallbackIdentifiers === 'object' && fallbackIdentifiers !== null
+    ? fallbackIdentifiers
+    : { id: fallbackIdentifiers };
+
+  if (!slug) {
+    console.warn('No slug provided to getPickleballHolidayBySlug');
+    return await resolvePickleballHolidayFallback(identifiers);
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/pickleball-holidays?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=*`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const transformed = transformTennisHolidayDetail(data.data[0]);
+      if (transformed) {
+        console.log(`🏓 Pickleball holiday fetched (slug=${slug}): ${transformed.title}`);
+        console.log(`📸 Gallery images found: ${transformed.mainGallery?.length || 0}`);
+      }
+      return transformed;
+    }
+
+  } catch (error) {
+    console.error(`❌ Error fetching pickleball holiday by slug (${slug}):`, error);
+  }
+
+  return await resolvePickleballHolidayFallback(identifiers);
+}
+
+export async function getPickleballHolidayByDocumentId(documentId) {
+  if (!documentId) {
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(`/pickleball-holidays?filters[documentId][$eq]=${encodeURIComponent(documentId)}&populate=*`);
+    
+    if (data && data.data && data.data.length > 0) {
+      return transformTennisHolidayDetail(data.data[0]);
+    }
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching pickleball holiday by documentId (${documentId}):`, error);
+    return null;
+  }
+}
+
+export async function getPickleballHolidayById(identifier) {
+  if (identifier === undefined || identifier === null) {
+    return null;
+  }
+
+  const numericId = typeof identifier === 'string' ? Number(identifier) : identifier;
+  if (Number.isNaN(numericId)) {
+    console.warn(`Cannot fetch pickleball holiday by id, identifier is not numeric: ${identifier}`);
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(`/pickleball-holidays?filters[id][$eq]=${numericId}&populate=*`);
+    
+    if (data && data.data && data.data.length > 0) {
+      return transformTennisHolidayDetail(data.data[0]);
+    }
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching pickleball holiday by id (${numericId}):`, error);
     return null;
   }
 }

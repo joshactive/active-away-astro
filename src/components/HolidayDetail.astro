@@ -45,6 +45,10 @@ const sportLabel = holidayType === 'padel-tennis-holiday' ? 'Padel' :
                    
 const courtsLabel = `${sportLabel} Courts`;
 const sectionTitle = `The ${sportLabel}`;
+const breadcrumbLink = `/${holidayType}`;
+
+// Carousel slide count varies by sport
+const carouselSlideCount = holidayType === 'pickleball-holiday' ? 2 : 3;
 ---
 
 <BaseLayout 
@@ -136,7 +140,7 @@ const sectionTitle = `The ${sportLabel}`;
         <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
-        <a href="/venues" class="text-gray-600 hover:text-[#ad986c] transition-colors flex-shrink-0">{sportLabel} Holidays</a>
+        <a href={breadcrumbLink} class="text-gray-600 hover:text-[#ad986c] transition-colors flex-shrink-0">{sportLabel} Holidays</a>
         <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
@@ -203,7 +207,7 @@ const sectionTitle = `The ${sportLabel}`;
             {(holidayData.whyWeLoveVenue1 || holidayData.whyWeLoveVenue2 || holidayData.whyWeLoveVenue3 || holidayData.whyWeLoveVenue4) && (
               <div class="mt-8 bg-gray-50 border border-gray-200 rounded-xl p-6 sm:p-8">
                 <h2 class="text-2xl sm:text-3xl font-playfair font-semibold text-gray-900 mb-6">
-                  Why We Love {holidayType === 'padel-tennis-holiday' ? (holidayData.shortLocationName || holidayData.venue || holidayData.title) : (holidayData.venue || holidayData.title)}
+                  Why We Love {(holidayType === 'padel-tennis-holiday' || holidayType === 'pickleball-holiday') ? (holidayData.shortLocationName || holidayData.venue || holidayData.title) : (holidayData.venue || holidayData.title)}
                 </h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {[holidayData.whyWeLoveVenue1, holidayData.whyWeLoveVenue2, holidayData.whyWeLoveVenue3, holidayData.whyWeLoveVenue4].filter(Boolean).map((reason) => (
@@ -237,7 +241,7 @@ const sectionTitle = `The ${sportLabel}`;
                   </div>
                 )}
                 
-                {/* Courts - Different rendering for Tennis vs Padel */}
+                {/* Courts - Different rendering for Tennis vs Padel vs Pickleball */}
                 {holidayType === 'padel-tennis-holiday' ? (
                   (holidayData.numberOfPadelCourts || holidayData.padelCourtSurface) && (
                     <div class="flex items-start gap-3">
@@ -251,6 +255,23 @@ const sectionTitle = `The ${sportLabel}`;
                         <p class="text-sm font-medium text-gray-900 font-inter">{courtsLabel}</p>
                         <p class="text-sm text-gray-600 font-inter">
                           {holidayData.numberOfPadelCourts ? `${holidayData.numberOfPadelCourts} ` : ''}{holidayData.padelCourtSurface || ''}
+                        </p>
+                      </div>
+                    </div>
+                  )
+                ) : holidayType === 'pickleball-holiday' ? (
+                  (holidayData.numberOfPickleballCourts || holidayData.pickleballCourtSurface) && (
+                    <div class="flex items-start gap-3">
+                      <svg class="w-6 h-6 text-[#ad986c] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z"/>
+                        <path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z"/>
+                        <path d="M16 17h4"/>
+                        <path d="M4 13h4"/>
+                      </svg>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-900 font-inter">{courtsLabel}</p>
+                        <p class="text-sm text-gray-600 font-inter">
+                          {holidayData.numberOfPickleballCourts ? `${holidayData.numberOfPickleballCourts} ` : ''}{holidayData.pickleballCourtSurface || ''}
                         </p>
                       </div>
                     </div>
@@ -272,35 +293,19 @@ const sectionTitle = `The ${sportLabel}`;
                   )
                 )}
                 
-                {/* Board Basis - Padel uses boardBasis, Tennis uses boardBasisLg */}
-                {holidayType === 'padel-tennis-holiday' ? (
-                  holidayData.boardBasis && (
-                    <div class="flex items-start gap-3">
-                      <svg class="w-6 h-6 text-[#ad986c] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
-                        <path d="M7 2v20"/>
-                        <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>
-                      </svg>
-                      <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-gray-900 font-inter">Board Basis</p>
-                        <p class="text-sm text-gray-600 font-inter">{holidayData.boardBasis}</p>
-                      </div>
+                {/* Board Basis - Both use boardBasisLg for sidebar display */}
+                {holidayData.boardBasisLg && (
+                  <div class="flex items-start gap-3">
+                    <svg class="w-6 h-6 text-[#ad986c] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
+                      <path d="M7 2v20"/>
+                      <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>
+                    </svg>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-gray-900 font-inter">Board Basis</p>
+                      <p class="text-sm text-gray-600 font-inter">{holidayData.boardBasisLg}</p>
                     </div>
-                  )
-                ) : (
-                  holidayData.boardBasisLg && (
-                    <div class="flex items-start gap-3">
-                      <svg class="w-6 h-6 text-[#ad986c] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
-                        <path d="M7 2v20"/>
-                        <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>
-                      </svg>
-                      <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-gray-900 font-inter">Board Basis</p>
-                        <p class="text-sm text-gray-600 font-inter">{holidayData.boardBasisLg}</p>
-                      </div>
-                    </div>
-                  )
+                  </div>
                 )}
                 
                 {/* Pricing */}
@@ -319,8 +324,8 @@ const sectionTitle = `The ${sportLabel}`;
                   </div>
                 )}
                 
-                {/* Airport - Padel uses distanceFromAirport, Tennis uses airportTransfer */}
-                {holidayType === 'padel-tennis-holiday' ? (
+                {/* Airport - Padel and Pickleball use distanceFromAirport, Tennis uses airportTransfer */}
+                {(holidayType === 'padel-tennis-holiday' || holidayType === 'pickleball-holiday') ? (
                   holidayData.distanceFromAirport && (
                     <div class="flex items-start gap-3">
                       <svg class="w-6 h-6 text-[#ad986c] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -346,8 +351,8 @@ const sectionTitle = `The ${sportLabel}`;
                   )
                 )}
                 
-                {/* Single Occupancy - Padel uses singleOccupancy, Tennis uses singleOccupancyRange */}
-                {holidayType === 'padel-tennis-holiday' ? (
+                {/* Single Occupancy - Padel and Pickleball use singleOccupancy, Tennis uses singleOccupancyRange */}
+                {(holidayType === 'padel-tennis-holiday' || holidayType === 'pickleball-holiday') ? (
                   holidayData.singleOccupancy && (
                     <div class="flex items-start gap-3">
                       <svg class="w-6 h-6 text-[#ad986c] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -719,7 +724,7 @@ const sectionTitle = `The ${sportLabel}`;
                   </div>
                 </div>
               </>
-            ) : (
+            ) : holidayType === 'padel-tennis-holiday' ? (
               <>
                 <!-- Padel Slide 1: A Padel Holiday in Action -->
                 <div class="tennis-slide flex-shrink-0 w-[85%] sm:w-[90%] lg:w-[900px] snap-start relative">
@@ -809,7 +814,69 @@ const sectionTitle = `The ${sportLabel}`;
                   </div>
                 </div>
               </>
-            )}
+            ) : holidayType === 'pickleball-holiday' ? (
+              <>
+                <!-- Pickleball Slide 1: The Pickleball Experience -->
+                <div class="tennis-slide flex-shrink-0 w-[85%] sm:w-[90%] lg:w-[900px] snap-start relative">
+                  <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 h-full">
+                    <div class="aspect-video relative overflow-hidden bg-gray-100">
+                      <button 
+                        type="button"
+                        class="lite-youtube-tennis group"
+                        data-video-id="Htz6SiJx0mc"
+                        aria-label="Play The Pickleball Experience video"
+                      >
+                        <img 
+                          src="https://i.ytimg.com/vi/Htz6SiJx0mc/hqdefault.jpg"
+                          alt="The Pickleball Experience video"
+                          loading="lazy"
+                          decoding="async"
+                          class="absolute inset-0 w-full h-full object-cover"
+                        />
+                        <span class="lite-youtube__play"></span>
+                      </button>
+                    </div>
+                    <div class="px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6 lg:pb-8">
+                      <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-4 sm:mb-6 leading-tight">
+                        The Pickleball Experience
+                      </h3>
+                      <div class="space-y-3">
+                        <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed"><strong>Pickleball Programme</strong> – Our Pickleball programme is designed to cover all facets of the game from dinking to tactical intentions.</p>
+                        <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed"><strong>Appropriately Pitched</strong> – We are acutely aware of the wide variety of Pickleball abilities. We will ensure you are matched and challenges to your level. If at any moment you feel over or under challenged - please inform your host.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Pickleball Slide 2: The Active Away Experience -->
+                <div class="tennis-slide flex-shrink-0 w-[85%] sm:w-[90%] lg:w-[900px] snap-start relative">
+                  <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 h-full">
+                    <div class="aspect-video relative overflow-hidden bg-gray-100">
+                      <img 
+                        src="https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/6a5a3e83-5ff0-4c2c-7270-871aa6614900/public?width=900&height=506&fit=cover&format=auto&quality=70"
+                        srcset="https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/6a5a3e83-5ff0-4c2c-7270-871aa6614900/public?width=900&height=506&fit=cover&format=auto&quality=70 900w,
+                                https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/6a5a3e83-5ff0-4c2c-7270-871aa6614900/public?width=1200&height=675&fit=cover&format=auto&quality=70 1200w"
+                        sizes="(max-width: 1024px) 100vw, 900px"
+                        alt="Active Away Pickleball Experience"
+                        width="900"
+                        height="506"
+                        class="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                    <div class="px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6 lg:pb-8">
+                      <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-4 sm:mb-6 leading-tight">
+                        The Active Away Experience
+                      </h3>
+                      <div class="space-y-3">
+                        <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed"><strong>Active Away Hosting</strong> – Our hosting is designed to create a supportive and engaging environment, allowing guests to focus on their love for Pickleball and make lasting memories.</p>
+                        <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed"><strong>Impeccable Reviews</strong> – We so proud of our reviews for our Pickleball Holidays.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : null}
 
           </div>
         </div>
@@ -818,7 +885,9 @@ const sectionTitle = `The ${sportLabel}`;
         <div class="hidden lg:flex justify-center items-center gap-2 mt-8">
           <button class="tennis-dot w-8 h-2 rounded-full bg-[#ad986c] transition-all duration-300" data-slide="0" aria-label="Go to slide 1"></button>
           <button class="tennis-dot w-2 h-2 rounded-full bg-gray-300 transition-all duration-300" data-slide="1" aria-label="Go to slide 2"></button>
-          <button class="tennis-dot w-2 h-2 rounded-full bg-gray-300 transition-all duration-300" data-slide="2" aria-label="Go to slide 3"></button>
+          {carouselSlideCount >= 3 && (
+            <button class="tennis-dot w-2 h-2 rounded-full bg-gray-300 transition-all duration-300" data-slide="2" aria-label="Go to slide 3"></button>
+          )}
         </div>
       </div>
     </div>
@@ -898,11 +967,11 @@ const sectionTitle = `The ${sportLabel}`;
         {holidayData.restaurants && (
           <div class="facility-tab-content active" data-tab-content="restaurants">
             <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-4">Restaurants</h3>
-            <div class="prose max-w-none font-inter" set:html={holidayData.restaurants}></div>
+            <div class="prose max-w-none font-inter" set:html={holidayData.restaurants.startsWith('<') ? holidayData.restaurants : `<p>${holidayData.restaurants}</p>`}></div>
             {holidayData.bars && (
               <div class="mt-8 pt-8 border-t border-gray-200">
                 <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-4">Bars</h3>
-                <div class="prose max-w-none font-inter" set:html={holidayData.bars}></div>
+                <div class="prose max-w-none font-inter" set:html={holidayData.bars.startsWith('<') ? holidayData.bars : `<p>${holidayData.bars}</p>`}></div>
               </div>
             )}
           </div>
@@ -910,19 +979,19 @@ const sectionTitle = `The ${sportLabel}`;
 
         {holidayData.boardBasis && (
           <div class="facility-tab-content hidden" data-tab-content="board">
-            <div class="prose max-w-none font-inter" set:html={holidayData.boardBasis}></div>
+            <div class="prose max-w-none font-inter" set:html={holidayData.boardBasis.startsWith('<') ? holidayData.boardBasis : `<p>${holidayData.boardBasis}</p>`}></div>
           </div>
         )}
 
         {holidayData.setting && (
           <div class="facility-tab-content hidden" data-tab-content="setting">
-            <div class="prose max-w-none font-inter" set:html={holidayData.setting}></div>
+            <div class="prose max-w-none font-inter" set:html={holidayData.setting.startsWith('<') ? holidayData.setting : `<p>${holidayData.setting}</p>`}></div>
           </div>
         )}
 
         {holidayData.tennisCourts && (
           <div class="facility-tab-content hidden" data-tab-content="tennis">
-            <div class="prose max-w-none font-inter" set:html={holidayData.tennisCourts}></div>
+            <div class="prose max-w-none font-inter" set:html={holidayData.tennisCourts.startsWith('<') ? holidayData.tennisCourts : `<p>${holidayData.tennisCourts}</p>`}></div>
           </div>
         )}
 
@@ -946,7 +1015,7 @@ const sectionTitle = `The ${sportLabel}`;
 
         {holidayData.topTips && (
           <div class="facility-tab-content hidden" data-tab-content="tips">
-            <div class="prose max-w-none font-inter" set:html={holidayData.topTips}></div>
+            <div class="prose max-w-none font-inter" set:html={holidayData.topTips.startsWith('<') ? holidayData.topTips : `<p>${holidayData.topTips.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>')}</p>`}></div>
           </div>
         )}
       </div>
@@ -1074,27 +1143,33 @@ const sectionTitle = `The ${sportLabel}`;
 
         <div class="lg:col-span-9">
           <div class="relative">
-            <button id="prevRoomSlide" class="hidden lg:flex absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-6 z-10 w-12 h-12 bg-[#ad986c] hover:bg-[#8d7a56] rounded-full shadow-lg items-center justify-center transition-all duration-300">
-              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" stroke="#FFFFFF"/>
-              </svg>
-            </button>
-            
-            <button id="nextRoomSlide" class="hidden lg:flex absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-6 z-10 w-12 h-12 bg-[#ad986c] hover:bg-[#8d7a56] rounded-full shadow-lg items-center justify-center transition-all duration-300">
-              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" stroke="#FFFFFF"/>
-              </svg>
-            </button>
+            {/* Only show navigation arrows if there are 2+ rooms */}
+            {holidayData.rooms && holidayData.rooms.length > 1 && (
+              <>
+                <button id="prevRoomSlide" class="hidden lg:flex absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-6 z-10 w-12 h-12 bg-[#ad986c] hover:bg-[#8d7a56] rounded-full shadow-lg items-center justify-center transition-all duration-300">
+                  <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" stroke="#FFFFFF"/>
+                  </svg>
+                </button>
+                
+                <button id="nextRoomSlide" class="hidden lg:flex absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-6 z-10 w-12 h-12 bg-[#ad986c] hover:bg-[#8d7a56] rounded-full shadow-lg items-center justify-center transition-all duration-300">
+                  <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" stroke="#FFFFFF"/>
+                  </svg>
+                </button>
+              </>
+            )}
 
-            <div class="overflow-x-auto lg:overflow-visible snap-x snap-mandatory scrollbar-hide">
-              <div id="roomsCarousel" class="flex gap-6 transition-transform duration-500 ease-out">
+            <div class={`overflow-x-auto lg:overflow-visible snap-x snap-mandatory scrollbar-hide ${holidayData.rooms && holidayData.rooms.length === 1 ? 'flex justify-center' : ''}`}>
+              <div id="roomsCarousel" class={`flex gap-6 transition-transform duration-500 ease-out ${holidayData.rooms && holidayData.rooms.length === 1 ? 'justify-center' : ''}`}>
                 {holidayData.rooms && holidayData.rooms.length > 0 ? (
                   holidayData.rooms.map((room, roomIndex) => {
                     const firstImage = room.roomGallery?.[0];
                     const hasMultipleImages = room.roomGallery && room.roomGallery.length > 1;
                     const roomGalleryJson = room.roomGallery ? JSON.stringify(room.roomGallery) : '[]';
+                    const isSingleRoom = holidayData.rooms.length === 1;
                     return (
-                      <div class="room-card flex-shrink-0 w-[85%] sm:w-[90%] lg:w-[48%] snap-start">
+                      <div class={`room-card flex-shrink-0 w-[85%] sm:w-[90%] ${isSingleRoom ? 'lg:w-full lg:max-w-2xl' : 'lg:w-[48%]'} snap-start`}>
                         <div class="bg-white border-2 border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 h-full">
                           <button 
                             type="button"
@@ -1482,11 +1557,11 @@ const sectionTitle = `The ${sportLabel}`;
   <!-- Persistent Dates & Prices Button -->
   <div id="persistentDatesButton" class="fixed bottom-6 right-6 z-40 transition-all duration-300 opacity-0 pointer-events-none">
     <button
-      onclick="scrollToSection('dates-prices')"
+      id="persistentDatesBtn"
       class="bg-[#ad986c] hover:bg-[#8d7a56] text-white font-inter font-medium py-2.5 px-5 rounded-full transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl text-sm"
     >
-      <span>Dates & Prices</span>
-      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <span id="persistentDatesText">Dates & Prices</span>
+      <svg id="persistentDatesArrow" class="w-4 h-4 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
       </svg>
     </button>
@@ -1625,7 +1700,7 @@ const sectionTitle = `The ${sportLabel}`;
   }
 </style>
 
-<script define:vars={{ mapSearchTerm: holidayData.googleMapsSearchTerm }}>
+<script define:vars={{ mapSearchTerm: holidayData.googleMapsSearchTerm, carouselSlideCount }}>
   // Smooth scroll to sections when tabs are clicked
   document.addEventListener('DOMContentLoaded', () => {
     const navTabs = document.querySelectorAll('.page-nav-tab');
@@ -1671,7 +1746,7 @@ const sectionTitle = `The ${sportLabel}`;
 
     // Tennis carousel functionality  
     let currentTennisSlide = 0;
-    const totalTennisSlides = 3;
+    const totalTennisSlides = carouselSlideCount;
     const tennisCarousel = document.getElementById('tennisCarousel');
     const prevTennisBtn = document.getElementById('prevTennisSlide');
     const nextTennisBtn = document.getElementById('nextTennisSlide');
@@ -1809,7 +1884,7 @@ const sectionTitle = `The ${sportLabel}`;
       });
     });
 
-    // Rooms carousel functionality
+    // Rooms carousel functionality (only if multiple rooms)
     const roomsCarousel = document.getElementById('roomsCarousel');
     const prevRoomBtn = document.getElementById('prevRoomSlide');
     const nextRoomBtn = document.getElementById('nextRoomSlide');
@@ -1817,7 +1892,7 @@ const sectionTitle = `The ${sportLabel}`;
     let currentRoomSlide = 0;
 
     const updateRoomsCarousel = () => {
-      if (!roomsCarousel || roomCards.length === 0) return;
+      if (!roomsCarousel || roomCards.length === 0 || roomCards.length === 1) return;
       const isDesktop = window.innerWidth >= 1024;
       
       if (isDesktop) {
@@ -2148,12 +2223,15 @@ const sectionTitle = `The ${sportLabel}`;
 
     // Persistent Dates & Prices button functionality
     const persistentButton = document.getElementById('persistentDatesButton');
+    const persistentDatesBtn = document.getElementById('persistentDatesBtn');
+    const persistentDatesArrow = document.getElementById('persistentDatesArrow');
     const datesSection = document.getElementById('dates-prices');
     
-    if (persistentButton && datesSection) {
+    if (persistentButton && persistentDatesBtn && datesSection) {
       let isButtonVisible = false;
       let heroOutOfView = false;
-      let datesVisible = false;
+      let datesInView = false;
+      let pastDatesSection = false;
       
       const showButton = () => {
         if (!isButtonVisible) {
@@ -2171,14 +2249,36 @@ const sectionTitle = `The ${sportLabel}`;
         }
       };
       
+      const updateButtonDirection = () => {
+        if (pastDatesSection) {
+          // User has scrolled past dates - arrow points UP
+          persistentDatesArrow.style.transform = 'rotate(180deg)';
+        } else {
+          // User is before dates - arrow points DOWN
+          persistentDatesArrow.style.transform = 'rotate(0deg)';
+        }
+      };
+      
       const evaluateButtonState = () => {
-        const shouldShow = heroOutOfView && !datesVisible;
+        // Check if user has scrolled past the dates section
+        const datesRect = datesSection.getBoundingClientRect();
+        pastDatesSection = datesRect.bottom < window.innerHeight / 2;
+        
+        // Show button when: hero out of view AND dates not currently in view
+        const shouldShow = heroOutOfView && !datesInView;
+        
         if (shouldShow) {
           showButton();
+          updateButtonDirection();
         } else {
           hideButton();
         }
       };
+      
+      // Button click handler
+      persistentDatesBtn.addEventListener('click', () => {
+        window.scrollToSection('dates-prices');
+      });
       
       const heroSection = document.getElementById('hero');
       if (heroSection) {
@@ -2201,10 +2301,13 @@ const sectionTitle = `The ${sportLabel}`;
       }
       
       const datesObserver = new IntersectionObserver((entries) => {
-        datesVisible = entries.length > 0 ? entries[0].isIntersecting : datesVisible;
+        datesInView = entries.length > 0 ? entries[0].isIntersecting : datesInView;
         evaluateButtonState();
       }, { threshold: 0, rootMargin: '0px 0px -40% 0px' });
       datesObserver.observe(datesSection);
+      
+      // Update on scroll for arrow direction
+      window.addEventListener('scroll', evaluateButtonState, { passive: true });
       
       // Ensure initial state is set
       evaluateButtonState();
