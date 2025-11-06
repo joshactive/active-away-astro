@@ -1277,7 +1277,7 @@ const carouselSlideCount = holidayType === 'pickleball-holiday' ? 2 : 3;
               </button>
               <div class="itinerary-accordion-content hidden border-t border-gray-200">
                 <div class="p-6">
-                  <div class="prose max-w-none font-inter" set:html={item.content}></div>
+                  <div class="prose max-w-none font-inter" set:html={marked.parse(item.content || '')}></div>
                 </div>
               </div>
             </div>
@@ -1394,7 +1394,7 @@ const carouselSlideCount = holidayType === 'pickleball-holiday' ? 2 : 3;
               </button>
               <div class="faq-accordion-content hidden border-t border-gray-200">
                 <div class="p-6">
-                  <div class="prose max-w-none font-inter" set:html={faq.answer}></div>
+                  <div class="prose max-w-none font-inter" set:html={marked.parse(faq.answer || '')}></div>
                 </div>
               </div>
             </div>
