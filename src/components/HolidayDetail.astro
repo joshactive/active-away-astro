@@ -39,7 +39,7 @@ const keywords = holidayData.seo?.keywords || null;
 const canonicalURL = holidayData.seo?.canonicalURL || `https://activeaway.com/${holidayType}/${slug}`;
 
 // Sport-specific labels based on holiday type
-const sportLabel = holidayType === 'padel-tennis-holiday' ? 'Padel' : 
+const sportLabel = (holidayType === 'padel-tennis-holiday' || holidayType === 'padel-holiday') ? 'Padel' : 
                    holidayType === 'pickleball-holiday' ? 'Pickleball' : 
                    'Tennis';
                    
@@ -210,7 +210,7 @@ const carouselSlideCount = (holidayType === 'pickleball-holiday' || holidayType 
             {(holidayData.whyWeLoveVenue1 || holidayData.whyWeLoveVenue2 || holidayData.whyWeLoveVenue3 || holidayData.whyWeLoveVenue4) && (
               <div class="mt-8 bg-gray-50 border border-gray-200 rounded-xl p-6 sm:p-8">
                 <h2 class="text-2xl sm:text-3xl font-playfair font-semibold text-gray-900 mb-6">
-                  Why We Love {(holidayType === 'padel-tennis-holiday' || holidayType === 'pickleball-holiday' || holidayType === 'tennis-clinic') ? (holidayData.shortLocationName || holidayData.venue || holidayData.title) : (holidayData.venue || holidayData.title)}
+                  Why We Love {(holidayType === 'padel-tennis-holiday' || holidayType === 'padel-holiday' || holidayType === 'pickleball-holiday' || holidayType === 'tennis-clinic') ? (holidayData.shortLocationName || holidayData.venue || holidayData.title) : (holidayData.venue || holidayData.title)}
                 </h2>
                 <div class={`grid grid-cols-1 ${holidayType !== 'tennis-clinic' ? 'sm:grid-cols-2' : ''} gap-4`}>
                   {[
@@ -249,7 +249,7 @@ const carouselSlideCount = (holidayType === 'pickleball-holiday' || holidayType 
                 )}
                 
                 {/* Courts - Different rendering for Tennis vs Padel vs Pickleball */}
-                {holidayType === 'padel-tennis-holiday' ? (
+                {(holidayType === 'padel-tennis-holiday' || holidayType === 'padel-holiday') ? (
                   (holidayData.numberOfPadelCourts || holidayData.padelCourtSurface) && (
                     <div class="flex items-start gap-3">
                       <svg class="w-6 h-6 text-[#ad986c] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -332,14 +332,14 @@ const carouselSlideCount = (holidayType === 'pickleball-holiday' || holidayType 
                 )}
                 
                 {/* Airport - Hide for tennis-clinic, Padel and Pickleball use distanceFromAirport, Tennis uses airportTransfer */}
-                {holidayType !== 'tennis-clinic' && ((holidayType === 'padel-tennis-holiday' || holidayType === 'pickleball-holiday') ? (
+                {holidayType !== 'tennis-clinic' && ((holidayType === 'padel-tennis-holiday' || holidayType === 'padel-holiday' || holidayType === 'pickleball-holiday') ? (
                   holidayData.distanceFromAirport && (
                     <div class="flex items-start gap-3">
                       <svg class="w-6 h-6 text-[#ad986c] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                       </svg>
                       <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-gray-900 font-inter">Distance From Airport</p>
+                        <p class="text-sm font-medium text-gray-900 font-inter">Airport</p>
                         <p class="text-sm text-gray-600 font-inter">{holidayData.distanceFromAirport}</p>
                       </div>
                     </div>
@@ -359,7 +359,7 @@ const carouselSlideCount = (holidayType === 'pickleball-holiday' || holidayType 
                 ))}
                 
                 {/* Single Occupancy - Hide for tennis-clinic, Padel and Pickleball use singleOccupancy, Tennis uses singleOccupancyRange */}
-                {holidayType !== 'tennis-clinic' && ((holidayType === 'padel-tennis-holiday' || holidayType === 'pickleball-holiday') ? (
+                {holidayType !== 'tennis-clinic' && ((holidayType === 'padel-tennis-holiday' || holidayType === 'padel-holiday' || holidayType === 'pickleball-holiday') ? (
                   holidayData.singleOccupancy && (
                     <div class="flex items-start gap-3">
                       <svg class="w-6 h-6 text-[#ad986c] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -761,7 +761,7 @@ const carouselSlideCount = (holidayType === 'pickleball-holiday' || holidayType 
                   </div>
                 </div>
               </>
-            ) : holidayType === 'padel-tennis-holiday' ? (
+            ) : (holidayType === 'padel-tennis-holiday' || holidayType === 'padel-holiday') ? (
               <>
                 <!-- Padel Slide 1: A Padel Holiday in Action -->
                 <div class="tennis-slide flex-shrink-0 w-[85%] sm:w-[90%] lg:w-[900px] snap-start relative">
@@ -1176,11 +1176,11 @@ const carouselSlideCount = (holidayType === 'pickleball-holiday' || holidayType 
         {holidayData.restaurants && (
           <div class={`facility-tab-content ${holidayType !== 'tennis-clinic' ? 'active' : 'hidden'}`} data-tab-content="restaurants">
             <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-4">Restaurants</h3>
-            <div class="prose max-w-none font-inter" set:html={holidayData.restaurants.startsWith('<') ? holidayData.restaurants : `<p>${holidayData.restaurants}</p>`}></div>
+            <div class="prose max-w-none font-inter" set:html={marked.parse(holidayData.restaurants || '')}></div>
             {holidayData.bars && (
               <div class="mt-8 pt-8 border-t border-gray-200">
                 <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-4">Bars</h3>
-                <div class="prose max-w-none font-inter" set:html={holidayData.bars.startsWith('<') ? holidayData.bars : `<p>${holidayData.bars}</p>`}></div>
+                <div class="prose max-w-none font-inter" set:html={marked.parse(holidayData.bars || '')}></div>
               </div>
             )}
           </div>
@@ -1188,7 +1188,7 @@ const carouselSlideCount = (holidayType === 'pickleball-holiday' || holidayType 
 
         {holidayData.boardBasis && (
           <div class="facility-tab-content hidden" data-tab-content="board">
-            <div class="prose max-w-none font-inter" set:html={holidayData.boardBasis.startsWith('<') ? holidayData.boardBasis : `<p>${holidayData.boardBasis}</p>`}></div>
+            <div class="prose max-w-none font-inter" set:html={marked.parse(holidayData.boardBasis || '')}></div>
           </div>
         )}
 
@@ -1200,7 +1200,7 @@ const carouselSlideCount = (holidayType === 'pickleball-holiday' || holidayType 
 
         {holidayData.tennisCourts && (
           <div class="facility-tab-content hidden" data-tab-content="tennis">
-            <div class="prose max-w-none font-inter" set:html={holidayData.tennisCourts.startsWith('<') ? holidayData.tennisCourts : `<p>${holidayData.tennisCourts}</p>`}></div>
+            <div class="prose max-w-none font-inter" set:html={marked.parse(holidayData.tennisCourts || '')}></div>
           </div>
         )}
 
@@ -1224,7 +1224,7 @@ const carouselSlideCount = (holidayType === 'pickleball-holiday' || holidayType 
 
         {holidayData.topTips && (
           <div class="facility-tab-content hidden" data-tab-content="tips">
-            <div class="prose max-w-none font-inter" set:html={holidayData.topTips.startsWith('<') ? holidayData.topTips : `<p>${holidayData.topTips.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>')}</p>`}></div>
+            <div class="prose max-w-none font-inter" set:html={marked.parse(holidayData.topTips || '')}></div>
           </div>
         )}
       </div>
