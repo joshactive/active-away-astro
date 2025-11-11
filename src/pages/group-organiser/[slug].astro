@@ -1,0 +1,284 @@
+---
+// Dynamic route for individual group organisers
+export const prerender = true;
+
+import HolidayDetail from '../../components/HolidayDetail.astro';
+import { 
+  getGroupOrganisers, 
+  getGroupOrganiserBySlug, 
+  getGroupOrganiserNestedData, 
+  getGroupOrganiserSEO, 
+  getMasterPageData,
+  getEventsByUniqueValue,
+  getEventsByDocumentIds
+} from '../../utils/strapi.js';
+
+// Generate static paths for all group organisers
+export async function getStaticPaths() {
+  console.log('👥 [getStaticPaths] Fetching all group organisers...');
+  
+  // Fetch ALL group organisers by fetching multiple pages
+  let allGroupOrganisers = [];
+  let page = 1;
+  let hasMore = true;
+  const pageSize = 100;
+  
+  while (hasMore) {
+    const organisers = await getGroupOrganisers(page, pageSize);
+    
+    if (organisers.length === 0) {
+      hasMore = false;
+    } else {
+      allGroupOrganisers = [...allGroupOrganisers, ...organisers];
+      console.log(`👥 [getStaticPaths] Fetched page ${page}: ${organisers.length} organisers`);
+      
+      // If we got less than pageSize, we've reached the end
+      if (organisers.length < pageSize) {
+        hasMore = false;
+      } else {
+        page++;
+      }
+    }
+  }
+  
+  console.log(`👥 [getStaticPaths] Total group organisers found: ${allGroupOrganisers.length}`);
+  
+  if (allGroupOrganisers.length === 0) {
+    console.warn('⚠️ [getStaticPaths] No group organisers found! Check if:');
+    console.warn('   1. Strapi server is running');
+    console.warn('   2. Group organisers are published in Strapi');
+    console.warn('   3. STRAPI_URL is set correctly in .env');
+  } else {
+    console.log('👥 [getStaticPaths] Generating routes for group organisers:');
+    allGroupOrganisers.slice(0, 10).forEach(org => {
+      console.log(`   - /group-organiser/${org.slug}`);
+    });
+    if (allGroupOrganisers.length > 10) {
+      console.log(`   ... and ${allGroupOrganisers.length - 10} more`);
+    }
+  }
+  
+  return allGroupOrganisers.map((organiser) => ({
+    params: { slug: organiser.slug },
+    props: { 
+      slug: organiser.slug,
+      id: organiser.strapiId,
+      documentId: organiser.documentId
+    }
+  }));
+}
+
+const { slug } = Astro.params;
+const { id, documentId } = Astro.props;
+const fallbackIdentifiers = { id, documentId };
+console.log(`👥 [${slug}] Static props identifiers:`, fallbackIdentifiers);
+
+// Fetch the specific group organiser data
+let groupOrganiserData = null;
+try {
+  groupOrganiserData = await getGroupOrganiserBySlug(slug, fallbackIdentifiers);
+  if (groupOrganiserData) {
+    console.log(`👥 [${slug}] Group organiser data fetched successfully`);
+    console.log(`🔍 [${slug}] DEBUG - masterPageType: "${groupOrganiserData.masterPageType}"`);
+    console.log(`🔍 [${slug}] DEBUG - masterPageSlug: "${groupOrganiserData.masterPageSlug}"`);
+  } else {
+    console.warn(`👥 [${slug}] Group organiser data not found after lookup`);
+  }
+} catch (error) {
+  console.error(`[${slug}] Error fetching group organiser:`, error.message);
+}
+
+// If no data found, show 404
+if (!groupOrganiserData) {
+  return Astro.redirect('/404');
+}
+
+// Fetch master page data if referenced
+let masterPageData = null;
+if (groupOrganiserData.masterPageType && groupOrganiserData.masterPageSlug) {
+  try {
+    console.log(`📄 [${slug}] Fetching master page: ${groupOrganiserData.masterPageType}/${groupOrganiserData.masterPageSlug}`);
+    masterPageData = await getMasterPageData(groupOrganiserData.masterPageType, groupOrganiserData.masterPageSlug);
+    
+    if (masterPageData) {
+      console.log(`📄 [${slug}] Master page fetched: ${masterPageData.title}`);
+      
+      // SEPARATE API CALL: Fetch master page's nested data (rooms with galleries, trip images)
+      const masterSlug = groupOrganiserData.masterPageSlug;
+      const masterType = groupOrganiserData.masterPageType;
+      
+      try {
+        let masterNestedData = null;
+        
+        if (masterType === 'tennis-holiday') {
+          const { getTennisHolidayNestedData } = await import('../../utils/strapi.js');
+          masterNestedData = await getTennisHolidayNestedData(masterSlug);
+        } else if (masterType === 'padel-holiday' || masterType === 'padel-tennis-holiday') {
+          const { getPadelHolidayNestedData } = await import('../../utils/strapi.js');
+          masterNestedData = await getPadelHolidayNestedData(masterSlug);
+        } else if (masterType === 'pickleball-holiday') {
+          const { getPickleballHolidayNestedData } = await import('../../utils/strapi.js');
+          masterNestedData = await getPickleballHolidayNestedData(masterSlug);
+        } else if (masterType === 'tennis-clinic') {
+          const { getTennisClinicNestedData } = await import('../../utils/strapi.js');
+          masterNestedData = await getTennisClinicNestedData(masterSlug);
+        }
+        
+        // Add master page's nested data to masterPageData
+        if (masterNestedData) {
+          if (masterNestedData.rooms && masterNestedData.rooms.length > 0) {
+            masterPageData.rooms = masterNestedData.rooms;
+            console.log(`🏨 [${slug}] Master page rooms loaded: ${masterNestedData.rooms.length} rooms`);
+          }
+          if (masterNestedData.tripImages && masterNestedData.tripImages.length > 0) {
+            masterPageData.tripImages = masterNestedData.tripImages;
+            console.log(`📸 [${slug}] Master page trip images loaded: ${masterNestedData.tripImages.length} images`);
+          }
+        }
+      } catch (nestedError) {
+        console.error(`[${slug}] Error fetching master page nested data:`, nestedError.message);
+      }
+    }
+  } catch (error) {
+    console.error(`[${slug}] Error fetching master page:`, error.message);
+  }
+}
+
+// Merge master page data with group organiser data (group organiser takes priority)
+let holidayData = groupOrganiserData;
+
+if (masterPageData) {
+  console.log(`🔀 [${slug}] Merging master page data with group organiser overrides`);
+  
+  // Start with master page data as base
+  holidayData = { ...masterPageData };
+  
+  // Override with group organiser fields (only non-null/non-empty values)
+  Object.keys(groupOrganiserData).forEach(key => {
+    const value = groupOrganiserData[key];
+    
+    // Always override these fields from group organiser
+    const alwaysOverride = [
+      'strapiId', 'documentId', 'slug', 'title',
+      'masterPageType', 'masterPageSlug',
+      'uniqueValue', // Group organiser has its own uniqueValue for events
+      'groupOrganiserName', 'groupOrganiserName2', 'groupOrganiserProduct',
+      'groupOrganiserImage', 'groupOrganiserWhatsappUrl', 'groupOrganiserOtherUrl',
+      'createdAt', 'publishedAt'
+    ];
+    
+    if (alwaysOverride.includes(key)) {
+      holidayData[key] = value;
+    }
+    // For other fields, only override if group organiser has a non-null/non-empty value
+    else if (value !== null && value !== undefined && value !== '' && 
+             !(Array.isArray(value) && value.length === 0) &&
+             !(typeof value === 'object' && Object.keys(value).length === 0)) {
+      holidayData[key] = value;
+    }
+  });
+  
+  console.log(`✅ [${slug}] Data merged successfully`);
+} else {
+  console.log(`ℹ️ [${slug}] No master page - using group organiser data only`);
+}
+
+// SEPARATE API CALL: Fetch nested data (rooms.roomGallery, tripImages) from GROUP ORGANISER
+// If the group organiser has its own rooms/images, they will OVERRIDE the master page's
+try {
+  const nestedData = await getGroupOrganiserNestedData(slug);
+  if (nestedData) {
+    // Override master page rooms if group organiser has its own
+    if (nestedData.rooms && nestedData.rooms.length > 0) {
+      holidayData.rooms = nestedData.rooms;
+      console.log(`🏨 [${slug}] Group organiser rooms OVERRIDE: ${nestedData.rooms.length} rooms`);
+    } else {
+      console.log(`🏨 [${slug}] Using master page rooms: ${holidayData.rooms?.length || 0} rooms`);
+    }
+    
+    // Override master page trip images if group organiser has its own
+    if (nestedData.tripImages && nestedData.tripImages.length > 0) {
+      holidayData.tripImages = nestedData.tripImages;
+      console.log(`📸 [${slug}] Group organiser trip images OVERRIDE: ${nestedData.tripImages.length} images`);
+    } else {
+      console.log(`📸 [${slug}] Using master page trip images: ${holidayData.tripImages?.length || 0} images`);
+    }
+  }
+} catch (error) {
+  console.error(`[${slug}] Error fetching nested data:`, error.message);
+}
+
+// SEPARATE API CALL: Fetch SEO data with metaImage
+// This is required for Strapi v5's nested population of seo.metaImage
+try {
+  const seoData = await getGroupOrganiserSEO(slug);
+  if (seoData) {
+    // Merge SEO data into holidayData
+    holidayData.seo = seoData;
+    console.log(`📄 [${slug}] SEO data merged: ${seoData.metaTitle || 'No title'}, metaImage: ${seoData.metaImage ? 'Yes' : 'No'}`);
+  }
+} catch (error) {
+  console.error(`[${slug}] Error fetching SEO data:`, error.message);
+}
+
+// Fetch random other group organiser destinations (excluding current one)
+let similarHolidays = [];
+try {
+  const allOrganisers = await getGroupOrganisers(1, 50);
+  
+  // Filter: exclude current organiser AND only show those with displayOnFrontEnd = true
+  const otherOrganisers = allOrganisers.filter(h => 
+    h.slug !== slug && h.displayOnFrontEnd === true
+  );
+  
+  // Randomize and select 3 destinations
+  if (otherOrganisers.length > 0) {
+    const shuffled = [...otherOrganisers];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    similarHolidays = shuffled.slice(0, 3);
+    console.log(`🎲 Selected ${similarHolidays.length} random group organiser destinations from ${otherOrganisers.length} available`);
+  }
+} catch (error) {
+  console.error('Error fetching other group organisers:', error);
+}
+
+// Fetch events for the "Dates & Prices" section
+// Uses eventsQueryCommaSeparated (comma-separated document IDs)
+let matchingEvents = [];
+try {
+  console.log(`🔍 [DEBUG] eventsQueryCommaSeparated value: "${holidayData.eventsQueryCommaSeparated}"`);
+  console.log(`🔍 [DEBUG] Type: ${typeof holidayData.eventsQueryCommaSeparated}`);
+  
+  if (holidayData.eventsQueryCommaSeparated) {
+    console.log(`👥 [Dates & Prices] Fetching events by document IDs: "${holidayData.eventsQueryCommaSeparated}"`);
+    matchingEvents = await getEventsByDocumentIds(holidayData.eventsQueryCommaSeparated);
+    console.log(`👥 [Dates & Prices] Found ${matchingEvents.length} event(s) by document IDs`);
+  } else {
+    console.warn(`⚠️ Group organiser "${slug}" has no eventsQueryCommaSeparated set for Dates & Prices section`);
+  }
+} catch (error) {
+  console.error('Error fetching events for Dates & Prices section:', error);
+}
+
+// Determine the holiday type for the component
+// Use master page type if available, otherwise default to 'group-organiser'
+const holidayType = groupOrganiserData.masterPageType || 'group-organiser';
+console.log(`🏷️ [${slug}] Holiday type for component: ${holidayType}`);
+
+// Store the original group organiser title for use in the component
+const groupOrganiserTitle = groupOrganiserData.title;
+---
+
+<HolidayDetail 
+  holidayData={holidayData}
+  holidayType={holidayType}
+  matchingEvents={matchingEvents}
+  similarHolidays={similarHolidays}
+  slug={slug}
+  isGroupOrganiser={true}
+  groupOrganiserTitle={groupOrganiserTitle}
+/>
+

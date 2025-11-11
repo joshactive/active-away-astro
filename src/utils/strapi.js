@@ -499,6 +499,112 @@ export async function getEventsByUniqueValue(uniqueValue) {
 }
 
 /**
+ * Fetch events by document IDs (comma-separated)
+ * @param {string} documentIds - Comma-separated document IDs (e.g., "abc123,def456,ghi789")
+ * @returns {Promise<Array>} Array of formatted event data matching the document IDs
+ */
+export async function getEventsByDocumentIds(documentIds) {
+  try {
+    if (!documentIds) {
+      console.warn('⚠️ No documentIds provided to getEventsByDocumentIds');
+      return [];
+    }
+
+    // Split comma-separated IDs and trim whitespace
+    const ids = documentIds.split(',').map(id => id.trim()).filter(id => id.length > 0);
+    
+    if (ids.length === 0) {
+      console.warn('⚠️ No valid document IDs after parsing');
+      return [];
+    }
+
+    console.log(`🔍 Fetching events by document IDs: ${ids.length} ID(s)`);
+    
+    // Fetch each event by documentId using the correct Strapi v5 filter syntax
+    const eventPromises = ids.map(documentId => 
+      fetchAPI(`/events?filters[documentId][$eq]=${encodeURIComponent(documentId)}&populate=*`)
+    );
+    
+    const results = await Promise.all(eventPromises);
+    const events = [];
+    
+    results.forEach((data, index) => {
+      if (data && data.data && data.data.length > 0) {
+        const item = data.data[0]; // Get first result from array
+        const event = item.attributes || item;
+        
+        // Format dates
+        let formattedDate = '';
+        if (event.dateFrom && event.dateUntil) {
+          const fromDate = new Date(event.dateFrom);
+          const untilDate = new Date(event.dateUntil);
+          
+          const dayFrom = fromDate.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit' });
+          const monthFrom = fromDate.toLocaleDateString('en-GB', { month: 'short' });
+          const dayUntil = untilDate.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit' });
+          const monthUntil = untilDate.toLocaleDateString('en-GB', { month: 'short' });
+          const year = untilDate.toLocaleDateString('en-GB', { year: 'numeric' });
+          
+          if (monthFrom === monthUntil) {
+            formattedDate = `${dayFrom} ${monthFrom} - ${dayUntil} ${monthUntil} ${year}`;
+          } else {
+            formattedDate = `${dayFrom} ${monthFrom} - ${dayUntil} ${monthUntil} ${year}`;
+          }
+        }
+        
+        // Determine status badge
+        let statusBadge = 'AVAILABLE';
+        let statusClass = 'bg-[#ad986c]/10 text-[#ad986c]';
+        
+        if (event.isSoldOut) {
+          statusBadge = 'SOLD OUT';
+          statusClass = 'bg-red-50 text-red-700';
+        } else if (event.featured) {
+          statusBadge = 'FEATURED';
+          statusClass = 'bg-green-50 text-green-700';
+        }
+        
+        events.push({
+          id: item.id || index + 1,
+          documentId: item.documentId,
+          title: event.title || formattedDate,
+          dateText: event.dateText || formattedDate,
+          dateFrom: event.dateFrom,
+          dateUntil: event.dateUntil,
+          price: event.price || null,
+          singleOccupancyPrice: event.singleOccupancyPriceEvent || null,
+          bookingLink: event.bookingLink || '#',
+          buttonText: event.buttonText || 'Book Now',
+          buttonColour: event.buttonColour || '#ad986c',
+          isSoldOut: event.isSoldOut || false,
+          statusBadge: statusBadge,
+          statusClass: statusClass,
+          product: event.product || '',
+          uniqueValue: event.uniqueValue || ''
+        });
+      } else {
+        console.warn(`⚠️ Event not found for document ID: ${ids[index]}`);
+      }
+    });
+    
+    console.log(`✅ Found ${events.length} event(s) by document IDs`);
+    
+    // Sort by dateFrom
+    events.sort((a, b) => {
+      if (!a.dateFrom) return 1;
+      if (!b.dateFrom) return -1;
+      return new Date(a.dateFrom) - new Date(b.dateFrom);
+    });
+    
+    return events;
+    
+  } catch (error) {
+    console.error(`❌ Error fetching events by document IDs:`, error);
+    return [];
+  }
+}
+
+/**
  * Fetch all products (for "What Do We Offer" section)
  * @returns {Promise<Array>} Array of formatted product data
  */
@@ -2944,5 +3050,438 @@ export async function getAllVenues(options = {}) {
         holidayTypes: []
       }
     };
+  }
+}
+
+// =============================================================================
+// GROUP ORGANISER API FUNCTIONS
+// =============================================================================
+
+/**
+ * Fetch Group Organisers
+ * @param {number} page - Page number (1-indexed)
+ * @param {number} pageSize - Items per page
+ * @returns {Promise<Array>} Array of normalized group organiser data
+ */
+export async function getGroupOrganisers(page = 1, pageSize = 25) {
+  try {
+    const data = await fetchAPI(`/group-organisers?populate=headerImage&sort=createdAt:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`);
+    
+    if (!data || !data.data || data.data.length === 0) {
+      return [];
+    }
+    
+    return data.data.map(item => normalizeVenueData(item, 'group-organiser'));
+  } catch (error) {
+    console.error('❌ Error fetching group organisers:', error);
+    return [];
+  }
+}
+
+/**
+ * Fetch a single group organiser by slug with all content
+ * @param {string} slug - Group organiser slug
+ * @param {Object} fallbackIdentifiers - Optional fallback identifiers {id, documentId}
+ * @returns {Promise<Object|null>} Complete group organiser data
+ */
+export async function getGroupOrganiserBySlug(slug, fallbackIdentifiers = {}) {
+  if (!slug) {
+    console.warn('No slug provided to getGroupOrganiserBySlug');
+    return null;
+  }
+
+  try {
+    // Try primary lookup by slug
+    const data = await fetchSingleGroupOrganiser(
+      `filters[slug][$eq]=${encodeURIComponent(slug)}`,
+      `slug: ${slug}`
+    );
+
+    if (data) {
+      return data;
+    }
+
+    // Fallback lookups if primary fails
+    console.warn(`⚠️ Group organiser not found by slug: ${slug}, trying fallbacks...`);
+    return await resolveGroupOrganiserFallback(fallbackIdentifiers);
+
+  } catch (error) {
+    console.error(`❌ Error fetching group organiser by slug (${slug}):`, error);
+    return null;
+  }
+}
+
+/**
+ * Fetch a single group organiser by documentId
+ * @param {string} documentId - Group organiser documentId
+ * @returns {Promise<Object|null>} Complete group organiser data
+ */
+export async function getGroupOrganiserByDocumentId(documentId) {
+  if (!documentId) {
+    console.warn('No documentId provided to getGroupOrganiserByDocumentId');
+    return null;
+  }
+
+  try {
+    return await fetchSingleGroupOrganiser(
+      `documentId=${encodeURIComponent(documentId)}`,
+      `documentId: ${documentId}`
+    );
+  } catch (error) {
+    console.error(`❌ Error fetching group organiser by documentId (${documentId}):`, error);
+    return null;
+  }
+}
+
+/**
+ * Fetch a single group organiser by numeric ID
+ * @param {number} id - Group organiser numeric ID
+ * @returns {Promise<Object|null>} Complete group organiser data
+ */
+export async function getGroupOrganiserById(id) {
+  if (!id) {
+    console.warn('No id provided to getGroupOrganiserById');
+    return null;
+  }
+
+  try {
+    return await fetchSingleGroupOrganiser(
+      `filters[id][$eq]=${id}`,
+      `id: ${id}`
+    );
+  } catch (error) {
+    console.error(`❌ Error fetching group organiser by id (${id}):`, error);
+    return null;
+  }
+}
+
+/**
+ * Transform raw Strapi group organiser data to frontend format
+ * @param {Object} item - Raw Strapi API response item
+ * @returns {Object} Transformed group organiser data
+ */
+function transformGroupOrganiserDetail(item) {
+  const holiday = item.attributes || item;
+  const seoData = holiday.seo || {};
+  
+  return {
+    strapiId: item.id,
+    documentId: item.documentId,
+    title: holiday.title,
+    slug: holiday.slug,
+    excerpt: holiday.excerpt,
+    venue: holiday.venue,
+    shortLocationName: holiday.shortLocationName,
+    country: holiday.country,
+    countryLg: holiday.countryLg,
+    airport: holiday.airport,
+    lengthOfTrip: holiday.lengthOfTrip,
+    internalRating: holiday.internalRating,
+    uniqueValue: holiday.uniqueValue,
+    
+    // Master page reference fields
+    masterPageType: holiday.masterPageType,
+    masterPageSlug: holiday.masterPageSlug,
+    eventsQueryCommaSeparated: holiday.eventsquerycommaseperated,
+    
+    // Hero Section
+    mainHeader: holiday.mainHeader,
+    headerImage: holiday.headerImage ? getStrapiImageData(holiday.headerImage) : null,
+    headingText: holiday.headingText,
+    belowHeadingText: holiday.belowHeadingText,
+    
+    // Gallery
+    mainGallery: holiday.mainGallery ? getStrapiImagesData(holiday.mainGallery) : [],
+    tripImages: [], // Fetched separately via getGroupOrganiserNestedData
+    
+    // Pricing
+    priceFrom: holiday.priceFrom,
+    singleOccupancyFrom: holiday.singleOccupancyFrom,
+    singleOccupancyRange: holiday.singleOccupancyRange,
+    boardBasisLg: holiday.boardBasisLg,
+    
+    // Why We Love This Venue
+    whyWeLoveVenue1: holiday.whyWeLoveVenue1,
+    whyWeLoveVenue2: holiday.whyWeLoveVenue2,
+    whyWeLoveVenue3: holiday.whyWeLoveVenue3,
+    whyWeLoveVenue4: holiday.whyWeLoveVenue4,
+    
+    // Ratings
+    ourRating: holiday.ourRating,
+    guestRating: holiday.guestRating,
+    tennisCourtRating: holiday.tennisCourtRating,
+    diningRating: holiday.diningRating,
+    
+    // Tennis/Court Information
+    tennisCourtSurface: holiday.tennisCourtSurface,
+    tennisCourts: holiday.tennisCourts,
+    padelCourtsInfo: holiday.padelCourtsInfo,
+    
+    // What's Included/Not Included
+    whatsIncluded: normalizeComponentArray(holiday.whatsIncluded),
+    whatsNotIncluded: normalizeComponentArray(holiday.whatsNotIncluded),
+    
+    // Facilities
+    facilities: normalizeComponentArray(holiday.facilities),
+    facilitiesExtraInfo: holiday.facilitiesExtraInfo,
+    
+    // Venue Details
+    setting: holiday.setting,
+    boardBasis: holiday.boardBasis,
+    restaurants: holiday.restaurants,
+    bars: holiday.bars,
+    airportTransfer: holiday.airportTransfer,
+    
+    // Rooms
+    rooms: [], // Fetched separately via getGroupOrganiserNestedData
+    roomsSubheading: holiday.roomsSubheading,
+    
+    // Itinerary & FAQs
+    itinerary: normalizeComponentArray(holiday.itinerary),
+    faqs: normalizeComponentArray(holiday.faqs),
+    topTips: holiday.topTips,
+    
+    // Additional Info
+    whereWeStay: holiday.whereWeStay,
+    howWeGetAround: holiday.howWeGetAround,
+    gettingThere: holiday.gettingThere,
+    eventInformation: holiday.eventInformation,
+    cafeInformation: holiday.cafeInformation,
+    carParkingInformation: holiday.carParkingInformation,
+    lunchInfo: holiday.lunchInfo,
+    maximumGroupSize: holiday.maximumGroupSize,
+    typicalGroupSize: holiday.typicalGroupSize,
+    residentialType: holiday.residentialType,
+    schoolToursLengthOfTrip: holiday.schoolToursLengthOfTrip,
+    schoolToursAvailableMonths: holiday.schoolToursAvailableMonths,
+    
+    // Booking Options
+    bookCourtsInfo: holiday.bookCourtsInfo,
+    bookCourtsLink: holiday.bookCourtsLink,
+    bookCourtsImage: holiday.bookCourtsImage ? getStrapiImageData(holiday.bookCourtsImage) : null,
+    bookLessonsInfo: holiday.bookLessonsInfo,
+    bookLessonsLink: holiday.bookLessonsLink,
+    bookLessonsImage: holiday.bookLessonsImage ? getStrapiImageData(holiday.bookLessonsImage) : null,
+    bookRacketsInfo: holiday.bookRacketsInfo,
+    bookRacketsLink: holiday.bookRacketsLink,
+    bookRacketsImage: holiday.bookRacketsImage ? getStrapiImageData(holiday.bookRacketsImage) : null,
+    bookCardioInfo: holiday.bookCardioInfo,
+    bookCardioLink: holiday.bookCardioLink,
+    bookCardioImage: holiday.bookCardioImage ? getStrapiImageData(holiday.bookCardioImage) : null,
+    
+    // Coach/Organiser info
+    tennisCoachName: holiday.tennisCoachName,
+    tennisCoachWhatsappUrl: holiday.tennisCoachWhatsappUrl,
+    tennisCoachImage: holiday.tennisCoachImage ? getStrapiImageData(holiday.tennisCoachImage) : null,
+    tennisCoachInfo: holiday.tennisCoachInfo,
+    groupOrganiserName: holiday.groupOrganiserName,
+    groupOrganiserName2: holiday.groupOrganiserName2,
+    groupOrganiserProduct: holiday.groupOrganiserProduct,
+    groupOrganiserImage: holiday.groupOrganiserImage ? getStrapiImageData(holiday.groupOrganiserImage) : null,
+    groupOrganiserWhatsappUrl: holiday.groupOrganiserWhatsappUrl,
+    groupOrganiserOtherUrl: holiday.groupOrganiserOtherUrl,
+    
+    // Downloads/Links
+    itineraryDownloadUrl: holiday.itineraryDownloadUrl,
+    itineraryDownloadUrl2: holiday.itineraryDownloadUrl2,
+    otherFaqsUrl: holiday.otherFaqsUrl,
+    googleMapsSearchTerm: holiday.googleMapsSearchTerm,
+    fullScreenVideo: holiday.fullScreenVideo,
+    emailAddress: holiday.emailAddress,
+    
+    // Meta
+    productType: holiday.productType,
+    displayOnFrontEnd: holiday.displayOnFrontEnd,
+    featured: holiday.featured,
+    seo: seoData,
+    createdAt: holiday.createdAt || item.createdAt,
+    publishedAt: holiday.publishedAt || item.publishedAt
+  };
+}
+
+async function fetchSingleGroupOrganiser(filterQuery, logContext = 'query') {
+  const data = await fetchAPI(`/group-organisers?${filterQuery}&populate=*`);
+
+  if (!data || !data.data || data.data.length === 0) {
+    console.log(`👥 No group organiser found for ${logContext}`);
+    return null;
+  }
+
+  const transformed = transformGroupOrganiserDetail(data.data[0]);
+  if (transformed) {
+    console.log(`👥 Group organiser fetched (${logContext}): ${transformed.title}`);
+    console.log(`📸 Gallery images: ${transformed.mainGallery?.length || 0}`);
+  }
+  return transformed;
+}
+
+async function resolveGroupOrganiserFallback(identifiers = {}) {
+  const { documentId, id } = identifiers || {};
+
+  if (documentId) {
+    console.log(`👥 Attempting fallback lookup by documentId: ${documentId}`);
+    const byDocumentId = await getGroupOrganiserByDocumentId(documentId);
+    if (byDocumentId) {
+      return byDocumentId;
+    }
+  }
+
+  if (id !== undefined && id !== null) {
+    const numericId = typeof id === 'string' ? Number(id) : id;
+    if (!Number.isNaN(numericId)) {
+      console.log(`👥 Attempting fallback lookup by id: ${numericId}`);
+      const byId = await getGroupOrganiserById(numericId);
+      if (byId) {
+        return byId;
+      }
+    } else {
+      console.warn(`⚠️ Provided fallback group organiser id is not numeric: ${id}`);
+    }
+  }
+
+  return null;
+}
+
+/**
+ * SEPARATE API CALL: Fetch nested data for group organiser (rooms.roomGallery, tripImages)
+ * This is called separately to handle Strapi v5's nested population requirements
+ * @param {string} slug - Group organiser slug
+ * @returns {Promise<Object|null>} Object with rooms and tripImages, or null
+ */
+export async function getGroupOrganiserNestedData(slug) {
+  if (!slug) {
+    console.warn('No slug provided to getGroupOrganiserNestedData');
+    return null;
+  }
+
+  try {
+    // Strapi v5 requires explicit nested population for deep relations
+    const data = await fetchAPI(
+      `/group-organisers?filters[slug][$eq]=${encodeURIComponent(slug)}&populate[rooms][populate]=*&populate=tripImages`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const item = data.data[0];
+      const organiser = item.attributes || item;
+      
+      // Process rooms with nested roomGallery
+      const rooms = [];
+      const roomsSource = normalizeComponentArray(organiser.rooms);
+      roomsSource.forEach(room => {
+        const roomGallery = room.roomGallery ? getStrapiImagesData(room.roomGallery) : [];
+        
+        rooms.push({
+          id: room.id,
+          roomTitle: room.roomTitle,
+          roomSize: room.roomSize,
+          roomBedConfig: room.roomBedConfig,
+          roomText: room.roomText,
+          roomGallery: roomGallery
+        });
+      });
+      
+      // Process tripImages
+      const tripImages = organiser.tripImages ? getStrapiImagesData(organiser.tripImages) : [];
+      
+      console.log(`🏨 Nested data fetched for ${slug}: ${rooms.length} rooms, ${tripImages.length} trip images`);
+      
+      return {
+        rooms,
+        tripImages
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching nested data for group organiser (${slug}):`, error);
+    return null;
+  }
+}
+
+/**
+ * SEPARATE API CALL: Fetch SEO data with metaImage for group organiser
+ * This is called separately to ensure proper population of nested SEO fields
+ * @param {string} slug - Group organiser slug
+ * @returns {Promise<Object|null>} SEO data object or null
+ */
+export async function getGroupOrganiserSEO(slug) {
+  if (!slug) {
+    console.warn('No slug provided to getGroupOrganiserSEO');
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/group-organisers?filters[slug][$eq]=${encodeURIComponent(slug)}&populate[seo][populate]=metaImage`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const item = data.data[0];
+      const organiser = item.attributes || item;
+      const seo = organiser.seo || {};
+      
+      return {
+        metaTitle: seo.metaTitle,
+        metaDescription: seo.metaDescription,
+        keywords: seo.keywords,
+        canonicalURL: seo.canonicalURL,
+        metaImage: seo.metaImage ? getStrapiImageData(seo.metaImage).url : null,
+        metaImageAlt: seo.metaImage ? getStrapiImageData(seo.metaImage).alt : null
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching SEO data for group organiser (${slug}):`, error);
+    return null;
+  }
+}
+
+/**
+ * Fetch master page data based on masterPageType and masterPageSlug
+ * @param {string} masterPageType - The type of master page (tennis-holiday, padel-holiday, etc.)
+ * @param {string} masterPageSlug - The slug of the master page
+ * @returns {Promise<Object|null>} Master page data or null
+ */
+export async function getMasterPageData(masterPageType, masterPageSlug) {
+  if (!masterPageType || !masterPageSlug) {
+    console.warn('⚠️ Missing masterPageType or masterPageSlug');
+    return null;
+  }
+
+  try {
+    console.log(`📄 Fetching master page: ${masterPageType}/${masterPageSlug}`);
+    
+    let masterData = null;
+    
+    switch (masterPageType) {
+      case 'tennis-holiday':
+        masterData = await getTennisHolidayBySlug(masterPageSlug);
+        break;
+      case 'padel-holiday':
+      case 'padel-tennis-holiday':
+        masterData = await getPadelHolidayBySlug(masterPageSlug);
+        break;
+      case 'pickleball-holiday':
+        masterData = await getPickleballHolidayBySlug(masterPageSlug);
+        break;
+      case 'tennis-clinic':
+        masterData = await getTennisClinicBySlug(masterPageSlug);
+        break;
+      default:
+        console.warn(`⚠️ Unknown masterPageType: ${masterPageType}`);
+        return null;
+    }
+    
+    if (masterData) {
+      console.log(`✅ Master page fetched: ${masterData.title}`);
+    } else {
+      console.warn(`⚠️ Master page not found: ${masterPageType}/${masterPageSlug}`);
+    }
+    
+    return masterData;
+  } catch (error) {
+    console.error(`❌ Error fetching master page (${masterPageType}/${masterPageSlug}):`, error);
+    return null;
   }
 }
