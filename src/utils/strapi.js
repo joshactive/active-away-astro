@@ -528,10 +528,25 @@ export async function getEventsByDocumentIds(documentIds) {
     const results = await Promise.all(eventPromises);
     const events = [];
     
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset to start of day for accurate comparison
+    
     results.forEach((data, index) => {
       if (data && data.data && data.data.length > 0) {
         const item = data.data[0]; // Get first result from array
         const event = item.attributes || item;
+        
+        // Check if event is in the future based on dateFrom
+        if (event.dateFrom) {
+          const eventDate = new Date(event.dateFrom);
+          eventDate.setHours(0, 0, 0, 0); // Reset to start of day
+          
+          // Skip past events
+          if (eventDate < today) {
+            console.log(`⏭️ Skipping past event: ${event.title || event.dateFrom} (${ids[index]})`);
+            return;
+          }
+        }
         
         // Format dates
         let formattedDate = '';
@@ -587,7 +602,7 @@ export async function getEventsByDocumentIds(documentIds) {
       }
     });
     
-    console.log(`✅ Found ${events.length} event(s) by document IDs`);
+    console.log(`✅ Found ${events.length} future event(s) by document IDs (${ids.length} total queried)`);
     
     // Sort by dateFrom
     events.sort((a, b) => {
@@ -3065,7 +3080,10 @@ export async function getAllVenues(options = {}) {
  */
 export async function getGroupOrganisers(page = 1, pageSize = 25) {
   try {
-    const data = await fetchAPI(`/group-organisers?populate=headerImage&sort=createdAt:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`);
+    console.log(`🔍 Fetching group organisers page ${page} with pageSize ${pageSize}`);
+    const data = await fetchAPI(`/group-organisers?pagination[page]=${page}&pagination[pageSize]=${pageSize}`);
+    
+    console.log(`📦 Received ${data?.data?.length || 0} group organisers`);
     
     if (!data || !data.data || data.data.length === 0) {
       return [];
