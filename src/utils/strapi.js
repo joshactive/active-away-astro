@@ -2073,6 +2073,7 @@ function transformTennisHolidayDetail(item) {
     // Tennis details
     tennisCourtSurface: holiday.tennisCourtSurface,
     airportTransfer: holiday.airportTransfer,
+    destinationAirport: holiday.destinationAirport,
     padelCourtsInfo: holiday.padelCourtsInfo,
     
     // Padel-specific fields
@@ -2091,6 +2092,7 @@ function transformTennisHolidayDetail(item) {
     lunchInfo: holiday.lunchInfo,
     eventInformation: holiday.eventInformation,
     residentialType: holiday.residentialType,
+    residentialOrNonResidential: holiday.residentialOrNonResidential,
     maximumGroupSize: holiday.maximumGroupSize,
     typicalGroupSize: holiday.typicalGroupSize,
     
@@ -2973,6 +2975,402 @@ export async function getTennisClinicById(identifier) {
     return null;
   } catch (error) {
     console.error(`❌ Error fetching tennis clinic by id (${numericId}):`, error);
+    return null;
+  }
+}
+
+/**
+ * JUNIOR TENNIS CAMP FUNCTIONS
+ * These follow the same pattern as tennis clinics but query the junior-tennis-camps endpoint
+ */
+
+/**
+ * SEPARATE API CALL: Fetch nested data for junior tennis camp (tripImages)
+ * @param {string} slug - Junior tennis camp slug
+ * @returns {Promise<Object|null>} Object with tripImages, or null
+ */
+export async function getJuniorTennisCampNestedData(slug) {
+  if (!slug) {
+    console.warn('No slug provided to getJuniorTennisCampNestedData');
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/junior-tennis-camps?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=tripImages`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const item = data.data[0];
+      const holiday = item.attributes || item;
+      
+      const tripImages = holiday.tripImages ? getStrapiImagesData(holiday.tripImages) : [];
+      
+      console.log(`👦 Nested data fetched for junior camp ${slug}: ${tripImages.length} trip images`);
+      
+      return {
+        tripImages
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching nested data for junior camp (${slug}):`, error);
+    return null;
+  }
+}
+
+/**
+ * SEPARATE API CALL: Fetch SEO data with metaImage for junior tennis camp
+ * @param {string} slug - Junior tennis camp slug
+ * @returns {Promise<Object|null>} SEO data object or null
+ */
+export async function getJuniorTennisCampSEO(slug) {
+  if (!slug) {
+    console.warn('No slug provided to getJuniorTennisCampSEO');
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/junior-tennis-camps?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=seo.metaImage`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const item = data.data[0];
+      const holiday = item.attributes || item;
+      
+      if (holiday.seo) {
+        const seo = holiday.seo;
+        const metaImageData = seo.metaImage ? getStrapiImageData(seo.metaImage) : null;
+        
+        const seoData = {
+          metaTitle: seo.metaTitle || null,
+          metaDescription: seo.metaDescription || null,
+          metaImage: metaImageData?.url || null,
+          metaImageAlt: metaImageData?.alt || null,
+          keywords: seo.keywords || null,
+          canonicalURL: seo.canonicalURL || null
+        };
+        
+        console.log(`📄 SEO data fetched for junior camp ${slug}:`, {
+          hasMetaImage: !!seoData.metaImage,
+          metaTitle: seoData.metaTitle
+        });
+        
+        return seoData;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching SEO data for junior camp (${slug}):`, error);
+    return null;
+  }
+}
+
+async function resolveJuniorTennisCampFallback(identifiers = {}) {
+  const { documentId, id } = identifiers || {};
+
+  if (documentId) {
+    console.log(`👦 Attempting fallback lookup by documentId: ${documentId}`);
+    const byDocumentId = await getJuniorTennisCampByDocumentId(documentId);
+    if (byDocumentId) {
+      return byDocumentId;
+    }
+  }
+
+  if (id !== undefined && id !== null) {
+    const numericId = typeof id === 'string' ? Number(id) : id;
+    if (!Number.isNaN(numericId)) {
+      console.log(`👦 Attempting fallback lookup by id: ${numericId}`);
+      const byId = await getJuniorTennisCampById(numericId);
+      if (byId) {
+        return byId;
+      }
+    } else {
+      console.warn(`⚠️ Provided fallback junior camp id is not numeric: ${id}`);
+    }
+  }
+
+  return null;
+}
+
+export async function getJuniorTennisCampBySlug(slug, fallbackIdentifiers) {
+  const identifiers = typeof fallbackIdentifiers === 'object' && fallbackIdentifiers !== null
+    ? fallbackIdentifiers
+    : { id: fallbackIdentifiers };
+
+  if (!slug) {
+    console.warn('No slug provided to getJuniorTennisCampBySlug');
+    return await resolveJuniorTennisCampFallback(identifiers);
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/junior-tennis-camps?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=*`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const transformed = transformTennisHolidayDetail(data.data[0]);
+      if (transformed) {
+        console.log(`👦 Junior camp fetched (slug=${slug}): ${transformed.title}`);
+        console.log(`📸 Gallery images found: ${transformed.mainGallery?.length || 0}`);
+      }
+      return transformed;
+    }
+
+  } catch (error) {
+    console.error(`❌ Error fetching junior camp by slug (${slug}):`, error);
+  }
+
+  return await resolveJuniorTennisCampFallback(identifiers);
+}
+
+export async function getJuniorTennisCampByDocumentId(documentId) {
+  if (!documentId) {
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(`/junior-tennis-camps?filters[documentId][$eq]=${encodeURIComponent(documentId)}&populate=*`);
+    
+    if (data && data.data && data.data.length > 0) {
+      return transformTennisHolidayDetail(data.data[0]);
+    }
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching junior camp by documentId (${documentId}):`, error);
+    return null;
+  }
+}
+
+export async function getJuniorTennisCampById(identifier) {
+  if (identifier === undefined || identifier === null) {
+    return null;
+  }
+
+  const numericId = typeof identifier === 'string' ? Number(identifier) : identifier;
+  if (Number.isNaN(numericId)) {
+    console.warn(`Cannot fetch junior camp by id, identifier is not numeric: ${identifier}`);
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(`/junior-tennis-camps?filters[id][$eq]=${numericId}&populate=*`);
+    
+    if (data && data.data && data.data.length > 0) {
+      return transformTennisHolidayDetail(data.data[0]);
+    }
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching junior camp by id (${numericId}):`, error);
+    return null;
+  }
+}
+
+/**
+ * PLAY AND WATCH FUNCTIONS
+ * These follow the same pattern as tennis holidays but query the play-and-watches endpoint
+ */
+
+/**
+ * SEPARATE API CALL: Fetch nested data for play-and-watch (rooms.roomGallery, tripImages)
+ * @param {string} slug - Play and watch slug
+ * @returns {Promise<Object|null>} Object with rooms and tripImages, or null
+ */
+export async function getPlayAndWatchNestedData(slug) {
+  if (!slug) {
+    console.warn('No slug provided to getPlayAndWatchNestedData');
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/play-and-watches?filters[slug][$eq]=${encodeURIComponent(slug)}&populate[rooms][populate]=*&populate=tripImages`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const item = data.data[0];
+      const holiday = item.attributes || item;
+      
+      const rooms = [];
+      const roomsSource = normalizeComponentArray(holiday.rooms);
+      roomsSource.forEach(room => {
+        const roomGallery = room.roomGallery ? getStrapiImagesData(room.roomGallery) : [];
+        
+        rooms.push({
+          id: room.id,
+          roomTitle: room.roomTitle,
+          roomSize: room.roomSize,
+          roomBedConfig: room.roomBedConfig,
+          roomText: room.roomText,
+          roomGallery: roomGallery
+        });
+      });
+      
+      const tripImages = holiday.tripImages ? getStrapiImagesData(holiday.tripImages) : [];
+      
+      console.log(`🏨 Nested data fetched for play-and-watch ${slug}: ${rooms.length} rooms, ${tripImages.length} trip images`);
+      
+      return {
+        rooms,
+        tripImages
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching nested data for play-and-watch (${slug}):`, error);
+    return null;
+  }
+}
+
+/**
+ * SEPARATE API CALL: Fetch SEO data with metaImage for play-and-watch
+ * @param {string} slug - Play and watch slug
+ * @returns {Promise<Object|null>} SEO data object or null
+ */
+export async function getPlayAndWatchSEO(slug) {
+  if (!slug) {
+    console.warn('No slug provided to getPlayAndWatchSEO');
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/play-and-watches?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=seo.metaImage`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const item = data.data[0];
+      const holiday = item.attributes || item;
+      
+      if (holiday.seo) {
+        const seo = holiday.seo;
+        const metaImageData = seo.metaImage ? getStrapiImageData(seo.metaImage) : null;
+        
+        const seoData = {
+          metaTitle: seo.metaTitle || null,
+          metaDescription: seo.metaDescription || null,
+          metaImage: metaImageData?.url || null,
+          metaImageAlt: metaImageData?.alt || null,
+          keywords: seo.keywords || null,
+          canonicalURL: seo.canonicalURL || null
+        };
+        
+        console.log(`📄 SEO data fetched for play-and-watch ${slug}:`, {
+          hasMetaImage: !!seoData.metaImage,
+          metaTitle: seoData.metaTitle
+        });
+        
+        return seoData;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching SEO data for play-and-watch (${slug}):`, error);
+    return null;
+  }
+}
+
+async function resolvePlayAndWatchFallback(identifiers = {}) {
+  const { documentId, id } = identifiers || {};
+
+  if (documentId) {
+    console.log(`🎾 Attempting fallback lookup by documentId: ${documentId}`);
+    const byDocumentId = await getPlayAndWatchByDocumentId(documentId);
+    if (byDocumentId) {
+      return byDocumentId;
+    }
+  }
+
+  if (id !== undefined && id !== null) {
+    const numericId = typeof id === 'string' ? Number(id) : id;
+    if (!Number.isNaN(numericId)) {
+      console.log(`🎾 Attempting fallback lookup by id: ${numericId}`);
+      const byId = await getPlayAndWatchById(numericId);
+      if (byId) {
+        return byId;
+      }
+    } else {
+      console.warn(`⚠️ Provided fallback play-and-watch id is not numeric: ${id}`);
+    }
+  }
+
+  return null;
+}
+
+export async function getPlayAndWatchBySlug(slug, fallbackIdentifiers) {
+  const identifiers = typeof fallbackIdentifiers === 'object' && fallbackIdentifiers !== null
+    ? fallbackIdentifiers
+    : { id: fallbackIdentifiers };
+
+  if (!slug) {
+    console.warn('No slug provided to getPlayAndWatchBySlug');
+    return await resolvePlayAndWatchFallback(identifiers);
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/play-and-watches?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=*`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const transformed = transformTennisHolidayDetail(data.data[0]);
+      if (transformed) {
+        console.log(`🎾 Play-and-watch fetched (slug=${slug}): ${transformed.title}`);
+        console.log(`📸 Gallery images found: ${transformed.mainGallery?.length || 0}`);
+      }
+      return transformed;
+    }
+
+  } catch (error) {
+    console.error(`❌ Error fetching play-and-watch by slug (${slug}):`, error);
+  }
+
+  return await resolvePlayAndWatchFallback(identifiers);
+}
+
+export async function getPlayAndWatchByDocumentId(documentId) {
+  if (!documentId) {
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(`/play-and-watches?filters[documentId][$eq]=${encodeURIComponent(documentId)}&populate=*`);
+    
+    if (data && data.data && data.data.length > 0) {
+      return transformTennisHolidayDetail(data.data[0]);
+    }
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching play-and-watch by documentId (${documentId}):`, error);
+    return null;
+  }
+}
+
+export async function getPlayAndWatchById(identifier) {
+  if (identifier === undefined || identifier === null) {
+    return null;
+  }
+
+  const numericId = typeof identifier === 'string' ? Number(identifier) : identifier;
+  if (Number.isNaN(numericId)) {
+    console.warn(`Cannot fetch play-and-watch by id, identifier is not numeric: ${identifier}`);
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(`/play-and-watches?filters[id][$eq]=${numericId}&populate=*`);
+    
+    if (data && data.data && data.data.length > 0) {
+      return transformTennisHolidayDetail(data.data[0]);
+    }
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching play-and-watch by id (${numericId}):`, error);
     return null;
   }
 }

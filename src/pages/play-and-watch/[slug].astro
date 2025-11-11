@@ -1,0 +1,122 @@
+---
+// Dynamic route for individual play-and-watch holidays
+export const prerender = true;
+
+import HolidayDetail from '../../components/HolidayDetail.astro';
+import { getPlayAndWatchHolidays, getPlayAndWatchBySlug, getPlayAndWatchNestedData, getPlayAndWatchSEO, getEventsByUniqueValue } from '../../utils/strapi.js';
+
+// Generate static paths for all play-and-watch holidays
+export async function getStaticPaths() {
+  const playAndWatchHolidays = await getPlayAndWatchHolidays(1, 100);
+  
+  return playAndWatchHolidays.map((holiday) => ({
+    params: { slug: holiday.slug },
+    props: { 
+      slug: holiday.slug,
+      id: holiday.strapiId,
+      documentId: holiday.documentId
+    }
+  }));
+}
+
+const { slug } = Astro.params;
+const { id, documentId } = Astro.props;
+const fallbackIdentifiers = { id, documentId };
+console.log(`🎾 [${slug}] Static props identifiers:`, fallbackIdentifiers);
+
+// Fetch the specific play-and-watch holiday data
+let holidayData = null;
+try {
+  holidayData = await getPlayAndWatchBySlug(slug, fallbackIdentifiers);
+  if (holidayData) {
+    console.log(`🎾 [${slug}] Play-and-watch holiday data fetched successfully`);
+  } else {
+    console.warn(`🎾 [${slug}] Play-and-watch holiday data not found after lookup`);
+  }
+} catch (error) {
+  console.error(`[${slug}] Error fetching play-and-watch holiday:`, error.message);
+}
+
+// If no data found, show 404
+if (!holidayData) {
+  return Astro.redirect('/404');
+}
+
+// SEPARATE API CALL: Fetch nested data (rooms.roomGallery, tripImages)
+// This is required for Strapi v5's nested population
+try {
+  const nestedData = await getPlayAndWatchNestedData(slug);
+  if (nestedData) {
+    // Merge nested data into holidayData
+    if (nestedData.rooms && nestedData.rooms.length > 0) {
+      holidayData.rooms = nestedData.rooms;
+    }
+    if (nestedData.tripImages && nestedData.tripImages.length > 0) {
+      holidayData.tripImages = nestedData.tripImages;
+    }
+    console.log(`🏨 [${slug}] Nested data merged: ${nestedData.rooms?.length || 0} rooms, ${nestedData.tripImages?.length || 0} trip images`);
+  }
+} catch (error) {
+  console.error(`[${slug}] Error fetching nested data:`, error.message);
+}
+
+// SEPARATE API CALL: Fetch SEO data with metaImage
+// This is required for Strapi v5's nested population of seo.metaImage
+try {
+  const seoData = await getPlayAndWatchSEO(slug);
+  if (seoData) {
+    // Merge SEO data into holidayData
+    holidayData.seo = seoData;
+    console.log(`📄 [${slug}] SEO data merged: ${seoData.metaTitle || 'No title'}, metaImage: ${seoData.metaImage ? 'Yes' : 'No'}`);
+  }
+} catch (error) {
+  console.error(`[${slug}] Error fetching SEO data:`, error.message);
+}
+
+// Fetch random other play-and-watch destinations (excluding current one)
+let similarHolidays = [];
+try {
+  const allHolidays = await getPlayAndWatchHolidays(1, 50);
+  
+  // Filter: exclude current holiday AND only show those with displayOnFrontEnd = true
+  const otherHolidays = allHolidays.filter(h => 
+    h.slug !== slug && h.displayOnFrontEnd === true
+  );
+  
+  // Randomize and select 3 destinations
+  if (otherHolidays.length > 0) {
+    const shuffled = [...otherHolidays];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    similarHolidays = shuffled.slice(0, 3);
+    console.log(`🎲 Selected ${similarHolidays.length} random play-and-watch destinations from ${otherHolidays.length} available`);
+  }
+} catch (error) {
+  console.error('Error fetching other play-and-watch destinations:', error);
+}
+
+// Fetch events matching this play-and-watch holiday's uniqueValue
+let matchingEvents = [];
+try {
+  if (holidayData.uniqueValue) {
+    console.log(`🎾 Fetching events for play-and-watch holiday uniqueValue: "${holidayData.uniqueValue}"`);
+    matchingEvents = await getEventsByUniqueValue(holidayData.uniqueValue);
+    console.log(`🎾 Found ${matchingEvents.length} matching event(s)`);
+  } else {
+    console.warn(`⚠️ Play-and-watch holiday "${slug}" has no uniqueValue set`);
+  }
+} catch (error) {
+  console.error('Error fetching events for play-and-watch holiday:', error);
+}
+---
+
+<HolidayDetail 
+  holidayData={holidayData}
+  holidayType="play-and-watch"
+  matchingEvents={matchingEvents}
+  similarHolidays={similarHolidays}
+  slug={slug}
+/>
+
