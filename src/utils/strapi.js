@@ -1744,6 +1744,7 @@ function normalizeVenueData(item, holidayType) {
     strapiId: item.id,
     documentId,
     title: venue.title || 'Untitled Venue',
+    headingText: venue.headingText || '',
     country: venue.country || '',
     holidayType: holidayType,
     productType: venue.productType || holidayType.split('-').map(word => 
@@ -1753,6 +1754,10 @@ function normalizeVenueData(item, holidayType) {
     priceText: price ? `from £${price}pp` : null,
     dateFrom: venue.dateFrom || null,
     dateUntil: venue.dateUntil || null,
+    uniqueValue: venue.uniqueValue || null,
+    tennisCourtSurface: venue.tennisCourtSurface || null,
+    groupOrganiserName: venue.groupOrganiserName || null,
+    groupOrganiserProduct: venue.groupOrganiserProduct || null,
     image: headerImage?.url || GENERIC_PLACEHOLDER_URL,
     imageAlt: headerImage?.alt || venue.title || 'Venue image',
     slug: slug,
@@ -1872,6 +1877,229 @@ export async function getSchoolTennisTours(page = 1, pageSize = 25) {
 }
 
 /**
+ * SCHOOL TENNIS TOUR FUNCTIONS
+ * These follow the same pattern as tennis holidays but query the school-tennis-tours endpoint
+ */
+
+/**
+ * SEPARATE API CALL: Fetch nested data for school tennis tour (rooms.roomGallery, tripImages)
+ * @param {string} slug - School tennis tour slug
+ * @returns {Promise<Object|null>} Object with rooms and tripImages, or null
+ */
+export async function getSchoolTennisTourNestedData(slug) {
+  if (!slug) {
+    console.warn('No slug provided to getSchoolTennisTourNestedData');
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/school-tennis-tours?filters[slug][$eq]=${encodeURIComponent(slug)}&populate[rooms][populate]=*&populate=tripImages`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const item = data.data[0];
+      const tour = item.attributes || item;
+      
+      const rooms = [];
+      const roomsSource = normalizeComponentArray(tour.rooms);
+      roomsSource.forEach(room => {
+        const roomGallery = room.roomGallery ? getStrapiImagesData(room.roomGallery) : [];
+        
+        rooms.push({
+          id: room.id,
+          roomTitle: room.roomTitle,
+          roomSize: room.roomSize,
+          roomBedConfig: room.roomBedConfig,
+          roomText: room.roomText,
+          roomGallery: roomGallery
+        });
+      });
+      
+      const tripImages = tour.tripImages ? getStrapiImagesData(tour.tripImages) : [];
+      
+      console.log(`🏨 Nested data fetched for school tour ${slug}: ${rooms.length} rooms, ${tripImages.length} trip images`);
+      
+      return {
+        rooms,
+        tripImages
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching nested data for school tennis tour (${slug}):`, error);
+    return null;
+  }
+}
+
+/**
+ * SEPARATE API CALL: Fetch SEO data with metaImage for school tennis tour
+ * @param {string} slug - School tennis tour slug
+ * @returns {Promise<Object|null>} SEO data object or null
+ */
+export async function getSchoolTennisTourSEO(slug) {
+  if (!slug) {
+    console.warn('No slug provided to getSchoolTennisTourSEO');
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/school-tennis-tours?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=seo.metaImage`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const item = data.data[0];
+      const tour = item.attributes || item;
+      
+      if (tour.seo) {
+        const seo = tour.seo;
+        const metaImageData = seo.metaImage ? getStrapiImageData(seo.metaImage) : null;
+        
+        const seoData = {
+          metaTitle: seo.metaTitle || null,
+          metaDescription: seo.metaDescription || null,
+          metaImage: metaImageData?.url || null,
+          metaImageAlt: metaImageData?.alt || null,
+          keywords: seo.keywords || null,
+          canonicalURL: seo.canonicalURL || null
+        };
+        
+        console.log(`📄 SEO data fetched for school tour ${slug}:`, {
+          hasMetaImage: !!seoData.metaImage,
+          metaTitle: seoData.metaTitle
+        });
+        
+        return seoData;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching SEO data for school tennis tour (${slug}):`, error);
+    return null;
+  }
+}
+
+/**
+ * Fallback resolver for school tennis tours
+ * @param {Object} identifiers - Object with documentId and/or id
+ * @returns {Promise<Object|null>} School tennis tour data or null
+ */
+async function resolveSchoolTennisTourFallback(identifiers = {}) {
+  const { documentId, id } = identifiers || {};
+
+  if (documentId) {
+    console.log(`🎒 Attempting fallback lookup by documentId: ${documentId}`);
+    const byDocumentId = await getSchoolTennisTourByDocumentId(documentId);
+    if (byDocumentId) {
+      return byDocumentId;
+    }
+  }
+
+  if (id !== undefined && id !== null) {
+    const numericId = typeof id === 'string' ? Number(id) : id;
+    if (!Number.isNaN(numericId)) {
+      console.log(`🎒 Attempting fallback lookup by id: ${numericId}`);
+      const byId = await getSchoolTennisTourById(numericId);
+      if (byId) {
+        return byId;
+      }
+    }
+  }
+
+  console.warn('⚠️ All school tennis tour fallback lookups failed');
+  return null;
+}
+
+/**
+ * Fetch a single school tennis tour by slug with all content
+ * @param {string} slug - School tennis tour slug
+ * @param {Object} fallbackIdentifiers - Optional fallback identifiers {documentId, id}
+ * @returns {Promise<Object|null>} Complete school tennis tour data
+ */
+export async function getSchoolTennisTourBySlug(slug, fallbackIdentifiers) {
+  const identifiers = typeof fallbackIdentifiers === 'object' && fallbackIdentifiers !== null
+    ? fallbackIdentifiers
+    : { id: fallbackIdentifiers };
+
+  if (!slug) {
+    console.warn('No slug provided to getSchoolTennisTourBySlug');
+    return await resolveSchoolTennisTourFallback(identifiers);
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/school-tennis-tours?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=*`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const transformed = transformTennisHolidayDetail(data.data[0]);
+      if (transformed) {
+        console.log(`🎒 School tennis tour fetched (slug=${slug}): ${transformed.title}`);
+        console.log(`📸 Gallery images found: ${transformed.mainGallery?.length || 0}`);
+      }
+      return transformed;
+    }
+
+  } catch (error) {
+    console.error(`❌ Error fetching school tennis tour by slug (${slug}):`, error);
+  }
+
+  return await resolveSchoolTennisTourFallback(identifiers);
+}
+
+/**
+ * Fetch a single school tennis tour by documentId
+ * @param {string} documentId - School tennis tour documentId
+ * @returns {Promise<Object|null>} Complete school tennis tour data
+ */
+export async function getSchoolTennisTourByDocumentId(documentId) {
+  if (!documentId) {
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(`/school-tennis-tours?filters[documentId][$eq]=${encodeURIComponent(documentId)}&populate=*`);
+    
+    if (data && data.data && data.data.length > 0) {
+      return transformTennisHolidayDetail(data.data[0]);
+    }
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching school tennis tour by documentId (${documentId}):`, error);
+    return null;
+  }
+}
+
+/**
+ * Fetch a single school tennis tour by numeric ID
+ * @param {number} id - School tennis tour ID
+ * @returns {Promise<Object|null>} Complete school tennis tour data
+ */
+export async function getSchoolTennisTourById(identifier) {
+  const numericId = typeof identifier === 'string' ? Number(identifier) : identifier;
+  
+  if (Number.isNaN(numericId) || numericId === null || numericId === undefined) {
+    console.warn('Invalid ID provided to getSchoolTennisTourById:', identifier);
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(`/school-tennis-tours?filters[id][$eq]=${numericId}&populate=*`);
+    
+    if (data && data.data && data.data.length > 0) {
+      return transformTennisHolidayDetail(data.data[0]);
+    }
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching school tennis tour by ID (${numericId}):`, error);
+    return null;
+  }
+}
+
+/**
  * Fetch Ski Holidays
  * @param {number} page - Page number (1-indexed)
  * @param {number} pageSize - Items per page
@@ -1889,6 +2117,673 @@ export async function getSkiHolidays(page = 1, pageSize = 25) {
   } catch (error) {
     console.error('❌ Error fetching ski holidays:', error);
     return [];
+  }
+}
+
+/**
+ * SKI HOLIDAY FUNCTIONS
+ * These follow the same pattern as tennis holidays but query the ski-holidays endpoint
+ */
+
+/**
+ * SEPARATE API CALL: Fetch nested data for ski holiday (rooms.roomGallery, tripImages)
+ * @param {string} slug - Ski holiday slug
+ * @returns {Promise<Object|null>} Object with rooms and tripImages, or null
+ */
+export async function getSkiHolidayNestedData(slug) {
+  if (!slug) {
+    console.warn('No slug provided to getSkiHolidayNestedData');
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/ski-holidays?filters[slug][$eq]=${encodeURIComponent(slug)}&populate[rooms][populate]=*&populate=tripImages`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const item = data.data[0];
+      const holiday = item.attributes || item;
+      
+      const rooms = [];
+      const roomsSource = normalizeComponentArray(holiday.rooms);
+      roomsSource.forEach(room => {
+        const roomGallery = room.roomGallery ? getStrapiImagesData(room.roomGallery) : [];
+        
+        rooms.push({
+          id: room.id,
+          roomTitle: room.roomTitle,
+          roomSize: room.roomSize,
+          roomBedConfig: room.roomBedConfig,
+          roomText: room.roomText,
+          roomGallery: roomGallery
+        });
+      });
+      
+      const tripImages = holiday.tripImages ? getStrapiImagesData(holiday.tripImages) : [];
+      
+      console.log(`🏨 Nested data fetched for ski ${slug}: ${rooms.length} rooms, ${tripImages.length} trip images`);
+      
+      return {
+        rooms,
+        tripImages
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching nested data for ski holiday (${slug}):`, error);
+    return null;
+  }
+}
+
+/**
+ * SEPARATE API CALL: Fetch SEO data with metaImage for ski holiday
+ * @param {string} slug - Ski holiday slug
+ * @returns {Promise<Object|null>} SEO data object or null
+ */
+export async function getSkiHolidaySEO(slug) {
+  if (!slug) {
+    console.warn('No slug provided to getSkiHolidaySEO');
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/ski-holidays?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=seo.metaImage`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const item = data.data[0];
+      const holiday = item.attributes || item;
+      
+      if (holiday.seo) {
+        const seo = holiday.seo;
+        const metaImageData = seo.metaImage ? getStrapiImageData(seo.metaImage) : null;
+        
+        const seoData = {
+          metaTitle: seo.metaTitle || null,
+          metaDescription: seo.metaDescription || null,
+          metaImage: metaImageData?.url || null,
+          metaImageAlt: metaImageData?.alt || null,
+          keywords: seo.keywords || null,
+          canonicalURL: seo.canonicalURL || null
+        };
+        
+        console.log(`📄 SEO data fetched for ski ${slug}:`, {
+          hasMetaImage: !!seoData.metaImage,
+          metaTitle: seoData.metaTitle
+        });
+        
+        return seoData;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching SEO data for ski holiday (${slug}):`, error);
+    return null;
+  }
+}
+
+/**
+ * Fallback resolver for ski holidays
+ * @param {Object} identifiers - Object with documentId and/or id
+ * @returns {Promise<Object|null>} Ski holiday data or null
+ */
+async function resolveSkiHolidayFallback(identifiers = {}) {
+  const { documentId, id } = identifiers || {};
+
+  if (documentId) {
+    console.log(`⛷️ Attempting fallback lookup by documentId: ${documentId}`);
+    const byDocumentId = await getSkiHolidayByDocumentId(documentId);
+    if (byDocumentId) {
+      return byDocumentId;
+    }
+  }
+
+  if (id !== undefined && id !== null) {
+    const numericId = typeof id === 'string' ? Number(id) : id;
+    if (!Number.isNaN(numericId)) {
+      console.log(`⛷️ Attempting fallback lookup by id: ${numericId}`);
+      const byId = await getSkiHolidayById(numericId);
+      if (byId) {
+        return byId;
+      }
+    }
+  }
+
+  console.warn('⚠️ All ski holiday fallback lookups failed');
+  return null;
+}
+
+/**
+ * Fetch a single ski holiday by slug with all content
+ * @param {string} slug - Ski holiday slug
+ * @param {Object} fallbackIdentifiers - Optional fallback identifiers {documentId, id}
+ * @returns {Promise<Object|null>} Complete ski holiday data
+ */
+export async function getSkiHolidayBySlug(slug, fallbackIdentifiers) {
+  const identifiers = typeof fallbackIdentifiers === 'object' && fallbackIdentifiers !== null
+    ? fallbackIdentifiers
+    : { id: fallbackIdentifiers };
+
+  if (!slug) {
+    console.warn('No slug provided to getSkiHolidayBySlug');
+    return await resolveSkiHolidayFallback(identifiers);
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/ski-holidays?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=*`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const transformed = transformTennisHolidayDetail(data.data[0]);
+      if (transformed) {
+        console.log(`⛷️ Ski holiday fetched (slug=${slug}): ${transformed.title}`);
+        console.log(`📸 Gallery images found: ${transformed.mainGallery?.length || 0}`);
+      }
+      return transformed;
+    }
+
+  } catch (error) {
+    console.error(`❌ Error fetching ski holiday by slug (${slug}):`, error);
+  }
+
+  return await resolveSkiHolidayFallback(identifiers);
+}
+
+/**
+ * Fetch a single ski holiday by documentId
+ * @param {string} documentId - Ski holiday documentId
+ * @returns {Promise<Object|null>} Complete ski holiday data
+ */
+export async function getSkiHolidayByDocumentId(documentId) {
+  if (!documentId) {
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(`/ski-holidays?filters[documentId][$eq]=${encodeURIComponent(documentId)}&populate=*`);
+    
+    if (data && data.data && data.data.length > 0) {
+      return transformTennisHolidayDetail(data.data[0]);
+    }
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching ski holiday by documentId (${documentId}):`, error);
+    return null;
+  }
+}
+
+/**
+ * Fetch a single ski holiday by numeric ID
+ * @param {number} id - Ski holiday ID
+ * @returns {Promise<Object|null>} Complete ski holiday data
+ */
+export async function getSkiHolidayById(identifier) {
+  const numericId = typeof identifier === 'string' ? Number(identifier) : identifier;
+  
+  if (Number.isNaN(numericId) || numericId === null || numericId === undefined) {
+    console.warn('Invalid ID provided to getSkiHolidayById:', identifier);
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(`/ski-holidays?filters[id][$eq]=${numericId}&populate=*`);
+    
+    if (data && data.data && data.data.length > 0) {
+      return transformTennisHolidayDetail(data.data[0]);
+    }
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching ski holiday by ID (${numericId}):`, error);
+    return null;
+  }
+}
+
+/**
+ * TENNIS ACADEMY FUNCTIONS
+ * Tennis academies have a different structure than holidays with unique fields
+ */
+
+/**
+ * Transform tennis academy detail data
+ * @param {Object} item - Raw Strapi tennis academy item
+ * @returns {Object|null} Transformed tennis academy data
+ */
+function transformTennisAcademyDetail(item) {
+  if (!item) {
+    return null;
+  }
+
+  const academy = item.attributes || item;
+
+  // Get header image
+  const headerImage = academy.headerImage ? getStrapiImageData(academy.headerImage) : null;
+  
+  // Get gallery images (uses 'gallery' field instead of 'mainGallery')
+  const gallery = academy.gallery ? getStrapiImagesData(academy.gallery) : [];
+  
+  // Get SEO data if available
+  let seoData = null;
+  if (academy.seo) {
+    const seo = academy.seo;
+    const metaImageData = seo.metaImage ? getStrapiImageData(seo.metaImage) : null;
+    
+    seoData = {
+      metaTitle: seo.metaTitle || null,
+      metaDescription: seo.metaDescription || null,
+      metaImage: metaImageData?.url || null,
+      metaImageAlt: metaImageData?.alt || null,
+      keywords: seo.keywords || null,
+      canonicalURL: seo.canonicalURL || null
+    };
+  }
+
+  // Process quick links
+  const quickLinks = [];
+  const quickLinksSource = normalizeComponentArray(academy.quickLinks);
+  quickLinksSource.forEach(link => {
+    const linkImage = link.quickLinkImage ? getStrapiImageData(link.quickLinkImage) : null;
+    
+    quickLinks.push({
+      id: link.id,
+      image: linkImage?.url || null,
+      imageAlt: linkImage?.alt || link.quickLinkTitle || '',
+      title: link.quickLinkTitle || '',
+      description: link.quickLinkDescription || '',
+      buttonText: link.quickLinkButtonText || '',
+      url: link.quickLinkURL || ''
+    });
+  });
+
+  // Process coach information
+  let coach = null;
+  if (academy.coach) {
+    const coachData = academy.coach;
+    const coachImage = coachData.coachImage ? getStrapiImageData(coachData.coachImage) : null;
+    
+    coach = {
+      image: coachImage?.url || null,
+      imageAlt: coachImage?.alt || `${coachData.coachFirstName} ${coachData.coachLastName}`,
+      firstName: coachData.coachFirstName || '',
+      lastName: coachData.coachLastName || '',
+      description: coachData.coachDescription || '',
+      whatsappURL: coachData.coachWhatsAppURL || ''
+    };
+  }
+
+  // Process useful resources
+  const usefulResources = [];
+  const resourcesSource = normalizeComponentArray(academy.usefulResources);
+  resourcesSource.forEach(resource => {
+    usefulResources.push({
+      id: resource.id,
+      title: resource.resourceTitle || '',
+      text: resource.resourceText || '',
+      url: resource.resourceURL || ''
+    });
+  });
+
+  // Process hosted experiences
+  const hostedExperiences = [];
+  const experiencesSource = normalizeComponentArray(academy.hostedExperiences);
+  experiencesSource.forEach(experience => {
+    const experienceImage = experience.holidayImage ? getStrapiImageData(experience.holidayImage) : null;
+    
+    hostedExperiences.push({
+      id: experience.id,
+      title: experience.holidayTitle || '',
+      description: experience.holidayDescription || '',
+      image: experienceImage?.url || null,
+      imageAlt: experienceImage?.alt || experience.holidayTitle || '',
+      url: experience.holidayURL || ''
+    });
+  });
+
+  const slug = academy.slug ||
+    (academy.title
+      ? academy.title.toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '')
+      : `tennis-academy-${item.id}`);
+
+  return {
+    id: item.id,
+    documentId: item.documentId || item.id,
+    wpId: academy.wpId,
+    title: academy.title,
+    slug: slug,
+    excerpt: academy.excerpt || '',
+    mainHeader: academy.mainHeader || academy.title,
+    headingText: academy.headingText || '',
+    belowHeadingText: academy.belowHeadingText || '',
+    
+    // Images
+    headerImage: headerImage,
+    gallery: gallery,
+    
+    // Location info
+    venue: academy.venue,
+    country: academy.country,
+    
+    // Key information (uses whyWeLoveVenue fields)
+    whyWeLoveVenue1: academy.whyWeLoveVenue1,
+    whyWeLoveVenue2: academy.whyWeLoveVenue2,
+    whyWeLoveVenue3: academy.whyWeLoveVenue3,
+    whyWeLoveVenue4: academy.whyWeLoveVenue4,
+    
+    // Academy-specific sections
+    quickLinks: quickLinks,
+    coach: coach,
+    usefulResources: usefulResources,
+    hostedExperiences: hostedExperiences,
+    
+    // FAQs
+    faqs: academy.faqs || [],
+    
+    // Meta
+    displayOnFrontEnd: academy.displayOnFrontEnd,
+    ordering: academy.ordering,
+    featured: academy.featured,
+    seo: seoData,
+    createdAt: academy.createdAt || item.createdAt,
+    publishedAt: academy.publishedAt || item.publishedAt
+  };
+}
+
+/**
+ * Fetch Tennis Academies
+ * @param {number} page - Page number (1-indexed)
+ * @param {number} pageSize - Items per page
+ * @returns {Promise<Array>} Array of normalized academy data
+ */
+export async function getTennisAcademies(page = 1, pageSize = 25) {
+  try {
+    const data = await fetchAPI(`/tennis-academies?populate=headerImage&sort=createdAt:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`);
+    
+    if (!data || !data.data || data.data.length === 0) {
+      return [];
+    }
+    
+    return data.data.map(item => normalizeVenueData(item, 'tennis-academy'));
+  } catch (error) {
+    console.error('❌ Error fetching tennis academies:', error);
+    return [];
+  }
+}
+
+/**
+ * SEPARATE API CALL: Fetch tennis academies for "Other Academies" section with full image population
+ * @param {number} page - Page number (1-indexed)
+ * @param {number} pageSize - Items per page
+ * @returns {Promise<Array>} Array of normalized academy data with images
+ */
+export async function getTennisAcademiesForCards(page = 1, pageSize = 25) {
+  try {
+    const data = await fetchAPI(`/tennis-academies?populate=headerImage&sort=createdAt:desc&pagination[page]=${page}&pagination[pageSize]=${pageSize}`);
+    
+    if (!data || !data.data || data.data.length === 0) {
+      return [];
+    }
+    
+    return data.data.map(item => normalizeVenueData(item, 'tennis-academy'));
+  } catch (error) {
+    console.error('❌ Error fetching tennis academies for cards:', error);
+    return [];
+  }
+}
+
+/**
+ * SEPARATE API CALL: Fetch nested data for tennis academy
+ * @param {string} slug - Tennis academy slug
+ * @returns {Promise<Object|null>} Object with nested data, or null
+ */
+export async function getTennisAcademyNestedData(slug) {
+  if (!slug) {
+    console.warn('No slug provided to getTennisAcademyNestedData');
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/tennis-academies?filters[slug][$eq]=${encodeURIComponent(slug)}&populate[quickLinks][populate]=*&populate[hostedExperiences][populate]=*&populate[coach][populate]=*`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const item = data.data[0];
+      const academy = item.attributes || item;
+      
+      // Process quick links
+      const quickLinks = [];
+      const quickLinksSource = normalizeComponentArray(academy.quickLinks);
+      quickLinksSource.forEach(link => {
+        const linkImage = link.quickLinkImage ? getStrapiImageData(link.quickLinkImage) : null;
+        
+        quickLinks.push({
+          id: link.id,
+          image: linkImage?.url || null,
+          imageAlt: linkImage?.alt || link.quickLinkTitle || '',
+          title: link.quickLinkTitle || '',
+          description: link.quickLinkDescription || '',
+          buttonText: link.quickLinkButtonText || '',
+          url: link.quickLinkURL || ''
+        });
+      });
+
+      // Process hosted experiences
+      const hostedExperiences = [];
+      const experiencesSource = normalizeComponentArray(academy.hostedExperiences);
+      experiencesSource.forEach(experience => {
+        const experienceImage = experience.holidayImage ? getStrapiImageData(experience.holidayImage) : null;
+        
+        hostedExperiences.push({
+          id: experience.id,
+          title: experience.holidayTitle || '',
+          description: experience.holidayDescription || '',
+          image: experienceImage?.url || null,
+          imageAlt: experienceImage?.alt || experience.holidayTitle || '',
+          url: experience.holidayURL || ''
+        });
+      });
+
+      // Process coach information
+      let coach = null;
+      if (academy.coach) {
+        const coachData = academy.coach;
+        const coachImage = coachData.coachImage ? getStrapiImageData(coachData.coachImage) : null;
+        
+        coach = {
+          image: coachImage?.url || null,
+          imageAlt: coachImage?.alt || `${coachData.coachFirstName} ${coachData.coachLastName}`,
+          firstName: coachData.coachFirstName || '',
+          lastName: coachData.coachLastName || '',
+          description: coachData.coachDescription || '',
+          whatsappURL: coachData.coachWhatsAppURL || ''
+        };
+      }
+      
+      console.log(`🎓 Nested data fetched for academy ${slug}: ${quickLinks.length} quick links, ${hostedExperiences.length} hosted experiences, coach: ${coach ? 'Yes' : 'No'}`);
+      
+      return {
+        quickLinks,
+        hostedExperiences,
+        coach
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching nested data for tennis academy (${slug}):`, error);
+    return null;
+  }
+}
+
+/**
+ * SEPARATE API CALL: Fetch SEO data with metaImage for tennis academy
+ * @param {string} slug - Tennis academy slug
+ * @returns {Promise<Object|null>} SEO data object or null
+ */
+export async function getTennisAcademySEO(slug) {
+  if (!slug) {
+    console.warn('No slug provided to getTennisAcademySEO');
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/tennis-academies?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=seo.metaImage`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const item = data.data[0];
+      const academy = item.attributes || item;
+      
+      if (academy.seo) {
+        const seo = academy.seo;
+        const metaImageData = seo.metaImage ? getStrapiImageData(seo.metaImage) : null;
+        
+        const seoData = {
+          metaTitle: seo.metaTitle || null,
+          metaDescription: seo.metaDescription || null,
+          metaImage: metaImageData?.url || null,
+          metaImageAlt: metaImageData?.alt || null,
+          keywords: seo.keywords || null,
+          canonicalURL: seo.canonicalURL || null
+        };
+        
+        console.log(`📄 SEO data fetched for academy ${slug}:`, {
+          hasMetaImage: !!seoData.metaImage,
+          metaTitle: seoData.metaTitle
+        });
+        
+        return seoData;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching SEO data for tennis academy (${slug}):`, error);
+    return null;
+  }
+}
+
+/**
+ * Fallback resolver for tennis academies
+ * @param {Object} identifiers - Object with documentId and/or id
+ * @returns {Promise<Object|null>} Tennis academy data or null
+ */
+async function resolveTennisAcademyFallback(identifiers = {}) {
+  const { documentId, id } = identifiers || {};
+
+  if (documentId) {
+    console.log(`🎓 Attempting fallback lookup by documentId: ${documentId}`);
+    const byDocumentId = await getTennisAcademyByDocumentId(documentId);
+    if (byDocumentId) {
+      return byDocumentId;
+    }
+  }
+
+  if (id !== undefined && id !== null) {
+    const numericId = typeof id === 'string' ? Number(id) : id;
+    if (!Number.isNaN(numericId)) {
+      console.log(`🎓 Attempting fallback lookup by id: ${numericId}`);
+      const byId = await getTennisAcademyById(numericId);
+      if (byId) {
+        return byId;
+      }
+    }
+  }
+
+  console.warn('⚠️ All tennis academy fallback lookups failed');
+  return null;
+}
+
+/**
+ * Fetch a single tennis academy by slug with all content
+ * @param {string} slug - Tennis academy slug
+ * @param {Object} fallbackIdentifiers - Optional fallback identifiers {documentId, id}
+ * @returns {Promise<Object|null>} Complete tennis academy data
+ */
+export async function getTennisAcademyBySlug(slug, fallbackIdentifiers) {
+  const identifiers = typeof fallbackIdentifiers === 'object' && fallbackIdentifiers !== null
+    ? fallbackIdentifiers
+    : { id: fallbackIdentifiers };
+
+  if (!slug) {
+    console.warn('No slug provided to getTennisAcademyBySlug');
+    return await resolveTennisAcademyFallback(identifiers);
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/tennis-academies?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=*`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const transformed = transformTennisAcademyDetail(data.data[0]);
+      if (transformed) {
+        console.log(`🎓 Tennis academy fetched (slug=${slug}): ${transformed.title}`);
+        console.log(`📸 Gallery images found: ${transformed.gallery?.length || 0}`);
+      }
+      return transformed;
+    }
+
+  } catch (error) {
+    console.error(`❌ Error fetching tennis academy by slug (${slug}):`, error);
+  }
+
+  return await resolveTennisAcademyFallback(identifiers);
+}
+
+/**
+ * Fetch a single tennis academy by documentId
+ * @param {string} documentId - Tennis academy documentId
+ * @returns {Promise<Object|null>} Complete tennis academy data
+ */
+export async function getTennisAcademyByDocumentId(documentId) {
+  if (!documentId) {
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(`/tennis-academies?filters[documentId][$eq]=${encodeURIComponent(documentId)}&populate=*`);
+    
+    if (data && data.data && data.data.length > 0) {
+      return transformTennisAcademyDetail(data.data[0]);
+    }
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching tennis academy by documentId (${documentId}):`, error);
+    return null;
+  }
+}
+
+/**
+ * Fetch a single tennis academy by numeric ID
+ * @param {number} id - Tennis academy ID
+ * @returns {Promise<Object|null>} Complete tennis academy data
+ */
+export async function getTennisAcademyById(identifier) {
+  const numericId = typeof identifier === 'string' ? Number(identifier) : identifier;
+  
+  if (Number.isNaN(numericId) || numericId === null || numericId === undefined) {
+    console.warn('Invalid ID provided to getTennisAcademyById:', identifier);
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(`/tennis-academies?filters[id][$eq]=${numericId}&populate=*`);
+    
+    if (data && data.data && data.data.length > 0) {
+      return transformTennisAcademyDetail(data.data[0]);
+    }
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching tennis academy by ID (${numericId}):`, error);
+    return null;
   }
 }
 
@@ -2042,7 +2937,7 @@ function transformTennisHolidayDetail(item) {
     priceFrom: holiday.priceFrom,
     singleOccupancyFrom: holiday.singleOccupancyFrom,
     singleOccupancyRange: holiday.singleOccupancyRange,
-    boardBasisLg: holiday.boardBasisLg,
+    boardBasisLg: holiday.boardBasisLg || holiday.boardBasis,
     
     // Ratings
     internalRating: holiday.internalRating,
@@ -2061,12 +2956,19 @@ function transformTennisHolidayDetail(item) {
     
     // Venue details (rich text)
     setting: holiday.setting,
+    settingDescription: holiday.settingDescription,
     boardBasis: holiday.boardBasis,
+    boardBasisIncluded: holiday.boardBasisIncluded,
+    boardBasisInfo: holiday.boardBasisInfo,
     restaurants: holiday.restaurants,
     bars: holiday.bars,
+    restaurantInformation: holiday.restaurantInformation,
+    barInformation: holiday.barInformation,
     tennisCourts: holiday.tennisCourts,
+    tennisCourtsInfo: holiday.tennisCourtsInfo,
     topTips: holiday.topTips,
     gettingThere: holiday.gettingThere,
+    theEvent: holiday.theEvent,
     whereWeStay: holiday.whereWeStay,
     howWeGetAround: holiday.howWeGetAround,
     
@@ -3376,6 +4278,40 @@ export async function getPlayAndWatchById(identifier) {
 }
 
 /**
+ * Fetch all future events for the venues page date filter
+ * @returns {Promise<Array>} Array of all future events
+ */
+async function fetchAllEvents() {
+  try {
+    // Get today's date to filter only future events
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayISO = today.toISOString().split('T')[0];
+    
+    const data = await fetchAPI(`/events?filters[dateUntil][$gte]=${todayISO}&pagination[pageSize]=100&sort=dateFrom:asc`);
+    
+    if (!data || !data.data || data.data.length === 0) {
+      console.log('ℹ️ No future events found');
+      return [];
+    }
+    
+    return data.data.map(item => {
+      const event = item.attributes || item;
+      return {
+        id: item.id,
+        uniqueValue: event.uniqueValue,
+        dateFrom: event.dateFrom,
+        dateUntil: event.dateUntil,
+        dateText: event.dateText || ''
+      };
+    });
+  } catch (error) {
+    console.error('❌ Error fetching all events:', error);
+    return [];
+  }
+}
+
+/**
  * Fetch all venues from all 8 collection types
  * @param {Object} options - Options object
  * @param {number} options.pageSize - Items per page (default: 18)
@@ -3385,7 +4321,7 @@ export async function getAllVenues(options = {}) {
   const { pageSize = 18 } = options;
   
   try {
-    // Fetch from all 8 collection types in parallel
+    // Fetch venues and all events in parallel
     const [
       juniorCamps,
       padelHolidays,
@@ -3394,7 +4330,8 @@ export async function getAllVenues(options = {}) {
       schoolTours,
       skiHolidays,
       tennisClinics,
-      tennisHolidays
+      tennisHolidays,
+      allEvents
     ] = await Promise.all([
       getJuniorTennisCamps(1, pageSize),
       getPadelTennisHolidays(1, pageSize),
@@ -3403,8 +4340,32 @@ export async function getAllVenues(options = {}) {
       getSchoolTennisTours(1, pageSize),
       getSkiHolidays(1, pageSize),
       getTennisClinics(1, pageSize),
-      getTennisHolidays(1, pageSize)
+      getTennisHolidays(1, pageSize),
+      fetchAllEvents()
     ]);
+    
+    // Debug: Log what was fetched from each collection
+    console.log(`📍 Venues fetched per type:`);
+    console.log(`  - Junior Tennis Camps: ${juniorCamps.length}`);
+    console.log(`  - Padel Tennis Holidays: ${padelHolidays.length}`);
+    console.log(`  - Pickleball Holidays: ${pickleballHolidays.length}`);
+    console.log(`  - Play & Watch: ${playAndWatch.length}`);
+    console.log(`  - School Tennis Tours: ${schoolTours.length}`);
+    console.log(`  - Ski Holidays: ${skiHolidays.length}`);
+    console.log(`  - Tennis Clinics: ${tennisClinics.length}`);
+    console.log(`  - Tennis Holidays: ${tennisHolidays.length}`);
+    console.log(`📅 Total events fetched: ${allEvents.length}`);
+    
+    // Create a map of uniqueValue to events for quick lookup
+    const eventsByUniqueValue = {};
+    allEvents.forEach(event => {
+      if (event.uniqueValue) {
+        if (!eventsByUniqueValue[event.uniqueValue]) {
+          eventsByUniqueValue[event.uniqueValue] = [];
+        }
+        eventsByUniqueValue[event.uniqueValue].push(event);
+      }
+    });
     
     // Combine all venues
     const allVenues = [
@@ -3418,27 +4379,54 @@ export async function getAllVenues(options = {}) {
       ...tennisHolidays
     ];
     
+    // Filter: only show venues with displayOnFrontEnd = true
+    const visibleVenues = allVenues.filter(v => v.displayOnFrontEnd === true);
+    console.log(`👁️ Filtered to ${visibleVenues.length} visible venues (out of ${allVenues.length} total)`);
+    
+    // Associate events with venues based on uniqueValue
+    const allEventDates = [];
+    visibleVenues.forEach(venue => {
+      if (venue.uniqueValue && eventsByUniqueValue[venue.uniqueValue]) {
+        venue.events = eventsByUniqueValue[venue.uniqueValue];
+        venue.eventDates = venue.events.map(e => e.dateFrom).filter(Boolean);
+      } else {
+        venue.events = [];
+        venue.eventDates = [];
+      }
+    });
+    
+    // Collect all unique event dates for the filter
+    allEvents.forEach(event => {
+      if (event.dateFrom) allEventDates.push(event.dateFrom);
+      if (event.dateUntil) allEventDates.push(event.dateUntil);
+    });
+    const uniqueDates = [...new Set(allEventDates)].sort();
+    
+    console.log(`🔗 Matched ${visibleVenues.filter(v => v.events.length > 0).length} venues with events`);
+    
     // Sort by creation date (newest first)
-    allVenues.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    visibleVenues.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     
     // Extract unique countries for filters
-    const countries = [...new Set(allVenues.map(v => v.country).filter(Boolean))].sort();
+    const countries = [...new Set(visibleVenues.map(v => v.country).filter(Boolean))].sort();
     
     // Extract price range
-    const prices = allVenues.map(v => v.price).filter(Boolean);
+    const prices = visibleVenues.map(v => v.price).filter(Boolean);
     const priceRange = prices.length > 0 ? {
       min: Math.min(...prices),
       max: Math.max(...prices)
     } : { min: 0, max: 5000 };
     
-    console.log(`📍 Fetched ${allVenues.length} total venues from all collection types`);
+    console.log(`📍 Showing ${visibleVenues.length} total venues (displayOnFrontEnd = true)`);
+    console.log(`📅 Available event dates: ${uniqueDates.length}`);
     
     return {
-      venues: allVenues,
+      venues: visibleVenues,
       metadata: {
-        total: allVenues.length,
+        total: visibleVenues.length,
         countries,
         priceRange,
+        availableDates: uniqueDates,
         holidayTypes: [
           { value: 'junior-tennis-camp', label: 'Junior Tennis Camp' },
           { value: 'padel-tennis-holiday', label: 'Padel Tennis Holiday' },
@@ -3614,7 +4602,7 @@ function transformGroupOrganiserDetail(item) {
     priceFrom: holiday.priceFrom,
     singleOccupancyFrom: holiday.singleOccupancyFrom,
     singleOccupancyRange: holiday.singleOccupancyRange,
-    boardBasisLg: holiday.boardBasisLg,
+    boardBasisLg: holiday.boardBasisLg || holiday.boardBasis,
     
     // Why We Love This Venue
     whyWeLoveVenue1: holiday.whyWeLoveVenue1,

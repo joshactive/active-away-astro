@@ -27,7 +27,12 @@ const { holidayData, holidayType, matchingEvents, similarHolidays, slug, isGroup
 
 // Extract data with fallbacks
 // For group organisers, use the groupOrganiserTitle for the hero, not the master page title
-const heroTitle = isGroupOrganiser && groupOrganiserTitle ? groupOrganiserTitle : (holidayData.mainHeader || holidayData.title);
+// For ski holidays, prefer shortLocationName for the hero title
+const heroTitle = isGroupOrganiser && groupOrganiserTitle 
+  ? groupOrganiserTitle 
+  : holidayType === 'ski-holiday' 
+    ? (holidayData.shortLocationName || holidayData.mainHeader || holidayData.title)
+    : (holidayData.mainHeader || holidayData.title);
 // For group organisers, use mainHeader from the master page as the subtitle, plus productType
 const heroSubtitle = isGroupOrganiser 
   ? `${holidayData.mainHeader || holidayData.headingText || ''}${holidayData.productType ? ' · ' + holidayData.productType : ''}`
@@ -48,6 +53,7 @@ const canonicalURL = holidayData.seo?.canonicalURL || `https://activeaway.com/${
 // Sport-specific labels based on holiday type
 const sportLabel = (holidayType === 'padel-tennis-holiday' || holidayType === 'padel-holiday') ? 'Padel' : 
                    holidayType === 'pickleball-holiday' ? 'Pickleball' : 
+                   holidayType === 'ski-holiday' ? 'Ski' :
                    holidayType === 'group-organiser' ? 'Tennis' :
                    'Tennis';
                    
@@ -56,15 +62,26 @@ const sectionTitle = `The ${sportLabel}`;
 
 // Breadcrumb link - group organisers have their own route
 const breadcrumbLink = isGroupOrganiser ? '/group-organiser' : (holidayType === 'group-organiser' ? '/' : `/${holidayType}`);
-const breadcrumbLabel = isGroupOrganiser ? 'Group Organisers' : (holidayType === 'group-organiser' ? 'Group Organisers' : `${sportLabel} Holidays`);
+
+// Breadcrumb label - proper naming for each type
+const getBreadcrumbLabel = () => {
+  if (isGroupOrganiser || holidayType === 'group-organiser') return 'Group Organisers';
+  if (holidayType === 'tennis-clinic') return 'Tennis Clinics';
+  if (holidayType === 'junior-tennis-camp') return 'Junior Tennis Camps';
+  if (holidayType === 'school-tennis-tour') return 'School Tennis Tours';
+  return `${sportLabel} Holidays`;
+};
+const breadcrumbLabel = getBreadcrumbLabel();
 const breadcrumbTitle = isGroupOrganiser && groupOrganiserTitle ? groupOrganiserTitle : holidayData.title;
 
 // Carousel slide count varies by sport
+// Ski holidays: 1 slide
 // Pickleball holidays: 2 slides
 // Junior tennis camps: 2 slides
 // Tennis clinics: 2 slides
+// School tennis tours: 2 slides
 // Everything else: 3 slides
-const carouselSlideCount = (holidayType === 'pickleball-holiday' || holidayType === 'junior-tennis-camp' || holidayType === 'tennis-clinic') ? 2 : 3;
+const carouselSlideCount = holidayType === 'ski-holiday' ? 1 : (holidayType === 'pickleball-holiday' || holidayType === 'junior-tennis-camp' || holidayType === 'tennis-clinic' || holidayType === 'school-tennis-tour') ? 2 : 3;
 ---
 
 <BaseLayout 
@@ -223,7 +240,7 @@ const carouselSlideCount = (holidayType === 'pickleball-holiday' || holidayType 
             {(holidayData.whyWeLoveVenue1 || holidayData.whyWeLoveVenue2 || holidayData.whyWeLoveVenue3 || holidayData.whyWeLoveVenue4) && (
               <div class="mt-8 bg-gray-50 border border-gray-200 rounded-xl p-6 sm:p-8">
                 <h2 class="text-2xl sm:text-3xl font-playfair font-semibold text-gray-900 mb-6">
-                  Why We Love {(holidayType === 'padel-tennis-holiday' || holidayType === 'padel-holiday' || holidayType === 'pickleball-holiday' || holidayType === 'tennis-clinic' || holidayType === 'junior-tennis-camp') ? (holidayData.shortLocationName || holidayData.venue || holidayData.title) : (holidayData.venue || holidayData.title)}
+                  Why We Love {(holidayType === 'padel-tennis-holiday' || holidayType === 'padel-holiday' || holidayType === 'pickleball-holiday' || holidayType === 'tennis-clinic' || holidayType === 'junior-tennis-camp' || holidayType === 'ski-holiday') ? (holidayData.shortLocationName || holidayData.venue || holidayData.title) : (holidayData.venue || holidayData.title)}
                 </h2>
                 <div class={`grid grid-cols-1 ${(holidayType !== 'tennis-clinic' && holidayType !== 'junior-tennis-camp') ? 'sm:grid-cols-2' : ''} gap-4`}>
                   {[
@@ -411,8 +428,8 @@ const carouselSlideCount = (holidayType === 'pickleball-holiday' || holidayType 
                   </div>
                 )}
                 
-                {/* Airport - Hide for tennis-clinic, Padel and Pickleball use distanceFromAirport, Tennis uses airportTransfer */}
-                {holidayType !== 'tennis-clinic' && ((holidayType === 'padel-tennis-holiday' || holidayType === 'padel-holiday' || holidayType === 'pickleball-holiday') ? (
+                {/* Airport - Hide for tennis-clinic, Padel, Pickleball and Ski use distanceFromAirport, Tennis uses airportTransfer */}
+                {holidayType !== 'tennis-clinic' && ((holidayType === 'padel-tennis-holiday' || holidayType === 'padel-holiday' || holidayType === 'pickleball-holiday' || holidayType === 'ski-holiday') ? (
                   holidayData.distanceFromAirport && (
                     <div class="flex items-start gap-3">
                       <svg class="w-6 h-6 text-[#ad986c] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -439,7 +456,7 @@ const carouselSlideCount = (holidayType === 'pickleball-holiday' || holidayType 
                 ))}
                 
                 {/* Single Occupancy - Hide for tennis-clinic and junior-tennis-camp */}
-                {(holidayType !== 'tennis-clinic' && holidayType !== 'junior-tennis-camp') && ((holidayType === 'padel-tennis-holiday' || holidayType === 'padel-holiday' || holidayType === 'pickleball-holiday' || holidayType === 'play-and-watch') ? (
+                {(holidayType !== 'tennis-clinic' && holidayType !== 'junior-tennis-camp') && ((holidayType === 'padel-tennis-holiday' || holidayType === 'padel-holiday' || holidayType === 'pickleball-holiday' || holidayType === 'play-and-watch' || holidayType === 'ski-holiday') ? (
                   holidayData.singleOccupancy && (
                     <div class="flex items-start gap-3">
                       <svg class="w-6 h-6 text-[#ad986c] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1213,6 +1230,196 @@ const carouselSlideCount = (holidayType === 'pickleball-holiday' || holidayType 
                   </div>
                 </div>
               </>
+            ) : holidayType === 'play-and-watch' ? (
+              <>
+                <!-- Play & Watch Slide 1: Play & Watch Events -->
+                <div class="tennis-slide flex-shrink-0 w-[85%] sm:w-[90%] lg:w-[900px] snap-start relative">
+                  <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 h-full">
+                    <div class="aspect-video relative overflow-hidden bg-gray-100">
+                      <button 
+                        type="button"
+                        class="lite-youtube-tennis group"
+                        data-video-id="HBHf1GZIq_k"
+                        aria-label="Play Play & Watch Events video"
+                      >
+                        <img 
+                          src="https://i.ytimg.com/vi/HBHf1GZIq_k/hqdefault.jpg"
+                          alt="Play & Watch Events video"
+                          loading="lazy"
+                          decoding="async"
+                          class="absolute inset-0 w-full h-full object-cover"
+                        />
+                        <span class="lite-youtube__play"></span>
+                      </button>
+                    </div>
+                    <div class="px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6 lg:pb-8">
+                      <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-4 sm:mb-6 leading-tight">
+                        Play & Watch Events
+                      </h3>
+                      <div class="space-y-3">
+                        <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed"><strong>The Tennis</strong> – Our programme is designed to make you a more skilled and self assured doubles player.</p>
+                        <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed"><strong>Watch</strong> – Experience the thrill of watching the world's greatest tennis players compete—nothing compares to the energy and excitement of live matches!</p>
+                        <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed"><strong>The City</strong> – Our Play & Watch events are normally set in vibrant cities, giving you the chance to explore their culture, cuisine, and charm alongside your love for tennis.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Play & Watch Slide 2: The Active Away Experience -->
+                <div class="tennis-slide flex-shrink-0 w-[85%] sm:w-[90%] lg:w-[900px] snap-start relative">
+                  <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 h-full">
+                    <div class="aspect-video relative overflow-hidden bg-gray-100">
+                      <img 
+                        src="https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/ccbd3495-41c9-4af3-755e-260071f95e00/public?width=900&height=506&fit=cover&format=auto&quality=70"
+                        srcset="https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/ccbd3495-41c9-4af3-755e-260071f95e00/public?width=900&height=506&fit=cover&format=auto&quality=70 900w,
+                                https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/ccbd3495-41c9-4af3-755e-260071f95e00/public?width=1200&height=675&fit=cover&format=auto&quality=70 1200w"
+                        sizes="(max-width: 1024px) 100vw, 900px"
+                        alt="The Active Away Experience"
+                        width="900"
+                        height="506"
+                        class="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                    <div class="px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6 lg:pb-8">
+                      <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-4 sm:mb-6 leading-tight">
+                        The Active Away Experience
+                      </h3>
+                      <div class="space-y-3">
+                        <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed"><strong>Our USP</strong> – What sets Active Away apart is our genuine dedication to creating an amazing experience, both on and off the court. From personalised coaching to memorable shared dinners, we're passionate about making your holiday everything you hope for and more.</p>
+                        <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed"><strong>Your Tennis</strong> – If for any reason you feel over or under challenged on your holiday from a tennis perspective - please speak to your host and they will accommodate your request to ensure you are appropriately challenged.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Play & Watch Slide 3: The Jamie Murray Tennis Programme -->
+                <div class="tennis-slide flex-shrink-0 w-[85%] sm:w-[90%] lg:w-[900px] snap-start relative">
+                  <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 h-full">
+                    <div class="aspect-video relative overflow-hidden bg-gray-100">
+                      <button 
+                        type="button"
+                        class="lite-youtube-tennis group"
+                        data-video-id="licVtR6T1cw"
+                        aria-label="Play The Jamie Murray Tennis Programme video"
+                      >
+                        <img 
+                          src="https://i.ytimg.com/vi/licVtR6T1cw/hqdefault.jpg"
+                          alt="The Jamie Murray Tennis Programme video"
+                          loading="lazy"
+                          decoding="async"
+                          class="absolute inset-0 w-full h-full object-cover"
+                        />
+                        <span class="lite-youtube__play"></span>
+                      </button>
+                    </div>
+                    <div class="px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6 lg:pb-8">
+                      <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-4 sm:mb-6 leading-tight">
+                        The Jamie Murray Tennis Programme
+                      </h3>
+                      <div class="space-y-3">
+                        <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed"><strong>The Tennis Programme</strong> – Curated to make you a more skilled and self assured doubles player. Designed by Jamie Murray.</p>
+                        <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed"><strong>Tennis Ability</strong> – This trip is bookable by anyone with a rating of 2-6 in our <a href="#" class="text-[#ad986c] hover:underline">Self Rating Guide</a>.</p>
+                        <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed"><strong>Non-Players</strong> – Are welcome. They receive a £200 Discount off the prices listed.</p>
+                        <p class="text-base sm:text-lg text-gray-600 font-inter leading-relaxed">No other Discount can be used in conjunction with this £200 Discount.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : holidayType === 'ski-holiday' ? (
+              <>
+                <!-- Ski Slide 1: The Italian Ski Experience -->
+                <div class="tennis-slide flex-shrink-0 w-[85%] sm:w-[90%] lg:w-[900px] snap-start relative">
+                  <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 h-full">
+                    <div class="aspect-video relative overflow-hidden bg-gray-100">
+                      <button 
+                        type="button"
+                        class="lite-youtube-tennis group"
+                        data-video-id="V0mYYztYwc0"
+                        aria-label="Play The Italian Ski Experience video"
+                      >
+                        <img 
+                          src="https://i.ytimg.com/vi/V0mYYztYwc0/hqdefault.jpg"
+                          alt="The Italian Ski Experience video"
+                          loading="lazy"
+                          decoding="async"
+                          class="absolute inset-0 w-full h-full object-cover"
+                        />
+                        <span class="lite-youtube__play"></span>
+                      </button>
+                    </div>
+                    <div class="px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6 lg:pb-8">
+                      <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-4 sm:mb-6 leading-tight">
+                        The Italian Ski Experience
+                      </h3>
+                      <div class="space-y-3">
+                        <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed">Our trips to Italy were inspired by our Director Matt's lifelong love of skiing. He fell so hard for Alagna that he moved there, and now he's eager to share this beautiful, picturesque village with you. Expect quiet charm, breathtaking Alpine views and truly exceptional skiing across varied terrain. Join us and experience Alagna the way a local does.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : holidayType === 'school-tennis-tour' ? (
+              <>
+                <!-- School Tour Slide 1: The Jamie Murray Tennis Programme -->
+                <div class="tennis-slide flex-shrink-0 w-[85%] sm:w-[90%] lg:w-[900px] snap-start relative">
+                  <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 h-full">
+                    <div class="aspect-video relative overflow-hidden bg-gray-100">
+                      <button 
+                        type="button"
+                        class="lite-youtube-tennis group"
+                        data-video-id="licVtR6T1cw"
+                        aria-label="Play The Jamie Murray Tennis Programme video"
+                      >
+                        <img 
+                          src="https://i.ytimg.com/vi/licVtR6T1cw/hqdefault.jpg"
+                          alt="The Jamie Murray Tennis Programme video"
+                          loading="lazy"
+                          decoding="async"
+                          class="absolute inset-0 w-full h-full object-cover"
+                        />
+                        <span class="lite-youtube__play"></span>
+                      </button>
+                    </div>
+                    <div class="px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6 lg:pb-8">
+                      <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-4 sm:mb-6 leading-tight">
+                        The Jamie Murray Tennis Programme
+                      </h3>
+                      <div class="space-y-3">
+                        <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed"><strong>The Tennis Programme</strong> – Our Jamie Murray programme is designed to ensure all attendees have a brilliant experience.</p>
+                        <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed"><strong>Tennis Ability</strong> – We will ensure each child is challenged appropriately.</p>
+                        <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed"><strong>Teachers</strong> – We can package up our school tours where the teachers are part of the coaching team or not - it's completely up-to you!</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- School Tour Slide 2: The Active Away Experience -->
+                <div class="tennis-slide flex-shrink-0 w-[85%] sm:w-[90%] lg:w-[900px] snap-start relative">
+                  <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 h-full">
+                    <div class="aspect-video relative overflow-hidden bg-gray-100">
+                      <img 
+                        src="https://imagedelivery.net/-aT8Z2F9gGvZ9fdofZcCaQ/activeaway.com/Active-Away-School-Tennis-Tours-1.jpg/public"
+                        alt="The Active Away School Tennis Tour Experience"
+                        width="900"
+                        height="506"
+                        class="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                    <div class="px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6 lg:pb-8">
+                      <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-4 sm:mb-6 leading-tight">
+                        The Active Away Experience
+                      </h3>
+                      <div class="space-y-3">
+                        <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed"><strong>Our USP</strong> – What sets Active Away apart is our genuine dedication to creating an amazing experience, both on and off the court. From personalised coaching to memorable shared dinners, we're passionate about making each child never forget their school tour.</p>
+                        <p class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed"><strong>Fully licensed and insured</strong> – We've been around since 2006 and have dotted the i's and crossed the t's to ensure a safe and secure environment.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
             ) : null}
 
           </div>
@@ -1221,7 +1428,9 @@ const carouselSlideCount = (holidayType === 'pickleball-holiday' || holidayType 
         <!-- Pagination Dots - Desktop Only -->
         <div class="hidden lg:flex justify-center items-center gap-2 mt-8">
           <button class="tennis-dot w-8 h-2 rounded-full bg-[#ad986c] transition-all duration-300" data-slide="0" aria-label="Go to slide 1"></button>
-          <button class="tennis-dot w-2 h-2 rounded-full bg-gray-300 transition-all duration-300" data-slide="1" aria-label="Go to slide 2"></button>
+          {carouselSlideCount >= 2 && (
+            <button class="tennis-dot w-2 h-2 rounded-full bg-gray-300 transition-all duration-300" data-slide="1" aria-label="Go to slide 2"></button>
+          )}
           {carouselSlideCount >= 3 && (
             <button class="tennis-dot w-2 h-2 rounded-full bg-gray-300 transition-all duration-300" data-slide="2" aria-label="Go to slide 3"></button>
           )}
@@ -1265,17 +1474,29 @@ const carouselSlideCount = (holidayType === 'pickleball-holiday' || holidayType 
             </>
           ) : (
             <>
-              {holidayData.restaurants && (
-                <button class="facility-tab active px-6 py-3 text-sm font-medium font-inter whitespace-nowrap transition-all relative inline-flex items-center gap-2" data-tab="restaurants">
+              {/* Play and Watch: Event Info tab first */}
+              {holidayType === 'play-and-watch' && (holidayData.theEvent || holidayData.whereWeStay || holidayData.howWeGetAround) && (
+                <button class="facility-tab active px-6 py-3 text-sm font-medium font-inter whitespace-nowrap transition-all relative inline-flex items-center gap-2" data-tab="event-info">
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+                    <line x1="16" x2="16" y1="2" y2="6"/>
+                    <line x1="8" x2="8" y1="2" y2="6"/>
+                    <line x1="3" x2="21" y1="10" y2="10"/>
+                  </svg>
+                  Event Info
+                </button>
+              )}
+              {(holidayData.restaurants || holidayData.restaurantInformation) && (
+                <button class={`facility-tab ${holidayType !== 'play-and-watch' ? 'active' : ''} px-6 py-3 text-sm font-medium font-inter whitespace-nowrap transition-all relative inline-flex items-center gap-2`} data-tab="restaurants">
                   <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
                     <path d="M7 2v20"/>
                     <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>
                   </svg>
-                  Restaurants & bars
+                  {holidayType === 'school-tennis-tour' ? 'Restaurants' : 'Restaurants & bars'}
                 </button>
               )}
-              {holidayData.boardBasis && (
+              {(holidayData.boardBasis || holidayData.boardBasisIncluded || (holidayType === 'school-tennis-tour' && holidayData.boardBasisInfo)) && (
                 <button class="facility-tab px-6 py-3 text-sm font-medium font-inter whitespace-nowrap transition-all relative inline-flex items-center gap-2" data-tab="board">
                   <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
@@ -1283,7 +1504,7 @@ const carouselSlideCount = (holidayType === 'pickleball-holiday' || holidayType 
                   Board
                 </button>
               )}
-              {holidayData.setting && (
+              {(holidayData.setting || holidayData.settingDescription) && (
                 <button class="facility-tab px-6 py-3 text-sm font-medium font-inter whitespace-nowrap transition-all relative inline-flex items-center gap-2" data-tab="setting">
                   <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -1292,7 +1513,7 @@ const carouselSlideCount = (holidayType === 'pickleball-holiday' || holidayType 
                   Setting
                 </button>
               )}
-              {holidayData.tennisCourts && (
+              {(holidayData.tennisCourts || (holidayType === 'school-tennis-tour' && holidayData.tennisCourtsInfo)) && holidayType !== 'play-and-watch' && (
                 <button class="facility-tab px-6 py-3 text-sm font-medium font-inter whitespace-nowrap transition-all relative inline-flex items-center gap-2" data-tab="tennis">
                   <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z"/>
@@ -1333,34 +1554,62 @@ const carouselSlideCount = (holidayType === 'pickleball-holiday' || holidayType 
           </div>
         )}
 
-        {holidayData.restaurants && (
-          <div class={`facility-tab-content ${holidayType !== 'tennis-clinic' ? 'active' : 'hidden'}`} data-tab-content="restaurants">
-            <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-4">Restaurants</h3>
-            <div class="prose max-w-none font-inter" set:html={marked.parse(holidayData.restaurants || '')}></div>
-            {holidayData.bars && (
-              <div class="mt-8 pt-8 border-t border-gray-200">
-                <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-4">Bars</h3>
-                <div class="prose max-w-none font-inter" set:html={marked.parse(holidayData.bars || '')}></div>
+        {/* Event Info tab - for play-and-watch */}
+        {holidayType === 'play-and-watch' && (holidayData.theEvent || holidayData.whereWeStay || holidayData.howWeGetAround) && (
+          <div class="facility-tab-content active" data-tab-content="event-info">
+            {holidayData.theEvent && (
+              <div class="mb-8">
+                <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-4">The Event</h3>
+                <div class="prose max-w-none font-inter" set:html={marked.parse(holidayData.theEvent || '')}></div>
+              </div>
+            )}
+            {holidayData.whereWeStay && (
+              <div class={`${holidayData.theEvent ? 'mt-8 pt-8 border-t border-gray-200' : ''}`}>
+                <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-4">Where We Stay</h3>
+                <div class="prose max-w-none font-inter" set:html={marked.parse(holidayData.whereWeStay || '')}></div>
+              </div>
+            )}
+            {holidayData.howWeGetAround && (
+              <div class={`${(holidayData.theEvent || holidayData.whereWeStay) ? 'mt-8 pt-8 border-t border-gray-200' : ''}`}>
+                <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-4">How We Get Around</h3>
+                <div class="prose max-w-none font-inter" set:html={marked.parse(holidayData.howWeGetAround || '')}></div>
               </div>
             )}
           </div>
         )}
 
-        {holidayData.boardBasis && (
+        {(holidayData.restaurants || holidayData.restaurantInformation) && (
+          <div class={`facility-tab-content ${(holidayType !== 'tennis-clinic' && holidayType !== 'play-and-watch') ? 'active' : 'hidden'}`} data-tab-content="restaurants">
+            <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-4">Restaurants</h3>
+            <div class="prose max-w-none font-inter" set:html={marked.parse((holidayType === 'ski-holiday' ? holidayData.restaurantInformation : holidayData.restaurants) || '')}></div>
+            {holidayType !== 'school-tennis-tour' && (holidayData.bars || holidayData.barInformation) && (
+              <div class="mt-8 pt-8 border-t border-gray-200">
+                <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-4">Bars</h3>
+                <div class="prose max-w-none font-inter" set:html={marked.parse((holidayType === 'ski-holiday' ? holidayData.barInformation : holidayData.bars) || '')}></div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {(holidayData.boardBasis || holidayData.boardBasisIncluded || (holidayType === 'school-tennis-tour' && holidayData.boardBasisInfo)) && (
           <div class="facility-tab-content hidden" data-tab-content="board">
-            <div class="prose max-w-none font-inter" set:html={marked.parse(holidayData.boardBasis || '')}></div>
+            <div class="prose max-w-none font-inter" set:html={marked.parse(
+              (holidayType === 'school-tennis-tour' ? holidayData.boardBasisInfo :
+              (holidayType === 'play-and-watch' || holidayType === 'ski-holiday') ? holidayData.boardBasisIncluded :
+              holidayData.boardBasis) || ''
+            )}></div>
           </div>
         )}
 
-        {holidayData.setting && (
+        {(holidayData.setting || holidayData.settingDescription) && (
           <div class="facility-tab-content hidden" data-tab-content="setting">
-            <div class="prose max-w-none font-inter" set:html={marked.parse(holidayData.setting || '')}></div>
+            <div class="prose max-w-none font-inter" set:html={marked.parse((holidayType === 'play-and-watch' || holidayType === 'ski-holiday' ? holidayData.settingDescription : holidayData.setting) || '')}></div>
           </div>
         )}
 
-        {holidayData.tennisCourts && (
+        {(holidayData.tennisCourts || (holidayType === 'school-tennis-tour' && holidayData.tennisCourtsInfo)) && (
           <div class="facility-tab-content hidden" data-tab-content="tennis">
-            <div class="prose max-w-none font-inter" set:html={marked.parse(holidayData.tennisCourts || '')}></div>
+            <div class="prose max-w-none font-inter" set:html={marked.parse((holidayType === 'school-tennis-tour' ? holidayData.tennisCourtsInfo : holidayData.tennisCourts) || '')}></div>
           </div>
         )}
 
@@ -1666,7 +1915,26 @@ const carouselSlideCount = (holidayType === 'pickleball-holiday' || holidayType 
         Dates & Prices
       </h2>
 
-      {matchingEvents.length > 0 ? (
+      {holidayType === 'school-tennis-tour' ? (
+        <div class="max-w-2xl mx-auto text-center py-12 bg-gray-50 border border-gray-200 rounded-2xl">
+          <svg class="w-16 h-16 mx-auto mb-4 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          <h3 class="text-2xl font-playfair font-semibold text-gray-900 mb-4">Contact Us for Pricing</h3>
+          <p class="text-base sm:text-lg font-inter text-gray-700 mb-6 max-w-xl mx-auto">
+            We'd love to discuss your school tennis tour requirements and provide you with a custom quote.
+          </p>
+          <a 
+            href="mailto:hello@activeaway.com"
+            class="inline-flex items-center gap-2 bg-[#ad986c] hover:bg-[#8d7a56] text-white font-inter font-semibold py-3 px-8 rounded-full transition-all duration-300 shadow-md hover:shadow-lg"
+          >
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            Email Us
+          </a>
+        </div>
+      ) : matchingEvents.length > 0 ? (
         <>
           <div id="eventsGrid" class={`grid grid-cols-1 gap-6 ${matchingEvents.length === 1 ? 'max-w-md mx-auto' : matchingEvents.length === 2 ? 'md:grid-cols-2 max-w-4xl mx-auto' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
             {matchingEvents.map((event, index) => (
@@ -1788,7 +2056,7 @@ const carouselSlideCount = (holidayType === 'pickleball-holiday' || holidayType 
           'md:grid-cols-2 lg:grid-cols-3'
         }`}>
           {similarHolidays.map((holiday) => (
-            <a href={`/${holidayType}/${holiday.slug}`} class="group bg-white border-2 border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 hover:-translate-y-1">
+            <a href={`/${holiday.holidayType || holidayType}/${holiday.slug}`} class="group bg-white border-2 border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 hover:-translate-y-1">
               {holiday.image && (
                 <div class="aspect-video overflow-hidden bg-gray-100 relative">
                   <img src={holiday.image} alt={holiday.imageAlt || holiday.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
@@ -1810,7 +2078,7 @@ const carouselSlideCount = (holidayType === 'pickleball-holiday' || holidayType 
                   <div class="mb-4">
                     <p class="text-sm text-gray-600 font-inter mb-1">From</p>
                     <p class="text-3xl font-bold text-[#ad986c] font-playfair">{holiday.priceText.replace('from ', '').replace('pp', '')}<span class="text-lg">pp</span></p>
-                    {(holidayType !== 'tennis-clinic' && holidayType !== 'junior-tennis-camp') && (
+                    {(holiday.holidayType !== 'tennis-clinic' && holiday.holidayType !== 'junior-tennis-camp') && (
                       <p class="text-xs text-gray-500 font-inter mt-1">Based on 2 sharing</p>
                     )}
                   </div>
@@ -1847,6 +2115,52 @@ const carouselSlideCount = (holidayType === 'pickleball-holiday' || holidayType 
       </div>
     </section>
   )}
+
+  <!-- Contact Us Section -->
+  <section class={`w-full py-12 sm:py-16 lg:py-20 border-t border-gray-200 ${
+    isGroupOrganiser ? 'bg-white' : 
+    (holidayType === 'tennis-clinic' || holidayType === 'junior-tennis-camp') ? 'bg-white' : 
+    'bg-gray-50'
+  }`}>
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-8 sm:mb-12 text-center">
+        Contact Us
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+        <!-- Phone -->
+        <a 
+          href="tel:+442079657277"
+          class="group bg-white border-2 border-gray-200 rounded-2xl p-8 shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 hover:-translate-y-1 text-center"
+        >
+          <svg class="w-8 h-8 mx-auto mb-4 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+          </svg>
+          <h3 class="text-lg font-playfair font-semibold text-gray-900 mb-2 group-hover:text-[#ad986c] transition-colors">
+            Phone
+          </h3>
+          <p class="text-base font-inter text-gray-700 group-hover:text-[#ad986c] transition-colors">
+            +44 020 7965 7277
+          </p>
+        </a>
+        
+        <!-- Email -->
+        <a 
+          href={`mailto:hello@activeaway.com?subject=${encodeURIComponent(holidayData.title)}`}
+          class="group bg-white border-2 border-gray-200 rounded-2xl p-8 shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 hover:-translate-y-1 text-center"
+        >
+          <svg class="w-8 h-8 mx-auto mb-4 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          <h3 class="text-lg font-playfair font-semibold text-gray-900 mb-2 group-hover:text-[#ad986c] transition-colors">
+            Email
+          </h3>
+          <p class="text-base font-inter text-gray-700 group-hover:text-[#ad986c] transition-colors">
+            hello@activeaway.com
+          </p>
+        </a>
+      </div>
+    </div>
+  </section>
 
   <!-- Gallery Lightbox Modal -->
   <div id="galleryLightbox" class="hidden fixed inset-0 z-50 bg-black/95 flex items-center justify-center">

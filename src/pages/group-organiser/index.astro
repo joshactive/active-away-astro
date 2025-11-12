@@ -1,0 +1,744 @@
+---
+// Group Organiser Archive Page - Shows all group organisers
+export const prerender = true;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getGroupOrganisers } from '../../utils/strapi.js';
+import { getStrapiImageAttrs } from '../../utils/cloudflareImages.js';
+
+// Fetch all group organisers with events
+let groupOrganisersData = { organisers: [], metadata: { total: 0, countries: [], productTypes: [], priceRange: { min: 0, max: 5000 }, availableDates: [] } };
+
+try {
+  // Fetch all group organisers (paginated to get all)
+  let allOrganisers = [];
+  let page = 1;
+  let hasMore = true;
+  
+  while (hasMore) {
+    const pageOrganisers = await getGroupOrganisers(page, 100);
+    if (pageOrganisers.length > 0) {
+      allOrganisers = [...allOrganisers, ...pageOrganisers];
+      page++;
+      // If we got less than 100, we've reached the end
+      if (pageOrganisers.length < 100) {
+        hasMore = false;
+      }
+    } else {
+      hasMore = false;
+    }
+  }
+  
+  console.log(`👥 [group-organiser archive] Fetched ${allOrganisers.length} total organisers`);
+  
+  // Filter: only show organisers with displayOnFrontEnd = true
+  const visibleOrganisers = allOrganisers.filter(o => o.displayOnFrontEnd === true);
+  console.log(`👥 [group-organiser archive] Filtered to ${visibleOrganisers.length} visible organisers (out of ${allOrganisers.length} total)`);
+  
+  // Fetch all events for group organisers
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayISO = today.toISOString().split('T')[0];
+  
+  // Get unique values from visible organisers
+  const uniqueValues = [...new Set(visibleOrganisers.map(o => o.uniqueValue).filter(Boolean))];
+  
+  // Fetch events for all group organisers
+  let allEvents = [];
+  if (uniqueValues.length > 0) {
+    const { fetchAPI } = await import('../../utils/strapi.js');
+    const eventsData = await fetchAPI(`/events?filters[dateUntil][$gte]=${todayISO}&pagination[pageSize]=100&sort=dateFrom:asc`);
+    
+    if (eventsData && eventsData.data) {
+      allEvents = eventsData.data.map(item => {
+        const event = item.attributes || item;
+        return {
+          id: item.id,
+          uniqueValue: event.uniqueValue,
+          dateFrom: event.dateFrom,
+          dateUntil: event.dateUntil
+        };
+      });
+    }
+  }
+  
+  // Create map of uniqueValue to events
+  const eventsByUniqueValue = {};
+  allEvents.forEach(event => {
+    if (event.uniqueValue) {
+      if (!eventsByUniqueValue[event.uniqueValue]) {
+        eventsByUniqueValue[event.uniqueValue] = [];
+      }
+      eventsByUniqueValue[event.uniqueValue].push(event);
+    }
+  });
+  
+  // Associate events with organisers
+  const allEventDates = [];
+  visibleOrganisers.forEach(organiser => {
+    if (organiser.uniqueValue && eventsByUniqueValue[organiser.uniqueValue]) {
+      organiser.events = eventsByUniqueValue[organiser.uniqueValue];
+      organiser.eventDates = organiser.events.map(e => e.dateFrom).filter(Boolean);
+    } else {
+      organiser.events = [];
+      organiser.eventDates = [];
+    }
+  });
+  
+  // Collect all unique event dates
+  allEvents.forEach(event => {
+    if (event.dateFrom) allEventDates.push(event.dateFrom);
+    if (event.dateUntil) allEventDates.push(event.dateUntil);
+  });
+  const uniqueDates = [...new Set(allEventDates)].sort();
+  
+  // Extract countries
+  const countries = [...new Set(visibleOrganisers.map(o => o.country).filter(Boolean))].sort();
+  
+  // Extract product types
+  const productTypes = [...new Set(visibleOrganisers.map(o => o.groupOrganiserProduct).filter(Boolean))].sort();
+  
+  // Extract price range
+  const prices = visibleOrganisers.map(o => o.price).filter(Boolean);
+  const priceRange = prices.length > 0 ? {
+    min: Math.min(...prices),
+    max: Math.max(...prices)
+  } : { min: 0, max: 5000 };
+  
+  groupOrganisersData = {
+    organisers: visibleOrganisers,
+    metadata: {
+      total: visibleOrganisers.length,
+      countries,
+      productTypes,
+      priceRange,
+      availableDates: uniqueDates
+    }
+  };
+  
+  console.log(`👥 [group-organiser archive] Showing ${visibleOrganisers.length} group organisers (displayOnFrontEnd = true)`);
+  console.log(`🔗 Matched ${visibleOrganisers.filter(o => o.events && o.events.length > 0).length} organisers with events`);
+  console.log(`📅 Available dates: ${uniqueDates.length}`);
+} catch (error) {
+  console.error('[group-organiser archive] Error fetching data:', error.message);
+}
+
+const { organisers, metadata } = groupOrganisersData;
+const ORGANISER_IMAGE_QUALITY = 60;
+
+// Hardcoded hero content (PLACEHOLDER - update with final content)
+const heroTitle = 'Discover Our Group Organisers';
+const heroSubtitle = 'Browse our group organisers who partner with us to offer exceptional racket experiences.';
+const heroKicker = 'GROUP ORGANISERS';
+const heroBackgroundImage = 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/60928078-b5b8-43a6-3752-4af140b16d00/public';
+
+// SEO
+const pageTitle = 'Group Organisers - Active Away';
+const pageDescription = 'Explore our group organisers across the world. Filter by location, price, and available dates to find the perfect group tennis holiday.';
+const canonicalURL = 'https://activeaway.com/group-organiser';
+---
+
+<BaseLayout 
+  title={pageTitle}
+  description={pageDescription}
+  canonicalURL={canonicalURL}
+>
+  <!-- Hero Header Section -->
+  <section class="relative w-full h-[400px] sm:h-[500px] lg:h-[600px] overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-b from-[#0D1C4E]/75 via-[#0D1C4E]/60 to-[#0D1C4E]/60 z-10"></div>
+    <img 
+      src={heroBackgroundImage}
+      alt="Group organiser tennis holidays at beautiful destinations"
+      class="absolute inset-0 w-full h-full object-cover"
+      loading="eager"
+    />
+    
+    <div class="relative z-20 container mx-auto max-w-[1400px] px-4 sm:px-10 h-full flex flex-col justify-center items-center text-center">
+      <div class="text-xs sm:text-sm font-inter font-semibold text-gold tracking-[0.2em] uppercase mb-4 sm:mb-6 border-t border-b border-gold/50 py-2 px-6">
+        {heroKicker}
+      </div>
+      <h1 class="text-4xl sm:text-5xl lg:text-7xl font-playfair font-bold text-white mb-6 sm:mb-8 leading-tight max-w-4xl">
+        {heroTitle}
+      </h1>
+      <p class="text-lg sm:text-xl lg:text-2xl font-inter text-gray-100 max-w-3xl leading-relaxed">
+        {heroSubtitle}
+      </p>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="w-full bg-white py-12 sm:py-16 lg:py-24">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      <div class="flex flex-col lg:flex-row gap-8 lg:gap-12">
+        
+        <!-- Left Sidebar - Filters -->
+        <aside class="w-full lg:w-[320px] flex-shrink-0">
+          <div id="filterBar" class="bg-white border border-gray-200 rounded-2xl p-6 shadow-lg lg:sticky lg:top-4">
+            <!-- Filter Header -->
+            <div class="mb-6 pb-4 border-b border-gray-200">
+              <div class="flex items-center justify-between">
+                <h3 class="text-base font-playfair font-semibold text-gray-900">Filters</h3>
+                <span id="activeFilterCount" class="hidden bg-gold text-white text-xs font-bold px-2.5 py-1 rounded-full">0</span>
+              </div>
+              <p id="filterStatus" class="text-sm font-inter text-gray-600 mt-1">0 filters selected</p>
+            </div>
+
+            <!-- Mobile Filter Toggle -->
+            <button 
+              id="mobileFilterToggle"
+              class="lg:hidden w-full flex items-center justify-between bg-gray-50 hover:bg-gray-100 px-4 py-3 rounded-lg transition-colors mb-4"
+            >
+              <span class="font-inter font-medium text-gray-900">Show/Hide Filters</span>
+              <svg class="w-5 h-5 text-gray-600 transition-transform" id="filterChevron" viewBox="0 0 24 24" fill="none">
+                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+
+            <!-- Filters Container -->
+            <div id="filtersContainer" class="space-y-6">
+              <!-- Search Filter -->
+              <div class="filter-group">
+                <h4 class="text-base font-inter font-medium text-gray-900 mb-3">Search</h4>
+                <div class="relative">
+                  <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input 
+                    type="text" 
+                    id="typeSearch"
+                    placeholder="Search by name or type..."
+                    class="w-full bg-gray-50 border border-gray-300 rounded-lg pl-10 pr-4 py-2.5 text-sm font-inter text-gray-900 focus:ring-2 focus:ring-gold focus:border-gold transition-all"
+                  />
+                </div>
+              </div>
+
+              <!-- Clear Filters Button -->
+              <div class="pt-6">
+                <button 
+                  id="clearFilters"
+                  class="w-full px-4 py-2.5 text-sm font-inter font-medium text-gold hover:text-gold-700 border border-gold hover:bg-gold hover:text-white rounded-lg transition-all"
+                >
+                  Clear All Filters
+                </button>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Right Content Area -->
+        <main class="flex-1 min-w-0">
+          <!-- Results Header with Sort -->
+          <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+            <div class="text-base sm:text-lg font-inter text-gray-900">
+              Showing <span id="filteredCount" class="font-semibold">{organisers.length}</span> of <span class="font-semibold">{metadata.total}</span> group organisers
+            </div>
+            
+            <!-- Sort By Dropdown -->
+            <div class="flex items-center gap-3">
+              <label class="text-sm font-inter text-gray-600 hidden sm:block">Sort by</label>
+              <div class="relative">
+                <select 
+                  id="sortBy"
+                  class="appearance-none bg-white border border-gray-300 rounded-lg pl-4 pr-10 py-2.5 text-sm font-inter text-gray-900 focus:ring-2 focus:ring-gold focus:border-gold transition-all cursor-pointer"
+                >
+                  <option value="recommended">Recommended</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
+                  <option value="name-asc">Name: A to Z</option>
+                  <option value="name-desc">Name: Z to A</option>
+                  <option value="newest">Newest First</option>
+                </select>
+                <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none" viewBox="0 0 24 24" fill="none">
+                  <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Organisers Grid -->
+          <div id="organisersGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+          {organisers.map((organiser, index) => {
+          const imageAlt = organiser.imageAlt || organiser.title;
+          const imageUrl = organiser.image;
+          const strapiAttrs = getStrapiImageAttrs({ url: imageUrl, alt: imageAlt }, {
+            displayWidth: 600,
+            displayHeight: 400,
+            fit: 'cover',
+            sizes: '(max-width: 1024px) 100vw, 600px',
+            quality: ORGANISER_IMAGE_QUALITY
+          });
+
+          const imgAttrs = strapiAttrs ?? {
+            src: imageUrl,
+            url: imageUrl,
+            alt: imageAlt,
+            width: 600,
+            height: 400,
+            loading: index < 18 ? 'eager' : 'lazy',
+            sizes: '(max-width: 1024px) 100vw, 600px'
+          };
+
+          return (
+            <a 
+              href={`/group-organiser/${organiser.slug}`}
+              class="organiser-card group bg-white border-2 border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 hover:-translate-y-1" 
+              data-organiser-id={organiser.id} 
+              data-product-type={organiser.groupOrganiserProduct || ''}
+            >
+              <div class="flex flex-col justify-between min-h-[180px]">
+                <div>
+                  <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3 leading-tight group-hover:text-[#ad986c] transition-colors">
+                    {organiser.title}
+                  </h3>
+                  
+                  {organiser.groupOrganiserName && (
+                    <p class="text-base font-inter text-gray-700 mb-2">
+                      {organiser.groupOrganiserName}
+                    </p>
+                  )}
+                  
+                  {organiser.groupOrganiserProduct && (
+                    <p class="text-sm font-inter text-gray-600 mb-4">
+                      {organiser.groupOrganiserProduct}
+                    </p>
+                  )}
+                </div>
+                
+                <div class="flex items-center justify-between gap-3 mt-auto">
+                  {organiser.price && (
+                    <div>
+                      <p class="text-sm text-gray-600 font-inter mb-1">From</p>
+                      <p class="text-3xl font-bold text-[#ad986c] font-playfair">£{organiser.price}<span class="text-lg">pp</span></p>
+                      <p class="text-xs text-gray-500 font-inter mt-1">Based on 2 sharing</p>
+                    </div>
+                  )}
+                  <div class="flex items-center gap-2 text-[#ad986c] font-inter font-semibold text-sm group-hover:gap-3 transition-all">
+                    <span>View Details</span>
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </a>
+          );
+        })}
+      </div>
+
+          <!-- Loading Indicator -->
+          <div id="loadingIndicator" class="hidden text-center py-12">
+            <div class="inline-block w-12 h-12 border-4 border-gray-300 border-t-gold rounded-full animate-spin"></div>
+            <p class="mt-4 text-base font-inter text-gray-800">Loading more group organisers...</p>
+          </div>
+
+          <!-- Empty State -->
+          <div id="emptyState" class="hidden text-center py-16">
+            <svg class="w-24 h-24 mx-auto text-gray-300 mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M12 12h.01M12 12h.01M12 12h.01M12 21a9 9 0 100-18 9 9 0 000 18z" />
+            </svg>
+            <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3">No group organisers found</h3>
+            <p class="text-base font-inter text-gray-800 leading-relaxed mb-6">Try adjusting your filters to see more results</p>
+            <button id="emptyStateClearBtn" class="px-6 py-3 bg-gold hover:bg-gold-700 text-white font-inter font-medium rounded-full transition-all duration-300">
+              Clear All Filters
+            </button>
+          </div>
+
+          <!-- Infinite Scroll Sentinel -->
+          <div id="scrollSentinel" class="h-4"></div>
+
+          <!-- End of Results Message -->
+          <div id="endMessage" class="hidden text-center py-12">
+            <p class="text-gray-600 font-inter">You've reached the end of all group organisers</p>
+          </div>
+        </main>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+
+  .organiser-card {
+    transition: all 0.3s ease;
+  }
+
+  .organiser-card.hidden {
+    display: none;
+  }
+
+  /* Filter Group Styles */
+  .filter-group {
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .filter-group:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .filter-group + .filter-group {
+    padding-top: 1.5rem;
+  }
+
+  .filter-header {
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s ease;
+  }
+
+  .filter-header:hover {
+    background-color: #f9fafb;
+    border-radius: 0.5rem;
+  }
+
+  .filter-header svg {
+    transition: transform 0.3s ease;
+  }
+
+  .filter-group.collapsed .filter-header svg {
+    transform: rotate(-90deg);
+  }
+
+  .filter-group.collapsed .filter-content {
+    display: none;
+  }
+
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Mobile filter container */
+  @media (max-width: 1023px) {
+    #filtersContainer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    #filtersContainer.show {
+      max-height: 2000px;
+    }
+  }
+</style>
+
+<script define:vars={{ initialOrganisers: organisers, metadata }}>
+  // Global state
+  let allOrganisers = [...initialOrganisers];
+  let filteredOrganisers = [...initialOrganisers];
+  let displayedOrganisers = [...initialOrganisers].slice(0, 18);
+  let currentPage = 1;
+  const pageSize = 18;
+  let isLoading = false;
+  let hasMoreOrganisers = allOrganisers.length > displayedOrganisers.length;
+
+  // Filter state
+  const filters = {
+    typeSearch: ''
+  };
+
+  // DOM elements
+  const organisersGrid = document.getElementById('organisersGrid');
+  const loadingIndicator = document.getElementById('loadingIndicator');
+  const emptyState = document.getElementById('emptyState');
+  const endMessage = document.getElementById('endMessage');
+  const scrollSentinel = document.getElementById('scrollSentinel');
+  const filteredCountEl = document.getElementById('filteredCount');
+  const activeFilterCountEl = document.getElementById('activeFilterCount');
+  const filterStatusEl = document.getElementById('filterStatus');
+  const sortBySelect = document.getElementById('sortBy');
+  
+  // Mobile filter toggle
+  const mobileFilterToggle = document.getElementById('mobileFilterToggle');
+  const filtersContainer = document.getElementById('filtersContainer');
+  const filterChevron = document.getElementById('filterChevron');
+
+  // Initialize
+  function init() {
+    setupEventListeners();
+    setupInfiniteScroll();
+    restoreFiltersFromURL();
+    
+    // Render initial state
+    renderOrganisers();
+    updateFilterCount();
+  }
+
+  // Setup event listeners
+  function setupEventListeners() {
+    // Mobile filter toggle
+    mobileFilterToggle?.addEventListener('click', () => {
+      filtersContainer.classList.toggle('show');
+      if (filtersContainer.classList.contains('show')) {
+        filterChevron.style.transform = 'rotate(180deg)';
+      } else {
+        filterChevron.style.transform = 'rotate(0deg)';
+      }
+    });
+
+    // Filter group collapse/expand
+    document.querySelectorAll('.filter-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const filterGroup = header.parentElement;
+        filterGroup.classList.toggle('collapsed');
+      });
+    });
+
+    // Type search input
+    document.getElementById('typeSearch')?.addEventListener('input', debounce((e) => {
+      filters.typeSearch = e.target.value.toLowerCase().trim();
+      applyFilters();
+    }, 300));
+
+    // Sort by dropdown
+    sortBySelect?.addEventListener('change', (e) => {
+      applySorting(e.target.value);
+    });
+
+    // Clear filters button
+    document.getElementById('clearFilters')?.addEventListener('click', clearAllFilters);
+    document.getElementById('emptyStateClearBtn')?.addEventListener('click', clearAllFilters);
+  }
+
+  // Apply sorting
+  function applySorting(sortValue) {
+    switch (sortValue) {
+      case 'price-low':
+        filteredOrganisers.sort((a, b) => (a.price || 0) - (b.price || 0));
+        break;
+      case 'price-high':
+        filteredOrganisers.sort((a, b) => (b.price || 0) - (a.price || 0));
+        break;
+      case 'name-asc':
+        filteredOrganisers.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case 'name-desc':
+        filteredOrganisers.sort((a, b) => b.title.localeCompare(a.title));
+        break;
+      case 'newest':
+        filteredOrganisers.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        break;
+      case 'recommended':
+      default:
+        // Apply filters with original order
+        filteredOrganisers = allOrganisers.filter(organiser => {
+          if (filters.typeSearch) {
+            const searchLower = filters.typeSearch;
+            const titleMatch = organiser.title.toLowerCase().includes(searchLower);
+            const productMatch = organiser.groupOrganiserProduct && organiser.groupOrganiserProduct.toLowerCase().includes(searchLower);
+            if (!titleMatch && !productMatch) return false;
+          }
+          return true;
+        });
+        break;
+    }
+
+    currentPage = 1;
+    displayedOrganisers = filteredOrganisers.slice(0, pageSize);
+    hasMoreOrganisers = filteredOrganisers.length > displayedOrganisers.length;
+    renderOrganisers();
+    updateFilterCount();
+    updateURL();
+  }
+
+  // Apply filters
+  function applyFilters() {
+    filteredOrganisers = allOrganisers.filter(organiser => {
+      // Type search filter - searches both title and product type
+      if (filters.typeSearch) {
+        const searchLower = filters.typeSearch;
+        const titleMatch = organiser.title.toLowerCase().includes(searchLower);
+        const productMatch = organiser.groupOrganiserProduct && organiser.groupOrganiserProduct.toLowerCase().includes(searchLower);
+        if (!titleMatch && !productMatch) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    // Apply current sorting
+    const currentSort = sortBySelect?.value || 'recommended';
+    if (currentSort !== 'recommended') {
+      applySorting(currentSort);
+      return;
+    }
+
+    currentPage = 1;
+    displayedOrganisers = filteredOrganisers.slice(0, pageSize);
+    hasMoreOrganisers = filteredOrganisers.length > displayedOrganisers.length;
+    
+    renderOrganisers();
+    updateFilterCount();
+    updateURL();
+  }
+
+  // Render organisers
+  function renderOrganisers() {
+    const cards = organisersGrid.querySelectorAll('.organiser-card');
+    
+    // Hide all cards first
+    cards.forEach(card => {
+      card.classList.add('hidden');
+    });
+
+    // Show filtered cards
+    let foundCount = 0;
+    displayedOrganisers.forEach(organiser => {
+      const card = organisersGrid.querySelector(`[data-organiser-id="${organiser.id}"]`);
+      if (card) {
+        card.classList.remove('hidden');
+        foundCount++;
+      }
+    });
+
+    // Update counts
+    filteredCountEl.textContent = filteredOrganisers.length;
+
+    // Show/hide empty state
+    if (filteredOrganisers.length === 0) {
+      emptyState.classList.remove('hidden');
+      endMessage.classList.add('hidden');
+    } else {
+      emptyState.classList.add('hidden');
+      if (!hasMoreOrganisers) {
+        endMessage.classList.remove('hidden');
+      } else {
+        endMessage.classList.add('hidden');
+      }
+    }
+  }
+
+  // Update filter count badge
+  function updateFilterCount() {
+    let count = 0;
+    if (filters.typeSearch) count++;
+
+    if (count > 0) {
+      activeFilterCountEl.textContent = count;
+      activeFilterCountEl.classList.remove('hidden');
+      filterStatusEl.textContent = `${count} filter${count > 1 ? 's' : ''} selected`;
+    } else {
+      activeFilterCountEl.classList.add('hidden');
+      filterStatusEl.textContent = '0 filters selected';
+    }
+  }
+
+  // Clear all filters
+  function clearAllFilters() {
+    filters.typeSearch = '';
+
+    // Clear search input
+    document.getElementById('typeSearch').value = '';
+
+    // Reset sort to recommended
+    sortBySelect.value = 'recommended';
+
+    applyFilters();
+  }
+
+  // Setup infinite scroll
+  function setupInfiniteScroll() {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMoreOrganisers && !isLoading) {
+          loadMoreOrganisers();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+
+    if (scrollSentinel) {
+      observer.observe(scrollSentinel);
+    }
+  }
+
+  // Load more organisers
+  function loadMoreOrganisers() {
+    if (isLoading || !hasMoreOrganisers) return;
+
+    isLoading = true;
+    loadingIndicator.classList.remove('hidden');
+
+    setTimeout(() => {
+      currentPage++;
+      const startIndex = (currentPage - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      const newOrganisers = filteredOrganisers.slice(startIndex, endIndex);
+
+      displayedOrganisers = [...displayedOrganisers, ...newOrganisers];
+      hasMoreOrganisers = filteredOrganisers.length > displayedOrganisers.length;
+
+      renderOrganisers();
+      
+      isLoading = false;
+      loadingIndicator.classList.add('hidden');
+
+      if (!hasMoreOrganisers) {
+        endMessage.classList.remove('hidden');
+      }
+    }, 500);
+  }
+
+  // Update URL with filter params
+  function updateURL() {
+    const params = new URLSearchParams();
+    
+    if (filters.typeSearch) {
+      params.set('search', filters.typeSearch);
+    }
+
+    const newURL = params.toString() ? `${window.location.pathname}?${params}` : window.location.pathname;
+    window.history.replaceState({}, '', newURL);
+  }
+
+  // Restore filters from URL
+  function restoreFiltersFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    
+    // Restore type search
+    const search = params.get('search');
+    if (search) {
+      filters.typeSearch = search;
+      document.getElementById('typeSearch').value = search;
+      applyFilters();
+    }
+  }
+
+  // Debounce utility
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  // Initialize on page load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+</script>
+</BaseLayout>
+

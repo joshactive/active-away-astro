@@ -1,0 +1,564 @@
+---
+// Tennis Academy Archive Page - Shows all tennis academies
+export const prerender = true;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getTennisAcademies } from '../../utils/strapi.js';
+import { getStrapiImageAttrs } from '../../utils/cloudflareImages.js';
+
+// Fetch all tennis academies
+let academiesData = { academies: [], metadata: { total: 0, countries: [] } };
+
+try {
+  const allAcademies = await getTennisAcademies(1, 100);
+  
+  // Filter: only show academies with displayOnFrontEnd = true
+  const visibleAcademies = allAcademies.filter(a => a.displayOnFrontEnd === true);
+  console.log(`🎓 [tennis-academy archive] Filtered to ${visibleAcademies.length} visible academies (out of ${allAcademies.length} total)`);
+  
+  // Extract countries
+  const countries = [...new Set(visibleAcademies.map(a => a.country).filter(Boolean))].sort();
+  
+  academiesData = {
+    academies: visibleAcademies,
+    metadata: {
+      total: visibleAcademies.length,
+      countries
+    }
+  };
+  
+  console.log(`🎓 [tennis-academy archive] Showing ${visibleAcademies.length} tennis academies (displayOnFrontEnd = true)`);
+} catch (error) {
+  console.error('[tennis-academy archive] Error fetching data:', error.message);
+}
+
+const { academies, metadata } = academiesData;
+const ACADEMY_IMAGE_QUALITY = 60;
+
+// Hardcoded hero content (PLACEHOLDER - update with final content)
+const heroTitle = 'Discover Our Tennis Academies';
+const heroSubtitle = 'We select some of the best hotels around the world to offer the Active Away Tennis Academy. Offering Coaching to all ages and abilities, you can be sure of an incredible Tennis Experience at these locations.';
+const heroKicker = 'TENNIS ACADEMIES';
+const heroBackgroundImage = 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/d1d61dac-829b-48f4-be65-82fd9823b600/public';
+
+// SEO
+const pageTitle = 'Tennis Academies - Active Away';
+const pageDescription = 'Explore our tennis academies across the world. Filter by location to find the perfect academy for you.';
+const canonicalURL = 'https://activeaway.com/tennis-academy';
+---
+
+<BaseLayout 
+  title={pageTitle}
+  description={pageDescription}
+  canonicalURL={canonicalURL}
+>
+  <!-- Hero Header Section -->
+  <section class="relative w-full h-[400px] sm:h-[500px] lg:h-[600px] overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-b from-[#0D1C4E]/75 via-[#0D1C4E]/60 to-[#0D1C4E]/60 z-10"></div>
+    <img 
+      src={heroBackgroundImage}
+      alt="Tennis academies at beautiful destinations"
+      class="absolute inset-0 w-full h-full object-cover"
+      loading="eager"
+    />
+    
+    <div class="relative z-20 container mx-auto max-w-[1400px] px-4 sm:px-10 h-full flex flex-col justify-center items-center text-center">
+      <div class="text-xs sm:text-sm font-inter font-semibold text-gold tracking-[0.2em] uppercase mb-4 sm:mb-6 border-t border-b border-gold/50 py-2 px-6">
+        {heroKicker}
+      </div>
+      <h1 class="text-4xl sm:text-5xl lg:text-7xl font-playfair font-bold text-white mb-6 sm:mb-8 leading-tight max-w-4xl">
+        {heroTitle}
+      </h1>
+      <p class="text-lg sm:text-xl lg:text-2xl font-inter text-gray-100 max-w-3xl leading-relaxed">
+        {heroSubtitle}
+      </p>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="w-full bg-white py-12 sm:py-16 lg:py-24">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      <div class="flex flex-col lg:flex-row gap-8 lg:gap-12">
+        
+        <!-- Left Sidebar - Filters -->
+        <aside class="w-full lg:w-[320px] flex-shrink-0">
+          <div id="filterBar" class="bg-white border border-gray-200 rounded-2xl p-6 shadow-lg lg:sticky lg:top-4">
+            <!-- Filter Header -->
+            <div class="mb-6 pb-4 border-b border-gray-200">
+              <div class="flex items-center justify-between">
+                <h3 class="text-base font-playfair font-semibold text-gray-900">Filters</h3>
+                <span id="activeFilterCount" class="hidden bg-gold text-white text-xs font-bold px-2.5 py-1 rounded-full">0</span>
+              </div>
+              <p id="filterStatus" class="text-sm font-inter text-gray-600 mt-1">0 filters selected</p>
+            </div>
+
+            <!-- Mobile Filter Toggle -->
+            <button 
+              id="mobileFilterToggle"
+              class="lg:hidden w-full flex items-center justify-between bg-gray-50 hover:bg-gray-100 px-4 py-3 rounded-lg transition-colors mb-4"
+            >
+              <span class="font-inter font-medium text-gray-900">Show/Hide Filters</span>
+              <svg class="w-5 h-5 text-gray-600 transition-transform" id="filterChevron" viewBox="0 0 24 24" fill="none">
+                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+
+            <!-- Filters Container -->
+            <div id="filtersContainer" class="space-y-6">
+              <!-- Country Filter -->
+              <div class="filter-group">
+                <button class="filter-header w-full flex items-center justify-between py-3 text-left" data-filter="country">
+                  <span class="text-base font-inter font-medium text-gray-900">Country</span>
+                  <svg class="w-5 h-5 text-gray-600 transition-transform" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div class="filter-content space-y-2 mt-3">
+                  {metadata.countries.map(country => (
+                    <label class="flex items-center cursor-pointer group">
+                      <input 
+                        type="checkbox" 
+                        name="country" 
+                        value={country}
+                        class="w-4 h-4 text-gold border-gray-300 rounded focus:ring-gold focus:ring-2"
+                      />
+                      <span class="ml-3 text-sm font-inter text-gray-700 group-hover:text-gray-900">{country}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <!-- Clear Filters Button -->
+              <div class="pt-6">
+                <button 
+                  id="clearFilters"
+                  class="w-full px-4 py-2.5 text-sm font-inter font-medium text-gold hover:text-gold-700 border border-gold hover:bg-gold hover:text-white rounded-lg transition-all"
+                >
+                  Clear All Filters
+                </button>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Right Content Area -->
+        <main class="flex-1 min-w-0">
+          <!-- Results Header with Sort -->
+          <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+            <div class="text-base sm:text-lg font-inter text-gray-900">
+              Showing <span id="filteredCount" class="font-semibold">{academies.length}</span> of <span class="font-semibold">{metadata.total}</span> tennis academies
+            </div>
+            
+            <!-- Sort By Dropdown -->
+            <div class="flex items-center gap-3">
+              <label class="text-sm font-inter text-gray-600 hidden sm:block">Sort by</label>
+              <div class="relative">
+                <select 
+                  id="sortBy"
+                  class="appearance-none bg-white border border-gray-300 rounded-lg pl-4 pr-10 py-2.5 text-sm font-inter text-gray-900 focus:ring-2 focus:ring-gold focus:border-gold transition-all cursor-pointer"
+                >
+                  <option value="recommended">Recommended</option>
+                  <option value="name-asc">Name: A to Z</option>
+                  <option value="name-desc">Name: Z to A</option>
+                  <option value="newest">Newest First</option>
+                </select>
+                <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none" viewBox="0 0 24 24" fill="none">
+                  <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Academies Grid -->
+          <div id="academiesGrid" class="flex flex-col gap-6 lg:gap-8">
+          {academies.map((academy, index) => {
+          const imageAlt = academy.imageAlt || academy.title;
+          const imageUrl = academy.image;
+          const strapiAttrs = getStrapiImageAttrs({ url: imageUrl, alt: imageAlt }, {
+            displayWidth: 600,
+            displayHeight: 400,
+            fit: 'cover',
+            sizes: '(max-width: 1024px) 100vw, 600px',
+            quality: ACADEMY_IMAGE_QUALITY
+          });
+
+          const imgAttrs = strapiAttrs ?? {
+            src: imageUrl,
+            url: imageUrl,
+            alt: imageAlt,
+            width: 600,
+            height: 400,
+            loading: index < 18 ? 'eager' : 'lazy',
+            sizes: '(max-width: 1024px) 100vw, 600px'
+          };
+
+          return (
+            <a 
+              href={`/tennis-academy/${academy.slug}`}
+              class="academy-card group bg-white border-2 border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 hover:-translate-y-1" 
+              data-academy-id={academy.id} 
+              data-country={academy.country}
+            >
+              {/* Mobile: Vertical Layout | Desktop: Horizontal Layout */}
+              <div class="flex flex-col lg:flex-row lg:h-[280px]">
+                {/* Image Section */}
+                <div class="relative w-full lg:w-[45%] h-64 lg:h-full flex-shrink-0 overflow-hidden bg-gray-100">
+                  <img 
+                    src={imgAttrs.src}
+                    {...(imgAttrs.srcset && { srcset: imgAttrs.srcset })}
+                    sizes={imgAttrs.sizes || '(max-width: 1024px) 100vw, 600px'}
+                    width={imgAttrs.width || 600}
+                    height={imgAttrs.height || 400}
+                    alt={imgAttrs.alt || imageAlt}
+                    loading={imgAttrs.loading || 'lazy'}
+                    decoding="async"
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                  />
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </div>
+                
+                {/* Content Section */}
+                <div class="flex flex-col p-6 lg:p-8 lg:w-[55%] justify-between">
+                  <div>
+                    <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3 lg:mb-4 leading-tight group-hover:text-[#ad986c] transition-colors">
+                      {academy.title}
+                    </h3>
+                    
+                    <div class="space-y-3 mb-4 lg:mb-6">
+                      {/* Country */}
+                      {academy.country && (
+                        <div class="flex items-start gap-3">
+                          <svg class="w-4 h-4 text-[#ad986c] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          <span class="text-sm text-gray-600 font-inter">{academy.country}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div class="flex items-center justify-end gap-3 mt-auto">
+                    <div class="flex items-center gap-2 text-[#ad986c] font-inter font-semibold text-sm group-hover:gap-3 transition-all">
+                      <span>View Details</span>
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </a>
+          );
+        })}
+      </div>
+
+          <!-- Empty State -->
+          <div id="emptyState" class="hidden text-center py-16">
+            <svg class="w-24 h-24 mx-auto text-gray-300 mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M12 12h.01M12 12h.01M12 12h.01M12 21a9 9 0 100-18 9 9 0 000 18z" />
+            </svg>
+            <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3">No tennis academies found</h3>
+            <p class="text-base font-inter text-gray-800 leading-relaxed mb-6">Try adjusting your filters to see more results</p>
+            <button id="emptyStateClearBtn" class="px-6 py-3 bg-gold hover:bg-gold-700 text-white font-inter font-medium rounded-full transition-all duration-300">
+              Clear All Filters
+            </button>
+          </div>
+        </main>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+
+  .academy-card {
+    transition: all 0.3s ease;
+  }
+
+  .academy-card.hidden {
+    display: none;
+  }
+
+  /* Filter Group Styles */
+  .filter-group {
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .filter-group:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .filter-group + .filter-group {
+    padding-top: 1.5rem;
+  }
+
+  .filter-header {
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s ease;
+  }
+
+  .filter-header:hover {
+    background-color: #f9fafb;
+    border-radius: 0.5rem;
+  }
+
+  .filter-header svg {
+    transition: transform 0.3s ease;
+  }
+
+  .filter-group.collapsed .filter-header svg {
+    transform: rotate(-90deg);
+  }
+
+  .filter-group.collapsed .filter-content {
+    display: none;
+  }
+
+  /* Mobile filter container */
+  @media (max-width: 1023px) {
+    #filtersContainer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    #filtersContainer.show {
+      max-height: 2000px;
+    }
+  }
+</style>
+
+<script define:vars={{ initialAcademies: academies, metadata }}>
+  // Global state
+  let allAcademies = [...initialAcademies];
+  let filteredAcademies = [...initialAcademies];
+  let displayedAcademies = [...initialAcademies];
+
+  // Filter state
+  const filters = {
+    countries: new Set()
+  };
+
+  // DOM elements
+  const academiesGrid = document.getElementById('academiesGrid');
+  const emptyState = document.getElementById('emptyState');
+  const filteredCountEl = document.getElementById('filteredCount');
+  const activeFilterCountEl = document.getElementById('activeFilterCount');
+  const filterStatusEl = document.getElementById('filterStatus');
+  const sortBySelect = document.getElementById('sortBy');
+  
+  // Mobile filter toggle
+  const mobileFilterToggle = document.getElementById('mobileFilterToggle');
+  const filtersContainer = document.getElementById('filtersContainer');
+  const filterChevron = document.getElementById('filterChevron');
+
+  // Initialize
+  function init() {
+    setupEventListeners();
+    restoreFiltersFromURL();
+    
+    // Render initial state
+    renderAcademies();
+    updateFilterCount();
+  }
+
+  // Setup event listeners
+  function setupEventListeners() {
+    // Mobile filter toggle
+    mobileFilterToggle?.addEventListener('click', () => {
+      filtersContainer.classList.toggle('show');
+      if (filtersContainer.classList.contains('show')) {
+        filterChevron.style.transform = 'rotate(180deg)';
+      } else {
+        filterChevron.style.transform = 'rotate(0deg)';
+      }
+    });
+
+    // Filter group collapse/expand
+    document.querySelectorAll('.filter-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const filterGroup = header.parentElement;
+        filterGroup.classList.toggle('collapsed');
+      });
+    });
+
+    // Country checkboxes
+    document.querySelectorAll('input[name="country"]').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          filters.countries.add(e.target.value);
+        } else {
+          filters.countries.delete(e.target.value);
+        }
+        applyFilters();
+      });
+    });
+
+    // Sort by dropdown
+    sortBySelect?.addEventListener('change', (e) => {
+      applySorting(e.target.value);
+    });
+
+    // Clear filters button
+    document.getElementById('clearFilters')?.addEventListener('click', clearAllFilters);
+    document.getElementById('emptyStateClearBtn')?.addEventListener('click', clearAllFilters);
+  }
+
+  // Apply sorting
+  function applySorting(sortValue) {
+    switch (sortValue) {
+      case 'name-asc':
+        filteredAcademies.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case 'name-desc':
+        filteredAcademies.sort((a, b) => b.title.localeCompare(a.title));
+        break;
+      case 'newest':
+        filteredAcademies.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        break;
+      case 'recommended':
+      default:
+        // Apply filters with original order
+        filteredAcademies = allAcademies.filter(academy => {
+          if (filters.countries.size > 0 && !filters.countries.has(academy.country)) return false;
+          return true;
+        });
+        break;
+    }
+
+    displayedAcademies = filteredAcademies;
+    renderAcademies();
+    updateFilterCount();
+    updateURL();
+  }
+
+  // Apply filters
+  function applyFilters() {
+    filteredAcademies = allAcademies.filter(academy => {
+      // Country filter
+      if (filters.countries.size > 0 && !filters.countries.has(academy.country)) {
+        return false;
+      }
+
+      return true;
+    });
+
+    // Apply current sorting
+    const currentSort = sortBySelect?.value || 'recommended';
+    if (currentSort !== 'recommended') {
+      applySorting(currentSort);
+      return;
+    }
+
+    displayedAcademies = filteredAcademies;
+    
+    renderAcademies();
+    updateFilterCount();
+    updateURL();
+  }
+
+  // Render academies
+  function renderAcademies() {
+    const cards = academiesGrid.querySelectorAll('.academy-card');
+    
+    // Hide all cards first
+    cards.forEach(card => {
+      card.classList.add('hidden');
+    });
+
+    // Show filtered cards
+    let foundCount = 0;
+    displayedAcademies.forEach(academy => {
+      const card = academiesGrid.querySelector(`[data-academy-id="${academy.id}"]`);
+      if (card) {
+        card.classList.remove('hidden');
+        foundCount++;
+      }
+    });
+
+    // Update counts
+    filteredCountEl.textContent = filteredAcademies.length;
+
+    // Show/hide empty state
+    if (filteredAcademies.length === 0) {
+      emptyState.classList.remove('hidden');
+    } else {
+      emptyState.classList.add('hidden');
+    }
+  }
+
+  // Update filter count badge
+  function updateFilterCount() {
+    let count = 0;
+    if (filters.countries.size > 0) count++;
+
+    if (count > 0) {
+      activeFilterCountEl.textContent = count;
+      activeFilterCountEl.classList.remove('hidden');
+      filterStatusEl.textContent = `${count} filter${count > 1 ? 's' : ''} selected`;
+    } else {
+      activeFilterCountEl.classList.add('hidden');
+      filterStatusEl.textContent = '0 filters selected';
+    }
+  }
+
+  // Clear all filters
+  function clearAllFilters() {
+    filters.countries.clear();
+
+    // Clear checkboxes
+    document.querySelectorAll('input[name="country"]').forEach(cb => cb.checked = false);
+
+    // Reset sort to recommended
+    sortBySelect.value = 'recommended';
+
+    applyFilters();
+  }
+
+  // Update URL with filter params
+  function updateURL() {
+    const params = new URLSearchParams();
+    
+    if (filters.countries.size > 0) {
+      params.set('countries', [...filters.countries].join(','));
+    }
+
+    const newURL = params.toString() ? `${window.location.pathname}?${params}` : window.location.pathname;
+    window.history.replaceState({}, '', newURL);
+  }
+
+  // Restore filters from URL
+  function restoreFiltersFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    
+    // Restore countries
+    const countries = params.get('countries');
+    if (countries) {
+      countries.split(',').forEach(country => {
+        filters.countries.add(country);
+        const checkbox = document.querySelector(`input[name="country"][value="${country}"]`);
+        if (checkbox) checkbox.checked = true;
+      });
+      applyFilters();
+    }
+  }
+
+  // Initialize on page load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+</script>
+</BaseLayout>
+

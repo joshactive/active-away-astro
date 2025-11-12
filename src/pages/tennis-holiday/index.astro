@@ -1,87 +1,135 @@
 ---
-// Prerender this page (since we're using hybrid mode)
+// Tennis Holiday Archive Page - Shows all tennis holidays
 export const prerender = true;
 
-import BaseLayout from '../layouts/BaseLayout.astro';
-import { getAllVenues, getVenuesPage, getPageSEO } from '../utils/strapi.js';
-import { getStrapiImageAttrs } from '../utils/cloudflareImages.js';
-import MapPinIcon from '../components/ui/icons/MapPinIcon.astro';
-import TagIcon from '../components/ui/icons/TagIcon.astro';
-import HotelIcon from '../components/ui/icons/HotelIcon.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getTennisHolidays } from '../../utils/strapi.js';
+import { getStrapiImageAttrs } from '../../utils/cloudflareImages.js';
 
-// Fetch venues page content from Strapi
-let pageContent = null;
-try {
-  pageContent = await getVenuesPage();
-  console.log('🏨 [venues.astro] Venues page content fetched successfully');
-} catch (error) {
-  console.warn('[venues.astro] Could not fetch venues page content, using defaults:', error.message);
-}
+// Fetch all tennis holidays with events
+let tennisHolidaysData = { holidays: [], metadata: { total: 0, countries: [], priceRange: { min: 0, max: 5000 }, availableDates: [] } };
 
-// Fetch SEO data from Strapi
-let seoData = null;
 try {
-  seoData = await getPageSEO('venues-page');
-  if (seoData) {
-    console.log('📄 [venues.astro] SEO data fetched successfully');
+  const allHolidays = await getTennisHolidays(1, 100);
+  
+  // Filter: only show holidays with displayOnFrontEnd = true
+  const visibleHolidays = allHolidays.filter(h => h.displayOnFrontEnd === true);
+  console.log(`🎾 [tennis-holiday archive] Filtered to ${visibleHolidays.length} visible holidays (out of ${allHolidays.length} total)`);
+  
+  // Fetch all events for tennis holidays
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayISO = today.toISOString().split('T')[0];
+  
+  // Get unique values from visible holidays
+  const uniqueValues = [...new Set(visibleHolidays.map(h => h.uniqueValue).filter(Boolean))];
+  
+  // Fetch events for all tennis holidays
+  let allEvents = [];
+  if (uniqueValues.length > 0) {
+    const { fetchAPI } = await import('../../utils/strapi.js');
+    const eventsData = await fetchAPI(`/events?filters[dateUntil][$gte]=${todayISO}&pagination[pageSize]=100&sort=dateFrom:asc`);
+    
+    if (eventsData && eventsData.data) {
+      allEvents = eventsData.data.map(item => {
+        const event = item.attributes || item;
+        return {
+          id: item.id,
+          uniqueValue: event.uniqueValue,
+          dateFrom: event.dateFrom,
+          dateUntil: event.dateUntil
+        };
+      });
+    }
   }
+  
+  // Create map of uniqueValue to events
+  const eventsByUniqueValue = {};
+  allEvents.forEach(event => {
+    if (event.uniqueValue) {
+      if (!eventsByUniqueValue[event.uniqueValue]) {
+        eventsByUniqueValue[event.uniqueValue] = [];
+      }
+      eventsByUniqueValue[event.uniqueValue].push(event);
+    }
+  });
+  
+  // Associate events with holidays
+  const allEventDates = [];
+  visibleHolidays.forEach(holiday => {
+    if (holiday.uniqueValue && eventsByUniqueValue[holiday.uniqueValue]) {
+      holiday.events = eventsByUniqueValue[holiday.uniqueValue];
+      holiday.eventDates = holiday.events.map(e => e.dateFrom).filter(Boolean);
+    } else {
+      holiday.events = [];
+      holiday.eventDates = [];
+    }
+  });
+  
+  // Collect all unique event dates
+  allEvents.forEach(event => {
+    if (event.dateFrom) allEventDates.push(event.dateFrom);
+    if (event.dateUntil) allEventDates.push(event.dateUntil);
+  });
+  const uniqueDates = [...new Set(allEventDates)].sort();
+  
+  // Extract countries
+  const countries = [...new Set(visibleHolidays.map(h => h.country).filter(Boolean))].sort();
+  
+  // Extract price range
+  const prices = visibleHolidays.map(h => h.price).filter(Boolean);
+  const priceRange = prices.length > 0 ? {
+    min: Math.min(...prices),
+    max: Math.max(...prices)
+  } : { min: 0, max: 5000 };
+  
+  tennisHolidaysData = {
+    holidays: visibleHolidays,
+    metadata: {
+      total: visibleHolidays.length,
+      countries,
+      priceRange,
+      availableDates: uniqueDates
+    }
+  };
+  
+  console.log(`🎾 [tennis-holiday archive] Showing ${visibleHolidays.length} tennis holidays (displayOnFrontEnd = true)`);
+  console.log(`🔗 Matched ${visibleHolidays.filter(h => h.events && h.events.length > 0).length} holidays with events`);
+  console.log(`📅 Available dates: ${uniqueDates.length}`);
 } catch (error) {
-  console.warn('[venues.astro] Could not fetch SEO data:', error.message);
+  console.error('[tennis-holiday archive] Error fetching data:', error.message);
 }
 
-// Fetch initial venues data
-let venuesData = { venues: [], metadata: { total: 0, countries: [], priceRange: { min: 0, max: 5000 }, holidayTypes: [] } };
-try {
-  venuesData = await getAllVenues({ pageSize: 18 });
-  console.log('🏨 [venues.astro] Venues data fetched successfully:', venuesData.metadata.total, 'venues');
-} catch (error) {
-  console.error('[venues.astro] Error fetching venues:', error.message);
-}
+const { holidays, metadata } = tennisHolidaysData;
+const HOLIDAY_IMAGE_QUALITY = 60;
 
-const { venues, metadata } = venuesData;
-const VENUE_IMAGE_SIZES = '(max-width: 1024px) 100vw, 600px';
-const VENUE_IMAGE_QUALITY = 60;
+// Hardcoded hero content
+const heroTitle = 'Discover Our Tennis Holidays';
+const heroSubtitle = 'Join us for unforgettable tennis holidays at stunning destinations worldwide. Expert coaching, beautiful resorts, and incredible experiences await.';
+const heroKicker = 'TENNIS HOLIDAYS';
+const heroBackgroundImage = 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/a5c7fc48-dfbc-4923-a015-20f2d9d31700/public';
 
-// Extract page content with fallbacks
-const heroTitle = pageContent?.hero?.title || 'Explore All Venues';
-const heroSubtitle = pageContent?.hero?.subtitle || 'Discover our complete collection of tennis, padel, pickleball, and ski holidays across the world. Filter by type, location, and price to find your perfect getaway.';
-const heroKicker = pageContent?.hero?.kicker || 'ALL DESTINATIONS';
-const heroBackgroundImage = pageContent?.hero?.backgroundImage?.url || 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/45b69090-1c22-46cd-7f98-086ba71efc00/public';
-const heroBackgroundImageAlt = pageContent?.hero?.backgroundImage?.alt || 'Tennis courts and resort';
-
-// Extract SEO fields with fallbacks
-const pageTitle = seoData?.metaTitle || pageContent?.meta?.title || 'All Venues - Active Away';
-const pageDescription = seoData?.metaDescription || pageContent?.meta?.description || 'Explore all our tennis, padel, pickleball, and ski holiday destinations. Find your perfect vacation with expert hosts and exceptional service.';
-const metaImage = seoData?.metaImage || null;
-const metaImageAlt = seoData?.metaImageAlt || null;
-const metaImageWidth = seoData?.metaImageWidth || null;
-const metaImageHeight = seoData?.metaImageHeight || null;
-const keywords = seoData?.keywords || null;
-const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
+// SEO
+const pageTitle = 'Tennis Holidays - Active Away';
+const pageDescription = 'Explore our complete collection of tennis holidays across the world. Filter by location, price, and available dates to find your perfect tennis getaway.';
+const canonicalURL = 'https://activeaway.com/tennis-holiday';
 ---
 
 <BaseLayout 
   title={pageTitle}
   description={pageDescription}
-  metaImage={metaImage}
-  metaImageAlt={metaImageAlt}
-  metaImageWidth={metaImageWidth}
-  metaImageHeight={metaImageHeight}
-  keywords={keywords}
   canonicalURL={canonicalURL}
 >
-  <!-- Hero Header Section with Background Image -->
+  <!-- Hero Header Section -->
   <section class="relative w-full h-[400px] sm:h-[500px] lg:h-[600px] overflow-hidden">
-    <!-- Background Image -->
-    <div class="absolute inset-0 bg-gradient-to-r from-[#0D1C4E]/90 to-[#0D1C4E]/70 z-10"></div>
+    <div class="absolute inset-0 bg-gradient-to-b from-[#0D1C4E]/75 via-[#0D1C4E]/60 to-[#0D1C4E]/60 z-10"></div>
     <img 
       src={heroBackgroundImage}
-      alt={heroBackgroundImageAlt}
+      alt="Two tennis players high-five on an outdoor red court with mountains and trees in the background."
       class="absolute inset-0 w-full h-full object-cover"
       loading="eager"
     />
     
-    <!-- Centered Content -->
     <div class="relative z-20 container mx-auto max-w-[1400px] px-4 sm:px-10 h-full flex flex-col justify-center items-center text-center">
       <div class="text-xs sm:text-sm font-inter font-semibold text-gold tracking-[0.2em] uppercase mb-4 sm:mb-6 border-t border-b border-gold/50 py-2 px-6">
         {heroKicker}
@@ -125,29 +173,6 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
 
             <!-- Filters Container -->
             <div id="filtersContainer" class="space-y-6">
-              <!-- Holiday Type Filter -->
-              <div class="filter-group">
-                <button class="filter-header w-full flex items-center justify-between py-3 text-left" data-filter="holidayType">
-                  <span class="text-base font-inter font-medium text-gray-900">Holiday Type</span>
-                  <svg class="w-5 h-5 text-gray-600 transition-transform" viewBox="0 0 24 24" fill="none">
-                    <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </button>
-                <div class="filter-content space-y-2 mt-3">
-                  {metadata.holidayTypes.map(type => (
-                    <label class="flex items-center cursor-pointer group">
-                      <input 
-                        type="checkbox" 
-                        name="holidayType" 
-                        value={type.value}
-                        class="w-4 h-4 text-gold border-gray-300 rounded focus:ring-gold focus:ring-2"
-                      />
-                      <span class="ml-3 text-sm font-inter text-gray-700 group-hover:text-gray-900">{type.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
               <!-- Country Filter -->
               <div class="filter-group">
                 <button class="filter-header w-full flex items-center justify-between py-3 text-left" data-filter="country">
@@ -252,7 +277,7 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
           <!-- Results Header with Sort -->
           <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
             <div class="text-base sm:text-lg font-inter text-gray-900">
-              Showing <span id="filteredCount" class="font-semibold">{venues.length}</span> of <span class="font-semibold">{metadata.total}</span> venues
+              Showing <span id="filteredCount" class="font-semibold">{holidays.length}</span> of <span class="font-semibold">{metadata.total}</span> tennis holidays
             </div>
             
             <!-- Sort By Dropdown -->
@@ -277,17 +302,17 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
             </div>
           </div>
 
-          <!-- Venues Grid -->
-          <div id="venuesGrid" class="flex flex-col gap-6 lg:gap-8">
-          {venues.map((venue, index) => {
-          const imageAlt = venue.imageAlt || venue.title;
-          const imageUrl = venue.image;
+          <!-- Holidays Grid -->
+          <div id="holidaysGrid" class="flex flex-col gap-6 lg:gap-8">
+          {holidays.map((holiday, index) => {
+          const imageAlt = holiday.imageAlt || holiday.title;
+          const imageUrl = holiday.image;
           const strapiAttrs = getStrapiImageAttrs({ url: imageUrl, alt: imageAlt }, {
             displayWidth: 600,
             displayHeight: 400,
             fit: 'cover',
             sizes: '(max-width: 1024px) 100vw, 600px',
-            quality: VENUE_IMAGE_QUALITY
+            quality: HOLIDAY_IMAGE_QUALITY
           });
 
           const imgAttrs = strapiAttrs ?? {
@@ -302,14 +327,12 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
 
           return (
             <a 
-              href={venue.slug ? `/${venue.holidayType}/${venue.slug}` : '#'}
-              class="venue-card group bg-white border-2 border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 hover:-translate-y-1" 
-              data-venue-id={venue.id} 
-              data-country={venue.country} 
-              data-holiday-type={venue.holidayType} 
-              data-price={venue.price || 0} 
-              data-event-dates={JSON.stringify(venue.eventDates || [])}
-              data-unique-value={venue.uniqueValue || ''}
+              href={`/tennis-holiday/${holiday.slug}`}
+              class="holiday-card group bg-white border-2 border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 hover:-translate-y-1" 
+              data-holiday-id={holiday.id} 
+              data-country={holiday.country} 
+              data-price={holiday.price || 0} 
+              data-event-dates={JSON.stringify(holiday.eventDates || [])}
             >
               {/* Mobile: Vertical Layout | Desktop: Horizontal Layout */}
               <div class="flex flex-col lg:flex-row lg:h-[280px]">
@@ -333,39 +356,29 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
                 <div class="flex flex-col p-6 lg:p-8 lg:w-[55%] justify-between">
                   <div>
                     <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3 lg:mb-4 leading-tight group-hover:text-[#ad986c] transition-colors">
-                      {venue.title}
+                      {holiday.title}
                     </h3>
                     
                     <div class="space-y-3 mb-4 lg:mb-6">
                       {/* Country */}
-                      {venue.country && (
+                      {holiday.country && (
                         <div class="flex items-start gap-3">
                           <svg class="w-4 h-4 text-[#ad986c] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                           </svg>
-                          <span class="text-sm text-gray-600 font-inter">{venue.country}</span>
+                          <span class="text-sm text-gray-600 font-inter">{holiday.country}</span>
                         </div>
                       )}
-                      
-                      {/* Holiday Type */}
-                      <div class="flex items-start gap-3">
-                        <svg class="w-4 h-4 text-[#ad986c] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v16a2 2 0 002 2z" />
-                        </svg>
-                        <span class="text-sm text-gray-600 font-inter">{venue.productType}</span>
-                      </div>
                     </div>
                   </div>
                   
                   <div class="flex items-center justify-between gap-3 mt-auto">
-                    {venue.price && (
+                    {holiday.price && (
                       <div>
                         <p class="text-sm text-gray-600 font-inter mb-1">From</p>
-                        <p class="text-3xl font-bold text-[#ad986c] font-playfair">£{venue.price}<span class="text-lg">pp</span></p>
-                        {!venue.productType?.toLowerCase().includes('clinic') && (
-                          <p class="text-xs text-gray-500 font-inter mt-1">Based on 2 sharing</p>
-                        )}
+                        <p class="text-3xl font-bold text-[#ad986c] font-playfair">£{holiday.price}<span class="text-lg">pp</span></p>
+                        <p class="text-xs text-gray-500 font-inter mt-1">Based on 2 sharing</p>
                       </div>
                     )}
                     <div class="flex items-center gap-2 text-[#ad986c] font-inter font-semibold text-sm group-hover:gap-3 transition-all">
@@ -385,7 +398,7 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
           <!-- Loading Indicator -->
           <div id="loadingIndicator" class="hidden text-center py-12">
             <div class="inline-block w-12 h-12 border-4 border-gray-300 border-t-gold rounded-full animate-spin"></div>
-            <p class="mt-4 text-base font-inter text-gray-800">Loading more venues...</p>
+            <p class="mt-4 text-base font-inter text-gray-800">Loading more tennis holidays...</p>
           </div>
 
           <!-- Empty State -->
@@ -393,7 +406,7 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
             <svg class="w-24 h-24 mx-auto text-gray-300 mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M12 12h.01M12 12h.01M12 12h.01M12 21a9 9 0 100-18 9 9 0 000 18z" />
             </svg>
-            <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3">No venues found</h3>
+            <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3">No tennis holidays found</h3>
             <p class="text-base font-inter text-gray-800 leading-relaxed mb-6">Try adjusting your filters to see more results</p>
             <button id="emptyStateClearBtn" class="px-6 py-3 bg-gold hover:bg-gold-700 text-white font-inter font-medium rounded-full transition-all duration-300">
               Clear All Filters
@@ -405,7 +418,7 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
 
           <!-- End of Results Message -->
           <div id="endMessage" class="hidden text-center py-12">
-            <p class="text-gray-600 font-inter">You've reached the end of all venues</p>
+            <p class="text-gray-600 font-inter">You've reached the end of all tennis holidays</p>
           </div>
         </main>
       </div>
@@ -422,11 +435,11 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
     font-family: 'Playfair Display', serif;
   }
 
-  .venue-card {
+  .holiday-card {
     transition: all 0.3s ease;
   }
 
-  .venue-card.hidden {
+  .holiday-card.hidden {
     display: none;
   }
 
@@ -467,16 +480,6 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
     display: none;
   }
 
-  /* Loading skeleton animation */
-  @keyframes shimmer {
-    0% {
-      background-position: -1000px 0;
-    }
-    100% {
-      background-position: 1000px 0;
-    }
-  }
-
   .animate-spin {
     animation: spin 1s linear infinite;
   }
@@ -504,19 +507,18 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
   }
 </style>
 
-<script define:vars={{ initialVenues: venues, metadata }}>
+<script define:vars={{ initialHolidays: holidays, metadata }}>
   // Global state
-  let allVenues = [...initialVenues];
-  let filteredVenues = [...initialVenues];
-  let displayedVenues = [...initialVenues].slice(0, 18);
+  let allHolidays = [...initialHolidays];
+  let filteredHolidays = [...initialHolidays];
+  let displayedHolidays = [...initialHolidays].slice(0, 18);
   let currentPage = 1;
   const pageSize = 18;
   let isLoading = false;
-  let hasMoreVenues = allVenues.length > displayedVenues.length;
+  let hasMoreHolidays = allHolidays.length > displayedHolidays.length;
 
   // Filter state
   const filters = {
-    holidayTypes: new Set(),
     countries: new Set(),
     priceMin: null,
     priceMax: null,
@@ -525,7 +527,7 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
   };
 
   // DOM elements
-  const venuesGrid = document.getElementById('venuesGrid');
+  const holidaysGrid = document.getElementById('holidaysGrid');
   const loadingIndicator = document.getElementById('loadingIndicator');
   const emptyState = document.getElementById('emptyState');
   const endMessage = document.getElementById('endMessage');
@@ -546,8 +548,8 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
     setupInfiniteScroll();
     restoreFiltersFromURL();
     
-    // Render initial state (will show first page of 18 venues)
-    renderVenues();
+    // Render initial state
+    renderHolidays();
     updateFilterCount();
   }
 
@@ -568,18 +570,6 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
       header.addEventListener('click', () => {
         const filterGroup = header.parentElement;
         filterGroup.classList.toggle('collapsed');
-      });
-    });
-
-    // Holiday type checkboxes
-    document.querySelectorAll('input[name="holidayType"]').forEach(checkbox => {
-      checkbox.addEventListener('change', (e) => {
-        if (e.target.checked) {
-          filters.holidayTypes.add(e.target.value);
-        } else {
-          filters.holidayTypes.delete(e.target.value);
-        }
-        applyFilters();
       });
     });
 
@@ -650,34 +640,33 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
   function applySorting(sortValue) {
     switch (sortValue) {
       case 'price-low':
-        filteredVenues.sort((a, b) => (a.price || 0) - (b.price || 0));
+        filteredHolidays.sort((a, b) => (a.price || 0) - (b.price || 0));
         break;
       case 'price-high':
-        filteredVenues.sort((a, b) => (b.price || 0) - (a.price || 0));
+        filteredHolidays.sort((a, b) => (b.price || 0) - (a.price || 0));
         break;
       case 'name-asc':
-        filteredVenues.sort((a, b) => a.title.localeCompare(b.title));
+        filteredHolidays.sort((a, b) => a.title.localeCompare(b.title));
         break;
       case 'name-desc':
-        filteredVenues.sort((a, b) => b.title.localeCompare(a.title));
+        filteredHolidays.sort((a, b) => b.title.localeCompare(a.title));
         break;
       case 'newest':
-        filteredVenues.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        filteredHolidays.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         break;
       case 'recommended':
       default:
-        // Keep original order - use applyFilters logic
-        filteredVenues = allVenues.filter(venue => {
-          if (filters.holidayTypes.size > 0 && !filters.holidayTypes.has(venue.holidayType)) return false;
-          if (filters.countries.size > 0 && !filters.countries.has(venue.country)) return false;
-          if (filters.priceMin !== null && venue.price < filters.priceMin) return false;
-          if (filters.priceMax !== null && venue.price > filters.priceMax) return false;
+        // Apply filters with original order
+        filteredHolidays = allHolidays.filter(holiday => {
+          if (filters.countries.size > 0 && !filters.countries.has(holiday.country)) return false;
+          if (filters.priceMin !== null && holiday.price < filters.priceMin) return false;
+          if (filters.priceMax !== null && holiday.price > filters.priceMax) return false;
           
-          // Date filter - check event dates
+          // Date filter
           if (filters.dateFrom || filters.dateTo) {
-            if (!venue.eventDates || venue.eventDates.length === 0) return false;
+            if (!holiday.eventDates || holiday.eventDates.length === 0) return false;
             
-            const hasMatchingDate = venue.eventDates.some(eventDate => {
+            const hasMatchingDate = holiday.eventDates.some(eventDate => {
               const date = new Date(eventDate);
               if (filters.dateFrom && date < new Date(filters.dateFrom)) return false;
               if (filters.dateTo && date > new Date(filters.dateTo)) return false;
@@ -693,43 +682,36 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
     }
 
     currentPage = 1;
-    displayedVenues = filteredVenues.slice(0, pageSize);
-    hasMoreVenues = filteredVenues.length > displayedVenues.length;
-    renderVenues();
+    displayedHolidays = filteredHolidays.slice(0, pageSize);
+    hasMoreHolidays = filteredHolidays.length > displayedHolidays.length;
+    renderHolidays();
     updateFilterCount();
     updateURL();
   }
 
   // Apply filters
   function applyFilters() {
-    filteredVenues = allVenues.filter(venue => {
-      // Holiday type filter
-      if (filters.holidayTypes.size > 0 && !filters.holidayTypes.has(venue.holidayType)) {
-        return false;
-      }
-
+    filteredHolidays = allHolidays.filter(holiday => {
       // Country filter
-      if (filters.countries.size > 0 && !filters.countries.has(venue.country)) {
+      if (filters.countries.size > 0 && !filters.countries.has(holiday.country)) {
         return false;
       }
 
       // Price range filter
-      if (filters.priceMin !== null && venue.price < filters.priceMin) {
+      if (filters.priceMin !== null && holiday.price < filters.priceMin) {
         return false;
       }
-      if (filters.priceMax !== null && venue.price > filters.priceMax) {
+      if (filters.priceMax !== null && holiday.price > filters.priceMax) {
         return false;
       }
 
-      // Date range filter - check if venue has events within the selected date range
+      // Date range filter
       if (filters.dateFrom || filters.dateTo) {
-        // If venue has no events, exclude it from date-filtered results
-        if (!venue.eventDates || venue.eventDates.length === 0) {
+        if (!holiday.eventDates || holiday.eventDates.length === 0) {
           return false;
         }
         
-        // Check if any event date falls within the selected range
-        const hasMatchingDate = venue.eventDates.some(eventDate => {
+        const hasMatchingDate = holiday.eventDates.some(eventDate => {
           const date = new Date(eventDate);
           if (filters.dateFrom && date < new Date(filters.dateFrom)) {
             return false;
@@ -752,22 +734,21 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
     const currentSort = sortBySelect?.value || 'recommended';
     if (currentSort !== 'recommended') {
       applySorting(currentSort);
-      return; // applySorting handles rendering
+      return;
     }
 
     currentPage = 1;
-    displayedVenues = filteredVenues.slice(0, pageSize);
-    hasMoreVenues = filteredVenues.length > displayedVenues.length;
+    displayedHolidays = filteredHolidays.slice(0, pageSize);
+    hasMoreHolidays = filteredHolidays.length > displayedHolidays.length;
     
-    renderVenues();
+    renderHolidays();
     updateFilterCount();
     updateURL();
   }
 
-  // Render venues
-  function renderVenues() {
-    const cards = venuesGrid.querySelectorAll('.venue-card');
-    console.log(`🎨 Rendering venues: ${displayedVenues.length} to display out of ${filteredVenues.length} filtered`);
+  // Render holidays
+  function renderHolidays() {
+    const cards = holidaysGrid.querySelectorAll('.holiday-card');
     
     // Hide all cards first
     cards.forEach(card => {
@@ -776,27 +757,24 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
 
     // Show filtered cards
     let foundCount = 0;
-    displayedVenues.forEach(venue => {
-      const card = venuesGrid.querySelector(`[data-venue-id="${venue.id}"]`);
+    displayedHolidays.forEach(holiday => {
+      const card = holidaysGrid.querySelector(`[data-holiday-id="${holiday.id}"]`);
       if (card) {
         card.classList.remove('hidden');
         foundCount++;
-      } else {
-        console.warn(`⚠️ Card not found for venue ID: ${venue.id}`);
       }
     });
-    console.log(`✅ Displayed ${foundCount} venue cards`);
 
     // Update counts
-    filteredCountEl.textContent = filteredVenues.length;
+    filteredCountEl.textContent = filteredHolidays.length;
 
     // Show/hide empty state
-    if (filteredVenues.length === 0) {
+    if (filteredHolidays.length === 0) {
       emptyState.classList.remove('hidden');
       endMessage.classList.add('hidden');
     } else {
       emptyState.classList.add('hidden');
-      if (!hasMoreVenues) {
+      if (!hasMoreHolidays) {
         endMessage.classList.remove('hidden');
       } else {
         endMessage.classList.add('hidden');
@@ -807,7 +785,6 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
   // Update filter count badge
   function updateFilterCount() {
     let count = 0;
-    if (filters.holidayTypes.size > 0) count++;
     if (filters.countries.size > 0) count++;
     if (filters.priceMin !== null || filters.priceMax !== null) count++;
     if (filters.dateFrom !== null || filters.dateTo !== null) count++;
@@ -824,7 +801,6 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
 
   // Clear all filters
   function clearAllFilters() {
-    filters.holidayTypes.clear();
     filters.countries.clear();
     filters.priceMin = null;
     filters.priceMax = null;
@@ -832,7 +808,6 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
     filters.dateTo = null;
 
     // Clear checkboxes
-    document.querySelectorAll('input[name="holidayType"]').forEach(cb => cb.checked = false);
     document.querySelectorAll('input[name="country"]').forEach(cb => cb.checked = false);
     
     // Clear inputs
@@ -851,8 +826,8 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
   function setupInfiniteScroll() {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMoreVenues && !isLoading) {
-          loadMoreVenues();
+        if (entries[0].isIntersecting && hasMoreHolidays && !isLoading) {
+          loadMoreHolidays();
         }
       },
       { rootMargin: '200px' }
@@ -863,29 +838,28 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
     }
   }
 
-  // Load more venues
-  function loadMoreVenues() {
-    if (isLoading || !hasMoreVenues) return;
+  // Load more holidays
+  function loadMoreHolidays() {
+    if (isLoading || !hasMoreHolidays) return;
 
     isLoading = true;
     loadingIndicator.classList.remove('hidden');
 
-    // Simulate loading delay for better UX
     setTimeout(() => {
       currentPage++;
       const startIndex = (currentPage - 1) * pageSize;
       const endIndex = startIndex + pageSize;
-      const newVenues = filteredVenues.slice(startIndex, endIndex);
+      const newHolidays = filteredHolidays.slice(startIndex, endIndex);
 
-      displayedVenues = [...displayedVenues, ...newVenues];
-      hasMoreVenues = filteredVenues.length > displayedVenues.length;
+      displayedHolidays = [...displayedHolidays, ...newHolidays];
+      hasMoreHolidays = filteredHolidays.length > displayedHolidays.length;
 
-      renderVenues();
+      renderHolidays();
       
       isLoading = false;
       loadingIndicator.classList.add('hidden');
 
-      if (!hasMoreVenues) {
+      if (!hasMoreHolidays) {
         endMessage.classList.remove('hidden');
       }
     }, 500);
@@ -895,9 +869,6 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
   function updateURL() {
     const params = new URLSearchParams();
     
-    if (filters.holidayTypes.size > 0) {
-      params.set('types', [...filters.holidayTypes].join(','));
-    }
     if (filters.countries.size > 0) {
       params.set('countries', [...filters.countries].join(','));
     }
@@ -922,16 +893,6 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
   function restoreFiltersFromURL() {
     const params = new URLSearchParams(window.location.search);
     
-    // Restore holiday types
-    const types = params.get('types');
-    if (types) {
-      types.split(',').forEach(type => {
-        filters.holidayTypes.add(type);
-        const checkbox = document.querySelector(`input[name="holidayType"][value="${type}"]`);
-        if (checkbox) checkbox.checked = true;
-      });
-    }
-
     // Restore countries
     const countries = params.get('countries');
     if (countries) {
@@ -967,7 +928,7 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
     }
 
     // Apply filters if any were restored
-    if (types || countries || minPrice || maxPrice || dateFrom || dateTo) {
+    if (countries || minPrice || maxPrice || dateFrom || dateTo) {
       applyFilters();
     }
   }

@@ -1,0 +1,915 @@
+---
+// Tennis Academy Detail Component
+// Used for tennis academy pages with unique structure
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getStrapiImageAttrs } from '../utils/cloudflareImages.js';
+import { marked } from 'marked';
+
+// Configure marked for safe markdown parsing
+marked.setOptions({
+  breaks: true,
+  gfm: true
+});
+
+// Props
+interface Props {
+  academyData: any;
+  otherAcademies: any[];
+  slug: string;
+}
+
+const { academyData, otherAcademies, slug } = Astro.props;
+
+// Debug: Check if otherAcademies data is being received
+console.log(`🎓 [Component] otherAcademies received:`, otherAcademies?.length || 0, 'academies');
+if (otherAcademies && otherAcademies.length > 0) {
+  console.log(`🎓 [Component] Sample academy:`, otherAcademies[0]);
+}
+
+// Extract data with fallbacks
+const heroTitle = academyData.mainHeader || academyData.title;
+const heroSubtitle = academyData.headingText || '';
+const heroKicker = academyData.country || '';
+const heroBackgroundImage = academyData.headerImage?.url || 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/45b69090-1c22-46cd-7f98-086ba71efc00/public';
+const heroBackgroundImageAlt = academyData.headerImage?.alt || heroTitle;
+
+// Extract SEO fields with fallbacks
+const pageTitle = academyData.seo?.metaTitle || `${academyData.title} - Active Away`;
+const pageDescription = academyData.seo?.metaDescription || academyData.excerpt || `Experience ${academyData.title} with Active Away`;
+const metaImage = academyData.seo?.metaImage || academyData.headerImage?.url || null;
+const metaImageAlt = academyData.seo?.metaImageAlt || null;
+const keywords = academyData.seo?.keywords || null;
+const canonicalURL = academyData.seo?.canonicalURL || `https://activeaway.com/tennis-academy/${slug}`;
+
+---
+
+<BaseLayout 
+  title={pageTitle}
+  description={pageDescription}
+  metaImage={metaImage}
+  metaImageAlt={metaImageAlt}
+  keywords={keywords}
+  canonicalURL={canonicalURL}
+>
+  <!-- Preload LCP Hero Image -->
+  <link 
+    slot="head" 
+    rel="preload" 
+    as="image" 
+    href={heroBackgroundImage}
+    fetchpriority="high"
+  />
+
+  <!-- Hero Header Section with Background Image -->
+  <section id="hero" class="relative w-full h-[400px] sm:h-[500px] lg:h-[600px] overflow-hidden">
+    <!-- Background Image with Centered Gradient Overlay -->
+    <div class="absolute inset-0 bg-gradient-to-b from-[#0D1C4E]/75 via-[#0D1C4E]/60 to-[#0D1C4E]/60 z-10"></div>
+    {academyData.headerImage && (() => {
+      const heroAttrs = getStrapiImageAttrs(academyData.headerImage, {
+        displayWidth: 1920,
+        sizes: '100vw'
+      });
+      return (
+        <img 
+          {...heroAttrs}
+          class="absolute inset-0 w-full h-full object-cover"
+          alt={heroBackgroundImageAlt}
+          fetchpriority="high"
+        />
+      );
+    })()}
+    
+    <!-- Centered Content -->
+    <div class="relative z-20 container mx-auto max-w-[1400px] px-4 sm:px-10 h-full flex flex-col justify-center items-center text-center">
+      <div class="text-xs sm:text-sm font-inter font-semibold text-gold tracking-[0.2em] uppercase mb-4 sm:mb-6 border-t border-b border-gold/50 py-2 px-6">
+        {heroKicker}
+      </div>
+      <h1 class="text-4xl sm:text-5xl lg:text-7xl font-playfair font-bold text-white mb-6 sm:mb-8 leading-tight max-w-4xl">
+        {heroTitle}
+      </h1>
+      {heroSubtitle && (
+        <p class="text-lg sm:text-xl lg:text-2xl font-inter text-gray-100 max-w-3xl leading-relaxed">
+          {heroSubtitle}
+        </p>
+      )}
+    </div>
+  </section>
+
+  <!-- Breadcrumb Navigation -->
+  <section class="w-full bg-gray-50 py-4 border-b border-gray-200">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      <nav class="flex items-center space-x-2 text-sm font-inter">
+        <a href="/" class="text-gray-600 hover:text-[#ad986c] transition-colors">Home</a>
+        <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+        <a href="/tennis-academy" class="text-gray-600 hover:text-[#ad986c] transition-colors">Tennis Academies</a>
+        <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+        <span class="text-gray-900 font-medium">{academyData.title}</span>
+      </nav>
+    </div>
+  </section>
+
+  <!-- Tab Navigation -->
+  <section class="w-full bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      <nav class="flex justify-center space-x-0 overflow-x-auto scrollbar-hide">
+        <button class="page-nav-tab active whitespace-nowrap px-6 py-4 text-sm font-medium font-inter border-b-2 border-[#ad986c] text-[#ad986c] transition-all" data-section="info">
+          Info
+        </button>
+        {academyData.coach && (
+          <button class="page-nav-tab whitespace-nowrap px-6 py-4 text-sm font-medium font-inter border-b-2 border-transparent text-gray-600 hover:text-[#ad986c] transition-all" data-section="coach">
+            Coach
+          </button>
+        )}
+        {academyData.hostedExperiences && academyData.hostedExperiences.length > 0 && (
+          <button class="page-nav-tab whitespace-nowrap px-6 py-4 text-sm font-medium font-inter border-b-2 border-transparent text-gray-600 hover:text-[#ad986c] transition-all" data-section="holidays">
+            Holidays
+          </button>
+        )}
+        {academyData.faqs && academyData.faqs.length > 0 && (
+          <button class="page-nav-tab whitespace-nowrap px-6 py-4 text-sm font-medium font-inter border-b-2 border-transparent text-gray-600 hover:text-[#ad986c] transition-all" data-section="faqs">
+            FAQs
+          </button>
+        )}
+      </nav>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <main>
+    <!-- Info Section (Full Width - No Sidebar) -->
+    <section id="info" class="w-full bg-white py-8 sm:py-12 lg:py-16 scroll-mt-20">
+      <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+        
+        <!-- Overview Content -->
+        {academyData.belowHeadingText && (
+          <div class="prose max-w-none font-inter mb-12" set:html={marked.parse(academyData.belowHeadingText)}></div>
+        )}
+        
+        <!-- Key Information Box -->
+        {(academyData.whyWeLoveVenue1 || academyData.whyWeLoveVenue2 || academyData.whyWeLoveVenue3 || academyData.whyWeLoveVenue4) && (
+          <div class="mt-8 bg-gray-50 border border-gray-200 rounded-xl p-6 sm:p-8 mb-12">
+            <h2 class="text-2xl sm:text-3xl font-playfair font-semibold text-gray-900 mb-6">
+              Key Information
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                academyData.whyWeLoveVenue1, 
+                academyData.whyWeLoveVenue2, 
+                academyData.whyWeLoveVenue3, 
+                academyData.whyWeLoveVenue4
+              ].filter(Boolean).map(item => (
+                <div class="flex items-start gap-3 bg-white p-4 rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+                  <svg class="w-5 h-5 text-[#ad986c] flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                  </svg>
+                  <p class="text-sm text-gray-800 font-inter flex-1">{item}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        
+      </div>
+    </section>
+
+    <!-- Gallery Section - Full Width to Browser Edges -->
+    {academyData.gallery && academyData.gallery.length > 0 && (
+      <section class="relative w-full border-t border-gray-200 py-8 sm:py-12 lg:py-16">
+        <div class="container mx-auto max-w-[1400px] px-4 sm:px-10 mb-8 sm:mb-12">
+          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 text-center">Gallery</h2>
+        </div>
+        
+        <div class="relative flex items-stretch">
+          <!-- Left Image - Extends to Left Edge -->
+          {academyData.gallery[1] && (() => {
+            const imgAttrs = getStrapiImageAttrs({ url: academyData.gallery[1].url, alt: academyData.gallery[1].alt }, {
+              displayWidth: 300,
+              displayHeight: 450,
+              fit: 'cover',
+              quality: 70,
+              sizes: '15vw'
+            });
+            
+            return (
+              <button
+                type="button"
+                class="gallery-image hidden lg:block w-[15vw] relative overflow-hidden bg-gray-100 group cursor-pointer flex-shrink-0"
+                data-index="1"
+              >
+                <img 
+                  src={imgAttrs?.src || academyData.gallery[1].url}
+                  srcset={imgAttrs?.srcset}
+                  sizes={imgAttrs?.sizes}
+                  alt={imgAttrs?.alt || academyData.gallery[1].alt || 'Gallery image'}
+                  width={imgAttrs?.width}
+                  height={imgAttrs?.height}
+                  class="w-full h-full min-h-[600px] object-cover group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
+                />
+                <div class="absolute inset-0 bg-white/40 group-hover:bg-white/20 transition-all duration-300"></div>
+              </button>
+            );
+          })()}
+          
+          <!-- Center Main Image - Container Width -->
+          <div class="flex-1 flex justify-center px-4 sm:px-10">
+            {(() => {
+              const mainAttrs = getStrapiImageAttrs({ url: academyData.gallery[0].url, alt: academyData.gallery[0].alt }, {
+                displayWidth: 1200,
+                displayHeight: 800,
+                fit: 'cover',
+                quality: 70,
+                sizes: '(max-width: 1024px) 100vw, 1200px'
+              });
+              
+              return (
+                <button
+                  type="button"
+                  class="gallery-image relative w-full max-w-[1400px] h-[400px] sm:h-[500px] lg:h-[600px] overflow-hidden rounded-xl bg-gray-100 group cursor-pointer"
+                  data-index="0"
+                >
+                  <img 
+                    src={mainAttrs?.src || academyData.gallery[0]?.url}
+                    srcset={mainAttrs?.srcset}
+                    sizes={mainAttrs?.sizes}
+                    alt={mainAttrs?.alt || academyData.gallery[0]?.alt || 'Main gallery image'}
+                    width={mainAttrs?.width}
+                    height={mainAttrs?.height}
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="eager"
+                  />
+                  <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="bg-black/50 backdrop-blur-sm hover:bg-black/60 text-white font-inter font-medium py-3 px-5 rounded-full transition-all flex items-center gap-2">
+                      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      View gallery ({academyData.gallery.length})
+                    </div>
+                  </div>
+                </button>
+              );
+            })()}
+          </div>
+          
+          <!-- Right Images - Horizontal Scroll -->
+          <div class="hidden lg:block w-[15vw] relative overflow-x-auto overflow-y-hidden scrollbar-hide flex-shrink-0">
+            <div class="flex gap-3 h-full min-h-[600px]">
+              {/* First right image (gallery[2]) */}
+              {academyData.gallery[2] && (() => {
+                const imgAttrs = getStrapiImageAttrs({ url: academyData.gallery[2].url, alt: academyData.gallery[2].alt }, {
+                  displayWidth: 300,
+                  displayHeight: 450,
+                  fit: 'cover',
+                  quality: 70,
+                  sizes: '15vw'
+                });
+                
+                return (
+                  <button
+                    type="button"
+                    class="gallery-image w-[15vw] relative overflow-hidden bg-gray-100 group cursor-pointer flex-shrink-0"
+                    data-index="2"
+                  >
+                    <img 
+                      src={imgAttrs?.src || academyData.gallery[2].url}
+                      srcset={imgAttrs?.srcset}
+                      sizes={imgAttrs?.sizes}
+                      alt={imgAttrs?.alt || academyData.gallery[2].alt || 'Gallery image'}
+                      width={imgAttrs?.width}
+                      height={imgAttrs?.height}
+                      class="w-full h-full min-h-[600px] object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                    />
+                    <div class="absolute inset-0 bg-white/40 group-hover:bg-white/20 transition-all duration-300"></div>
+                  </button>
+                );
+              })()}
+              
+              {/* Additional images (gallery[3] onwards) */}
+              {academyData.gallery.slice(3).map((image, index) => {
+                const imgAttrs = getStrapiImageAttrs({ url: image.url, alt: image.alt }, {
+                  displayWidth: 300,
+                  displayHeight: 450,
+                  fit: 'cover',
+                  quality: 70,
+                  sizes: '15vw'
+                });
+                
+                return (
+                  <button
+                    type="button"
+                    class="gallery-image w-[15vw] relative overflow-hidden bg-gray-100 group cursor-pointer flex-shrink-0"
+                    data-index={index + 3}
+                  >
+                    <img 
+                      src={imgAttrs?.src || image.url}
+                      srcset={imgAttrs?.srcset}
+                      sizes={imgAttrs?.sizes}
+                      alt={imgAttrs?.alt || image.alt || `Gallery image ${index + 4}`}
+                      width={imgAttrs?.width}
+                      height={imgAttrs?.height}
+                      class="w-full h-full min-h-[600px] object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                    />
+                    <div class="absolute inset-0 bg-white/40 group-hover:bg-white/20 transition-all duration-300"></div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+    )}
+
+    <!-- Quick Links Section -->
+    {academyData.quickLinks && academyData.quickLinks.length > 0 && (
+      <section class="w-full bg-gray-50 py-12 sm:py-16 lg:py-20">
+        <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-8 sm:mb-12 text-center">
+            Quick Links
+          </h2>
+          <div class={`grid gap-6 ${
+            academyData.quickLinks.length === 1 ? 'grid-cols-1 max-w-md mx-auto' :
+            academyData.quickLinks.length === 2 ? 'grid-cols-1 sm:grid-cols-2 max-w-3xl mx-auto' :
+            academyData.quickLinks.length === 3 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' :
+            'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
+          }`}>
+            {academyData.quickLinks.map((link) => (
+              <a 
+                href={link.url} 
+                class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 transform hover:-translate-y-1 border-2 border-gray-200"
+              >
+                <div class="aspect-video relative overflow-hidden bg-gray-100">
+                  {link.image && (() => {
+                    const imgAttrs = getStrapiImageAttrs({ url: link.image, alt: link.imageAlt }, {
+                      displayWidth: 400,
+                      sizes: '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw'
+                    });
+                    return (
+                      <img 
+                        {...imgAttrs}
+                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        alt={link.imageAlt}
+                        loading="lazy"
+                      />
+                    );
+                  })()}
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </div>
+                <div class="p-6">
+                  <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3 group-hover:text-[#ad986c] transition-colors leading-tight">
+                    {link.title}
+                  </h3>
+                  {link.description && (
+                    <p class="text-sm text-gray-600 font-inter mb-4 line-clamp-3">
+                      {link.description}
+                    </p>
+                  )}
+                  <div class="mt-4 flex items-center gap-2 text-[#ad986c] font-inter font-semibold text-sm group-hover:gap-3 transition-all">
+                    <span>{link.buttonText}</span>
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    <!-- Coach Section -->
+    {academyData.coach && (
+      <section id="coach" class="w-full bg-white py-12 sm:py-16 lg:py-20 scroll-mt-20">
+        <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-8 sm:mb-12 text-center">
+            Meet Your Coach
+          </h2>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            <!-- Coach Image -->
+            <div class="relative">
+              {academyData.coach.image && (() => {
+                const coachImgAttrs = getStrapiImageAttrs({ url: academyData.coach.image, alt: academyData.coach.imageAlt }, {
+                  displayWidth: 700,
+                  sizes: '(max-width: 1024px) 100vw, 50vw'
+                });
+                return (
+                  <img 
+                    {...coachImgAttrs}
+                    class="w-full rounded-2xl shadow-xl"
+                    alt={academyData.coach.imageAlt}
+                    loading="lazy"
+                  />
+                );
+              })()}
+            </div>
+            
+            <!-- Coach Info -->
+            <div>
+              <h3 class="text-3xl sm:text-4xl font-playfair font-bold text-gray-900 mb-6">
+                {academyData.coach.firstName} {academyData.coach.lastName}
+              </h3>
+              <div class="prose max-w-none font-inter mb-6" set:html={marked.parse(academyData.coach.description || '')}></div>
+              
+              {academyData.coach.whatsappURL && (
+                <a 
+                  href={academyData.coach.whatsappURL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white font-inter font-semibold px-6 py-3 rounded-full transition-all duration-300 shadow-md hover:shadow-lg"
+                >
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                  </svg>
+                  Contact on WhatsApp
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    )}
+
+    <!-- Useful Resources Section -->
+    {academyData.usefulResources && academyData.usefulResources.length > 0 && (
+      <section class="w-full bg-gray-50 py-12 sm:py-16 lg:py-20">
+        <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-8 sm:mb-12 text-center">
+            Useful Resources
+          </h2>
+          <div class={`grid gap-6 ${
+            academyData.usefulResources.length === 1 ? 'grid-cols-1 max-w-md mx-auto' :
+            academyData.usefulResources.length === 2 ? 'grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto' :
+            'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+          }`}>
+            {academyData.usefulResources.map((resource) => (
+              <div class="bg-white rounded-xl p-6 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100">
+                <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-4">
+                  {resource.title}
+                </h3>
+                <div class="prose prose-sm max-w-none font-inter mb-4 text-gray-700" set:html={marked.parse(resource.text || '')}></div>
+                {resource.url && (
+                  <a 
+                    href={resource.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center text-sm font-inter font-semibold text-[#ad986c] hover:text-[#8d7a56] transition-colors"
+                  >
+                    <span>Download {resource.title}</span>
+                    <svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    <!-- Hosted Experience Section -->
+    {academyData.hostedExperiences && academyData.hostedExperiences.length > 0 && (
+      <section id="holidays" class="w-full bg-white py-12 sm:py-16 lg:py-20 scroll-mt-20">
+        <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-8 sm:mb-12 text-center">
+            Hosted Experiences
+          </h2>
+          <div class={`grid gap-8 ${
+            academyData.hostedExperiences.length === 1 ? 'grid-cols-1 max-w-md mx-auto' :
+            academyData.hostedExperiences.length === 2 ? 'grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto' :
+            'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+          }`}>
+            {academyData.hostedExperiences.map((experience) => (
+              <a 
+                href={experience.url}
+                class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 transform hover:-translate-y-1 border-2 border-gray-200"
+              >
+                <div class="aspect-video relative overflow-hidden bg-gray-100">
+                  {experience.image && (() => {
+                    const expImgAttrs = getStrapiImageAttrs({ url: experience.image, alt: experience.imageAlt }, {
+                      displayWidth: 500,
+                      sizes: '(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw'
+                    });
+                    return (
+                      <img 
+                        {...expImgAttrs}
+                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        alt={experience.imageAlt}
+                        loading="lazy"
+                      />
+                    );
+                  })()}
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </div>
+                <div class="p-6">
+                  <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3 group-hover:text-[#ad986c] transition-colors leading-tight">
+                    {experience.title}
+                  </h3>
+                  <div class="prose prose-sm max-w-none font-inter text-gray-700 mb-4 line-clamp-3" set:html={marked.parse(experience.description || '')}></div>
+                  <div class="mt-4 flex items-center gap-2 text-[#ad986c] font-inter font-semibold text-sm group-hover:gap-3 transition-all">
+                    <span>View Details</span>
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    <!-- FAQs Section -->
+    {academyData.faqs && academyData.faqs.length > 0 && (
+      <section id="faqs" class="w-full bg-gray-50 py-12 sm:py-16 lg:py-20 border-t border-gray-200 scroll-mt-20">
+        <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-8 sm:mb-12 text-center">
+            FAQs
+          </h2>
+          <div class="max-w-4xl mx-auto space-y-3">
+            {academyData.faqs.map((faq, index) => (
+              <div class="faq-item bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                <button type="button" class="faq-accordion-btn w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors">
+                  <h3 class="text-base lg:text-lg font-inter font-medium text-gray-900 pr-4 flex-1">{faq.question}</h3>
+                  <svg class="w-5 h-5 text-gray-600 transition-transform duration-300 faq-chevron flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div class="faq-accordion-content hidden border-t border-gray-200">
+                  <div class="p-6">
+                    <div class="prose max-w-none font-inter" set:html={marked.parse(faq.answer || '')}></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    <!-- Other Academies Section -->
+    {otherAcademies && otherAcademies.length > 0 && (
+      <section class="w-full bg-white py-12 sm:py-16 lg:py-20">
+        <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-8 sm:mb-12 text-center">
+            Other Tennis Academies
+          </h2>
+          <div class={`grid gap-8 ${
+            otherAcademies.length === 1 ? 'grid-cols-1 max-w-md mx-auto' :
+            otherAcademies.length === 2 ? 'grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto' :
+            'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+          }`}>
+            {otherAcademies.map((academy) => (
+              <a 
+                href={`/tennis-academy/${academy.slug}`}
+                class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 transform hover:-translate-y-1 border-2 border-gray-200"
+              >
+                <div class="aspect-video relative overflow-hidden bg-gray-100">
+                  {academy.image && (
+                    <img 
+                      src={academy.image}
+                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      alt={academy.imageAlt || academy.title}
+                      loading="lazy"
+                    />
+                  )}
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </div>
+                <div class="p-6">
+                  <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3 group-hover:text-[#ad986c] transition-colors leading-tight">
+                    {academy.title}
+                  </h3>
+                  {academy.country && (
+                    <div class="flex items-center gap-2 text-sm text-gray-600 font-inter mb-4">
+                      <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      {academy.country}
+                    </div>
+                  )}
+                  <div class="mt-4 flex items-center gap-2 text-[#ad986c] font-inter font-semibold text-sm group-hover:gap-3 transition-all">
+                    <span>View Details</span>
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    <!-- Contact Us Section -->
+    <section class="w-full bg-gray-50 py-12 sm:py-16 lg:py-20 border-t border-gray-200">
+      <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-8 sm:mb-12 text-center">
+          Contact Us
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+          <!-- Phone -->
+          <a 
+            href="tel:+442079657277"
+            class="group bg-white border-2 border-gray-200 rounded-2xl p-8 shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 hover:-translate-y-1 text-center"
+          >
+            <svg class="w-8 h-8 mx-auto mb-4 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+            </svg>
+            <h3 class="text-lg font-playfair font-semibold text-gray-900 mb-2 group-hover:text-[#ad986c] transition-colors">
+              Phone
+            </h3>
+            <p class="text-base font-inter text-gray-700 group-hover:text-[#ad986c] transition-colors">
+              +44 020 7965 7277
+            </p>
+          </a>
+          
+          <!-- Email -->
+          <a 
+            href={`mailto:hello@activeaway.com?subject=${encodeURIComponent(academyData.title)}`}
+            class="group bg-white border-2 border-gray-200 rounded-2xl p-8 shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 hover:-translate-y-1 text-center"
+          >
+            <svg class="w-8 h-8 mx-auto mb-4 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <h3 class="text-lg font-playfair font-semibold text-gray-900 mb-2 group-hover:text-[#ad986c] transition-colors">
+              Email
+            </h3>
+            <p class="text-base font-inter text-gray-700 group-hover:text-[#ad986c] transition-colors">
+              hello@activeaway.com
+            </p>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Gallery Lightbox Modal -->
+  <div id="galleryLightbox" class="hidden fixed inset-0 z-50 bg-black/95 flex items-center justify-center">
+    <div class="relative w-full h-full flex items-center justify-center p-4">
+      <!-- Close Button -->
+      <button
+        id="closeGalleryButton"
+        class="absolute top-4 right-4 z-10 w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors"
+        aria-label="Close gallery"
+      >
+        <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      
+      <!-- Previous Button -->
+      <button
+        id="prevGalleryButton"
+        class="absolute left-4 z-10 w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors"
+        aria-label="Previous image"
+      >
+        <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+      
+      <!-- Image Container -->
+      <div class="max-w-6xl max-h-[90vh] w-full h-full flex items-center justify-center">
+        <img 
+          id="galleryLightboxImage"
+          src=""
+          alt=""
+          class="max-w-full max-h-full object-contain rounded-lg"
+        />
+      </div>
+      
+      <!-- Next Button -->
+      <button
+        id="nextGalleryButton"
+        class="absolute right-4 z-10 w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors"
+        aria-label="Next image"
+      >
+        <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+      
+      <!-- Image Counter -->
+      <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-inter">
+        <span id="galleryCounter">1</span> / <span id="galleryTotal">1</span>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  /* Tab Navigation Styles */
+  .page-nav-tab {
+    position: relative;
+  }
+  
+  .page-nav-tab.active {
+    border-bottom-color: #ad986c;
+    color: #ad986c;
+  }
+  
+
+  /* Scrollbar Hide */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Line Clamp */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>
+
+<script>
+  // Smooth scroll to sections when tabs are clicked
+  document.addEventListener('DOMContentLoaded', () => {
+    const navTabs = document.querySelectorAll('.page-nav-tab');
+    
+    navTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const sectionId = tab.dataset.section;
+        
+        // Update active tab
+        navTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // Scroll to section
+        window.scrollToSection(sectionId);
+      });
+    });
+
+    // Update active tab on scroll
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const sectionId = entry.target.id;
+            const correspondingTab = document.querySelector(`[data-section="${sectionId}"]`);
+            
+            if (correspondingTab) {
+              navTabs.forEach(t => t.classList.remove('active'));
+              correspondingTab.classList.add('active');
+            }
+          }
+        });
+      },
+      { threshold: 0.3, rootMargin: '-100px 0px -50% 0px' }
+    );
+
+    // Observe sections
+    const sections = document.querySelectorAll('[id]');
+    sections.forEach(section => {
+      if (['info', 'coach', 'holidays', 'faqs'].includes(section.id)) {
+        observer.observe(section);
+      }
+    });
+
+    // FAQ Accordion functionality
+    const faqButtons = document.querySelectorAll('.faq-accordion-btn');
+    
+    faqButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const content = button.nextElementSibling;
+        const chevron = button.querySelector('.faq-chevron');
+        const isOpen = !content.classList.contains('hidden');
+        
+        // Close all FAQs
+        document.querySelectorAll('.faq-accordion-content').forEach(c => c.classList.add('hidden'));
+        document.querySelectorAll('.faq-chevron').forEach(ch => ch.style.transform = 'rotate(0deg)');
+        
+        // Open clicked FAQ if it wasn't open
+        if (!isOpen) {
+          content.classList.remove('hidden');
+          chevron.style.transform = 'rotate(180deg)';
+        }
+      });
+    });
+
+    // Gallery lightbox functionality
+    const galleryImages = document.querySelectorAll('.gallery-image');
+    const galleryLightbox = document.getElementById('galleryLightbox');
+    const galleryLightboxImage = document.getElementById('galleryLightboxImage');
+    const closeGalleryButton = document.getElementById('closeGalleryButton');
+    const prevGalleryButton = document.getElementById('prevGalleryButton');
+    const nextGalleryButton = document.getElementById('nextGalleryButton');
+    const galleryCounter = document.getElementById('galleryCounter');
+    const galleryTotal = document.getElementById('galleryTotal');
+
+    // Build gallery data from gallery images
+    let galleryData = [];
+    document.querySelectorAll('.gallery-image img').forEach(img => {
+      galleryData.push({
+        url: img.src,
+        alt: img.alt
+      });
+    });
+
+    let currentGalleryIndex = 0;
+
+    // Show specific image
+    const showGalleryImage = (index) => {
+      if (galleryData[index]) {
+        galleryLightboxImage.src = galleryData[index].url;
+        galleryLightboxImage.alt = galleryData[index].alt;
+        galleryCounter.textContent = index + 1;
+        galleryTotal.textContent = galleryData.length;
+        currentGalleryIndex = index;
+      }
+    };
+
+    // Open gallery lightbox with specific data
+    const openGalleryWithData = (data, startIndex = 0) => {
+      galleryData = data;
+      currentGalleryIndex = startIndex;
+      showGalleryImage(startIndex);
+      galleryLightbox.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    };
+
+    // Close gallery
+    const closeGallery = () => {
+      galleryLightbox.classList.add('hidden');
+      document.body.style.overflow = '';
+    };
+
+    // Navigate to next image
+    const nextImage = () => {
+      currentGalleryIndex = (currentGalleryIndex + 1) % galleryData.length;
+      showGalleryImage(currentGalleryIndex);
+    };
+
+    // Navigate to previous image
+    const prevImage = () => {
+      currentGalleryIndex = (currentGalleryIndex - 1 + galleryData.length) % galleryData.length;
+      showGalleryImage(currentGalleryIndex);
+    };
+
+    // Gallery image click handlers
+    if (galleryImages.length > 0) {
+      galleryImages.forEach((galleryImg, index) => {
+        galleryImg.addEventListener('click', () => {
+          // Rebuild gallery data from all images
+          const mainGalleryData = [];
+          document.querySelectorAll('.gallery-image img').forEach(img => {
+            mainGalleryData.push({
+              url: img.src,
+              alt: img.alt
+            });
+          });
+          openGalleryWithData(mainGalleryData, index);
+        });
+      });
+    }
+
+    closeGalleryButton?.addEventListener('click', closeGallery);
+    prevGalleryButton?.addEventListener('click', prevImage);
+    nextGalleryButton?.addEventListener('click', nextImage);
+
+    // Close on background click
+    galleryLightbox?.addEventListener('click', (e) => {
+      if (e.target === galleryLightbox) {
+        closeGallery();
+      }
+    });
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (galleryLightbox && !galleryLightbox.classList.contains('hidden')) {
+        if (e.key === 'Escape') {
+          closeGallery();
+        } else if (e.key === 'ArrowRight') {
+          nextImage();
+        } else if (e.key === 'ArrowLeft') {
+          prevImage();
+        }
+      }
+    });
+  });
+</script>
+

@@ -1,0 +1,117 @@
+---
+// Dynamic route for individual tennis academies
+export const prerender = true;
+
+import TennisAcademyDetail from '../../components/TennisAcademyDetail.astro';
+import { getTennisAcademies, getTennisAcademiesForCards, getTennisAcademyBySlug, getTennisAcademyNestedData, getTennisAcademySEO } from '../../utils/strapi.js';
+
+// Generate static paths for all tennis academies
+export async function getStaticPaths() {
+  const tennisAcademies = await getTennisAcademies(1, 100);
+  
+  return tennisAcademies.map((academy) => ({
+    params: { slug: academy.slug },
+    props: { 
+      slug: academy.slug,
+      id: academy.strapiId,
+      documentId: academy.documentId
+    }
+  }));
+}
+
+const { slug } = Astro.params;
+const { id, documentId } = Astro.props;
+const fallbackIdentifiers = { id, documentId };
+console.log(`🎓 [${slug}] Static props identifiers:`, fallbackIdentifiers);
+
+// Fetch the specific tennis academy data
+let academyData = null;
+try {
+  academyData = await getTennisAcademyBySlug(slug, fallbackIdentifiers);
+  if (academyData) {
+    console.log(`🎓 [${slug}] Tennis academy data fetched successfully`);
+  } else {
+    console.warn(`🎓 [${slug}] Tennis academy data not found after lookup`);
+  }
+} catch (error) {
+  console.error(`[${slug}] Error fetching tennis academy:`, error.message);
+}
+
+// If no data found, show 404
+if (!academyData) {
+  return Astro.redirect('/404');
+}
+
+// SEPARATE API CALL: Fetch nested data (quickLinks, hostedExperiences, coach with images)
+// This is required for Strapi v5's nested population
+try {
+  const nestedData = await getTennisAcademyNestedData(slug);
+  if (nestedData) {
+    // Merge nested data into academyData
+    if (nestedData.quickLinks && nestedData.quickLinks.length > 0) {
+      academyData.quickLinks = nestedData.quickLinks;
+    }
+    if (nestedData.hostedExperiences && nestedData.hostedExperiences.length > 0) {
+      academyData.hostedExperiences = nestedData.hostedExperiences;
+    }
+    if (nestedData.coach) {
+      academyData.coach = nestedData.coach;
+    }
+    console.log(`🎓 [${slug}] Nested data merged: ${nestedData.quickLinks?.length || 0} quick links, ${nestedData.hostedExperiences?.length || 0} hosted experiences, coach: ${nestedData.coach ? 'Yes' : 'No'}`);
+  }
+} catch (error) {
+  console.error(`[${slug}] Error fetching nested data:`, error.message);
+}
+
+// SEPARATE API CALL: Fetch SEO data with metaImage
+// This is required for Strapi v5's nested population of seo.metaImage
+try {
+  const seoData = await getTennisAcademySEO(slug);
+  if (seoData) {
+    // Merge SEO data into academyData
+    academyData.seo = seoData;
+    console.log(`📄 [${slug}] SEO data merged: ${seoData.metaTitle || 'No title'}, metaImage: ${seoData.metaImage ? 'Yes' : 'No'}`);
+  }
+} catch (error) {
+  console.error(`[${slug}] Error fetching SEO data:`, error.message);
+}
+
+// SEPARATE API CALL: Fetch random other tennis academies (excluding current one)
+// Use getTennisAcademiesForCards for full image population
+let otherAcademies = [];
+try {
+  const allAcademies = await getTennisAcademiesForCards(1, 50);
+  console.log(`🎓 Total academies fetched for cards: ${allAcademies.length}`);
+  console.log(`🎓 All academies:`, allAcademies.map(a => ({ slug: a.slug, title: a.title, displayOnFrontEnd: a.displayOnFrontEnd })));
+  
+  // Filter: exclude current academy AND only show those with displayOnFrontEnd = true
+  const otherAcademiesList = allAcademies.filter(a => 
+    a.slug !== slug && a.displayOnFrontEnd !== false
+  );
+  
+  console.log(`🎓 After filtering (excluding ${slug}): ${otherAcademiesList.length} academies`);
+  
+  // Randomize and select 3 academies
+  if (otherAcademiesList.length > 0) {
+    const shuffled = [...otherAcademiesList];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    otherAcademies = shuffled.slice(0, 3);
+    console.log(`🎲 Selected ${otherAcademies.length} random tennis academies from ${otherAcademiesList.length} available`);
+    console.log(`🎲 Selected academies:`, otherAcademies.map(a => ({ slug: a.slug, title: a.title, image: a.image ? 'Yes' : 'No' })));
+  } else {
+    console.warn(`⚠️ No other academies found to display`);
+  }
+} catch (error) {
+  console.error('Error fetching other tennis academies:', error);
+}
+---
+
+<TennisAcademyDetail 
+  academyData={academyData}
+  otherAcademies={otherAcademies}
+  slug={slug}
+/>
+

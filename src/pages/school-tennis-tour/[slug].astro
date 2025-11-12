@@ -1,0 +1,122 @@
+---
+// Dynamic route for individual school tennis tours
+export const prerender = true;
+
+import HolidayDetail from '../../components/HolidayDetail.astro';
+import { getSchoolTennisTours, getSchoolTennisTourBySlug, getSchoolTennisTourNestedData, getSchoolTennisTourSEO, getEventsByUniqueValue } from '../../utils/strapi.js';
+
+// Generate static paths for all school tennis tours
+export async function getStaticPaths() {
+  const schoolTours = await getSchoolTennisTours(1, 100);
+  
+  return schoolTours.map((tour) => ({
+    params: { slug: tour.slug },
+    props: { 
+      slug: tour.slug,
+      id: tour.strapiId,
+      documentId: tour.documentId
+    }
+  }));
+}
+
+const { slug } = Astro.params;
+const { id, documentId } = Astro.props;
+const fallbackIdentifiers = { id, documentId };
+console.log(`🎒 [${slug}] Static props identifiers:`, fallbackIdentifiers);
+
+// Fetch the specific school tennis tour data
+let tourData = null;
+try {
+  tourData = await getSchoolTennisTourBySlug(slug, fallbackIdentifiers);
+  if (tourData) {
+    console.log(`🎒 [${slug}] School tennis tour data fetched successfully`);
+  } else {
+    console.warn(`🎒 [${slug}] School tennis tour data not found after lookup`);
+  }
+} catch (error) {
+  console.error(`[${slug}] Error fetching school tennis tour:`, error.message);
+}
+
+// If no data found, show 404
+if (!tourData) {
+  return Astro.redirect('/404');
+}
+
+// SEPARATE API CALL: Fetch nested data (rooms.roomGallery, tripImages)
+// This is required for Strapi v5's nested population
+try {
+  const nestedData = await getSchoolTennisTourNestedData(slug);
+  if (nestedData) {
+    // Merge nested data into tourData
+    if (nestedData.rooms && nestedData.rooms.length > 0) {
+      tourData.rooms = nestedData.rooms;
+    }
+    if (nestedData.tripImages && nestedData.tripImages.length > 0) {
+      tourData.tripImages = nestedData.tripImages;
+    }
+    console.log(`🏨 [${slug}] Nested data merged: ${nestedData.rooms?.length || 0} rooms, ${nestedData.tripImages?.length || 0} trip images`);
+  }
+} catch (error) {
+  console.error(`[${slug}] Error fetching nested data:`, error.message);
+}
+
+// SEPARATE API CALL: Fetch SEO data with metaImage
+// This is required for Strapi v5's nested population of seo.metaImage
+try {
+  const seoData = await getSchoolTennisTourSEO(slug);
+  if (seoData) {
+    // Merge SEO data into tourData
+    tourData.seo = seoData;
+    console.log(`📄 [${slug}] SEO data merged: ${seoData.metaTitle || 'No title'}, metaImage: ${seoData.metaImage ? 'Yes' : 'No'}`);
+  }
+} catch (error) {
+  console.error(`[${slug}] Error fetching SEO data:`, error.message);
+}
+
+// Fetch random other school tennis tours (excluding current one)
+let similarTours = [];
+try {
+  const allTours = await getSchoolTennisTours(1, 50);
+  
+  // Filter: exclude current tour AND only show those with displayOnFrontEnd = true
+  const otherTours = allTours.filter(t => 
+    t.slug !== slug && t.displayOnFrontEnd === true
+  );
+  
+  // Randomize and select 3 tours
+  if (otherTours.length > 0) {
+    const shuffled = [...otherTours];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    similarTours = shuffled.slice(0, 3);
+    console.log(`🎲 Selected ${similarTours.length} random school tennis tours from ${otherTours.length} available`);
+  }
+} catch (error) {
+  console.error('Error fetching other school tennis tours:', error);
+}
+
+// Fetch events matching this school tour's uniqueValue
+let matchingEvents = [];
+try {
+  if (tourData.uniqueValue) {
+    console.log(`🎒 Fetching events for school tour uniqueValue: "${tourData.uniqueValue}"`);
+    matchingEvents = await getEventsByUniqueValue(tourData.uniqueValue);
+    console.log(`🎒 Found ${matchingEvents.length} matching event(s)`);
+  } else {
+    console.warn(`⚠️ School tennis tour "${slug}" has no uniqueValue set`);
+  }
+} catch (error) {
+  console.error('Error fetching events for school tennis tour:', error);
+}
+---
+
+<HolidayDetail 
+  holidayData={tourData}
+  holidayType="school-tennis-tour"
+  matchingEvents={matchingEvents}
+  similarHolidays={similarTours}
+  slug={slug}
+/>
+
