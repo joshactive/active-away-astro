@@ -34,7 +34,15 @@ try {
 
 // Extract data with fallbacks
 const pageTitle = pageContent?.pageTitle || 'Booking Terms & Conditions';
-const content = pageContent?.content || '';
+const introText = pageContent?.introText || '';
+const generalTerms = pageContent?.generalTerms || '';
+const holidaysTerms = pageContent?.holidaysTerms || '';
+const ukClinicsTerms = pageContent?.ukClinicsTerms || '';
+const juniorCampsTerms = pageContent?.juniorCampsTerms || '';
+const schoolToursTerms = pageContent?.schoolToursTerms || '';
+const creditNotesTerms = pageContent?.creditNotesTerms || '';
+const touristTaxTerms = pageContent?.touristTaxTerms || '';
+const academyTerms = pageContent?.academyTerms || '';
 const lastUpdated = pageContent?.lastUpdated || null;
 
 // Extract SEO fields
@@ -48,7 +56,8 @@ const keywords = seoData?.keywords || pageContent?.seo?.keywords || null;
 const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 'https://activeaway.com/booking-terms-conditions';
 
 // Hero content
-const heroBackgroundImage = 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/45b69090-1c22-46cd-7f98-086ba71efc00/public';
+const heroBackgroundImage = pageContent?.heroBackgroundImage?.url || 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/45b69090-1c22-46cd-7f98-086ba71efc00/public';
+const heroBackgroundImageAlt = pageContent?.heroBackgroundImage?.alt || 'Terms and Conditions';
 ---
 
 <BaseLayout 
@@ -62,17 +71,17 @@ const heroBackgroundImage = 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2
   canonicalURL={canonicalURL}
 >
   <!-- Hero Header Section -->
-  <section class="relative w-full h-[300px] sm:h-[350px] lg:h-[400px] overflow-hidden">
-    <div class="absolute inset-0 bg-gradient-to-b from-[#0D1C4E]/75 via-[#0D1C4E]/60 to-[#0D1C4E]/60 z-10"></div>
+  <section class="relative w-full h-[400px] sm:h-[500px] lg:h-[600px] overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-r from-[#0D1C4E]/75 to-[#0D1C4E]/60 z-10"></div>
     <img 
       src={heroBackgroundImage}
-      alt="Terms and Conditions"
+      alt={heroBackgroundImageAlt}
       class="absolute inset-0 w-full h-full object-cover"
       loading="eager"
     />
     
     <div class="relative z-20 container mx-auto max-w-[1400px] px-4 sm:px-10 h-full flex flex-col justify-center items-center text-center">
-      <h1 class="text-4xl sm:text-5xl lg:text-6xl font-playfair font-bold text-white mb-4 leading-tight max-w-4xl">
+      <h1 class="text-4xl sm:text-5xl lg:text-7xl font-playfair font-bold text-white mb-6 sm:mb-8 leading-tight max-w-4xl">
         {pageTitle}
       </h1>
       {lastUpdated && (
@@ -98,13 +107,342 @@ const heroBackgroundImage = 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2
 
   <!-- Main Content -->
   <main class="w-full bg-white py-12 sm:py-16 lg:py-20">
-    <div class="container mx-auto max-w-4xl px-4 sm:px-10">
-      <!-- Terms Content -->
-      <div class="prose prose-lg max-w-none font-inter">
-        <div set:html={marked.parse(content || '')}></div>
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      
+      <!-- Introduction -->
+      {introText && (
+        <div class="mb-12 bg-gray-50 border border-gray-200 rounded-xl p-6 sm:p-8">
+          <p class="text-xs font-inter font-semibold text-[#ad986c] tracking-wider uppercase mb-3">IMPORTANT</p>
+          <div class="prose prose-lg max-w-none font-inter" set:html={marked.parse(introText)}></div>
+        </div>
+      )}
+
+      <!-- Table of Contents -->
+      <div class="mb-12 bg-white border-2 border-gray-200 rounded-xl p-6 sm:p-8 shadow-sm">
+        <h2 class="text-2xl font-playfair font-bold text-gray-900 mb-6">Contents</h2>
+        <nav class="grid grid-cols-1 sm:grid-cols-2 gap-3" data-terms-toc>
+          {generalTerms && (
+            <a href="#general-terms" class="flex items-center gap-2 text-base font-inter text-gray-700 hover:text-[#ad986c] transition-colors py-2 px-3 rounded-lg hover:bg-gray-50">
+              <svg class="w-4 h-4 flex-shrink-0 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+              Booking Protection
+            </a>
+          )}
+          {holidaysTerms && (
+            <a href="#holidays" class="flex items-center gap-2 text-base font-inter text-gray-700 hover:text-[#ad986c] transition-colors py-2 px-3 rounded-lg hover:bg-gray-50">
+              <svg class="w-4 h-4 flex-shrink-0 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+              Tennis, Padel, Pickleball & Ski Holidays
+            </a>
+          )}
+          {ukClinicsTerms && (
+            <a href="#uk-clinics" class="flex items-center gap-2 text-base font-inter text-gray-700 hover:text-[#ad986c] transition-colors py-2 px-3 rounded-lg hover:bg-gray-50">
+              <svg class="w-4 h-4 flex-shrink-0 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+              UK Clinics
+            </a>
+          )}
+          {juniorCampsTerms && (
+            <a href="#junior-camps" class="flex items-center gap-2 text-base font-inter text-gray-700 hover:text-[#ad986c] transition-colors py-2 px-3 rounded-lg hover:bg-gray-50">
+              <svg class="w-4 h-4 flex-shrink-0 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+              Junior Tennis Camps
+            </a>
+          )}
+          {schoolToursTerms && (
+            <a href="#school-tours" class="flex items-center gap-2 text-base font-inter text-gray-700 hover:text-[#ad986c] transition-colors py-2 px-3 rounded-lg hover:bg-gray-50">
+              <svg class="w-4 h-4 flex-shrink-0 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+              School Tennis Tours
+            </a>
+          )}
+          {creditNotesTerms && (
+            <a href="#credit-notes" class="flex items-center gap-2 text-base font-inter text-gray-700 hover:text-[#ad986c] transition-colors py-2 px-3 rounded-lg hover:bg-gray-50">
+              <svg class="w-4 h-4 flex-shrink-0 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+              Credit Notes
+            </a>
+          )}
+          {touristTaxTerms && (
+            <a href="#tourist-tax" class="flex items-center gap-2 text-base font-inter text-gray-700 hover:text-[#ad986c] transition-colors py-2 px-3 rounded-lg hover:bg-gray-50">
+              <svg class="w-4 h-4 flex-shrink-0 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+              Tourist Tax
+            </a>
+          )}
+          {academyTerms && (
+            <a href="#academy" class="flex items-center gap-2 text-base font-inter text-gray-700 hover:text-[#ad986c] transition-colors py-2 px-3 rounded-lg hover:bg-gray-50">
+              <svg class="w-4 h-4 flex-shrink-0 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+              Liberty Lykia Tennis Academy
+            </a>
+          )}
+        </nav>
+      </div>
+
+      <!-- Terms Sections -->
+      <div class="terms-accordion-list space-y-4">
+        {generalTerms && (
+          <div id="general-terms" class="terms-accordion bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 scroll-mt-20">
+            <button class="terms-accordion-header flex w-full items-center justify-between px-4 py-4 sm:px-6 sm:py-5 text-left cursor-pointer hover:bg-gray-50 transition-colors" type="button" aria-expanded="false">
+              <h3 class="text-base lg:text-lg font-inter font-medium text-gray-900 pr-4">Booking Protection</h3>
+              <div class="terms-accordion-icon flex-shrink-0">
+                <div class="terms-accordion-arrow w-6 h-6 flex items-center justify-center transition-transform duration-300">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M4 6L8 10L12 6" stroke="#1E1E1E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </div>
+              </div>
+            </button>
+            <div class="terms-accordion-content overflow-hidden">
+              <div class="px-4 pb-6 sm:px-6 sm:pb-8 pt-0">
+                <div class="terms-richtext prose prose-lg max-w-none font-inter" set:html={marked.parse(generalTerms)}></div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {holidaysTerms && (
+          <div id="holidays" class="terms-accordion bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 scroll-mt-20">
+            <button class="terms-accordion-header flex w-full items-center justify-between px-4 py-4 sm:px-6 sm:py-5 text-left cursor-pointer hover:bg-gray-50 transition-colors" type="button" aria-expanded="false">
+              <h3 class="text-base lg:text-lg font-inter font-medium text-gray-900 pr-4">Tennis, Padel, Pickleball & Ski Holidays</h3>
+              <div class="terms-accordion-icon flex-shrink-0">
+                <div class="terms-accordion-arrow w-6 h-6 flex items-center justify-center transition-transform duration-300">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M4 6L8 10L12 6" stroke="#1E1E1E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </div>
+              </div>
+            </button>
+            <div class="terms-accordion-content overflow-hidden">
+              <div class="px-4 pb-6 sm:px-6 sm:pb-8 pt-0">
+                <div class="terms-richtext prose prose-lg max-w-none font-inter" set:html={marked.parse(holidaysTerms)}></div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {ukClinicsTerms && (
+          <div id="uk-clinics" class="terms-accordion bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 scroll-mt-20">
+            <button class="terms-accordion-header flex w-full items-center justify-between px-4 py-4 sm:px-6 sm:py-5 text-left cursor-pointer hover:bg-gray-50 transition-colors" type="button" aria-expanded="false">
+              <h3 class="text-base lg:text-lg font-inter font-medium text-gray-900 pr-4">UK Clinics</h3>
+              <div class="terms-accordion-icon flex-shrink-0">
+                <div class="terms-accordion-arrow w-6 h-6 flex items-center justify-center transition-transform duration-300">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M4 6L8 10L12 6" stroke="#1E1E1E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </div>
+              </div>
+            </button>
+            <div class="terms-accordion-content overflow-hidden">
+              <div class="px-4 pb-6 sm:px-6 sm:pb-8 pt-0">
+                <div class="terms-richtext prose prose-lg max-w-none font-inter" set:html={marked.parse(ukClinicsTerms)}></div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {juniorCampsTerms && (
+          <div id="junior-camps" class="terms-accordion bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 scroll-mt-20">
+            <button class="terms-accordion-header flex w-full items-center justify-between px-4 py-4 sm:px-6 sm:py-5 text-left cursor-pointer hover:bg-gray-50 transition-colors" type="button" aria-expanded="false">
+              <h3 class="text-base lg:text-lg font-inter font-medium text-gray-900 pr-4">Junior Tennis Camps</h3>
+              <div class="terms-accordion-icon flex-shrink-0">
+                <div class="terms-accordion-arrow w-6 h-6 flex items-center justify-center transition-transform duration-300">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M4 6L8 10L12 6" stroke="#1E1E1E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </div>
+              </div>
+            </button>
+            <div class="terms-accordion-content overflow-hidden">
+              <div class="px-4 pb-6 sm:px-6 sm:pb-8 pt-0">
+                <div class="terms-richtext prose prose-lg max-w-none font-inter" set:html={marked.parse(juniorCampsTerms)}></div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {schoolToursTerms && (
+          <div id="school-tours" class="terms-accordion bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 scroll-mt-20">
+            <button class="terms-accordion-header flex w-full items-center justify-between px-4 py-4 sm:px-6 sm:py-5 text-left cursor-pointer hover:bg-gray-50 transition-colors" type="button" aria-expanded="false">
+              <h3 class="text-base lg:text-lg font-inter font-medium text-gray-900 pr-4">School Tennis Tours</h3>
+              <div class="terms-accordion-icon flex-shrink-0">
+                <div class="terms-accordion-arrow w-6 h-6 flex items-center justify-center transition-transform duration-300">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M4 6L8 10L12 6" stroke="#1E1E1E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </div>
+              </div>
+            </button>
+            <div class="terms-accordion-content overflow-hidden">
+              <div class="px-4 pb-6 sm:px-6 sm:pb-8 pt-0">
+                <div class="terms-richtext prose prose-lg max-w-none font-inter" set:html={marked.parse(schoolToursTerms)}></div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {creditNotesTerms && (
+          <div id="credit-notes" class="terms-accordion bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 scroll-mt-20">
+            <button class="terms-accordion-header flex w-full items-center justify-between px-4 py-4 sm:px-6 sm:py-5 text-left cursor-pointer hover:bg-gray-50 transition-colors" type="button" aria-expanded="false">
+              <h3 class="text-base lg:text-lg font-inter font-medium text-gray-900 pr-4">Credit Notes</h3>
+              <div class="terms-accordion-icon flex-shrink-0">
+                <div class="terms-accordion-arrow w-6 h-6 flex items-center justify-center transition-transform duration-300">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M4 6L8 10L12 6" stroke="#1E1E1E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </div>
+              </div>
+            </button>
+            <div class="terms-accordion-content overflow-hidden">
+              <div class="px-4 pb-6 sm:px-6 sm:pb-8 pt-0">
+                <div class="terms-richtext prose prose-lg max-w-none font-inter" set:html={marked.parse(creditNotesTerms)}></div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {touristTaxTerms && (
+          <div id="tourist-tax" class="terms-accordion bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 scroll-mt-20">
+            <button class="terms-accordion-header flex w-full items-center justify-between px-4 py-4 sm:px-6 sm:py-5 text-left cursor-pointer hover:bg-gray-50 transition-colors" type="button" aria-expanded="false">
+              <h3 class="text-base lg:text-lg font-inter font-medium text-gray-900 pr-4">Tourist Tax</h3>
+              <div class="terms-accordion-icon flex-shrink-0">
+                <div class="terms-accordion-arrow w-6 h-6 flex items-center justify-center transition-transform duration-300">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M4 6L8 10L12 6" stroke="#1E1E1E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </div>
+              </div>
+            </button>
+            <div class="terms-accordion-content overflow-hidden">
+              <div class="px-4 pb-6 sm:px-6 sm:pb-8 pt-0">
+                <div class="terms-richtext prose prose-lg max-w-none font-inter" set:html={marked.parse(touristTaxTerms)}></div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {academyTerms && (
+          <div id="academy" class="terms-accordion bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 scroll-mt-20">
+            <button class="terms-accordion-header flex w-full items-center justify-between px-4 py-4 sm:px-6 sm:py-5 text-left cursor-pointer hover:bg-gray-50 transition-colors" type="button" aria-expanded="false">
+              <h3 class="text-base lg:text-lg font-inter font-medium text-gray-900 pr-4">Liberty Lykia Tennis Academy</h3>
+              <div class="terms-accordion-icon flex-shrink-0">
+                <div class="terms-accordion-arrow w-6 h-6 flex items-center justify-center transition-transform duration-300">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M4 6L8 10L12 6" stroke="#1E1E1E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </div>
+              </div>
+            </button>
+            <div class="terms-accordion-content overflow-hidden">
+              <div class="px-4 pb-6 sm:px-6 sm:pb-8 pt-0">
+                <div class="terms-richtext prose prose-lg max-w-none font-inter" set:html={marked.parse(academyTerms)}></div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   </main>
+
+  <script is:inline>
+    if (typeof window !== 'undefined') {
+      const initTermsAccordions = () => {
+        const accordions = document.querySelectorAll('.terms-accordion');
+        accordions.forEach((accordion) => {
+          const header = accordion.querySelector('.terms-accordion-header');
+          if (header) {
+            header.addEventListener('click', () => toggleTermsAccordion(accordion));
+          }
+        });
+
+        const tocLinks = document.querySelectorAll('[data-terms-toc] a[href^="#"]');
+        tocLinks.forEach((link) => {
+          link.addEventListener('click', () => {
+            const targetId = link.getAttribute('href')?.replace('#', '');
+            if (!targetId) return;
+            const targetAccordion = document.getElementById(targetId);
+            if (!targetAccordion) return;
+            setTimeout(() => openTermsAccordion(targetAccordion), 150);
+          });
+        });
+      };
+
+      const toggleTermsAccordion = (accordion) => {
+        if (!accordion) return;
+        const isOpen = accordion.classList.contains('open');
+        const parent = accordion.parentElement;
+
+        if (parent) {
+          parent.querySelectorAll('.terms-accordion').forEach((item) => {
+            if (item !== accordion) {
+              collapseTermsAccordion(item);
+            }
+          });
+        }
+
+        if (isOpen) {
+          collapseTermsAccordion(accordion);
+        } else {
+          openTermsAccordion(accordion);
+        }
+      };
+
+      const openTermsAccordion = (accordion) => {
+        const content = accordion.querySelector('.terms-accordion-content');
+        const arrow = accordion.querySelector('.terms-accordion-arrow');
+        const header = accordion.querySelector('.terms-accordion-header');
+
+        accordion.classList.add('open', 'shadow-lg');
+        accordion.classList.remove('shadow-sm');
+
+        if (content) {
+          content.style.maxHeight = content.scrollHeight + 'px';
+          content.style.opacity = '1';
+        }
+
+        if (arrow) {
+          arrow.classList.add('rotate-180');
+        }
+
+        if (header) {
+          header.setAttribute('aria-expanded', 'true');
+        }
+      };
+
+      const collapseTermsAccordion = (accordion) => {
+        const content = accordion.querySelector('.terms-accordion-content');
+        const arrow = accordion.querySelector('.terms-accordion-arrow');
+        const header = accordion.querySelector('.terms-accordion-header');
+
+        accordion.classList.remove('open', 'shadow-lg');
+        accordion.classList.add('shadow-sm');
+
+        if (content) {
+          content.style.maxHeight = '0px';
+          content.style.opacity = '0';
+        }
+
+        if (arrow) {
+          arrow.classList.remove('rotate-180');
+        }
+
+        if (header) {
+          header.setAttribute('aria-expanded', 'false');
+        }
+      };
+
+      document.addEventListener('DOMContentLoaded', initTermsAccordions);
+    }
+  </script>
 </BaseLayout>
 
 <style>
@@ -112,59 +450,103 @@ const heroBackgroundImage = 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2
     color: #1f2937;
   }
 
-  .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+  .terms-richtext :global(h1),
+  .terms-richtext :global(h2),
+  .terms-richtext :global(h3),
+  .terms-richtext :global(h4),
+  .terms-richtext :global(h5),
+  .terms-richtext :global(h6) {
     font-family: 'Playfair Display', serif;
-    font-weight: 600;
     color: #111827;
-    margin-top: 2em;
-    margin-bottom: 1em;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
   }
 
-  .prose h2 {
-    font-size: 2em;
-    border-bottom: 2px solid #ad986c;
-    padding-bottom: 0.5em;
+  .terms-richtext :global(h1) {
+    font-size: clamp(2.25rem, 5vw, 3rem);
+    border-bottom: 3px solid #ad986c;
+    padding-bottom: 0.75rem;
   }
 
-  .prose h3 {
-    font-size: 1.5em;
+  .terms-richtext :global(h2) {
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 0.5rem;
   }
 
-  .prose h4 {
-    font-size: 1.25em;
+  .terms-richtext :global(h3) {
+    font-size: clamp(1.5rem, 3vw, 2rem);
   }
 
-  .prose h5 {
-    font-size: 1.125em;
-    color: #ad986c;
+  .terms-richtext :global(h4) {
+    font-size: clamp(1.25rem, 2.5vw, 1.75rem);
   }
 
-  .prose p {
-    margin-bottom: 1.25em;
+  .terms-richtext :global(h5) {
+    font-size: 1.125rem;
+    color: #111827;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .terms-richtext :global(h6) {
+    font-size: 1rem;
+    color: #111827;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .terms-richtext :global(p) {
+    margin-bottom: 1.25rem;
     line-height: 1.75;
+    color: #1f2937;
   }
 
-  .prose ul, .prose ol {
-    margin-left: 1.5em;
-    margin-bottom: 1.25em;
+  .terms-richtext :global(ul),
+  .terms-richtext :global(ol) {
+    margin-left: 1.5rem;
+    margin-bottom: 1.25rem;
   }
 
-  .prose li {
-    margin-bottom: 0.5em;
+  .terms-richtext :global(li) {
+    margin-bottom: 0.5rem;
+    line-height: 1.7;
   }
 
-  .prose strong {
+  .terms-richtext :global(strong) {
     color: #111827;
-    font-weight: 600;
   }
 
-  .prose a {
+  .terms-richtext :global(a) {
     color: #ad986c;
     text-decoration: underline;
+    transition: color 0.2s ease;
   }
 
-  .prose a:hover {
+  .terms-richtext :global(a:hover) {
     color: #8d7a56;
+  }
+
+  .terms-accordion-header {
+    background: transparent;
+    border: none;
+  }
+
+  .terms-accordion-header:focus-visible {
+    outline: 2px solid #ad986c;
+    outline-offset: 2px;
+  }
+
+  .terms-accordion-content {
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.4s ease, opacity 0.3s ease;
+  }
+
+  .terms-accordion.open .terms-accordion-content {
+    opacity: 1;
   }
 </style>
 

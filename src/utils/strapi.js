@@ -1815,8 +1815,17 @@ export async function getTermsPage() {
 
     return {
       slug: pageData.slug || 'booking-terms-conditions',
+      heroBackgroundImage: pageData.heroBackgroundImage ? getStrapiImageData(pageData.heroBackgroundImage) : null,
       pageTitle: pageData.pageTitle || 'Booking Terms & Conditions',
-      content: pageData.content || '',
+      introText: pageData.introText || '',
+      generalTerms: pageData.generalTerms || '',
+      holidaysTerms: pageData.holidaysTerms || '',
+      ukClinicsTerms: pageData.ukClinicsTerms || '',
+      juniorCampsTerms: pageData.juniorCampsTerms || '',
+      schoolToursTerms: pageData.schoolToursTerms || '',
+      creditNotesTerms: pageData.creditNotesTerms || '',
+      touristTaxTerms: pageData.touristTaxTerms || '',
+      academyTerms: pageData.academyTerms || '',
       lastUpdated: pageData.lastUpdated || null,
       seo: seoData
     };
