@@ -759,30 +759,50 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
     // Product type quick filter buttons (pills)
     document.querySelectorAll('.product-filter-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        // Update active state
-        document.querySelectorAll('.product-filter-btn').forEach(b => {
-          b.classList.remove('active', 'bg-[#ad986c]', 'text-white');
-          b.classList.add('bg-gray-100', 'text-gray-700');
-        });
-        btn.classList.add('active', 'bg-[#ad986c]', 'text-white');
-        btn.classList.remove('bg-gray-100', 'text-gray-700');
-        
         const selectedProduct = btn.dataset.product;
+        const isCurrentlyActive = btn.classList.contains('active');
         
-        // Clear all sidebar checkboxes first
-        filters.productTypes.clear();
-        document.querySelectorAll('input[name="product"]').forEach(cb => cb.checked = false);
-        
-        // If clicking a specific product (not "All Events"), check the corresponding sidebar checkbox
-        if (selectedProduct !== 'all') {
-          filters.productTypes.add(selectedProduct);
-          const checkbox = document.querySelector(`input[name="product"][value="${selectedProduct}"]`);
-          if (checkbox) {
-            checkbox.checked = true;
+        // If clicking the currently active pill (and it's not "All Events"), toggle it off
+        if (isCurrentlyActive && selectedProduct !== 'all') {
+          // Deactivate this pill and activate "All Events"
+          btn.classList.remove('active', 'bg-[#ad986c]', 'text-white');
+          btn.classList.add('bg-gray-100', 'text-gray-700');
+          
+          const allBtn = document.querySelector('.product-filter-btn[data-product="all"]');
+          if (allBtn) {
+            allBtn.classList.add('active', 'bg-[#ad986c]', 'text-white');
+            allBtn.classList.remove('bg-gray-100', 'text-gray-700');
           }
-          filters.productTypePill = 'all'; // Reset pill state (sidebar is now active)
-        } else {
+          
+          // Clear filters
+          filters.productTypes.clear();
+          document.querySelectorAll('input[name="product"]').forEach(cb => cb.checked = false);
           filters.productTypePill = 'all';
+        } else {
+          // Regular activation logic
+          // Update active state
+          document.querySelectorAll('.product-filter-btn').forEach(b => {
+            b.classList.remove('active', 'bg-[#ad986c]', 'text-white');
+            b.classList.add('bg-gray-100', 'text-gray-700');
+          });
+          btn.classList.add('active', 'bg-[#ad986c]', 'text-white');
+          btn.classList.remove('bg-gray-100', 'text-gray-700');
+          
+          // Clear all sidebar checkboxes first
+          filters.productTypes.clear();
+          document.querySelectorAll('input[name="product"]').forEach(cb => cb.checked = false);
+          
+          // If clicking a specific product (not "All Events"), check the corresponding sidebar checkbox
+          if (selectedProduct !== 'all') {
+            filters.productTypes.add(selectedProduct);
+            const checkbox = document.querySelector(`input[name="product"][value="${selectedProduct}"]`);
+            if (checkbox) {
+              checkbox.checked = true;
+            }
+            filters.productTypePill = 'all'; // Reset pill state (sidebar is now active)
+          } else {
+            filters.productTypePill = 'all';
+          }
         }
         
         applyFilters();

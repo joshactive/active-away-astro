@@ -1782,6 +1782,52 @@ export async function getEventsPage() {
 }
 
 /**
+ * Fetch Terms and Conditions Page from Strapi
+ * @returns {Promise<Object|null>} Terms page data
+ */
+export async function getTermsPage() {
+  try {
+    const data = await fetchAPI('/terms-page?populate=*');
+    
+    if (!data || !data.data) {
+      console.log('📄 No terms page data found');
+      return null;
+    }
+
+    const pageData = data.data.attributes || data.data;
+    console.log('📄 Terms page data fetched successfully');
+
+    // Process SEO data
+    let seoData = null;
+    if (pageData.seo) {
+      const seo = pageData.seo;
+      const metaImageData = seo.metaImage ? getStrapiImageData(seo.metaImage) : null;
+      
+      seoData = {
+        metaTitle: seo.metaTitle || null,
+        metaDescription: seo.metaDescription || null,
+        metaImage: metaImageData?.url || null,
+        metaImageAlt: metaImageData?.alt || null,
+        keywords: seo.keywords || null,
+        canonicalURL: seo.canonicalURL || null
+      };
+    }
+
+    return {
+      slug: pageData.slug || 'booking-terms-conditions',
+      pageTitle: pageData.pageTitle || 'Booking Terms & Conditions',
+      content: pageData.content || '',
+      lastUpdated: pageData.lastUpdated || null,
+      seo: seoData
+    };
+
+  } catch (error) {
+    console.error('Error fetching terms page data:', error);
+    return null;
+  }
+}
+
+/**
  * Fetch navigation menu data from Strapi
  * @returns {Promise<Object>} Navigation menu data
  */
