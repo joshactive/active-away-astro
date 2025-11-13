@@ -733,7 +733,7 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/venues';
           const date = new Date(eventDate);
           if (filters.dateFrom && date < new Date(filters.dateFrom)) {
             return false;
-          }
+      }
           if (filters.dateTo && date > new Date(filters.dateTo)) {
             return false;
           }

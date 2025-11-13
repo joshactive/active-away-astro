@@ -1771,6 +1771,16 @@ export async function getTennisAcademyPage() {
   );
 }
 
+// Events Page
+export async function getEventsPage() {
+  return await getArchivePage(
+    'events-page',
+    'Browse All Events',
+    'Discover all our upcoming tennis, padel, pickleball, and ski events. Filter by type, location, price, and dates to find your perfect experience.',
+    'EVENTS'
+  );
+}
+
 /**
  * Fetch navigation menu data from Strapi
  * @returns {Promise<Object>} Navigation menu data
