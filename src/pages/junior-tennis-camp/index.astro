@@ -3,8 +3,28 @@
 export const prerender = true;
 
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getJuniorTennisCamps } from '../../utils/strapi.js';
+import { getJuniorTennisCamps, getJuniorCampPage, getPageSEO } from '../../utils/strapi.js';
 import { getStrapiImageAttrs } from '../../utils/cloudflareImages.js';
+
+// Fetch page content from Strapi
+let pageContent = null;
+try {
+  pageContent = await getJuniorCampPage();
+  console.log('👦 [junior-camp] Page content fetched successfully');
+} catch (error) {
+  console.warn('[junior-camp] Could not fetch page content, using defaults:', error.message);
+}
+
+// Fetch SEO data separately
+let seoData = null;
+try {
+  seoData = await getPageSEO('junior-camp-page');
+  if (seoData) {
+    console.log('📄 [junior-camp] SEO data fetched successfully');
+  }
+} catch (error) {
+  console.warn('[junior-camp] Could not fetch SEO data:', error.message);
+}
 
 // Fetch all junior tennis camps with events
 let juniorCampsData = { camps: [], metadata: { total: 0, courtSurfaces: [], priceRange: { min: 0, max: 5000 }, availableDates: [] } };
@@ -104,21 +124,32 @@ try {
 const { camps, metadata } = juniorCampsData;
 const CAMP_IMAGE_QUALITY = 60;
 
-// Hardcoded hero content (PLACEHOLDER - update with final content)
-const heroTitle = 'Discover Our Junior Tennis Camps';
-const heroSubtitle = 'Exciting junior tennis camps designed to develop young players\' skills while making lasting friendships. Expert coaching in inspiring locations.';
-const heroKicker = 'JUNIOR TENNIS CAMPS';
-const heroBackgroundImage = 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/126feceb-478c-4961-9aa3-0640510f3d00/public';
+// Extract page content with fallbacks
+const heroTitle = pageContent?.hero?.title || 'Discover Our Junior Tennis Camps';
+const heroSubtitle = pageContent?.hero?.subtitle || 'Exciting junior tennis camps designed to develop young players\' skills while making lasting friendships. Expert coaching in inspiring locations.';
+const heroKicker = pageContent?.hero?.kicker || 'JUNIOR TENNIS CAMPS';
+const heroBackgroundImage = pageContent?.hero?.backgroundImage?.url || 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/126feceb-478c-4961-9aa3-0640510f3d00/public';
+const heroBackgroundImageAlt = pageContent?.hero?.backgroundImage?.alt || 'Junior tennis camp at a beautiful location';
 
-// SEO
-const pageTitle = 'Junior Tennis Camps - Active Away';
-const pageDescription = 'Explore our junior tennis camps across the world. Filter by court surface, price, and available dates to find the perfect camp for your child.';
-const canonicalURL = 'https://activeaway.com/junior-tennis-camp';
+// Extract SEO fields with fallbacks
+const pageTitle = seoData?.metaTitle || pageContent?.seo?.metaTitle || 'Junior Tennis Camps - Active Away';
+const pageDescription = seoData?.metaDescription || pageContent?.seo?.metaDescription || 'Explore our junior tennis camps across the world. Filter by court surface, price, and available dates to find the perfect camp for your child.';
+const metaImage = seoData?.metaImage || pageContent?.seo?.metaImage || null;
+const metaImageAlt = seoData?.metaImageAlt || pageContent?.seo?.metaImageAlt || null;
+const metaImageWidth = seoData?.metaImageWidth || null;
+const metaImageHeight = seoData?.metaImageHeight || null;
+const keywords = seoData?.keywords || pageContent?.seo?.keywords || null;
+const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 'https://activeaway.com/junior-tennis-camp';
 ---
 
 <BaseLayout 
   title={pageTitle}
   description={pageDescription}
+  metaImage={metaImage}
+  metaImageAlt={metaImageAlt}
+  metaImageWidth={metaImageWidth}
+  metaImageHeight={metaImageHeight}
+  keywords={keywords}
   canonicalURL={canonicalURL}
 >
   <!-- Hero Header Section -->
@@ -126,7 +157,7 @@ const canonicalURL = 'https://activeaway.com/junior-tennis-camp';
     <div class="absolute inset-0 bg-gradient-to-b from-[#0D1C4E]/75 via-[#0D1C4E]/60 to-[#0D1C4E]/60 z-10"></div>
     <img 
       src={heroBackgroundImage}
-      alt="Junior tennis camp at a beautiful location"
+      alt={heroBackgroundImageAlt}
       class="absolute inset-0 w-full h-full object-cover"
       loading="eager"
     />

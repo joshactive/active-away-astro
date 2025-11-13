@@ -1620,6 +1620,158 @@ export async function getVenuesPage() {
 }
 
 /**
+ * Generic function to fetch archive page content from Strapi
+ * @param {string} pageSlug - The page slug (e.g., 'tennis-holiday-page')
+ * @param {string} defaultTitle - Default title if not found
+ * @param {string} defaultSubtitle - Default subtitle if not found
+ * @param {string} defaultKicker - Default kicker if not found
+ * @returns {Promise<Object|null>} Page content or null
+ */
+async function getArchivePage(pageSlug, defaultTitle, defaultSubtitle, defaultKicker) {
+  try {
+    const data = await fetchAPI(`/${pageSlug}?populate=*`);
+    
+    if (!data || !data.data) {
+      console.log(`📍 No ${pageSlug} data found`);
+      return null;
+    }
+
+    const pageData = data.data.attributes || data.data;
+    console.log(`📄 ${pageSlug} data fetched successfully`);
+
+    // Process SEO data
+    let seoData = null;
+    if (pageData.seo) {
+      const seo = pageData.seo;
+      const metaImageData = seo.metaImage ? getStrapiImageData(seo.metaImage) : null;
+      
+      seoData = {
+        metaTitle: seo.metaTitle || null,
+        metaDescription: seo.metaDescription || null,
+        metaImage: metaImageData?.url || null,
+        metaImageAlt: metaImageData?.alt || null,
+        keywords: seo.keywords || null,
+        canonicalURL: seo.canonicalURL || null
+      };
+    }
+
+    return {
+      hero: {
+        title: pageData.heroTitle || defaultTitle,
+        subtitle: pageData.heroSubtitle || defaultSubtitle,
+        kicker: pageData.heroKicker || defaultKicker,
+        backgroundImage: pageData.heroBackgroundImage ? getStrapiImageData(pageData.heroBackgroundImage) : null
+      },
+      seo: seoData
+    };
+
+  } catch (error) {
+    console.error(`Error fetching ${pageSlug} data:`, error);
+    return null;
+  }
+}
+
+// Tennis Holiday Page
+export async function getTennisHolidayPage() {
+  return await getArchivePage(
+    'tennis-holiday-page',
+    'Discover Our Tennis Holidays',
+    'Join us for unforgettable tennis holidays at stunning destinations worldwide. Expert coaching, beautiful resorts, and incredible experiences await.',
+    'TENNIS HOLIDAYS'
+  );
+}
+
+// Tennis Clinic Page
+export async function getTennisClinicPage() {
+  return await getArchivePage(
+    'tennis-clinic-page',
+    'Discover Our Tennis Clinics',
+    'Improve your game with expert coaching at our tennis clinics. Perfect for players of all levels looking to develop their skills in prestigious locations.',
+    'TENNIS CLINICS'
+  );
+}
+
+// Junior Tennis Camp Page
+export async function getJuniorCampPage() {
+  return await getArchivePage(
+    'junior-camp-page',
+    'Discover Our Junior Tennis Camps',
+    'Exciting junior tennis camps designed to develop young players\' skills while making lasting friendships. Expert coaching in inspiring locations.',
+    'JUNIOR TENNIS CAMPS'
+  );
+}
+
+// School Tennis Tour Page
+export async function getSchoolTourPage() {
+  return await getArchivePage(
+    'school-tour-page',
+    'Discover Our School Tennis Tours',
+    'Unforgettable school tennis tours combining expert coaching with superb destinations. Perfect for schools looking to inspire their students.',
+    'SCHOOL TENNIS TOURS'
+  );
+}
+
+// Padel Holiday Page
+export async function getPadelHolidayPage() {
+  return await getArchivePage(
+    'padel-holiday-page',
+    'Discover Our Padel Holidays',
+    'Join us for unforgettable padel holidays at stunning destinations worldwide. Expert coaching, beautiful resorts, and incredible experiences await.',
+    'PADEL HOLIDAYS'
+  );
+}
+
+// Pickleball Holiday Page
+export async function getPickleballHolidayPage() {
+  return await getArchivePage(
+    'pickleball-holiday-page',
+    'Discover Our Pickleball Holidays',
+    'Join us for unforgettable pickleball holidays at stunning destinations worldwide. Expert coaching, beautiful resorts, and incredible experiences await.',
+    'PICKLEBALL HOLIDAYS'
+  );
+}
+
+// Ski Holiday Page
+export async function getSkiHolidayPage() {
+  return await getArchivePage(
+    'ski-holiday-page',
+    'Discover Our Ski Holidays',
+    'Join us for unforgettable ski holidays at stunning destinations worldwide. Expert guidance, beautiful resorts, and incredible mountain experiences await.',
+    'SKI HOLIDAYS'
+  );
+}
+
+// Play & Watch Page
+export async function getPlayAndWatchPage() {
+  return await getArchivePage(
+    'play-and-watch-page',
+    'Discover Our Play & Watch Events',
+    'Experience the thrill of world-class tennis with our exclusive play & watch events. Combine playing tennis with watching the pros at prestigious tournaments.',
+    'PLAY & WATCH'
+  );
+}
+
+// Group Organiser Page
+export async function getGroupOrganiserPage() {
+  return await getArchivePage(
+    'group-organiser-page',
+    'Discover Our Group Organisers',
+    'Browse our group organisers who partner with us to offer exceptional racket experiences.',
+    'GROUP ORGANISERS'
+  );
+}
+
+// Tennis Academy Page
+export async function getTennisAcademyPage() {
+  return await getArchivePage(
+    'tennis-academy-page',
+    'Discover Our Tennis Academies',
+    'We select some of the best hotels around the world to offer the Active Away Tennis Academy. Offering Coaching to all ages and abilities, you can be sure of an incredible Tennis Experience at these locations.',
+    'TENNIS ACADEMIES'
+  );
+}
+
+/**
  * Fetch navigation menu data from Strapi
  * @returns {Promise<Object>} Navigation menu data
  */
