@@ -32,43 +32,56 @@ const hasSchedule = scheduleData.scheduleRows && scheduleData.scheduleRows.lengt
         </h2>
       )}
       
-      <!-- Mobile: Card Layout -->
+      <!-- Mobile: Accordion Layout -->
       <div class="block lg:hidden space-y-4">
-        {scheduleData.scheduleRows.map((row) => (
-          <div class="bg-white border-2 border-gray-200 rounded-xl overflow-hidden shadow-sm">
-            {/* Day Header */}
-            <div class="bg-[#0D1C4E] text-white px-4 py-3">
+        {scheduleData.scheduleRows.map((row, index) => (
+          <div class="bg-white border-2 border-gray-200 rounded-xl overflow-hidden shadow-sm schedule-accordion-item">
+            {/* Day Header - Clickable */}
+            <button 
+              type="button"
+              class="schedule-accordion-btn w-full bg-[#0D1C4E] text-white px-4 py-3 flex items-center justify-between"
+              data-schedule-index={index}
+            >
               <h3 class="text-lg font-inter font-semibold">{row.day}</h3>
-            </div>
+              <svg 
+                class="schedule-chevron w-5 h-5 transition-transform duration-300"
+                viewBox="0 0 24 24" 
+                fill="none"
+              >
+                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
             
-            {/* Schedule Details */}
-            <div class="divide-y divide-gray-200">
-              {row.morning && (
-                <div class="p-4">
-                  <h4 class="text-sm font-inter font-semibold text-gray-900 mb-2 uppercase tracking-wide">Morning</h4>
-                  <div class="text-base sm:text-lg font-inter text-gray-700 leading-relaxed prose max-w-none">
-                    <Fragment set:html={row.morning} />
+            {/* Schedule Details - Collapsible */}
+            <div class="schedule-accordion-content max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
+              <div class="divide-y divide-gray-200">
+                {row.morning && (
+                  <div class="p-4">
+                    <h4 class="text-sm font-inter font-semibold text-gray-900 mb-2 uppercase tracking-wide">Morning</h4>
+                    <div class="text-base sm:text-lg font-inter text-gray-700 leading-relaxed prose max-w-none">
+                      <Fragment set:html={row.morning} />
+                    </div>
                   </div>
-                </div>
-              )}
-              
-              {row.afternoon && (
-                <div class="p-4">
-                  <h4 class="text-sm font-inter font-semibold text-gray-900 mb-2 uppercase tracking-wide">Afternoon</h4>
-                  <div class="text-base sm:text-lg font-inter text-gray-700 leading-relaxed prose max-w-none">
-                    <Fragment set:html={row.afternoon} />
+                )}
+                
+                {row.afternoon && (
+                  <div class="p-4">
+                    <h4 class="text-sm font-inter font-semibold text-gray-900 mb-2 uppercase tracking-wide">Afternoon</h4>
+                    <div class="text-base sm:text-lg font-inter text-gray-700 leading-relaxed prose max-w-none">
+                      <Fragment set:html={row.afternoon} />
+                    </div>
                   </div>
-                </div>
-              )}
-              
-              {row.evening && (
-                <div class="p-4">
-                  <h4 class="text-sm font-inter font-semibold text-gray-900 mb-2 uppercase tracking-wide">Evening</h4>
-                  <div class="text-base sm:text-lg font-inter text-gray-700 leading-relaxed prose max-w-none">
-                    <Fragment set:html={row.evening} />
+                )}
+                
+                {row.evening && (
+                  <div class="p-4">
+                    <h4 class="text-sm font-inter font-semibold text-gray-900 mb-2 uppercase tracking-wide">Evening</h4>
+                    <div class="text-base sm:text-lg font-inter text-gray-700 leading-relaxed prose max-w-none">
+                      <Fragment set:html={row.evening} />
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         ))}
@@ -173,5 +186,40 @@ const hasSchedule = scheduleData.scheduleRows && scheduleData.scheduleRows.lengt
     border-collapse: collapse;
     width: 100%;
   }
+  
+  /* Mobile accordion animations */
+  .schedule-accordion-item.active .schedule-accordion-content {
+    max-height: 2000px;
+  }
+  
+  .schedule-accordion-item.active .schedule-chevron {
+    transform: rotate(180deg);
+  }
 </style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const accordionButtons = document.querySelectorAll('.schedule-accordion-btn');
+    
+    // Open first accordion by default on mobile
+    const firstItem = document.querySelector('.schedule-accordion-item');
+    if (firstItem && window.innerWidth < 1024) {
+      firstItem.classList.add('active');
+    }
+    
+    accordionButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const item = button.closest('.schedule-accordion-item');
+        const isActive = item.classList.contains('active');
+        
+        // Toggle current item
+        if (isActive) {
+          item.classList.remove('active');
+        } else {
+          item.classList.add('active');
+        }
+      });
+    });
+  });
+</script>
 

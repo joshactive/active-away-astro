@@ -115,7 +115,7 @@ const isSplitScreen = heroData.mediaType === 'split-screen-image' || heroData.me
 
 {isSplitScreen ? (
   <!-- Split-Screen Hero Layout with Background -->
-  <section class="relative w-full min-h-[500px] sm:min-h-[600px] lg:min-h-[700px] overflow-hidden pt-24 md:pt-32 lg:pt-0">
+  <section class="relative w-full min-h-[600px] sm:min-h-[700px] lg:min-h-[700px] overflow-hidden">
     <!-- Background Image -->
     {backgroundImageAttrs && (
       <img 
@@ -126,7 +126,7 @@ const isSplitScreen = heroData.mediaType === 'split-screen-image' || heroData.me
         width={backgroundImageAttrs.width || 1920}
         height={backgroundImageAttrs.height || 1080}
         class="absolute inset-0 w-full h-full object-cover"
-        loading="eager"
+        fetchpriority="high"
         decoding="async"
       />
     )}
@@ -135,11 +135,12 @@ const isSplitScreen = heroData.mediaType === 'split-screen-image' || heroData.me
     <div class="absolute inset-0 bg-gradient-to-r from-[#0D1C4E]/90 via-[#0D1C4E]/70 to-[#0D1C4E]/50 z-10"></div>
     
     <!-- Content Container -->
-    <div class="relative z-20 container mx-auto max-w-[1400px] h-full">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 min-h-[500px] sm:min-h-[600px] lg:min-h-[700px] items-center px-6 sm:px-10 py-12 sm:py-16 lg:py-20">
-        
-        <!-- Left Side - Content -->
-        <div class="flex flex-col justify-center text-left">
+    <div class="relative z-20 h-full">
+      <div class="lg:container lg:mx-auto lg:max-w-[1400px]">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 min-h-[600px] sm:min-h-[700px] lg:min-h-[700px] items-center px-4 sm:px-10 py-24 sm:py-32 lg:py-20">
+          
+          <!-- Left Side - Content -->
+          <div class="flex flex-col justify-center text-left">
           <!-- Kicker -->
           {heroData.kicker && (
             <div class="text-xs sm:text-sm font-inter font-semibold text-gold tracking-[0.2em] uppercase mb-4 sm:mb-6">
@@ -213,13 +214,14 @@ const isSplitScreen = heroData.mediaType === 'split-screen-image' || heroData.me
                 width={rightSideImageAttrs.width || 800}
                 height={rightSideImageAttrs.height || 600}
                 class="w-full h-auto object-cover"
-                loading="eager"
+                fetchpriority="high"
                 decoding="async"
               />
             </div>
           ) : null}
         </div>
-        
+          
+        </div>
       </div>
     </div>
   </section>
@@ -239,7 +241,7 @@ const isSplitScreen = heroData.mediaType === 'split-screen-image' || heroData.me
         width={backgroundImageAttrs.width || 1920}
         height={backgroundImageAttrs.height || 1080}
         class="absolute inset-0 w-full h-full object-cover"
-        loading="eager"
+        fetchpriority="high"
         decoding="async"
       />
     )}

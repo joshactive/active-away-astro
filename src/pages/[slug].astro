@@ -78,7 +78,15 @@ if (!productData) {
 // Extract SEO fields with fallbacks
 const pageTitle = seoData?.metaTitle || productData?.seo?.metaTitle || productData?.title || 'Product Page';
 const pageDescription = seoData?.metaDescription || productData?.seo?.metaDescription || productData?.hero?.subheading || 'Explore our products and services.';
-const metaImage = seoData?.metaImage || productData?.seo?.metaImage || null;
+
+// Extract meta image URL properly
+let metaImage = null;
+if (seoData?.metaImage) {
+  metaImage = typeof seoData.metaImage === 'string' ? seoData.metaImage : seoData.metaImage.url;
+} else if (productData?.seo?.metaImage) {
+  metaImage = typeof productData.seo.metaImage === 'string' ? productData.seo.metaImage : productData.seo.metaImage.url;
+}
+
 const metaImageAlt = seoData?.metaImageAlt || productData?.seo?.metaImageAlt || null;
 const metaImageWidth = seoData?.metaImageWidth || productData?.seo?.metaImageWidth || null;
 const metaImageHeight = seoData?.metaImageHeight || productData?.seo?.metaImageHeight || null;
