@@ -9,11 +9,16 @@ interface Props {
 const { homeData } = Astro.props;
 
 const jamieMurrayData = {
-  title: homeData?.jamieMurray?.title || "",
-  description: homeData?.jamieMurray?.description || "",
+  title: homeData?.jamieMurray?.title || "THE JAMIE MURRAY TENNIS PROGRAMME",
+  description: homeData?.jamieMurray?.description || "Designed to make adults more skilled and self assured doubles players – Jamie has developed a programme that will give you the knowledge and understanding of a top level doubles player (all pitched at club level players)!",
   buttonText: homeData?.jamieMurray?.buttonText || "Learn More",
-  videoUrl: homeData?.jamieMurray?.videoUrl || "",
-  image: homeData?.jamieMurray?.image || null
+  videoUrl: homeData?.jamieMurray?.videoUrl || "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+  image: homeData?.jamieMurray?.image || {
+    url: 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/c3a90375-2a74-45a5-2e5d-c46e10d67400/public',
+    alt: 'Jamie Murray Tennis Programme',
+    width: 800,
+    height: 600
+  }
 };
 
 function extractYouTubeId(url: string) {

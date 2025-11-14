@@ -5106,3 +5106,245 @@ export async function getMasterPageData(masterPageType, masterPageSlug) {
     return null;
   }
 }
+
+/**
+ * ====================================
+ * PRODUCT PAGES
+ * ====================================
+ */
+
+/**
+ * Get all product pages for static path generation
+ * @returns {Promise<Array>} Array of product pages with basic info
+ */
+export async function getProductPages() {
+  try {
+    console.log('📦 [getProductPages] Fetching all product pages...');
+    
+    const data = await fetchAPI('/product-pages?populate=*&filters[displayOnFrontEnd][$eq]=true');
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getProductPages] No product pages found');
+      return [];
+    }
+    
+    const pages = data.data.map((item) => {
+      const page = item.attributes || item;
+      return {
+        slug: page.slug,
+        title: page.title,
+        category: page.category
+      };
+    });
+    
+    console.log(`✅ [getProductPages] Fetched ${pages.length} product pages`);
+    return pages;
+  } catch (error) {
+    console.error('❌ [getProductPages] Error:', error);
+    return [];
+  }
+}
+
+/**
+ * Get product page data by slug with all nested components
+ * @param {string} slug - Product page slug
+ * @returns {Promise<Object|null>} Product page data
+ */
+export async function getProductPageBySlug(slug) {
+  if (!slug) {
+    console.warn('⚠️  [getProductPageBySlug] No slug provided');
+    return null;
+  }
+  
+  try {
+    console.log(`📦 [getProductPageBySlug] Fetching product page: ${slug}`);
+    
+    // Fetch with all nested data populated
+    const data = await fetchAPI(
+      `/product-pages?filters[slug][$eq]=${slug}&` +
+      'populate[hero][populate]=*&' +
+      'populate[quote][populate]=*&' +
+      'populate[jamieMurray][populate]=*&' +
+      'populate[twoColumnContent][populate][leftBlock][populate]=*&' +
+      'populate[twoColumnContent][populate][rightBlock][populate]=*&' +
+      'populate[keyInformation][populate]=*&' +
+      'populate[schedule][populate]=*&' +
+      'populate[discount][populate]=*&' +
+      'populate[faq][populate]=*&' +
+      'populate[destinations][populate]=*&' +
+      'populate[seo][populate]=*'
+    );
+    
+    if (!data || !data.data || data.data.length === 0) {
+      console.warn(`⚠️  [getProductPageBySlug] Product page not found: ${slug}`);
+      return null;
+    }
+    
+    const item = data.data[0];
+    const page = item.attributes || item;
+    
+    // Process the data structure
+    const productPage = {
+      id: item.id,
+      slug: page.slug,
+      title: page.title,
+      category: page.category,
+      displayOnFrontEnd: page.displayOnFrontEnd,
+      
+      // Hero section
+      hero: page.hero ? {
+        kicker: page.hero.kicker,
+        heading: page.hero.heading,
+        subheading: page.hero.subheading,
+        backgroundImage: getStrapiImageData(page.hero.backgroundImage),
+        heroImages: getStrapiImagesData(page.hero.heroImages),
+        buttonText: page.hero.buttonText,
+        buttonLink: page.hero.buttonLink,
+        mediaType: page.hero.mediaType || 'fullscreen-background',
+        videoUrl: page.hero.videoUrl,
+        rightSideImage: getStrapiImageData(page.hero.rightSideImage)
+      } : null,
+      
+      // Quote section
+      quote: page.quote ? {
+        eyebrow: page.quote.eyebrow,
+        quoteText: page.quote.quoteText,
+        authorName: page.quote.authorName,
+        authorImages: getStrapiImagesData(page.quote.authorImages),
+        decorativeIcon: getStrapiImageData(page.quote.decorativeIcon)
+      } : null,
+      
+      // Jamie Murray section
+      jamieMurray: page.jamieMurray ? {
+        title: page.jamieMurray.title,
+        description: page.jamieMurray.description,
+        buttonText: page.jamieMurray.buttonText,
+        videoUrl: page.jamieMurray.videoUrl,
+        image: getStrapiImageData(page.jamieMurray.image),
+        achievements: page.jamieMurray.achievements || []
+      } : null,
+      
+      // Two Column Content section
+      twoColumnContent: page.twoColumnContent ? {
+        eyebrow: page.twoColumnContent.eyebrow,
+        leftBlock: page.twoColumnContent.leftBlock ? {
+          heading: page.twoColumnContent.leftBlock.heading,
+          content: page.twoColumnContent.leftBlock.content,
+          image: getStrapiImageData(page.twoColumnContent.leftBlock.image),
+          imagePosition: page.twoColumnContent.leftBlock.imagePosition || 'bottom'
+        } : null,
+        rightBlock: page.twoColumnContent.rightBlock ? {
+          heading: page.twoColumnContent.rightBlock.heading,
+          content: page.twoColumnContent.rightBlock.content,
+          image: getStrapiImageData(page.twoColumnContent.rightBlock.image),
+          imagePosition: page.twoColumnContent.rightBlock.imagePosition || 'bottom'
+        } : null
+      } : null,
+      
+      // Key Information section
+      keyInformation: page.keyInformation ? {
+        eyebrow: page.keyInformation.eyebrow,
+        heading: page.keyInformation.heading,
+        subtitle: page.keyInformation.subtitle,
+        infoCards: page.keyInformation.infoCards || []
+      } : null,
+      
+      // Schedule section
+      schedule: page.schedule ? {
+        heading: page.schedule.heading,
+        scheduleRows: page.schedule.scheduleRows || []
+      } : null,
+      
+      // Discount section
+      discount: page.discount ? {
+        eyebrow: page.discount.eyebrow,
+        heading: page.discount.heading,
+        description: page.discount.description,
+        buttonText: page.discount.buttonText,
+        buttonLink: page.discount.buttonLink,
+        backgroundImage: getStrapiImageData(page.discount.backgroundImage)
+      } : null,
+      
+      // FAQ section
+      faq: page.faq ? {
+        eyebrow: page.faq.eyebrow,
+        heading: page.faq.heading,
+        faqs: page.faq.faqs || []
+      } : null,
+      
+      // Destinations section
+      destinations: page.destinations ? {
+        showDestinations: page.destinations.showDestinations !== false,
+        heading: page.destinations.heading,
+        eyebrow: page.destinations.eyebrow,
+        featuredLocationSlugs: page.destinations.featuredLocationSlugs || []
+      } : null,
+      
+      // SEO
+      seo: page.seo || null
+    };
+    
+    console.log(`✅ [getProductPageBySlug] Product page fetched: ${productPage.title}`);
+    return productPage;
+  } catch (error) {
+    console.error(`❌ [getProductPageBySlug] Error fetching ${slug}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Get product page SEO data by slug
+ * @param {string} slug - Product page slug
+ * @returns {Promise<Object|null>} SEO data
+ */
+export async function getProductPageSEO(slug) {
+  if (!slug) {
+    console.warn('⚠️  [getProductPageSEO] No slug provided');
+    return null;
+  }
+  
+  try {
+    console.log(`📄 [getProductPageSEO] Fetching SEO for product page: ${slug}`);
+    
+    const data = await fetchAPI(
+      `/product-pages?filters[slug][$eq]=${slug}&populate[seo][populate]=metaImage`
+    );
+    
+    if (!data || !data.data || data.data.length === 0) {
+      console.warn(`⚠️  [getProductPageSEO] Product page not found: ${slug}`);
+      return null;
+    }
+    
+    const item = data.data[0];
+    const page = item.attributes || item;
+    const seo = page.seo;
+    
+    if (!seo) {
+      console.warn(`⚠️  [getProductPageSEO] No SEO data for: ${slug}`);
+      return null;
+    }
+    
+    const seoData = {
+      metaTitle: seo.metaTitle,
+      metaDescription: seo.metaDescription,
+      keywords: seo.keywords,
+      canonicalURL: seo.canonicalURL,
+      metaImage: null,
+      metaImageAlt: seo.metaImageAlt,
+      metaImageWidth: seo.metaImageWidth,
+      metaImageHeight: seo.metaImageHeight
+    };
+    
+    // Process meta image
+    if (seo.metaImage?.data) {
+      const imageData = seo.metaImage.data.attributes || seo.metaImage.data;
+      seoData.metaImage = getStrapiImageUrl(imageData);
+    }
+    
+    console.log(`✅ [getProductPageSEO] SEO data fetched for: ${slug}`);
+    return seoData;
+  } catch (error) {
+    console.error(`❌ [getProductPageSEO] Error fetching SEO for ${slug}:`, error);
+    return null;
+  }
+}

@@ -1,0 +1,218 @@
+---
+// Two Column Content section for product pages - Tailwind CSS Version
+import { getStrapiImageAttrs } from '../utils/cloudflareImages.js';
+
+interface Props {
+  productData?: any;
+}
+
+const { productData } = Astro.props;
+
+// Extract content data
+const contentData = {
+  eyebrow: productData?.twoColumnContent?.eyebrow || null,
+  leftBlock: productData?.twoColumnContent?.leftBlock || null,
+  rightBlock: productData?.twoColumnContent?.rightBlock || null
+};
+
+// Process left block image
+let leftImageAttrs = null;
+if (contentData.leftBlock?.image) {
+  const imageUrl = contentData.leftBlock.image.url || contentData.leftBlock.image;
+  const imageAlt = contentData.leftBlock.image.alt || contentData.leftBlock.image.alternativeText || contentData.leftBlock.heading;
+  
+  if (typeof imageUrl === 'string') {
+    leftImageAttrs = getStrapiImageAttrs(
+      { url: imageUrl, alt: imageAlt },
+      {
+        displayWidth: 700,
+        displayHeight: 500,
+        fit: 'cover',
+        sizes: '(max-width: 1024px) 100vw, 50vw',
+        quality: 75
+      }
+    );
+    
+    if (!leftImageAttrs) {
+      leftImageAttrs = {
+        src: imageUrl,
+        url: imageUrl,
+        alt: imageAlt,
+        loading: 'lazy'
+      };
+    }
+  }
+}
+
+// Process right block image
+let rightImageAttrs = null;
+if (contentData.rightBlock?.image) {
+  const imageUrl = contentData.rightBlock.image.url || contentData.rightBlock.image;
+  const imageAlt = contentData.rightBlock.image.alt || contentData.rightBlock.image.alternativeText || contentData.rightBlock.heading;
+  
+  if (typeof imageUrl === 'string') {
+    rightImageAttrs = getStrapiImageAttrs(
+      { url: imageUrl, alt: imageAlt },
+      {
+        displayWidth: 700,
+        displayHeight: 500,
+        fit: 'cover',
+        sizes: '(max-width: 1024px) 100vw, 50vw',
+        quality: 75
+      }
+    );
+    
+    if (!rightImageAttrs) {
+      rightImageAttrs = {
+        src: imageUrl,
+        url: imageUrl,
+        alt: imageAlt,
+        loading: 'lazy'
+      };
+    }
+  }
+}
+
+const hasContent = contentData.leftBlock || contentData.rightBlock;
+---
+
+{hasContent && (
+  <section class="w-full bg-gray-50 py-12 sm:py-16 lg:py-24">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      
+      {contentData.eyebrow && (
+        <div class="text-xs sm:text-sm font-inter font-semibold text-gray-600 tracking-[0.2em] uppercase mb-8 sm:mb-12 text-center">
+          {contentData.eyebrow}
+        </div>
+      )}
+      
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+        
+        <!-- Left Block -->
+        {contentData.leftBlock && (
+          <div class="space-y-6">
+            {/* Heading */}
+            {contentData.leftBlock.heading && (
+              <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900">
+                {contentData.leftBlock.heading}
+              </h2>
+            )}
+            
+            {/* Content */}
+            {contentData.leftBlock.content && (
+              <div class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed prose prose-lg max-w-none">
+                <Fragment set:html={contentData.leftBlock.content} />
+              </div>
+            )}
+            
+            {/* Image */}
+            {leftImageAttrs && contentData.leftBlock.imagePosition === 'bottom' && (
+              <div class="rounded-2xl overflow-hidden shadow-lg">
+                <img 
+                  src={leftImageAttrs.src || leftImageAttrs.url}
+                  {...(leftImageAttrs.srcset && { srcset: leftImageAttrs.srcset })}
+                  {...(leftImageAttrs.sizes && { sizes: leftImageAttrs.sizes })}
+                  alt={leftImageAttrs.alt}
+                  width={leftImageAttrs.width || 700}
+                  height={leftImageAttrs.height || 500}
+                  class="w-full h-auto object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+            )}
+          </div>
+        )}
+        
+        <!-- Right Block -->
+        {contentData.rightBlock && (
+          <div class="space-y-6">
+            {/* Image - Top Position */}
+            {rightImageAttrs && contentData.rightBlock.imagePosition === 'top' && (
+              <div class="rounded-2xl overflow-hidden shadow-lg">
+                <img 
+                  src={rightImageAttrs.src || rightImageAttrs.url}
+                  {...(rightImageAttrs.srcset && { srcset: rightImageAttrs.srcset })}
+                  {...(rightImageAttrs.sizes && { sizes: rightImageAttrs.sizes })}
+                  alt={rightImageAttrs.alt}
+                  width={rightImageAttrs.width || 700}
+                  height={rightImageAttrs.height || 500}
+                  class="w-full h-auto object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+            )}
+            
+            {/* Heading */}
+            {contentData.rightBlock.heading && (
+              <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-[#ad986c]">
+                {contentData.rightBlock.heading}
+              </h2>
+            )}
+            
+            {/* Content */}
+            {contentData.rightBlock.content && (
+              <div class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed prose prose-lg max-w-none">
+                <Fragment set:html={contentData.rightBlock.content} />
+              </div>
+            )}
+            
+            {/* Image - Bottom Position */}
+            {rightImageAttrs && contentData.rightBlock.imagePosition === 'bottom' && (
+              <div class="rounded-2xl overflow-hidden shadow-lg">
+                <img 
+                  src={rightImageAttrs.src || rightImageAttrs.url}
+                  {...(rightImageAttrs.srcset && { srcset: rightImageAttrs.srcset })}
+                  {...(rightImageAttrs.sizes && { sizes: rightImageAttrs.sizes })}
+                  alt={rightImageAttrs.alt}
+                  width={rightImageAttrs.width || 700}
+                  height={rightImageAttrs.height || 500}
+                  class="w-full h-auto object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+            )}
+          </div>
+        )}
+        
+      </div>
+    </div>
+  </section>
+)}
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+  
+  /* Prose styling */
+  .prose p {
+    margin: 0 0 1rem 0;
+  }
+  
+  .prose p:last-child {
+    margin-bottom: 0;
+  }
+  
+  .prose ul,
+  .prose ol {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+  }
+  
+  .prose li {
+    margin: 0.5rem 0;
+  }
+  
+  .prose strong {
+    font-weight: 600;
+    color: rgb(17 24 39);
+  }
+</style>
+

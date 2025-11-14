@@ -1,0 +1,162 @@
+---
+// Quote section component for Active Away product pages - Tailwind CSS Version
+import { getStrapiImageAttrs } from '../utils/cloudflareImages.js';
+
+interface Props {
+  productData?: any;
+}
+
+const { productData } = Astro.props;
+
+// Extract quote data with fallbacks
+const quoteData = {
+  eyebrow: productData?.quote?.eyebrow || 'SINCE 2006',
+  quoteText: productData?.quote?.quoteText || '"Sample quote text goes here."',
+  authorName: productData?.quote?.authorName || 'AUTHOR NAME',
+  authorImages: productData?.quote?.authorImages || [],
+  decorativeIcon: productData?.quote?.decorativeIcon || null
+};
+
+// Process author images
+const processedAuthorImages = quoteData.authorImages.map((image, index) => {
+  const imageUrl = image?.url || image;
+  const imageAlt = image?.alt || image?.alternativeText || `${quoteData.authorName} photo ${index + 1}`;
+  
+  if (typeof imageUrl === 'string') {
+    const attrs = getStrapiImageAttrs(
+      { url: imageUrl, alt: imageAlt },
+      {
+        displayWidth: 80,
+        displayHeight: 80,
+        fit: 'cover',
+        sizes: '80px',
+        quality: 85
+      }
+    );
+    
+    return attrs || {
+      src: imageUrl,
+      url: imageUrl,
+      alt: imageAlt,
+      width: 80,
+      height: 80,
+      loading: 'lazy'
+    };
+  }
+  
+  return null;
+}).filter(Boolean);
+
+// Process decorative icon
+let decorativeIconAttrs = null;
+if (quoteData.decorativeIcon) {
+  const iconUrl = quoteData.decorativeIcon.url || quoteData.decorativeIcon;
+  const iconAlt = quoteData.decorativeIcon.alt || quoteData.decorativeIcon.alternativeText || 'Quote icon';
+  
+  if (typeof iconUrl === 'string') {
+    decorativeIconAttrs = getStrapiImageAttrs(
+      { url: iconUrl, alt: iconAlt },
+      {
+        displayWidth: 60,
+        displayHeight: 60,
+        fit: 'contain',
+        sizes: '60px',
+        quality: 85
+      }
+    );
+    
+    if (!decorativeIconAttrs) {
+      decorativeIconAttrs = {
+        src: iconUrl,
+        url: iconUrl,
+        alt: iconAlt,
+        width: 60,
+        height: 60,
+        loading: 'lazy'
+      };
+    }
+  }
+}
+---
+
+<section class="w-full bg-white py-12 sm:py-16 lg:py-24">
+  <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+    <div class="max-w-4xl mx-auto text-center">
+      <!-- Eyebrow -->
+      <div class="text-xs sm:text-sm font-inter font-semibold text-gray-600 tracking-[0.2em] uppercase mb-4 sm:mb-6">
+        {quoteData.eyebrow}
+      </div>
+      
+      <!-- Decorative Quote Icon (Hardcoded) -->
+      <div class="flex justify-center mb-6 sm:mb-8">
+        <svg class="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 opacity-20 text-[#ad986c]" viewBox="0 0 48 48" fill="currentColor">
+          <path d="M12 34h6l4-8V14H10v12h6zm16 0h6l4-8V14H26v12h6z"/>
+        </svg>
+      </div>
+      
+      <!-- Quote Text -->
+      <blockquote class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-8 sm:mb-10 lg:mb-12 leading-tight">
+        <div class="prose prose-lg max-w-none">
+          <Fragment set:html={quoteData.quoteText} />
+        </div>
+      </blockquote>
+      
+      <!-- Author Images -->
+      {processedAuthorImages.length > 0 && (
+        <div class="flex justify-center items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+          {processedAuthorImages.map((image, index) => {
+            const isMiddle = processedAuthorImages.length === 3 && index === 1;
+            const sizeClasses = isMiddle 
+              ? 'w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24' 
+              : 'w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20';
+            const borderWidth = isMiddle ? 'border-3' : 'border-2';
+            
+            return (
+              <div class={`${sizeClasses} rounded-full overflow-hidden ${borderWidth} border-gray-200 shadow-md transition-transform hover:scale-105`}>
+                <img 
+                  src={image.src || image.url}
+                  {...(image.srcset && { srcset: image.srcset })}
+                  {...(image.sizes && { sizes: image.sizes })}
+                  alt={image.alt}
+                  width={image.width || 80}
+                  height={image.height || 80}
+                  class="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+            );
+          })}
+        </div>
+      )}
+      
+      <!-- Author Name -->
+      <div class="text-sm sm:text-base font-inter font-semibold text-gray-900 tracking-[0.15em] uppercase">
+        {quoteData.authorName}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+  
+  /* Ensure quote text styling */
+  blockquote .prose p {
+    color: rgb(17 24 39);
+    font-size: inherit;
+    line-height: inherit;
+    margin: 0;
+  }
+  
+  blockquote .prose strong {
+    font-weight: 600;
+  }
+</style>
+

@@ -1,0 +1,177 @@
+---
+// Schedule/Itinerary Table component for Active Away product pages - Tailwind CSS Version
+import { parseMarkdown } from '../utils/markdown.js';
+
+interface Props {
+  productData?: any;
+}
+
+const { productData } = Astro.props;
+
+// Extract schedule data with fallbacks
+const scheduleData = {
+  heading: productData?.schedule?.heading || '',
+  scheduleRows: (productData?.schedule?.scheduleRows || []).map(row => ({
+    day: row.day,
+    morning: row.morning ? parseMarkdown(row.morning) : null,
+    afternoon: row.afternoon ? parseMarkdown(row.afternoon) : null,
+    evening: row.evening ? parseMarkdown(row.evening) : null
+  }))
+};
+
+// If no schedule rows, don't render the component
+const hasSchedule = scheduleData.scheduleRows && scheduleData.scheduleRows.length > 0;
+---
+
+{hasSchedule && (
+  <section class="w-full bg-gray-50 py-12 sm:py-16 lg:py-24">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      {scheduleData.heading && (
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-8 sm:mb-12 text-center">
+          {scheduleData.heading}
+        </h2>
+      )}
+      
+      <!-- Mobile: Card Layout -->
+      <div class="block lg:hidden space-y-4">
+        {scheduleData.scheduleRows.map((row) => (
+          <div class="bg-white border-2 border-gray-200 rounded-xl overflow-hidden shadow-sm">
+            {/* Day Header */}
+            <div class="bg-[#0D1C4E] text-white px-4 py-3">
+              <h3 class="text-lg font-inter font-semibold">{row.day}</h3>
+            </div>
+            
+            {/* Schedule Details */}
+            <div class="divide-y divide-gray-200">
+              {row.morning && (
+                <div class="p-4">
+                  <h4 class="text-sm font-inter font-semibold text-gray-900 mb-2 uppercase tracking-wide">Morning</h4>
+                  <div class="text-base sm:text-lg font-inter text-gray-700 leading-relaxed prose max-w-none">
+                    <Fragment set:html={row.morning} />
+                  </div>
+                </div>
+              )}
+              
+              {row.afternoon && (
+                <div class="p-4">
+                  <h4 class="text-sm font-inter font-semibold text-gray-900 mb-2 uppercase tracking-wide">Afternoon</h4>
+                  <div class="text-base sm:text-lg font-inter text-gray-700 leading-relaxed prose max-w-none">
+                    <Fragment set:html={row.afternoon} />
+                  </div>
+                </div>
+              )}
+              
+              {row.evening && (
+                <div class="p-4">
+                  <h4 class="text-sm font-inter font-semibold text-gray-900 mb-2 uppercase tracking-wide">Evening</h4>
+                  <div class="text-base sm:text-lg font-inter text-gray-700 leading-relaxed prose max-w-none">
+                    <Fragment set:html={row.evening} />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      <!-- Desktop: Table Layout -->
+      <div class="hidden lg:block overflow-x-auto rounded-2xl border-2 border-gray-200 shadow-lg">
+        <table class="w-full">
+          <thead>
+            <tr class="bg-[#0D1C4E]">
+              <th class="text-left px-6 py-4 text-white font-inter font-semibold text-base sm:text-lg border-r border-white/20">
+                Days
+              </th>
+              <th class="text-left px-6 py-4 text-white font-inter font-semibold text-base sm:text-lg border-r border-white/20">
+                Morning
+              </th>
+              <th class="text-left px-6 py-4 text-white font-inter font-semibold text-base sm:text-lg border-r border-white/20">
+                Afternoon
+              </th>
+              <th class="text-left px-6 py-4 text-white font-inter font-semibold text-base sm:text-lg">
+                Evening
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {scheduleData.scheduleRows.map((row, index) => (
+              <tr class={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} border-b border-gray-200 last:border-b-0`}>
+                <td class="px-6 py-5 text-gray-900 font-inter font-semibold text-base sm:text-lg border-r border-gray-200 align-top">
+                  {row.day}
+                </td>
+                <td class="px-6 py-5 text-gray-700 font-inter text-base sm:text-lg leading-relaxed border-r border-gray-200 align-top">
+                  {row.morning ? (
+                    <div class="prose max-w-none">
+                      <Fragment set:html={row.morning} />
+                    </div>
+                  ) : (
+                    <span class="text-gray-400">—</span>
+                  )}
+                </td>
+                <td class="px-6 py-5 text-gray-700 font-inter text-base sm:text-lg leading-relaxed border-r border-gray-200 align-top">
+                  {row.afternoon ? (
+                    <div class="prose max-w-none">
+                      <Fragment set:html={row.afternoon} />
+                    </div>
+                  ) : (
+                    <span class="text-gray-400">—</span>
+                  )}
+                </td>
+                <td class="px-6 py-5 text-gray-700 font-inter text-base sm:text-lg leading-relaxed align-top">
+                  {row.evening ? (
+                    <div class="prose max-w-none">
+                      <Fragment set:html={row.evening} />
+                    </div>
+                  ) : (
+                    <span class="text-gray-400">—</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+)}
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+  
+  /* Prose styling for schedule content */
+  .prose p {
+    margin: 0 0 0.5rem 0;
+  }
+  
+  .prose p:last-child {
+    margin-bottom: 0;
+  }
+  
+  .prose ul,
+  .prose ol {
+    margin: 0;
+    padding-left: 1.25rem;
+  }
+  
+  .prose li {
+    margin: 0.25rem 0;
+  }
+  
+  .prose strong {
+    font-weight: 600;
+    color: rgb(17 24 39);
+  }
+  
+  /* Ensure table doesn't overflow */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+</style>
+

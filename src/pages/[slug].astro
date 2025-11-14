@@ -1,0 +1,159 @@
+---
+// Dynamic Product Page - Handles all product category pages (Adult Tennis Holidays, Padel, etc.)
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ProductHeroTailwind from '../components/ProductHeroTailwind.astro';
+import QuoteSectionTailwind from '../components/QuoteSectionTailwind.astro';
+import JamieMurrayTailwind from '../components/JamieMurrayTailwind.astro';
+import ScheduleTableTailwind from '../components/ScheduleTableTailwind.astro';
+import DiscountCTATailwind from '../components/DiscountCTATailwind.astro';
+import StoriesOfHopeTailwind from '../components/StoriesOfHopeTailwind.astro';
+import LocationsTailwind from '../components/LocationsTailwind.astro';
+import FAQAccordionTailwind from '../components/FAQAccordionTailwind.astro';
+import OurPartnersTailwind from '../components/OurPartnersTailwind.astro';
+import TwoColumnContentTailwind from '../components/TwoColumnContentTailwind.astro';
+import KeyInformationTailwind from '../components/KeyInformationTailwind.astro';
+import { getProductPages, getProductPageBySlug, getProductPageSEO, getHomeData } from '../utils/strapi.js';
+
+// Generate static paths for all product pages
+export async function getStaticPaths() {
+  try {
+    const productPages = await getProductPages();
+    
+    if (!productPages || productPages.length === 0) {
+      console.warn('⚠️  [product-pages] No product pages found for static generation');
+      return [];
+    }
+    
+    console.log(`📦 [product-pages] Generating ${productPages.length} static product pages`);
+    
+    return productPages.map((page) => ({
+      params: { slug: page.slug },
+      props: { pageSlug: page.slug }
+    }));
+  } catch (error) {
+    console.error('❌ [product-pages] Error generating static paths:', error);
+    return [];
+  }
+}
+
+const { slug } = Astro.params;
+const { pageSlug } = Astro.props;
+
+// Fetch product page data
+let productData = null;
+try {
+  productData = await getProductPageBySlug(slug || pageSlug);
+  console.log(`📦 [product-page] Product page data fetched: ${productData?.title || slug}`);
+} catch (error) {
+  console.error(`❌ [product-page] Error fetching product page ${slug}:`, error.message);
+}
+
+// Fetch SEO data separately
+let seoData = null;
+try {
+  seoData = await getProductPageSEO(slug || pageSlug);
+  if (seoData) {
+    console.log(`📄 [product-page] SEO data fetched for: ${slug}`);
+  }
+} catch (error) {
+  console.warn(`⚠️  [product-page] Could not fetch SEO data for ${slug}:`, error.message);
+}
+
+// Fetch homepage data for partners
+let homepageData = null;
+try {
+  homepageData = await getHomeData();
+  console.log(`🏠 [product-page] Homepage data fetched for partners`);
+} catch (error) {
+  console.warn(`⚠️  [product-page] Could not fetch homepage data:`, error.message);
+}
+
+// If no product data found, return 404
+if (!productData) {
+  return Astro.redirect('/404');
+}
+
+// Extract SEO fields with fallbacks
+const pageTitle = seoData?.metaTitle || productData?.seo?.metaTitle || productData?.title || 'Product Page';
+const pageDescription = seoData?.metaDescription || productData?.seo?.metaDescription || productData?.hero?.subheading || 'Explore our products and services.';
+const metaImage = seoData?.metaImage || productData?.seo?.metaImage || null;
+const metaImageAlt = seoData?.metaImageAlt || productData?.seo?.metaImageAlt || null;
+const metaImageWidth = seoData?.metaImageWidth || productData?.seo?.metaImageWidth || null;
+const metaImageHeight = seoData?.metaImageHeight || productData?.seo?.metaImageHeight || null;
+const keywords = seoData?.keywords || productData?.seo?.keywords || null;
+const canonicalURL = seoData?.canonicalURL || productData?.seo?.canonicalURL || `https://activeaway.com/${slug}`;
+
+// Prepare data for reusable components
+const homeData = {
+  jamieMurray: productData?.jamieMurray || null,
+  partners: homepageData?.partners || [],
+  stories: null // Will use Google reviews
+};
+---
+
+<BaseLayout 
+  title={pageTitle}
+  description={pageDescription}
+  metaImage={metaImage}
+  metaImageAlt={metaImageAlt}
+  metaImageWidth={metaImageWidth}
+  metaImageHeight={metaImageHeight}
+  keywords={keywords}
+  canonicalURL={canonicalURL}
+>
+  <!-- Hero Section -->
+  <ProductHeroTailwind productData={productData} />
+  
+  <!-- Quote Section -->
+  {productData?.quote && (
+    <QuoteSectionTailwind productData={productData} />
+  )}
+  
+  <!-- Jamie Murray Section -->
+  {productData?.jamieMurray && (
+    <JamieMurrayTailwind homeData={homeData} />
+  )}
+  
+  <!-- Two Column Content Section (Hosting / Tennis Standards) -->
+  {productData?.twoColumnContent && (
+    <TwoColumnContentTailwind productData={productData} />
+  )}
+  
+  <!-- Key Information Section -->
+  {productData?.keyInformation && productData?.keyInformation?.infoCards?.length > 0 && (
+    <KeyInformationTailwind productData={productData} />
+  )}
+  
+  <!-- Schedule/Itinerary Table -->
+  {productData?.schedule && productData?.schedule?.scheduleRows?.length > 0 && (
+    <ScheduleTableTailwind productData={productData} />
+  )}
+  
+  <!-- Discount CTA Section -->
+  {productData?.discount && (
+    <DiscountCTATailwind productData={productData} />
+  )}
+  
+  <!-- Testimonials/Stories Section -->
+  <StoriesOfHopeTailwind homeData={homeData} customTitle="Our Google Reviews" customSubtitle="Have you ever seen reviews like these?" />
+  
+  <!-- Destinations/Locations Section -->
+  {productData?.destinations?.showDestinations !== false && (
+    <LocationsTailwind 
+      customHeading={productData?.destinations?.heading}
+      customEyebrow={productData?.destinations?.eyebrow}
+      featuredSlugs={productData?.destinations?.featuredLocationSlugs}
+    />
+  )}
+  
+  <!-- FAQ Section -->
+  {productData?.faq && productData?.faq?.faqs?.length > 0 && (
+    <FAQAccordionTailwind productData={productData} />
+  )}
+  
+  <!-- Partners Section -->
+  <OurPartnersTailwind homeData={homeData} />
+</BaseLayout>
+

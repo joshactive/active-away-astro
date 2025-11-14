@@ -6,8 +6,23 @@ import MapPinIcon from './ui/icons/MapPinIcon.astro';
 import TagIcon from './ui/icons/TagIcon.astro';
 import HotelIcon from './ui/icons/HotelIcon.astro';
 
+interface Props {
+  customHeading?: string;
+  customEyebrow?: string;
+  featuredSlugs?: string[];
+}
+
+const { customHeading, customEyebrow, featuredSlugs } = Astro.props;
+
 // Fetch featured locations from Strapi
-let locations = await getFeaturedLocations();
+let allLocations = await getFeaturedLocations();
+
+// Filter by featured slugs if provided
+let locations = allLocations;
+if (featuredSlugs && featuredSlugs.length > 0) {
+  locations = allLocations.filter(loc => featuredSlugs.includes(loc.slug));
+  console.log(`📍 Filtered to ${locations.length} locations from ${allLocations.length} total`);
+}
 
 const LOCATION_IMAGE_SIZES = '(max-width: 640px) calc(100vw - 5rem), (max-width: 1024px) calc(100vw - 8rem), 455px';
 const LOCATION_IMAGE_QUALITY = 60;
@@ -95,17 +110,17 @@ if (!locations || locations.length === 0) {
 }
 ---
 
-<section class="w-full bg-white py-8 sm:py-16 lg:py-24">
+<section id="destinations" class="w-full bg-white py-8 sm:py-16 lg:py-24">
   <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
     <!-- Header -->
     <div class="mb-6 sm:mb-8 lg:mb-16">
       <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 sm:gap-3 lg:gap-4">
         <div>
           <div class="text-sm sm:text-base font-inter font-medium text-gray-900 tracking-widest uppercase mb-1 sm:mb-2">
-            DESTINATIONS
+            {customEyebrow || 'DESTINATIONS'}
           </div>
           <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900">
-            Explore our Locations
+            {customHeading || 'Explore our Locations'}
           </h2>
         </div>
         <a href="/venues" class="text-base sm:text-lg font-inter text-gray-900 underline hover:text-gray-700 transition-colors">

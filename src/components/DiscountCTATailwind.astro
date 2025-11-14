@@ -1,0 +1,151 @@
+---
+// Discount CTA section component for Active Away product pages - Tailwind CSS Version
+import { getStrapiImageAttrs } from '../utils/cloudflareImages.js';
+
+interface Props {
+  productData?: any;
+}
+
+const { productData } = Astro.props;
+
+// Extract discount data with fallbacks
+const discountData = {
+  eyebrow: productData?.discount?.eyebrow || 'DISCOUNT',
+  heading: productData?.discount?.heading || 'Access an Instant Discount',
+  description: productData?.discount?.description || 'Sign up today and receive an exclusive discount code.',
+  buttonText: productData?.discount?.buttonText || 'Access Discount',
+  buttonLink: productData?.discount?.buttonLink || '#',
+  backgroundImage: productData?.discount?.backgroundImage || null
+};
+
+// Process background image
+let backgroundImageAttrs = null;
+if (discountData.backgroundImage) {
+  const imageUrl = discountData.backgroundImage.url || discountData.backgroundImage;
+  const imageAlt = discountData.backgroundImage.alt || discountData.backgroundImage.alternativeText || 'Discount background';
+  
+  if (typeof imageUrl === 'string') {
+    backgroundImageAttrs = getStrapiImageAttrs(
+      { url: imageUrl, alt: imageAlt },
+      {
+        displayWidth: 1400,
+        displayHeight: 500,
+        fit: 'cover',
+        sizes: '(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1400px',
+        quality: 70
+      }
+    );
+    
+    if (!backgroundImageAttrs) {
+      backgroundImageAttrs = {
+        src: imageUrl,
+        url: imageUrl,
+        alt: imageAlt,
+        loading: 'lazy'
+      };
+    }
+  }
+}
+
+// If no discount data provided, don't render
+const hasDiscount = discountData.heading || discountData.description;
+---
+
+{hasDiscount && (
+  <section class="w-full bg-white py-12 sm:py-16 lg:py-24">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      <div class="relative overflow-hidden rounded-2xl sm:rounded-3xl shadow-2xl">
+        <!-- Background Image -->
+        {backgroundImageAttrs && (
+          <div class="absolute inset-0 z-0">
+            <img 
+              src={backgroundImageAttrs.src || backgroundImageAttrs.url}
+              {...(backgroundImageAttrs.srcset && { srcset: backgroundImageAttrs.srcset })}
+              {...(backgroundImageAttrs.sizes && { sizes: backgroundImageAttrs.sizes })}
+              alt={backgroundImageAttrs.alt}
+              width={backgroundImageAttrs.width || 1400}
+              height={backgroundImageAttrs.height || 500}
+              class="w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+        )}
+        
+        <!-- Gradient Overlay -->
+        <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/60 to-black/50 z-10"></div>
+        
+        <!-- Content -->
+        <div class="relative z-20 px-6 sm:px-10 lg:px-16 py-12 sm:py-16 lg:py-20">
+          <div class="max-w-2xl">
+            <!-- Eyebrow -->
+            <div class="text-xs sm:text-sm font-inter font-semibold text-gold tracking-[0.2em] uppercase mb-3 sm:mb-4">
+              {discountData.eyebrow}
+            </div>
+            
+            <!-- Heading -->
+            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-bold text-white mb-4 sm:mb-6 leading-tight">
+              {discountData.heading}
+            </h2>
+            
+            <!-- Description -->
+            <div class="discount-description text-base sm:text-lg font-inter text-white leading-relaxed mb-6 sm:mb-8 prose prose-invert max-w-none">
+              <Fragment set:html={discountData.description} />
+            </div>
+            
+            <!-- CTA Button -->
+            <a 
+              href={discountData.buttonLink}
+              class="inline-flex items-center gap-2 bg-gold hover:bg-gold-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-inter font-semibold text-base sm:text-lg transition-all duration-300 hover:-translate-y-0.5 shadow-lg hover:shadow-xl"
+            >
+              <span>{discountData.buttonText}</span>
+              <svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none">
+                <path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+)}
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+  
+  /* Prose styling for description - Force white text */
+  .discount-description,
+  .discount-description *,
+  .discount-description p,
+  .discount-description strong,
+  .discount-description em,
+  .discount-description a,
+  .discount-description span {
+    color: rgb(255 255 255) !important;
+  }
+  
+  .prose-invert p {
+    color: rgb(255 255 255) !important;
+    margin: 0 0 0.75rem 0;
+  }
+  
+  .prose-invert p:last-child {
+    margin-bottom: 0;
+  }
+  
+  .prose-invert strong {
+    font-weight: 600;
+    color: rgb(255 255 255) !important;
+  }
+  
+  .prose-invert a {
+    color: rgb(255 255 255) !important;
+  }
+</style>
+

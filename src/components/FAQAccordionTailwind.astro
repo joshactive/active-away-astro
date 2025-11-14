@@ -1,0 +1,164 @@
+---
+// FAQ Accordion section component for Active Away product pages - Tailwind CSS Version
+
+interface Props {
+  productData?: any;
+}
+
+const { productData } = Astro.props;
+
+// Extract FAQ data with fallbacks
+const faqData = {
+  eyebrow: productData?.faq?.eyebrow || 'OTHER INFORMATION',
+  heading: productData?.faq?.heading || 'Frequently Asked Questions',
+  faqs: productData?.faq?.faqs || []
+};
+
+// If no FAQs, don't render the component
+const hasFAQs = faqData.faqs && faqData.faqs.length > 0;
+---
+
+{hasFAQs && (
+  <section class="w-full bg-gray-50 py-12 sm:py-16 lg:py-24">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      <!-- Section Header -->
+      <div class="mb-8 sm:mb-12 text-center">
+        {faqData.eyebrow && (
+          <div class="text-xs sm:text-sm font-inter font-semibold text-gray-600 tracking-[0.2em] uppercase mb-3 sm:mb-4">
+            {faqData.eyebrow}
+          </div>
+        )}
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900">
+          {faqData.heading}
+        </h2>
+      </div>
+      
+      <!-- FAQ Accordion -->
+      <div class="max-w-4xl mx-auto">
+        <div class="space-y-4">
+          {faqData.faqs.map((faq, index) => (
+            <div class="faq-item bg-white border-2 border-gray-200 rounded-xl overflow-hidden hover:border-gray-300 transition-colors">
+              <button 
+                type="button"
+                class="faq-question w-full flex items-center justify-between px-6 py-5 text-left group"
+                aria-expanded="false"
+                data-faq-index={index}
+              >
+                <span class="text-base sm:text-lg font-inter font-semibold text-gray-900 pr-4 group-hover:text-[#ad986c] transition-colors">
+                  {faq.question}
+                </span>
+                <svg 
+                  class="faq-icon w-5 h-5 sm:w-6 sm:h-6 text-gray-600 flex-shrink-0 transition-transform duration-300"
+                  viewBox="0 0 24 24" 
+                  fill="none"
+                >
+                  <path class="faq-icon-vertical" d="M12 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </button>
+              
+              <div class="faq-answer max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
+                <div class="px-6 pb-5">
+                  <div class="text-base sm:text-lg font-inter text-gray-700 leading-relaxed prose max-w-none">
+                    <Fragment set:html={faq.answer} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+)}
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+  
+  /* FAQ Accordion Animations */
+  .faq-item.active .faq-answer {
+    max-height: 1000px; /* Large enough for most content */
+  }
+  
+  .faq-item.active .faq-icon {
+    transform: rotate(45deg);
+    color: #ad986c;
+  }
+  
+  .faq-item.active .faq-question {
+    color: #ad986c;
+  }
+  
+  /* Prose styling for FAQ answers */
+  .prose p {
+    margin: 0 0 0.75rem 0;
+  }
+  
+  .prose p:last-child {
+    margin-bottom: 0;
+  }
+  
+  .prose ul,
+  .prose ol {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+  }
+  
+  .prose li {
+    margin: 0.375rem 0;
+  }
+  
+  .prose strong {
+    font-weight: 600;
+    color: rgb(17 24 39);
+  }
+  
+  .prose a {
+    color: #ad986c;
+    text-decoration: underline;
+  }
+  
+  .prose a:hover {
+    color: #8a7454;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const faqQuestions = document.querySelectorAll('.faq-question');
+    
+    faqQuestions.forEach((question) => {
+      question.addEventListener('click', () => {
+        const faqItem = question.closest('.faq-item');
+        const isActive = faqItem.classList.contains('active');
+        
+        // Close all other FAQs
+        document.querySelectorAll('.faq-item.active').forEach((item) => {
+          if (item !== faqItem) {
+            item.classList.remove('active');
+            const btn = item.querySelector('.faq-question');
+            if (btn) {
+              btn.setAttribute('aria-expanded', 'false');
+            }
+          }
+        });
+        
+        // Toggle current FAQ
+        if (isActive) {
+          faqItem.classList.remove('active');
+          question.setAttribute('aria-expanded', 'false');
+        } else {
+          faqItem.classList.add('active');
+          question.setAttribute('aria-expanded', 'true');
+        }
+      });
+    });
+  });
+</script>
+

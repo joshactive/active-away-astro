@@ -5,9 +5,11 @@ import { getImageByName, getResponsiveImageByName, getStrapiImageAttrs } from '.
 // Accept homeData as prop (fetched once in index.astro)
 interface Props {
   homeData?: any;
+  customTitle?: string;
+  customSubtitle?: string;
 }
 
-const { homeData } = Astro.props;
+const { homeData, customTitle, customSubtitle } = Astro.props;
 
 // Fetch Google reviews
 let googleReviews = [];
@@ -154,8 +156,8 @@ const normalizedReviews = allReviews.map((review, index) => {
 });
 
 const storiesData = {
-  title: homeData?.stories?.title || "Stories of Hope",
-  subtitle: homeData?.stories?.subtitle || "Real people, real transformation",
+  title: customTitle || homeData?.stories?.title || "Stories of Hope",
+  subtitle: customSubtitle || homeData?.stories?.subtitle || "Real people, real transformation",
   reviews: normalizedReviews,
   googleIcon: googleIconImage
 };
