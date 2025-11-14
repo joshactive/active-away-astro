@@ -1,0 +1,203 @@
+---
+// About Hero section component - Tailwind CSS Version
+import { getStrapiImageAttrs } from '../utils/cloudflareImages.js';
+
+interface Props {
+  aboutData?: any;
+}
+
+const { aboutData } = Astro.props;
+
+const heroData = {
+  eyebrow: aboutData?.hero?.eyebrow || 'ABOUT US',
+  heading: aboutData?.hero?.heading || 'Meet Active Away',
+  topLeftImage: aboutData?.hero?.topLeftImage || null,
+  topRightImage: aboutData?.hero?.topRightImage || null,
+  introText: aboutData?.hero?.introText || '',
+  bottomLeftImage: aboutData?.hero?.bottomLeftImage || null,
+  bottomRightImage: aboutData?.hero?.bottomRightImage || null,
+  mainContent: aboutData?.hero?.mainContent || '',
+  highlights: aboutData?.hero?.highlights || [],
+  buttonText: aboutData?.hero?.buttonText || null,
+  buttonLink: aboutData?.hero?.buttonLink || null
+};
+
+// Process images
+const processImage = (image, width, height, priority = false) => {
+  if (!image) return null;
+  const imageUrl = image.url || image;
+  const imageAlt = image.alt || image.alternativeText || 'Active Away';
+  
+  if (typeof imageUrl === 'string') {
+    const attrs = getStrapiImageAttrs(
+      { url: imageUrl, alt: imageAlt },
+      {
+        displayWidth: width,
+        displayHeight: height,
+        fit: 'cover',
+        sizes: '(max-width: 1024px) 100vw, 50vw',
+        quality: 80
+      }
+    );
+    
+    return attrs || {
+      src: imageUrl,
+      url: imageUrl,
+      alt: imageAlt,
+      loading: priority ? 'eager' : 'lazy'
+    };
+  }
+  return null;
+};
+
+const topLeftImageAttrs = processImage(heroData.topLeftImage, 700, 500, true);
+const topRightImageAttrs = processImage(heroData.topRightImage, 700, 500, true);
+const bottomLeftImageAttrs = processImage(heroData.bottomLeftImage, 700, 500);
+const bottomRightImageAttrs = processImage(heroData.bottomRightImage, 700, 400);
+
+// Icon mapping
+const iconMap = {
+  'clock': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />',
+  'star': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />',
+  'heart': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />',
+  'users': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />',
+  'check': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />',
+  'shield': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />'
+};
+---
+
+<section class="w-full bg-white py-12 sm:py-16 lg:py-24">
+  <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+    
+
+    
+    <!-- Heading -->
+    <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-4 sm:mb-6 text-center">
+     We Love All Things Rackets
+    </h2>
+    
+    <!-- Intro Text -->
+    {heroData.introText && (
+      <div class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed text-center max-w-4xl mx-auto mb-8 sm:mb-12 prose prose-lg">
+        <Fragment set:html={heroData.introText} />
+      </div>
+    )}
+    
+    <!-- Bottom Content Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+      
+      <!-- Bottom Left Image -->
+      {bottomLeftImageAttrs && (
+        <div class="rounded-2xl overflow-hidden shadow-lg h-full min-h-[400px]">
+          <img 
+            src={bottomLeftImageAttrs.src || bottomLeftImageAttrs.url}
+            {...(bottomLeftImageAttrs.srcset && { srcset: bottomLeftImageAttrs.srcset })}
+            {...(bottomLeftImageAttrs.sizes && { sizes: bottomLeftImageAttrs.sizes })}
+            alt={bottomLeftImageAttrs.alt}
+            width={bottomLeftImageAttrs.width || 700}
+            height={bottomLeftImageAttrs.height || 500}
+            class="w-full h-full object-cover"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+      )}
+      
+      <!-- Bottom Right Content -->
+      <div class="space-y-6">
+        
+        {/* Bottom Right Image */}
+        {bottomRightImageAttrs && (
+          <div class="rounded-2xl overflow-hidden shadow-lg">
+            <img 
+              src={bottomRightImageAttrs.src || bottomRightImageAttrs.url}
+              {...(bottomRightImageAttrs.srcset && { srcset: bottomRightImageAttrs.srcset })}
+              {...(bottomRightImageAttrs.sizes && { sizes: bottomRightImageAttrs.sizes })}
+              alt={bottomRightImageAttrs.alt}
+              width={bottomRightImageAttrs.width || 700}
+              height={bottomRightImageAttrs.height || 400}
+              class="w-full h-auto object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+        )}
+        
+        {/* Main Content */}
+        {heroData.mainContent && (
+          <div class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed prose prose-lg max-w-none">
+            <Fragment set:html={heroData.mainContent} />
+          </div>
+        )}
+        
+        {/* Highlights Grid */}
+        {heroData.highlights && heroData.highlights.length > 0 && (
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {heroData.highlights.map((highlight) => {
+              const iconPath = iconMap[highlight.icon] || iconMap['star'];
+              return (
+                <div class="text-center bg-white border-2 border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:border-gray-300 transition-all duration-300">
+                  <div class="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center mx-auto mb-3">
+                    <svg 
+                      class="w-full h-full text-[#ad986c]" 
+                      fill="none" 
+                      viewBox="0 0 24 24" 
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      set:html={iconPath}
+                    >
+                    </svg>
+                  </div>
+                  <h3 class="text-base sm:text-lg font-playfair font-semibold text-gray-900 mb-1">
+                    {highlight.heading}
+                  </h3>
+                  {highlight.description && (
+                    <p class="text-sm sm:text-base font-inter text-gray-700">
+                      {highlight.description}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+        
+        {/* Button */}
+        {heroData.buttonText && (
+          <div>
+            <a 
+              href={heroData.buttonLink || '#'}
+              class="inline-flex items-center gap-2 bg-gold hover:bg-gold-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-inter font-semibold text-base sm:text-lg transition-all duration-300 hover:-translate-y-0.5"
+            >
+              <span>{heroData.buttonText}</span>
+              <svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-icon lucide-arrow-down"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+              </svg>
+            </a>
+          </div>
+        )}
+        
+      </div>
+      
+    </div>
+  </div>
+</section>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+  
+  .prose p {
+    margin: 0 0 1rem 0;
+  }
+  
+  .prose p:last-child {
+    margin-bottom: 0;
+  }
+</style>
+

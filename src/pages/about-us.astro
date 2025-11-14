@@ -1,0 +1,135 @@
+---
+// About Us Page
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeroTailwind from '../components/PageHeroTailwind.astro';
+import BreadcrumbsTailwind from '../components/BreadcrumbsTailwind.astro';
+import AboutHeroTailwind from '../components/AboutHeroTailwind.astro';
+import StatsGridTailwind from '../components/StatsGridTailwind.astro';
+import FlexibleContentBlockTailwind from '../components/FlexibleContentBlockTailwind.astro';
+import WhatDoWeOfferTailwind from '../components/WhatDoWeOfferTailwind.astro';
+import BenefitsGridTailwind from '../components/BenefitsGridTailwind.astro';
+import DragonsDenTailwind from '../components/DragonsDenTailwind.astro';
+import PeopleGridTailwind from '../components/PeopleGridTailwind.astro';
+import HistoryTimelineTailwind from '../components/HistoryTimelineTailwind.astro';
+import InstagramTailwind from '../components/InstagramTailwind.astro';
+import { getAboutPage, getAboutPageSEO, getHomeData } from '../utils/strapi.js';
+
+// Fetch about page data
+let aboutData = null;
+try {
+  aboutData = await getAboutPage();
+  console.log('📖 [about-us] About page data fetched successfully');
+} catch (error) {
+  console.error('❌ [about-us] Error fetching about page:', error.message);
+}
+
+// Fetch SEO data
+let seoData = null;
+try {
+  seoData = await getAboutPageSEO();
+  if (seoData) {
+    console.log('📄 [about-us] SEO data fetched');
+  }
+} catch (error) {
+  console.warn('⚠️  [about-us] Could not fetch SEO data:', error.message);
+}
+
+// Fetch homepage data for Instagram component
+let homepageData = null;
+try {
+  homepageData = await getHomeData();
+  console.log('🏠 [about-us] Homepage data fetched for Instagram');
+} catch (error) {
+  console.warn('⚠️  [about-us] Could not fetch homepage data:', error.message);
+}
+
+// Extract SEO fields
+const pageTitle = seoData?.metaTitle || aboutData?.seo?.metaTitle || 'About Us | Active Away';
+const pageDescription = seoData?.metaDescription || aboutData?.seo?.metaDescription || 'Learn about Active Away - the UK\'s leading tennis and racket holiday specialist.';
+
+// Extract meta image URL properly
+let metaImage = null;
+if (seoData?.metaImage) {
+  metaImage = typeof seoData.metaImage === 'string' ? seoData.metaImage : seoData.metaImage.url;
+} else if (aboutData?.seo?.metaImage) {
+  metaImage = typeof aboutData.seo.metaImage === 'string' ? aboutData.seo.metaImage : aboutData.seo.metaImage.url;
+}
+
+const metaImageAlt = seoData?.metaImageAlt || aboutData?.seo?.metaImageAlt || null;
+const metaImageWidth = seoData?.metaImageWidth || aboutData?.seo?.metaImageWidth || null;
+const metaImageHeight = seoData?.metaImageHeight || aboutData?.seo?.metaImageHeight || null;
+const keywords = seoData?.keywords || aboutData?.seo?.keywords || null;
+const canonicalURL = seoData?.canonicalURL || aboutData?.seo?.canonicalURL || 'https://activeaway.com/about-us';
+---
+
+<BaseLayout 
+  title={pageTitle}
+  description={pageDescription}
+  metaImage={metaImage}
+  metaImageAlt={metaImageAlt}
+  metaImageWidth={metaImageWidth}
+  metaImageHeight={metaImageHeight}
+  keywords={keywords}
+  canonicalURL={canonicalURL}
+>
+  <!-- Page Hero (Background Image) -->
+  {aboutData?.pageHero && (
+    <PageHeroTailwind pageData={aboutData} />
+  )}
+  
+  <!-- Breadcrumbs Section -->
+  {aboutData?.pageHero?.showBreadcrumbs !== false && (
+    <BreadcrumbsTailwind 
+      breadcrumbs={[
+        { label: 'Home', href: '/' },
+        { label: 'About Us' }
+      ]}
+    />
+  )}
+  
+  <!-- About Hero (Meet Active Away Section) -->
+  {aboutData?.hero && (
+    <AboutHeroTailwind aboutData={aboutData} />
+  )}
+  
+  <!-- Stats Section -->
+  {aboutData?.stats && aboutData?.stats?.stats?.length > 0 && (
+    <StatsGridTailwind aboutData={aboutData} />
+  )}
+  
+  <!-- Flexible Content Blocks -->
+  {aboutData?.contentBlocks && aboutData.contentBlocks.map((block) => (
+    <FlexibleContentBlockTailwind block={block} />
+  ))}
+  
+  <!-- What We Offer Section -->
+  {aboutData?.showWhatWeOffer && (
+    <WhatDoWeOfferTailwind homeData={homepageData} />
+  )}
+  
+  <!-- Benefits/Why Choose Section -->
+  {aboutData?.benefits && aboutData?.benefits?.benefits?.length > 0 && (
+    <BenefitsGridTailwind aboutData={aboutData} />
+  )}
+  
+  <!-- Dragons' Den Section -->
+  {aboutData?.dragonsDen && (
+    <DragonsDenTailwind aboutData={aboutData} />
+  )}
+  
+  <!-- Meet Our Team Section -->
+  <PeopleGridTailwind />
+  
+  <!-- History Timeline Section -->
+  {aboutData?.history && aboutData?.history?.events?.length > 0 && (
+    <HistoryTimelineTailwind aboutData={aboutData} />
+  )}
+  
+  <!-- Instagram Section -->
+  {aboutData?.showInstagram && (
+    <InstagramTailwind homeData={homepageData} />
+  )}
+</BaseLayout>
+

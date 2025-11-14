@@ -1,5 +1,6 @@
 ---
 // FAQ Accordion section component for Active Away product pages - Tailwind CSS Version
+import { marked } from 'marked';
 
 interface Props {
   productData?: any;
@@ -7,10 +8,13 @@ interface Props {
 
 const { productData } = Astro.props;
 
+// Get current year for dynamic replacement
+const currentYear = new Date().getFullYear();
+
 // Extract FAQ data with fallbacks
 const faqData = {
   eyebrow: productData?.faq?.eyebrow || 'OTHER INFORMATION',
-  heading: productData?.faq?.heading || 'Frequently Asked Questions',
+  heading: (productData?.faq?.heading || 'Frequently Asked Questions').replace(/{YEAR}/g, currentYear.toString()),
   faqs: productData?.faq?.faqs || []
 };
 
@@ -60,7 +64,7 @@ const hasFAQs = faqData.faqs && faqData.faqs.length > 0;
               <div class="faq-answer max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
                 <div class="px-6 pb-5">
                   <div class="text-base sm:text-lg font-inter text-gray-700 leading-relaxed prose max-w-none">
-                    <Fragment set:html={faq.answer} />
+                    <Fragment set:html={marked.parse(faq.answer || '')} />
                   </div>
                 </div>
               </div>

@@ -5348,3 +5348,195 @@ export async function getProductPageSEO(slug) {
     return null;
   }
 }
+
+/**
+ * ====================================
+ * ABOUT PAGE
+ * ====================================
+ */
+
+/**
+ * Get About Page data with all nested components
+ * @returns {Promise<Object|null>} About page data
+ */
+export async function getAboutPage() {
+  try {
+    console.log('📖 [getAboutPage] Fetching about page data...');
+    
+    const data = await fetchAPI(
+      '/about-page?' +
+      'populate[pageHero][populate]=*&' +
+      'populate[hero][populate]=*&' +
+      'populate[stats][populate]=*&' +
+      'populate[contentBlocks][populate]=*&' +
+      'populate[benefits][populate]=*&' +
+      'populate[dragonsDen][populate]=*&' +
+      'populate[history][populate]=*&' +
+      'populate[seo][populate]=*'
+    );
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getAboutPage] No about page found');
+      return null;
+    }
+    
+    const page = data.data.attributes || data.data;
+    
+    const aboutPage = {
+      title: page.title,
+      displayOnFrontEnd: page.displayOnFrontEnd,
+      
+      pageHero: page.pageHero ? {
+        kicker: page.pageHero.kicker,
+        heading: page.pageHero.heading,
+        subtitle: page.pageHero.subtitle,
+        backgroundImage: getStrapiImageData(page.pageHero.backgroundImage),
+        showBreadcrumbs: page.pageHero.showBreadcrumbs !== false
+      } : null,
+      
+      hero: page.hero ? {
+        eyebrow: page.hero.eyebrow,
+        heading: page.hero.heading,
+        topLeftImage: getStrapiImageData(page.hero.topLeftImage),
+        topRightImage: getStrapiImageData(page.hero.topRightImage),
+        introText: page.hero.introText,
+        bottomLeftImage: getStrapiImageData(page.hero.bottomLeftImage),
+        bottomRightImage: getStrapiImageData(page.hero.bottomRightImage),
+        mainContent: page.hero.mainContent,
+        highlights: page.hero.highlights || [],
+        buttonText: page.hero.buttonText,
+        buttonLink: page.hero.buttonLink
+      } : null,
+      
+      stats: page.stats ? {
+        stats: page.stats.stats || []
+      } : null,
+      
+      contentBlocks: page.contentBlocks ? page.contentBlocks.map(block => ({
+        heading: block.heading,
+        content: block.content,
+        image: getStrapiImageData(block.image),
+        imagePosition: block.imagePosition || 'right',
+        backgroundColor: block.backgroundColor || 'white'
+      })) : [],
+      
+      showWhatWeOffer: page.showWhatWeOffer !== false,
+      
+      benefits: page.benefits ? {
+        heading: page.benefits.heading,
+        benefits: page.benefits.benefits || []
+      } : null,
+      
+      dragonsDen: page.dragonsDen ? {
+        heading: page.dragonsDen.heading,
+        content: page.dragonsDen.content,
+        image: getStrapiImageData(page.dragonsDen.image),
+        videoUrl: page.dragonsDen.videoUrl,
+        buttonText: page.dragonsDen.buttonText,
+        buttonLink: page.dragonsDen.buttonLink,
+        backgroundColor: page.dragonsDen.backgroundColor || 'navy'
+      } : null,
+      
+      history: page.history ? {
+        heading: page.history.heading,
+        events: page.history.events || []
+      } : null,
+      
+      showInstagram: page.showInstagram !== false,
+      
+      seo: page.seo || null
+    };
+    
+    console.log('✅ [getAboutPage] About page data fetched successfully');
+    return aboutPage;
+  } catch (error) {
+    console.error('❌ [getAboutPage] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * Get About Page SEO data
+ * @returns {Promise<Object|null>} SEO data
+ */
+export async function getAboutPageSEO() {
+  try {
+    console.log('📄 [getAboutPageSEO] Fetching SEO for about page...');
+    
+    const data = await fetchAPI('/about-page?populate[seo][populate]=metaImage');
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getAboutPageSEO] No about page found');
+      return null;
+    }
+    
+    const page = data.data.attributes || data.data;
+    const seo = page.seo;
+    
+    if (!seo) {
+      console.warn('⚠️  [getAboutPageSEO] No SEO data');
+      return null;
+    }
+    
+    const seoData = {
+      metaTitle: seo.metaTitle,
+      metaDescription: seo.metaDescription,
+      keywords: seo.keywords,
+      canonicalURL: seo.canonicalURL,
+      metaImage: null,
+      metaImageAlt: seo.metaImageAlt,
+      metaImageWidth: seo.metaImageWidth,
+      metaImageHeight: seo.metaImageHeight
+    };
+    
+    if (seo.metaImage?.data) {
+      const imageData = seo.metaImage.data.attributes || seo.metaImage.data;
+      seoData.metaImage = getStrapiImageUrl(imageData);
+    }
+    
+    console.log('✅ [getAboutPageSEO] SEO data fetched');
+    return seoData;
+  } catch (error) {
+    console.error('❌ [getAboutPageSEO] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * Get all people/team members
+ * @returns {Promise<Array>} Array of people
+ */
+export async function getPeople() {
+  try {
+    console.log('👥 [getPeople] Fetching people...');
+    
+    const data = await fetchAPI(
+      '/people?filters[displayOnAboutPage][$eq]=true&sort=order:asc&populate=*'
+    );
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getPeople] No people found');
+      return [];
+    }
+    
+    const people = data.data.map((item) => {
+      const person = item.attributes || item;
+      return {
+        id: item.id,
+        name: person.name,
+        role: person.role,
+        bio: person.bio,
+        image: getStrapiImageData(person.image),
+        order: person.order || 0,
+        linkedin: person.linkedin,
+        email: person.email
+      };
+    });
+    
+    console.log(`✅ [getPeople] Fetched ${people.length} people`);
+    return people;
+  } catch (error) {
+    console.error('❌ [getPeople] Error:', error);
+    return [];
+  }
+}

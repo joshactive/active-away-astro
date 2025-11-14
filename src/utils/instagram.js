@@ -58,7 +58,7 @@ export async function getInstagramPosts(limit = 6) {
       return [];
     }
 
-    const fields = 'id,caption,media_type,media_url,permalink,timestamp,thumbnail_url';
+    const fields = 'id,caption,media_type,media_url,permalink,timestamp,thumbnail_url,children{media_url,media_type,thumbnail_url}';
     const response = await fetch(
       `https://graph.instagram.com/me/media?fields=${fields}&access_token=${token}&limit=${limit}`
     );
@@ -71,7 +71,22 @@ export async function getInstagramPosts(limit = 6) {
     const data = await response.json();
     console.log(`✅ Fetched ${data.data?.length || 0} Instagram posts`);
 
-    return data.data || [];
+    // Process posts to handle carousels
+    const posts = (data.data || []).map(post => {
+      // If it's a carousel, use the first child's media
+      if (post.media_type === 'CAROUSEL_ALBUM' && post.children?.data?.length > 0) {
+        const firstChild = post.children.data[0];
+        return {
+          ...post,
+          media_url: firstChild.media_url || post.media_url,
+          thumbnail_url: firstChild.thumbnail_url || post.thumbnail_url,
+          media_type: firstChild.media_type || 'IMAGE'
+        };
+      }
+      return post;
+    });
+
+    return posts;
   } catch (error) {
     console.error('❌ Error fetching Instagram posts:', error);
     return [];

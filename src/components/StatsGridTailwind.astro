@@ -1,0 +1,116 @@
+---
+// Stats Grid section component - Tailwind CSS Version
+
+interface Props {
+  aboutData?: any;
+}
+
+const { aboutData } = Astro.props;
+
+const statsData = {
+  stats: aboutData?.stats?.stats || []
+};
+
+const hasStats = statsData.stats && statsData.stats.length > 0;
+---
+
+{hasStats && (
+  <section class="w-full bg-gray-50 py-12 sm:py-16 lg:py-20">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 lg:gap-12">
+        {statsData.stats.map((stat, index) => (
+          <div class="text-center">
+            <div 
+              class="stat-number text-4xl sm:text-5xl lg:text-6xl font-playfair font-bold text-[#ad986c] mb-2"
+              data-target={stat.number}
+              data-index={index}
+            >
+              0
+            </div>
+            <div class="text-sm sm:text-base lg:text-lg font-inter font-medium text-gray-700">
+              {stat.label}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+)}
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const statNumbers = document.querySelectorAll('.stat-number');
+    let hasAnimated = false;
+    
+    // Extract number from string like "7,000+" or "20+"
+    function extractNumber(str) {
+      const cleaned = str.replace(/[,+]/g, '');
+      return parseInt(cleaned) || 0;
+    }
+    
+    // Animate a single stat
+    function animateStat(element, targetStr) {
+      const suffix = targetStr.includes('+') ? '+' : '';
+      const hasComma = targetStr.includes(',');
+      const target = extractNumber(targetStr);
+      const duration = 2000; // 2 seconds
+      const fps = 60;
+      const totalFrames = (duration / 1000) * fps;
+      const increment = target / totalFrames;
+      
+      let current = 0;
+      let frame = 0;
+      
+      const timer = setInterval(() => {
+        frame++;
+        current += increment;
+        
+        if (frame >= totalFrames) {
+          current = target;
+          clearInterval(timer);
+        }
+        
+        let displayNum = Math.floor(current);
+        if (hasComma && displayNum >= 1000) {
+          displayNum = displayNum.toLocaleString();
+        }
+        element.textContent = displayNum + suffix;
+      }, 1000 / fps);
+    }
+    
+    // Use Intersection Observer to trigger when in viewport
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting && !hasAnimated) {
+          hasAnimated = true;
+          statNumbers.forEach((stat) => {
+            const target = stat.getAttribute('data-target');
+            if (target) {
+              animateStat(stat, target);
+            }
+          });
+        }
+      });
+    }, {
+      threshold: 0.3
+    });
+    
+    if (statNumbers.length > 0) {
+      const section = statNumbers[0].closest('section');
+      if (section) {
+        observer.observe(section);
+      }
+    }
+  });
+</script>
+

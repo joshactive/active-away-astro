@@ -1,6 +1,7 @@
 ---
 // Two Column Content section for product pages - Tailwind CSS Version
 import { getStrapiImageAttrs } from '../utils/cloudflareImages.js';
+import { marked } from 'marked';
 
 interface Props {
   productData?: any;
@@ -101,7 +102,7 @@ const hasContent = contentData.leftBlock || contentData.rightBlock;
             {/* Content */}
             {contentData.leftBlock.content && (
               <div class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed prose prose-lg max-w-none">
-                <Fragment set:html={contentData.leftBlock.content} />
+                <Fragment set:html={marked.parse(contentData.leftBlock.content)} />
               </div>
             )}
             
@@ -154,7 +155,7 @@ const hasContent = contentData.leftBlock || contentData.rightBlock;
             {/* Content */}
             {contentData.rightBlock.content && (
               <div class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed prose prose-lg max-w-none">
-                <Fragment set:html={contentData.rightBlock.content} />
+                <Fragment set:html={marked.parse(contentData.rightBlock.content)} />
               </div>
             )}
             
@@ -213,6 +214,16 @@ const hasContent = contentData.leftBlock || contentData.rightBlock;
   .prose strong {
     font-weight: 600;
     color: rgb(17 24 39);
+  }
+  
+  .prose a {
+    color: #ad986c;
+    text-decoration: underline;
+    transition: color 0.2s ease;
+  }
+  
+  .prose a:hover {
+    color: #8a7454;
   }
 </style>
 

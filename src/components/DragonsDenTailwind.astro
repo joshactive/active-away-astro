@@ -1,0 +1,249 @@
+---
+// Dragons' Den section component - Tailwind CSS Version
+import { getStrapiImageAttrs } from '../utils/cloudflareImages.js';
+
+interface Props {
+  aboutData?: any;
+}
+
+const { aboutData } = Astro.props;
+
+const dragonsDenData = {
+  heading: aboutData?.dragonsDen?.heading || '',
+  content: aboutData?.dragonsDen?.content || '',
+  image: aboutData?.dragonsDen?.image || null,
+  videoUrl: aboutData?.dragonsDen?.videoUrl || null,
+  buttonText: aboutData?.dragonsDen?.buttonText || null,
+  buttonLink: aboutData?.dragonsDen?.buttonLink || null,
+  backgroundColor: aboutData?.dragonsDen?.backgroundColor || 'navy'
+};
+
+// Process image
+let imageAttrs = null;
+if (dragonsDenData.image) {
+  const imageUrl = dragonsDenData.image.url || dragonsDenData.image;
+  const imageAlt = dragonsDenData.image.alt || dragonsDenData.image.alternativeText || dragonsDenData.heading;
+  
+  if (typeof imageUrl === 'string') {
+    imageAttrs = getStrapiImageAttrs(
+      { url: imageUrl, alt: imageAlt },
+      {
+        displayWidth: 800,
+        displayHeight: 600,
+        fit: 'cover',
+        sizes: '(max-width: 1024px) 100vw, 50vw',
+        quality: 80
+      }
+    );
+    
+    if (!imageAttrs) {
+      imageAttrs = {
+        src: imageUrl,
+        url: imageUrl,
+        alt: imageAlt,
+        loading: 'lazy'
+      };
+    }
+  }
+}
+
+// Extract YouTube ID
+function extractYouTubeId(url: string) {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.includes('youtu.be')) return parsed.pathname.replace('/', '');
+    if (parsed.searchParams.has('v')) return parsed.searchParams.get('v');
+    const pathSegments = parsed.pathname.split('/').filter(Boolean);
+    if (pathSegments[0] === 'embed' && pathSegments[1]) return pathSegments[1];
+  } catch (error) {
+    console.warn('Unable to parse YouTube URL', url, error);
+  }
+  return null;
+}
+
+const youTubeId = dragonsDenData.videoUrl ? extractYouTubeId(dragonsDenData.videoUrl) : null;
+const youTubeThumbnail = youTubeId ? `https://i.ytimg.com/vi/${youTubeId}/maxresdefault.jpg` : null;
+
+const bgClass = dragonsDenData.backgroundColor === 'grey' ? 'bg-gray-50' : dragonsDenData.backgroundColor === 'navy' ? 'bg-[#0D1C4E]' : 'bg-white';
+const textColor = dragonsDenData.backgroundColor === 'navy' ? 'text-white' : 'text-gray-900';
+const descColor = dragonsDenData.backgroundColor === 'navy' ? 'text-gray-100' : 'text-gray-800';
+
+const hasContent = dragonsDenData.heading || dragonsDenData.content;
+---
+
+{hasContent && (
+  <section class={`w-full ${bgClass} py-12 sm:py-16 lg:py-24`}>
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+        
+        <!-- Content Side -->
+        <div>
+          {dragonsDenData.heading && (
+            <h2 class={`text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold ${textColor} mb-4 sm:mb-6`}>
+              {dragonsDenData.heading}
+            </h2>
+          )}
+          
+          {dragonsDenData.content && (
+            <div class={`text-base sm:text-lg font-inter ${descColor} leading-relaxed mb-6 sm:mb-8 prose ${dragonsDenData.backgroundColor === 'navy' ? 'prose-invert' : ''} max-w-none`}>
+              <Fragment set:html={dragonsDenData.content} />
+            </div>
+          )}
+          
+          {dragonsDenData.buttonText && (
+            <a 
+              href={dragonsDenData.buttonLink || '#'}
+              class="inline-flex items-center gap-2 bg-gold hover:bg-gold-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-inter font-semibold text-base sm:text-lg transition-all duration-300"
+            >
+              <span>{dragonsDenData.buttonText}</span>
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                <path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          )}
+        </div>
+        
+        <!-- Media Side -->
+        <div>
+          {youTubeId ? (
+            <div class="relative w-full aspect-video rounded-2xl overflow-hidden shadow-lg">
+              <button 
+                type="button"
+                class="lite-youtube-dragons group w-full h-full"
+                data-video-id={youTubeId}
+                aria-label={`Play ${dragonsDenData.heading} video`}
+              >
+                {youTubeThumbnail && (
+                  <img 
+                    src={youTubeThumbnail}
+                    alt={`${dragonsDenData.heading} video thumbnail`}
+                    loading="lazy"
+                    decoding="async"
+                    class="absolute inset-0 w-full h-full object-cover"
+                  />
+                )}
+                <span class="lite-youtube__play"></span>
+              </button>
+            </div>
+          ) : imageAttrs ? (
+            <div class="rounded-2xl overflow-hidden shadow-lg">
+              <img 
+                src={imageAttrs.src || imageAttrs.url}
+                {...(imageAttrs.srcset && { srcset: imageAttrs.srcset })}
+                {...(imageAttrs.sizes && { sizes: imageAttrs.sizes })}
+                alt={imageAttrs.alt}
+                width={imageAttrs.width || 800}
+                height={imageAttrs.height || 600}
+                class="w-full h-auto object-cover"
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
+          ) : null}
+        </div>
+        
+      </div>
+    </div>
+  </section>
+)}
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+  
+  /* Prose white text for navy background */
+  .prose-invert p {
+    color: rgb(243 244 246);
+  }
+  
+  /* YouTube styles */
+  .lite-youtube-dragons {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+  }
+
+  .lite-youtube-dragons img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .lite-youtube__play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 68px;
+    height: 48px;
+    transform: translate(-50%, -50%);
+    background: rgba(33, 33, 33, 0.8);
+    border-radius: 14px;
+    transition: background 0.3s ease;
+    z-index: 10;
+  }
+
+  .lite-youtube__play::before {
+    content: '';
+    position: absolute;
+    left: 22px;
+    top: 14px;
+    border-style: solid;
+    border-width: 10px 0 10px 16px;
+    border-color: transparent transparent transparent #fff;
+  }
+
+  .lite-youtube-dragons:hover .lite-youtube__play {
+    background: rgba(214, 0, 0, 0.9);
+  }
+</style>
+
+{youTubeId && (
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.lite-youtube-dragons').forEach((trigger) => {
+        trigger.addEventListener('click', () => {
+          const videoId = trigger.getAttribute('data-video-id');
+          if (!videoId) return;
+          const iframe = document.createElement('iframe');
+          iframe.setAttribute('allowfullscreen', '');
+          iframe.setAttribute('loading', 'lazy');
+          iframe.setAttribute('title', 'Dragons Den video');
+          iframe.setAttribute(
+            'src',
+            `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`
+          );
+          iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+          iframe.style.position = 'absolute';
+          iframe.style.inset = '0';
+          iframe.style.width = '100%';
+          iframe.style.height = '100%';
+          iframe.style.border = 'none';
+
+          const wrapper = document.createElement('div');
+          wrapper.style.position = 'absolute';
+          wrapper.style.inset = '0';
+          wrapper.style.width = '100%';
+          wrapper.style.height = '100%';
+          wrapper.appendChild(iframe);
+
+          trigger.replaceWith(wrapper);
+        }, { once: true });
+      });
+    });
+  </script>
+)}
+

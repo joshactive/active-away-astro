@@ -844,7 +844,7 @@ const logoUrl = getImageByName('logo', { width: 180, height: 50, fit: 'cover', f
                         <h4 class="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2 px-2">Find your next...</h4>
                         <div class="space-y-1">
                           {datesMenuData.findYourNext.map((link) => (
-                            <a href={link.href} onclick="closeMobileMenu()" class="block py-2 px-3 text-sm text-gray-700 hover:text-gold-700 hover:bg-white rounded-lg transition-colors">
+                            <a href={link.href} onclick="closeMobileMenu()" class="block py-2 px-3 text-base text-gray-700 hover:text-gold-700 hover:bg-white rounded-lg transition-colors">
                               {link.name}
                             </a>
                           ))}
@@ -854,7 +854,7 @@ const logoUrl = getImageByName('logo', { width: 180, height: 50, fit: 'cover', f
                         <h4 class="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2 px-2">Useful Links</h4>
                         <div class="space-y-1">
                           {datesMenuData.usefulLinks.map((link) => (
-                            <a href={link.href} onclick="closeMobileMenu()" class="block py-2 px-3 text-sm text-gray-700 hover:text-gold-700 hover:bg-white rounded-lg transition-colors">
+                            <a href={link.href} onclick="closeMobileMenu()" class="block py-2 px-3 text-base text-gray-700 hover:text-gold-700 hover:bg-white rounded-lg transition-colors">
                               {link.name}
                             </a>
                           ))}
@@ -883,8 +883,8 @@ const logoUrl = getImageByName('logo', { width: 180, height: 50, fit: 'cover', f
                     <div class="space-y-2 pt-3">
                       {aboutMegaMenuItems.map((aItem) => (
                         <a href={aItem.href} onclick="closeMobileMenu()" class="block p-3 rounded-lg hover:bg-white transition-colors">
-                          <h5 class="font-semibold text-sm text-gray-900 mb-1">{aItem.title}</h5>
-                          <p class="text-xs text-gray-600">{aItem.description}</p>
+                          <h5 class="font-semibold text-base text-gray-900 mb-1">{aItem.title}</h5>
+                          <p class="text-sm text-gray-600">{aItem.description}</p>
                         </a>
                       ))}
                     </div>
@@ -896,7 +896,7 @@ const logoUrl = getImageByName('logo', { width: 180, height: 50, fit: 'cover', f
                           <h4 class="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2 px-2">{category.label}</h4>
                           <div class="space-y-1">
                             {category.destinations.slice(0, 5).map((dest) => (
-                              <a href={dest.href} onclick="closeMobileMenu()" class="block py-2 px-3 text-sm text-gray-700 hover:text-gold-700 hover:bg-white rounded-lg transition-colors">
+                              <a href={dest.href} onclick="closeMobileMenu()" class="block py-2 px-3 text-base text-gray-700 hover:text-gold-700 hover:bg-white rounded-lg transition-colors">
                                 {dest.name}
                               </a>
                             ))}
@@ -904,7 +904,7 @@ const logoUrl = getImageByName('logo', { width: 180, height: 50, fit: 'cover', f
                               <>
                                 <div id={`mobile-dest-hidden-${categoryIndex}`} class="hidden space-y-1">
                                   {category.destinations.slice(5).map((dest) => (
-                                    <a href={dest.href} onclick="closeMobileMenu()" class="block py-2 px-3 text-sm text-gray-700 hover:text-gold-700 hover:bg-white rounded-lg transition-colors">
+                                    <a href={dest.href} onclick="closeMobileMenu()" class="block py-2 px-3 text-base text-gray-700 hover:text-gold-700 hover:bg-white rounded-lg transition-colors">
                                       {dest.name}
                                     </a>
                                   ))}
@@ -912,7 +912,7 @@ const logoUrl = getImageByName('logo', { width: 180, height: 50, fit: 'cover', f
                                 <button 
                                   type="button"
                                   onclick={`toggleDestinationCategory(${categoryIndex})`}
-                                  class="mobile-dest-toggle w-full py-2 px-3 text-sm text-gold-700 font-medium hover:bg-white rounded-lg transition-colors text-left flex items-center justify-between"
+                                  class="mobile-dest-toggle w-full py-2 px-3 text-base text-gold-700 font-medium hover:bg-white rounded-lg transition-colors text-left flex items-center justify-between"
                                   data-category={categoryIndex}
                                 >
                                   <span class="toggle-text">Show more</span>

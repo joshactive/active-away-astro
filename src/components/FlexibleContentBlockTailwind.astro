@@ -1,0 +1,171 @@
+---
+// Flexible Content Block component - Tailwind CSS Version
+import { getStrapiImageAttrs } from '../utils/cloudflareImages.js';
+
+interface Props {
+  block: any;
+}
+
+const { block } = Astro.props;
+
+// Process image
+let imageAttrs = null;
+if (block.image) {
+  const imageUrl = block.image.url || block.image;
+  const imageAlt = block.image.alt || block.image.alternativeText || block.heading;
+  
+  if (typeof imageUrl === 'string') {
+    imageAttrs = getStrapiImageAttrs(
+      { url: imageUrl, alt: imageAlt },
+      {
+        displayWidth: 700,
+        displayHeight: 500,
+        fit: 'cover',
+        sizes: '(max-width: 1024px) 100vw, 50vw',
+        quality: 75
+      }
+    );
+    
+    if (!imageAttrs) {
+      imageAttrs = {
+        src: imageUrl,
+        url: imageUrl,
+        alt: imageAlt,
+        loading: 'lazy'
+      };
+    }
+  }
+}
+
+const bgClass = block.backgroundColor === 'grey' ? 'bg-gray-50' : 'bg-white';
+const isImageLeft = block.imagePosition === 'left';
+const isImageRight = block.imagePosition === 'right';
+const isImageTop = block.imagePosition === 'top';
+const isImageBottom = block.imagePosition === 'bottom';
+---
+
+<section class={`w-full ${bgClass} py-12 sm:py-16 lg:py-24`}>
+  <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+    
+    {(isImageLeft || isImageRight) ? (
+      <!-- Side-by-Side Layout -->
+      <div class={`grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center ${isImageLeft ? 'lg:flex-row-reverse' : ''}`}>
+        
+        {isImageLeft && imageAttrs && (
+          <div class="rounded-2xl overflow-hidden shadow-lg lg:order-first">
+            <img 
+              src={imageAttrs.src || imageAttrs.url}
+              {...(imageAttrs.srcset && { srcset: imageAttrs.srcset })}
+              {...(imageAttrs.sizes && { sizes: imageAttrs.sizes })}
+              alt={imageAttrs.alt}
+              width={imageAttrs.width || 700}
+              height={imageAttrs.height || 500}
+              class="w-full h-auto object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+        )}
+        
+        <div class={isImageLeft ? 'lg:order-last' : ''}>
+          {block.heading && (
+            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-4 sm:mb-6">
+              {block.heading}
+            </h2>
+          )}
+          {block.content && (
+            <div class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed prose prose-lg max-w-none">
+              <Fragment set:html={block.content} />
+            </div>
+          )}
+        </div>
+        
+        {isImageRight && imageAttrs && (
+          <div class="rounded-2xl overflow-hidden shadow-lg">
+            <img 
+              src={imageAttrs.src || imageAttrs.url}
+              {...(imageAttrs.srcset && { srcset: imageAttrs.srcset })}
+              {...(imageAttrs.sizes && { sizes: imageAttrs.sizes })}
+              alt={imageAttrs.alt}
+              width={imageAttrs.width || 700}
+              height={imageAttrs.height || 500}
+              class="w-full h-auto object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+        )}
+        
+      </div>
+    ) : (
+      <!-- Top/Bottom Layout -->
+      <div class="max-w-4xl mx-auto text-center">
+        
+        {isImageTop && imageAttrs && (
+          <div class="rounded-2xl overflow-hidden shadow-lg mb-6 sm:mb-8">
+            <img 
+              src={imageAttrs.src || imageAttrs.url}
+              {...(imageAttrs.srcset && { srcset: imageAttrs.srcset })}
+              {...(imageAttrs.sizes && { sizes: imageAttrs.sizes })}
+              alt={imageAttrs.alt}
+              width={imageAttrs.width || 700}
+              height={imageAttrs.height || 500}
+              class="w-full h-auto object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+        )}
+        
+        {block.heading && (
+          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-4 sm:mb-6">
+            {block.heading}
+          </h2>
+        )}
+        
+        {block.content && (
+          <div class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed prose prose-lg max-w-none">
+            <Fragment set:html={block.content} />
+          </div>
+        )}
+        
+        {isImageBottom && imageAttrs && (
+          <div class="rounded-2xl overflow-hidden shadow-lg mt-6 sm:mt-8">
+            <img 
+              src={imageAttrs.src || imageAttrs.url}
+              {...(imageAttrs.srcset && { srcset: imageAttrs.srcset })}
+              {...(imageAttrs.sizes && { sizes: imageAttrs.sizes })}
+              alt={imageAttrs.alt}
+              width={imageAttrs.width || 700}
+              height={imageAttrs.height || 500}
+              class="w-full h-auto object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+        )}
+        
+      </div>
+    )}
+    
+  </div>
+</section>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+  
+  .prose p {
+    margin: 0 0 1rem 0;
+  }
+  
+  .prose p:last-child {
+    margin-bottom: 0;
+  }
+</style>
+
