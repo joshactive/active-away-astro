@@ -1,0 +1,145 @@
+---
+// Announcement Bar component - Appears above navigation
+import { getAnnouncementBar } from '../utils/strapi.js';
+
+// Fetch announcement bar data
+let announcementData = null;
+try {
+  announcementData = await getAnnouncementBar();
+} catch (error) {
+  console.warn('⚠️  Could not fetch announcement bar:', error.message);
+}
+
+// Only render if active
+const shouldShow = announcementData && announcementData.isActive;
+
+// Extract data with defaults
+const barData = shouldShow ? {
+  message: announcementData.message,
+  ctaText: announcementData.ctaText,
+  ctaLink: announcementData.ctaLink,
+  backgroundColorStart: announcementData.backgroundColorStart || '#0D1C4E',
+  backgroundColorEnd: announcementData.backgroundColorEnd || '#0a1539',
+  textColor: announcementData.textColor || '#FFFFFF',
+  ctaTextColor: announcementData.ctaTextColor || '#FFFFFF',
+  ctaHoverColor: announcementData.ctaHoverColor || '#ad986c',
+  isDismissible: announcementData.isDismissible !== false,
+  cookieName: announcementData.cookieName || 'announcement-dismissed'
+} : null;
+
+const gradientStyle = barData ? `background: linear-gradient(to right, ${barData.backgroundColorStart}, ${barData.backgroundColorEnd});` : '';
+---
+
+{shouldShow && (
+  <div 
+    id="announcement-bar" 
+    class="announcement-bar w-full py-3 sticky top-0 z-[60]"
+    style={gradientStyle}
+    data-cookie-name={barData.cookieName}
+  >
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      <div class="flex items-center justify-between gap-4">
+        
+        <!-- Message -->
+        <div 
+          class="text-sm sm:text-base font-inter flex-1 text-left"
+          style={`color: ${barData.textColor};`}
+        >
+          {barData.message}
+        </div>
+        
+        <!-- Right Side: CTA + Close -->
+        <div class="flex items-center gap-4">
+          
+          <!-- CTA Link (Text with Arrow) -->
+          {barData.ctaText && barData.ctaLink && (
+            <a 
+              href={barData.ctaLink}
+              class="announcement-cta inline-flex items-center gap-2 text-sm sm:text-base font-inter font-semibold transition-colors whitespace-nowrap"
+              style={`color: ${barData.ctaTextColor};`}
+              data-hover-color={barData.ctaHoverColor}
+            >
+              <span>{barData.ctaText}</span>
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 17L17 7M17 7H7M17 7V17" />
+              </svg>
+            </a>
+          )}
+          
+          <!-- Close Button -->
+          {barData.isDismissible && (
+            <button 
+              type="button"
+              class="announcement-close flex-shrink-0 p-1 transition-opacity hover:opacity-70"
+              aria-label="Close announcement"
+              style={`color: ${barData.textColor};`}
+            >
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+          
+        </div>
+        
+      </div>
+    </div>
+  </div>
+)}
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+</style>
+
+<script is:inline define:vars={{ barData }}>
+  // Client-side logic for announcement bar
+  (function() {
+    if (!barData) return;
+    
+    const bar = document.getElementById('announcement-bar');
+    const closeBtn = bar?.querySelector('.announcement-close');
+    const cta = bar?.querySelector('.announcement-cta');
+    const cookieName = barData.cookieName;
+    
+    // Check if announcement was dismissed
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+      return null;
+    }
+    
+    // Set cookie
+    function setCookie(name, value, days) {
+      const expires = new Date();
+      expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+      document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+    }
+    
+    // Hide bar if dismissed (start visible to prevent CLS)
+    if (bar && getCookie(cookieName)) {
+      bar.style.display = 'none';
+    }
+    
+    // Handle close button
+    if (closeBtn && barData.isDismissible) {
+      closeBtn.addEventListener('click', () => {
+        bar.style.display = 'none';
+        setCookie(cookieName, 'true', 7); // Remember for 7 days
+      });
+    }
+    
+    // Handle CTA hover color
+    if (cta && barData.ctaHoverColor) {
+      cta.addEventListener('mouseenter', () => {
+        cta.style.color = barData.ctaHoverColor;
+      });
+      cta.addEventListener('mouseleave', () => {
+        cta.style.color = barData.ctaTextColor;
+      });
+    }
+  })();
+</script>
+

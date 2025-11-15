@@ -5510,6 +5510,199 @@ export async function getAboutPageSEO() {
 }
 
 /**
+ * ====================================
+ * ANNOUNCEMENT BAR
+ * ====================================
+ */
+
+/**
+ * Get announcement bar data
+ * @returns {Promise<Object|null>} Announcement bar data or null if inactive
+ */
+export async function getAnnouncementBar() {
+  try {
+    console.log('📣 [getAnnouncementBar] Fetching announcement bar...');
+    
+    const data = await fetchAPI('/announcement-bar');
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getAnnouncementBar] No announcement bar found');
+      return null;
+    }
+    
+    const bar = data.data.attributes || data.data;
+    
+    // Only return if active
+    if (!bar.isActive) {
+      console.log('ℹ️  [getAnnouncementBar] Announcement bar is inactive');
+      return null;
+    }
+    
+    const announcementBar = {
+      isActive: bar.isActive,
+      message: bar.message,
+      ctaText: bar.ctaText,
+      ctaLink: bar.ctaLink,
+      backgroundColorStart: bar.backgroundColorStart || '#0D1C4E',
+      backgroundColorEnd: bar.backgroundColorEnd || '#0a1539',
+      textColor: bar.textColor || '#FFFFFF',
+      ctaTextColor: bar.ctaTextColor || '#FFFFFF',
+      ctaHoverColor: bar.ctaHoverColor || '#ad986c',
+      isDismissible: bar.isDismissible !== false,
+      cookieName: bar.cookieName || 'announcement-dismissed'
+    };
+    
+    console.log('✅ [getAnnouncementBar] Announcement bar fetched');
+    return announcementBar;
+  } catch (error) {
+    console.error('❌ [getAnnouncementBar] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * ====================================
+ * DRAGONS' DEN PAGE
+ * ====================================
+ */
+
+/**
+ * Get Dragons' Den Page data
+ * @returns {Promise<Object|null>} Dragons' Den page data
+ */
+export async function getDragonsDenPage() {
+  try {
+    console.log('🐲 [getDragonsDenPage] Fetching Dragons Den page...');
+    
+    const data = await fetchAPI(
+      '/dragons-den-page?' +
+      'populate[pageHero][populate]=*&' +
+      'populate[quote][populate]=*&' +
+      'populate[video1][populate]=*&' +
+      'populate[contentBlock][populate]=*&' +
+      'populate[video2][populate]=*&' +
+      'populate[faq][populate]=*&' +
+      'populate[seo][populate]=*'
+    );
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getDragonsDenPage] No Dragons Den page found');
+      return null;
+    }
+    
+    const page = data.data.attributes || data.data;
+    
+    const dragonsDenPage = {
+      title: page.title,
+      displayOnFrontEnd: page.displayOnFrontEnd,
+      
+      pageHero: page.pageHero ? {
+        kicker: page.pageHero.kicker,
+        heading: page.pageHero.heading,
+        subtitle: page.pageHero.subtitle,
+        backgroundImage: getStrapiImageData(page.pageHero.backgroundImage),
+        showBreadcrumbs: page.pageHero.showBreadcrumbs !== false
+      } : null,
+      
+      quote: page.quote ? {
+        eyebrow: page.quote.eyebrow,
+        quoteText: page.quote.quoteText,
+        authorName: page.quote.authorName,
+        authorImages: getStrapiImagesData(page.quote.authorImages),
+        decorativeIcon: getStrapiImageData(page.quote.decorativeIcon)
+      } : null,
+      
+      video1: page.video1 ? {
+        heading: page.video1.heading,
+        content: page.video1.content,
+        videoUrl: page.video1.videoUrl,
+        layout: page.video1.layout || 'side-by-side',
+        backgroundColor: page.video1.backgroundColor || 'white'
+      } : null,
+      
+      contentBlock: page.contentBlock ? {
+        heading: page.contentBlock.heading,
+        content: page.contentBlock.content,
+        image: getStrapiImageData(page.contentBlock.image),
+        imagePosition: page.contentBlock.imagePosition || 'right',
+        backgroundColor: page.contentBlock.backgroundColor || 'white'
+      } : null,
+      
+      video2: page.video2 ? {
+        heading: page.video2.heading,
+        content: page.video2.content,
+        videoUrl: page.video2.videoUrl,
+        layout: page.video2.layout || 'stacked',
+        backgroundColor: page.video2.backgroundColor || 'grey'
+      } : null,
+      
+      showProductsGrid: page.showProductsGrid !== false,
+      
+      faq: page.faq ? {
+        eyebrow: page.faq.eyebrow,
+        heading: page.faq.heading,
+        faqs: page.faq.faqs || []
+      } : null,
+      
+      seo: page.seo || null
+    };
+    
+    console.log('✅ [getDragonsDenPage] Dragons Den page fetched');
+    return dragonsDenPage;
+  } catch (error) {
+    console.error('❌ [getDragonsDenPage] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * Get Dragons' Den Page SEO data
+ * @returns {Promise<Object|null>} SEO data
+ */
+export async function getDragonsDenPageSEO() {
+  try {
+    console.log('📄 [getDragonsDenPageSEO] Fetching SEO...');
+    
+    const data = await fetchAPI('/dragons-den-page?populate[seo][populate]=metaImage');
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getDragonsDenPageSEO] No page found');
+      return null;
+    }
+    
+    const page = data.data.attributes || data.data;
+    const seo = page.seo;
+    
+    if (!seo) {
+      console.warn('⚠️  [getDragonsDenPageSEO] No SEO data');
+      return null;
+    }
+    
+    const seoData = {
+      metaTitle: seo.metaTitle,
+      metaDescription: seo.metaDescription,
+      keywords: seo.keywords,
+      canonicalURL: seo.canonicalURL,
+      metaImage: null,
+      metaImageAlt: seo.metaImageAlt,
+      metaImageWidth: seo.metaImageWidth,
+      metaImageHeight: seo.metaImageHeight
+    };
+    
+    if (seo.metaImage?.data) {
+      const imageData = seo.metaImage.data.attributes || seo.metaImage.data;
+      seoData.metaImage = getStrapiImageUrl(imageData);
+    }
+    
+    console.log('✅ [getDragonsDenPageSEO] SEO fetched');
+    return seoData;
+  } catch (error) {
+    console.error('❌ [getDragonsDenPageSEO] Error:', error);
+    return null;
+  }
+}
+
+/**
  * Get all people/team members from Team single-type
  * @returns {Promise<Array>} Array of people
  */

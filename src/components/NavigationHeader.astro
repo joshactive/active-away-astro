@@ -284,11 +284,20 @@ const isMenuItemActive = (href) => {
 // Use Strapi data or fallback
 let menuItems = navMenuData?.menuItems || defaultMenuItems;
 
-// Hardcode: Home is always active, others are not
-menuItems = menuItems.map(item => ({
-  ...item,
-  isActive: item.label === 'Home'
-}));
+// Set active state based on current path
+menuItems = menuItems.map(item => {
+  // Fix: If Home link is /home, correct it to /
+  let href = item.href;
+  if (item.label === 'Home' && href === '/home') {
+    href = '/';
+  }
+  
+  return {
+    ...item,
+    href: href,
+    isActive: isMenuItemActive(href)
+  };
+});
 
 const datesMenuData = navMenuData?.datesMenuData || defaultDatesMenuData;
 const racketsMegaMenuItems = navMenuData?.racketsMegaMenuItems || defaultRacketsMegaMenuItems;

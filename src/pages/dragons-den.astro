@@ -1,0 +1,123 @@
+---
+// Dragons' Den Page
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeroTailwind from '../components/PageHeroTailwind.astro';
+import BreadcrumbsTailwind from '../components/BreadcrumbsTailwind.astro';
+import QuoteSectionTailwind from '../components/QuoteSectionTailwind.astro';
+import VideoContentBlockTailwind from '../components/VideoContentBlockTailwind.astro';
+import FlexibleContentBlockTailwind from '../components/FlexibleContentBlockTailwind.astro';
+import WhatDoWeOfferTailwind from '../components/WhatDoWeOfferTailwind.astro';
+import FAQAccordionTailwind from '../components/FAQAccordionTailwind.astro';
+import { getDragonsDenPage, getDragonsDenPageSEO, getHomeData } from '../utils/strapi.js';
+
+// Fetch Dragons' Den page data
+let dragonsData = null;
+try {
+  dragonsData = await getDragonsDenPage();
+  console.log('🐲 [dragons-den] Page data fetched');
+} catch (error) {
+  console.error('❌ [dragons-den] Error fetching page:', error.message);
+}
+
+// Fetch SEO data
+let seoData = null;
+try {
+  seoData = await getDragonsDenPageSEO();
+  if (seoData) {
+    console.log('📄 [dragons-den] SEO data fetched');
+  }
+} catch (error) {
+  console.warn('⚠️  [dragons-den] Could not fetch SEO data:', error.message);
+}
+
+// Fetch homepage data for products grid
+let homepageData = null;
+try {
+  homepageData = await getHomeData();
+  console.log('🏠 [dragons-den] Homepage data fetched for products');
+} catch (error) {
+  console.warn('⚠️  [dragons-den] Could not fetch homepage data:', error.message);
+}
+
+// Extract SEO fields
+const pageTitle = seoData?.metaTitle || dragonsData?.seo?.metaTitle || 'Dragons\' Den | Active Away';
+const pageDescription = seoData?.metaDescription || dragonsData?.seo?.metaDescription || 'Discover how Active Away secured investment from Peter Jones on Dragons\' Den.';
+
+// Extract meta image URL properly
+let metaImage = null;
+if (seoData?.metaImage) {
+  metaImage = typeof seoData.metaImage === 'string' ? seoData.metaImage : seoData.metaImage.url;
+} else if (dragonsData?.seo?.metaImage) {
+  metaImage = typeof dragonsData.seo.metaImage === 'string' ? dragonsData.seo.metaImage : dragonsData.seo.metaImage.url;
+}
+
+const metaImageAlt = seoData?.metaImageAlt || dragonsData?.seo?.metaImageAlt || null;
+const metaImageWidth = seoData?.metaImageWidth || dragonsData?.seo?.metaImageWidth || null;
+const metaImageHeight = seoData?.metaImageHeight || dragonsData?.seo?.metaImageHeight || null;
+const keywords = seoData?.keywords || dragonsData?.seo?.keywords || null;
+const canonicalURL = seoData?.canonicalURL || dragonsData?.seo?.canonicalURL || 'https://activeaway.com/dragons-den';
+
+// Prepare data object for quote component
+const quoteData = {
+  quote: dragonsData?.quote || null
+};
+---
+
+<BaseLayout 
+  title={pageTitle}
+  description={pageDescription}
+  metaImage={metaImage}
+  metaImageAlt={metaImageAlt}
+  metaImageWidth={metaImageWidth}
+  metaImageHeight={metaImageHeight}
+  keywords={keywords}
+  canonicalURL={canonicalURL}
+>
+  <!-- Page Hero (Background Image) -->
+  {dragonsData?.pageHero && (
+    <PageHeroTailwind pageData={dragonsData} />
+  )}
+  
+  <!-- Breadcrumbs Section -->
+  {dragonsData?.pageHero?.showBreadcrumbs !== false && (
+    <BreadcrumbsTailwind 
+      breadcrumbs={[
+        { label: 'Home', href: '/' },
+        { label: 'Dragons\' Den' }
+      ]}
+    />
+  )}
+  
+  <!-- Quote Section -->
+  {dragonsData?.quote && (
+    <QuoteSectionTailwind productData={quoteData} />
+  )}
+  
+  <!-- Video Section 1 -->
+  {dragonsData?.video1 && (
+    <VideoContentBlockTailwind videoBlock={dragonsData.video1} />
+  )}
+  
+  <!-- Content Block (Story) -->
+  {dragonsData?.contentBlock && (
+    <FlexibleContentBlockTailwind block={dragonsData.contentBlock} />
+  )}
+  
+  <!-- Video Section 2 -->
+  {dragonsData?.video2 && (
+    <VideoContentBlockTailwind videoBlock={dragonsData.video2} />
+  )}
+  
+  <!-- Products Grid -->
+  {dragonsData?.showProductsGrid && (
+    <WhatDoWeOfferTailwind homeData={homepageData} backgroundColor="grey" />
+  )}
+  
+  <!-- FAQ Section -->
+  {dragonsData?.faq && dragonsData?.faq?.faqs?.length > 0 && (
+    <FAQAccordionTailwind aboutData={dragonsData} backgroundColor="white" />
+  )}
+</BaseLayout>
+

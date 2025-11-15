@@ -1,0 +1,227 @@
+---
+// Video Content Block component - Tailwind CSS Version
+
+interface Props {
+  videoBlock: any;
+}
+
+const { videoBlock } = Astro.props;
+
+if (!videoBlock) return null;
+
+// Extract YouTube ID
+function extractYouTubeId(url: string) {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.includes('youtu.be')) return parsed.pathname.replace('/', '');
+    if (parsed.searchParams.has('v')) return parsed.searchParams.get('v');
+    const pathSegments = parsed.pathname.split('/').filter(Boolean);
+    if (pathSegments[0] === 'embed' && pathSegments[1]) return pathSegments[1];
+  } catch (error) {
+    console.warn('Unable to parse YouTube URL', url, error);
+  }
+  return null;
+}
+
+const youTubeId = videoBlock.videoUrl ? extractYouTubeId(videoBlock.videoUrl) : null;
+const youTubeThumbnail = youTubeId ? `https://i.ytimg.com/vi/${youTubeId}/maxresdefault.jpg` : null;
+
+const bgClass = videoBlock.backgroundColor === 'grey' ? 'bg-gray-50' : 'bg-white';
+const isSideBySide = videoBlock.layout === 'side-by-side';
+const isStacked = videoBlock.layout === 'stacked';
+---
+
+<section class={`w-full ${bgClass} py-12 sm:py-16 lg:py-24`}>
+  <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+    
+    {isSideBySide ? (
+      <!-- Side-by-Side Layout -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+        
+        <!-- Video Side -->
+        {youTubeId && (
+          <div class="relative w-full aspect-video rounded-2xl overflow-hidden shadow-lg">
+            <button 
+              type="button"
+              class="lite-youtube-video group w-full h-full"
+              data-video-id={youTubeId}
+              aria-label={`Play ${videoBlock.heading || 'video'}`}
+            >
+              {youTubeThumbnail && (
+                <img 
+                  src={youTubeThumbnail}
+                  alt={`${videoBlock.heading || 'Video'} thumbnail`}
+                  loading="lazy"
+                  decoding="async"
+                  class="absolute inset-0 w-full h-full object-cover"
+                  fetchpriority="low"
+                />
+              )}
+              <span class="lite-youtube__play"></span>
+            </button>
+          </div>
+        )}
+        
+        <!-- Content Side -->
+        <div>
+          {videoBlock.heading && (
+            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-4 sm:mb-6">
+              {videoBlock.heading}
+            </h2>
+          )}
+          {videoBlock.content && (
+            <div class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed prose prose-lg max-w-none">
+              <Fragment set:html={videoBlock.content} />
+            </div>
+          )}
+        </div>
+        
+      </div>
+    ) : (
+      <!-- Stacked Layout -->
+      <div class="max-w-4xl mx-auto text-center">
+        
+        {videoBlock.heading && (
+          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-6 sm:mb-8">
+            {videoBlock.heading}
+          </h2>
+        )}
+        
+        {youTubeId && (
+          <div class="relative w-full aspect-video rounded-2xl overflow-hidden shadow-lg mb-6 sm:mb-8">
+            <button 
+              type="button"
+              class="lite-youtube-video group w-full h-full"
+              data-video-id={youTubeId}
+              aria-label={`Play ${videoBlock.heading || 'video'}`}
+            >
+              {youTubeThumbnail && (
+                <img 
+                  src={youTubeThumbnail}
+                  alt={`${videoBlock.heading || 'Video'} thumbnail`}
+                  loading="lazy"
+                  decoding="async"
+                  class="absolute inset-0 w-full h-full object-cover"
+                  fetchpriority="low"
+                />
+              )}
+              <span class="lite-youtube__play"></span>
+            </button>
+          </div>
+        )}
+        
+        {videoBlock.content && (
+          <div class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed prose prose-lg max-w-none">
+            <Fragment set:html={videoBlock.content} />
+          </div>
+        )}
+        
+      </div>
+    )}
+    
+  </div>
+</section>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+  
+  .prose p {
+    margin: 0 0 1rem 0;
+  }
+  
+  .prose p:last-child {
+    margin-bottom: 0;
+  }
+  
+  /* YouTube Video Player Styles */
+  .lite-youtube-video {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+  }
+
+  .lite-youtube-video img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .lite-youtube__play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 68px;
+    height: 48px;
+    transform: translate(-50%, -50%);
+    background: rgba(33, 33, 33, 0.8);
+    border-radius: 14px;
+    transition: background 0.3s ease;
+    z-index: 10;
+  }
+
+  .lite-youtube__play::before {
+    content: '';
+    position: absolute;
+    left: 22px;
+    top: 14px;
+    border-style: solid;
+    border-width: 10px 0 10px 16px;
+    border-color: transparent transparent transparent #fff;
+  }
+
+  .lite-youtube-video:hover .lite-youtube__play {
+    background: rgba(214, 0, 0, 0.9);
+  }
+</style>
+
+<script is:inline>
+  // YouTube video embed on click
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.lite-youtube-video').forEach((trigger) => {
+      trigger.addEventListener('click', () => {
+        const videoId = trigger.getAttribute('data-video-id');
+        if (!videoId) return;
+        
+        const iframe = document.createElement('iframe');
+        iframe.setAttribute('allowfullscreen', '');
+        iframe.setAttribute('loading', 'lazy');
+        iframe.setAttribute('title', 'Video');
+        iframe.setAttribute(
+          'src',
+          `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`
+        );
+        iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+        iframe.style.position = 'absolute';
+        iframe.style.inset = '0';
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.border = 'none';
+
+        const wrapper = document.createElement('div');
+        wrapper.style.position = 'absolute';
+        wrapper.style.inset = '0';
+        wrapper.style.width = '100%';
+        wrapper.style.height = '100%';
+        wrapper.appendChild(iframe);
+
+        trigger.replaceWith(wrapper);
+      }, { once: true });
+    });
+  });
+</script>
+

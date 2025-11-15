@@ -14,6 +14,7 @@ import '@fontsource/playfair-display/800.css';
 import '@fontsource/playfair-display/900.css';
 
 // Import global navigation and footer
+import AnnouncementBarTailwind from '../components/AnnouncementBarTailwind.astro';
 import NavigationHeader from '../components/NavigationHeader.astro';
 import FooterTailwind from '../components/FooterTailwind.astro';
 
@@ -166,6 +167,7 @@ const ogImageHeight = metaImageHeight || 630;
     </style>
   </head>
   <body class="font-sans bg-white text-gray-900 antialiased">
+    <AnnouncementBarTailwind />
     <div class="relative">
       <NavigationHeader />
       <slot />
