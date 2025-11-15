@@ -41,7 +41,7 @@ const hasBenefits = benefitsData.benefits && benefitsData.benefits.length > 0;
           const iconPath = benefit.customIconSvg || iconMap[benefit.icon] || iconMap['star'];
           
           return (
-            <div class="text-center">
+            <div class="text-center bg-white border-2 border-gray-200 rounded-2xl p-6 sm:p-8 hover:shadow-lg hover:border-gray-300 transition-all duration-300">
               {/* Icon */}
               <div class="w-16 h-16 sm:w-18 sm:h-18 lg:w-20 lg:h-20 bg-[#ad986c] rounded-full flex items-center justify-center mb-4 sm:mb-6 mx-auto shadow-lg">
                 <svg 

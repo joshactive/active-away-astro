@@ -73,76 +73,62 @@ const hasContent = dragonsDenData.heading || dragonsDenData.content;
 ---
 
 {hasContent && (
-  <section class={`w-full ${bgClass} py-12 sm:py-16 lg:py-24`}>
+  <section class="w-full bg-white py-12 sm:py-16 lg:py-24">
     <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+      <div class="relative overflow-hidden rounded-2xl sm:rounded-3xl shadow-2xl">
+        <!-- Background Image -->
+        {imageAttrs && (
+          <div class="absolute inset-0 z-0">
+            <img 
+              src={imageAttrs.src || imageAttrs.url}
+              {...(imageAttrs.srcset && { srcset: imageAttrs.srcset })}
+              {...(imageAttrs.sizes && { sizes: imageAttrs.sizes })}
+              alt={imageAttrs.alt}
+              width={imageAttrs.width || 1400}
+              height={imageAttrs.height || 500}
+              class="w-full h-full object-cover object-center lg:object-top"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+        )}
         
-        <!-- Content Side -->
-        <div>
-          {dragonsDenData.heading && (
-            <h2 class={`text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold ${textColor} mb-4 sm:mb-6`}>
-              {dragonsDenData.heading}
-            </h2>
-          )}
-          
-          {dragonsDenData.content && (
-            <div class={`text-base sm:text-lg font-inter ${descColor} leading-relaxed mb-6 sm:mb-8 prose ${dragonsDenData.backgroundColor === 'navy' ? 'prose-invert' : ''} max-w-none`}>
-              <Fragment set:html={dragonsDenData.content} />
+        <!-- Gradient Overlay -->
+        <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/60 to-black/50 z-10"></div>
+        
+        <!-- Content -->
+        <div class="relative z-20 px-6 sm:px-10 lg:px-16 py-12 sm:py-16 lg:py-20">
+          <div class="max-w-2xl">
+            <!-- Eyebrow -->
+            <div class="text-xs sm:text-sm font-inter font-semibold text-gold tracking-[0.2em] uppercase mb-3 sm:mb-4">
+              AS SEEN ON
             </div>
-          )}
-          
-          {dragonsDenData.buttonText && (
-            <a 
-              href={dragonsDenData.buttonLink || '#'}
-              class="inline-flex items-center gap-2 bg-gold hover:bg-gold-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-inter font-semibold text-base sm:text-lg transition-all duration-300"
-            >
-              <span>{dragonsDenData.buttonText}</span>
-              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none">
-                <path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </a>
-          )}
-        </div>
-        
-        <!-- Media Side -->
-        <div>
-          {youTubeId ? (
-            <div class="relative w-full aspect-video rounded-2xl overflow-hidden shadow-lg">
-              <button 
-                type="button"
-                class="lite-youtube-dragons group w-full h-full"
-                data-video-id={youTubeId}
-                aria-label={`Play ${dragonsDenData.heading} video`}
+            
+            {dragonsDenData.heading && (
+              <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-bold text-white mb-4 sm:mb-6 leading-tight">
+                {dragonsDenData.heading}
+              </h2>
+            )}
+            
+            {dragonsDenData.content && (
+              <div class="dragons-den-content text-base sm:text-lg font-inter text-white leading-relaxed mb-6 sm:mb-8 prose prose-invert max-w-none">
+                <Fragment set:html={dragonsDenData.content} />
+              </div>
+            )}
+            
+            {dragonsDenData.buttonText && (
+              <a 
+                href={dragonsDenData.buttonLink || '#'}
+                class="inline-flex items-center gap-2 bg-gold hover:bg-gold-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-inter font-semibold text-base sm:text-lg transition-all duration-300 hover:-translate-y-0.5 shadow-lg hover:shadow-xl"
               >
-                {youTubeThumbnail && (
-                  <img 
-                    src={youTubeThumbnail}
-                    alt={`${dragonsDenData.heading} video thumbnail`}
-                    loading="lazy"
-                    decoding="async"
-                    class="absolute inset-0 w-full h-full object-cover"
-                  />
-                )}
-                <span class="lite-youtube__play"></span>
-              </button>
-            </div>
-          ) : imageAttrs ? (
-            <div class="rounded-2xl overflow-hidden shadow-lg">
-              <img 
-                src={imageAttrs.src || imageAttrs.url}
-                {...(imageAttrs.srcset && { srcset: imageAttrs.srcset })}
-                {...(imageAttrs.sizes && { sizes: imageAttrs.sizes })}
-                alt={imageAttrs.alt}
-                width={imageAttrs.width || 800}
-                height={imageAttrs.height || 600}
-                class="w-full h-auto object-cover"
-                loading="lazy"
-                decoding="async"
-              />
-            </div>
-          ) : null}
+                <span>{dragonsDenData.buttonText}</span>
+                <svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none">
+                  <path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </a>
+            )}
+          </div>
         </div>
-        
       </div>
     </div>
   </section>
@@ -157,9 +143,24 @@ const hasContent = dragonsDenData.heading || dragonsDenData.content;
     font-family: 'Playfair Display', serif;
   }
   
-  /* Prose white text for navy background */
+  /* Force white text for description */
+  .dragons-den-content,
+  .dragons-den-content *,
+  .dragons-den-content p,
+  .dragons-den-content strong,
+  .dragons-den-content em,
+  .dragons-den-content a,
+  .dragons-den-content span {
+    color: rgb(255 255 255) !important;
+  }
+  
   .prose-invert p {
-    color: rgb(243 244 246);
+    color: rgb(255 255 255) !important;
+    margin: 0 0 0.75rem 0;
+  }
+  
+  .prose-invert p:last-child {
+    margin-bottom: 0;
   }
   
   /* YouTube styles */

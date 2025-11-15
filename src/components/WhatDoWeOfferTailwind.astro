@@ -6,9 +6,11 @@ import { getImageByName, getResponsiveImageByName, getStrapiImageAttrs } from '.
 // Accept homeData as prop (fetched once in index.astro)
 interface Props {
   homeData?: any;
+  backgroundColor?: 'white' | 'grey';
 }
 
-const { homeData } = Astro.props;
+const { homeData, backgroundColor = 'white' } = Astro.props;
+const bgClass = backgroundColor === 'grey' ? 'bg-gray-50' : 'bg-white';
 
 // Fetch products from Strapi
 let products = await getProducts();
@@ -77,7 +79,7 @@ const offerData = {
 };
 ---
 
-<section class="w-full bg-white py-12 sm:py-16 lg:py-24">
+<section class={`w-full ${bgClass} py-12 sm:py-16 lg:py-24`}>
   <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
     <!-- Header -->
     <div class="mb-6 sm:mb-8 lg:mb-16 lg:text-center max-w-4xl lg:mx-auto">

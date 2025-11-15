@@ -4,18 +4,21 @@ import { marked } from 'marked';
 
 interface Props {
   productData?: any;
+  aboutData?: any;
+  backgroundColor?: 'white' | 'grey';
 }
 
-const { productData } = Astro.props;
+const { productData, aboutData, backgroundColor = 'grey' } = Astro.props;
+const bgClass = backgroundColor === 'grey' ? 'bg-gray-50' : 'bg-white';
 
 // Get current year for dynamic replacement
 const currentYear = new Date().getFullYear();
 
-// Extract FAQ data with fallbacks
+// Extract FAQ data with fallbacks (support both product and about pages)
 const faqData = {
-  eyebrow: productData?.faq?.eyebrow || 'OTHER INFORMATION',
-  heading: (productData?.faq?.heading || 'Frequently Asked Questions').replace(/{YEAR}/g, currentYear.toString()),
-  faqs: productData?.faq?.faqs || []
+  eyebrow: productData?.faq?.eyebrow || aboutData?.faq?.eyebrow || 'OTHER INFORMATION',
+  heading: (productData?.faq?.heading || aboutData?.faq?.heading || 'Frequently Asked Questions').replace(/{YEAR}/g, currentYear.toString()),
+  faqs: productData?.faq?.faqs || aboutData?.faq?.faqs || []
 };
 
 // If no FAQs, don't render the component
@@ -23,7 +26,7 @@ const hasFAQs = faqData.faqs && faqData.faqs.length > 0;
 ---
 
 {hasFAQs && (
-  <section class="w-full bg-gray-50 py-12 sm:py-16 lg:py-24">
+  <section class={`w-full ${bgClass} py-12 sm:py-16 lg:py-24`}>
     <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
       <!-- Section Header -->
       <div class="mb-8 sm:mb-12 text-center">

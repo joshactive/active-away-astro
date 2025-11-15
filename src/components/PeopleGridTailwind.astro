@@ -16,7 +16,7 @@ const hasPeople = people && people.length > 0;
 ---
 
 {hasPeople && (
-  <section class="w-full bg-white py-12 sm:py-16 lg:py-24">
+  <section class="w-full bg-gray-50 py-12 sm:py-16 lg:py-24">
     <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
       
       <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-8 sm:mb-12 text-center">
@@ -75,9 +75,21 @@ const hasPeople = people && people.length > 0;
               
               {/* Person Info */}
               <div class="p-5 sm:p-6">
-                <h3 class="text-lg sm:text-xl font-playfair font-semibold text-gray-900 mb-1">
-                  {person.name}
-                </h3>
+                {/* Name - Link if website exists */}
+                {person.website ? (
+                  <a 
+                    href={person.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-lg sm:text-xl font-playfair font-semibold text-gray-900 hover:text-[#ad986c] transition-colors mb-1 inline-block"
+                  >
+                    {person.name}
+                  </a>
+                ) : (
+                  <h3 class="text-lg sm:text-xl font-playfair font-semibold text-gray-900 mb-1">
+                    {person.name}
+                  </h3>
+                )}
                 
                 {person.role && (
                   <p class="text-sm sm:text-base font-inter font-medium text-[#ad986c] mb-3">
@@ -86,14 +98,26 @@ const hasPeople = people && people.length > 0;
                 )}
                 
                 {person.bio && (
-                  <div class="text-sm font-inter text-gray-700 leading-relaxed line-clamp-3">
-                    <Fragment set:html={person.bio} />
+                  <div>
+                    <div 
+                      class="person-bio text-sm font-inter text-gray-700 leading-relaxed line-clamp-3"
+                      data-person-id={person.id}
+                    >
+                      <Fragment set:html={person.bio} />
+                    </div>
+                    <button 
+                      class="read-more-btn mt-2 text-sm font-inter font-semibold text-[#ad986c] hover:text-[#8a7454] transition-colors hidden"
+                      data-person-id={person.id}
+                      type="button"
+                    >
+                      Read more
+                    </button>
                   </div>
                 )}
                 
                 {/* Social Links */}
-                {(person.linkedin || person.email) && (
-                  <div class="flex gap-3 mt-4">
+                {(person.linkedin || person.email || person.website) && (
+                  <div class="flex gap-3 mt-4 justify-center">
                     {person.linkedin && (
                       <a 
                         href={person.linkedin}
@@ -102,8 +126,21 @@ const hasPeople = people && people.length > 0;
                         class="text-gray-600 hover:text-[#ad986c] transition-colors"
                         aria-label={`${person.name} LinkedIn`}
                       >
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M16.338 16.338H13.67V12.16c0-.995-.017-2.277-1.387-2.277-1.39 0-1.601 1.086-1.601 2.207v4.248H8.014v-8.59h2.559v1.174h.037c.356-.675 1.227-1.387 2.526-1.387 2.703 0 3.203 1.778 3.203 4.092v4.711zM5.005 6.575a1.548 1.548 0 11-.003-3.096 1.548 1.548 0 01.003 3.096zm-1.337 9.763H6.34v-8.59H3.667v8.59zM17.668 1H2.328C1.595 1 1 1.581 1 2.298v15.403C1 18.418 1.595 19 2.328 19h15.34c.734 0 1.332-.582 1.332-1.299V2.298C19 1.581 18.402 1 17.668 1z"/>
+                        <svg class="w-5 h-5" viewBox="0 0 448 512" fill="currentColor">
+                          <path d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3zM135.4 416H69V202.2h66.5V416zm-33.2-243c-21.3 0-38.5-17.3-38.5-38.5S80.9 96 102.2 96c21.2 0 38.5 17.3 38.5 38.5 0 21.3-17.2 38.5-38.5 38.5zm282.1 243h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9V416z"/>
+                        </svg>
+                      </a>
+                    )}
+                    {person.website && (
+                      <a 
+                        href={person.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-gray-600 hover:text-[#ad986c] transition-colors"
+                        aria-label={`${person.name} Website`}
+                      >
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
                         </svg>
                       </a>
                     )}
@@ -138,4 +175,53 @@ const hasPeople = people && people.length > 0;
     font-family: 'Playfair Display', serif;
   }
 </style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const readMoreButtons = document.querySelectorAll('.read-more-btn');
+    
+    // Check if bio is truncated and show button
+    function checkTruncation() {
+      readMoreButtons.forEach(button => {
+        const personId = button.getAttribute('data-person-id');
+        const bio = document.querySelector(`.person-bio[data-person-id="${personId}"]`);
+        
+        if (bio) {
+          const isTruncated = bio.scrollHeight > bio.clientHeight;
+          if (isTruncated) {
+            button.classList.remove('hidden');
+          } else {
+            button.classList.add('hidden');
+          }
+        }
+      });
+    }
+    
+    // Check on load
+    checkTruncation();
+    
+    // Check on resize
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(checkTruncation, 250);
+    });
+    
+    // Handle click to expand/collapse
+    readMoreButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const personId = button.getAttribute('data-person-id');
+        const bio = document.querySelector(`.person-bio[data-person-id="${personId}"]`);
+        
+        if (bio.classList.contains('line-clamp-3')) {
+          bio.classList.remove('line-clamp-3');
+          button.textContent = 'Read less';
+        } else {
+          bio.classList.add('line-clamp-3');
+          button.textContent = 'Read more';
+        }
+      });
+    });
+  });
+</script>
 

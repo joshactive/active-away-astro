@@ -5372,6 +5372,7 @@ export async function getAboutPage() {
       'populate[benefits][populate]=*&' +
       'populate[dragonsDen][populate]=*&' +
       'populate[history][populate]=*&' +
+      'populate[faq][populate]=*&' +
       'populate[seo][populate]=*'
     );
     
@@ -5444,6 +5445,12 @@ export async function getAboutPage() {
       
       showInstagram: page.showInstagram !== false,
       
+      faq: page.faq ? {
+        eyebrow: page.faq.eyebrow,
+        heading: page.faq.heading,
+        faqs: page.faq.faqs || []
+      } : null,
+      
       seo: page.seo || null
     };
     
@@ -5503,38 +5510,41 @@ export async function getAboutPageSEO() {
 }
 
 /**
- * Get all people/team members
+ * Get all people/team members from Team single-type
  * @returns {Promise<Array>} Array of people
  */
 export async function getPeople() {
   try {
-    console.log('👥 [getPeople] Fetching people...');
+    console.log('👥 [getPeople] Fetching team members...');
     
     const data = await fetchAPI(
-      '/people?filters[displayOnAboutPage][$eq]=true&sort=order:asc&populate=*'
+      '/team?populate[teamMembers][populate]=profile_image_people'
     );
     
     if (!data || !data.data) {
-      console.warn('⚠️  [getPeople] No people found');
+      console.warn('⚠️  [getPeople] No team data found');
       return [];
     }
     
-    const people = data.data.map((item) => {
-      const person = item.attributes || item;
-      return {
-        id: item.id,
-        name: person.name,
-        role: person.role,
-        bio: person.bio,
-        image: getStrapiImageData(person.image),
-        order: person.order || 0,
-        linkedin: person.linkedin,
-        email: person.email
-      };
-    });
+    const team = data.data.attributes || data.data;
+    const teamMembers = team.teamMembers || [];
     
-    console.log(`✅ [getPeople] Fetched ${people.length} people`);
-    return people;
+    // Sort by order_people field
+    const sortedPeople = teamMembers
+      .sort((a, b) => (a.order_people || 0) - (b.order_people || 0))
+      .map((person) => ({
+        id: person.id,
+        name: person.full_name,
+        role: person.job_title,
+        bio: person.short_description_people,
+        image: getStrapiImageData(person.profile_image_people),
+        linkedin: person.linkedin_url,
+        email: person.email_address_people,
+        website: person.website_person
+      }));
+    
+    console.log(`✅ [getPeople] Fetched ${sortedPeople.length} team members`);
+    return sortedPeople;
   } catch (error) {
     console.error('❌ [getPeople] Error:', error);
     return [];

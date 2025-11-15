@@ -14,6 +14,7 @@ import DragonsDenTailwind from '../components/DragonsDenTailwind.astro';
 import PeopleGridTailwind from '../components/PeopleGridTailwind.astro';
 import HistoryTimelineTailwind from '../components/HistoryTimelineTailwind.astro';
 import InstagramTailwind from '../components/InstagramTailwind.astro';
+import FAQAccordionTailwind from '../components/FAQAccordionTailwind.astro';
 import { getAboutPage, getAboutPageSEO, getHomeData } from '../utils/strapi.js';
 
 // Fetch about page data
@@ -106,7 +107,7 @@ const canonicalURL = seoData?.canonicalURL || aboutData?.seo?.canonicalURL || 'h
   
   <!-- What We Offer Section -->
   {aboutData?.showWhatWeOffer && (
-    <WhatDoWeOfferTailwind homeData={homepageData} />
+    <WhatDoWeOfferTailwind homeData={homepageData} backgroundColor="grey" />
   )}
   
   <!-- Benefits/Why Choose Section -->
@@ -129,7 +130,12 @@ const canonicalURL = seoData?.canonicalURL || aboutData?.seo?.canonicalURL || 'h
   
   <!-- Instagram Section -->
   {aboutData?.showInstagram && (
-    <InstagramTailwind homeData={homepageData} />
+    <InstagramTailwind homeData={homepageData} backgroundColor="grey" />
+  )}
+  
+  <!-- FAQ Section -->
+  {aboutData?.faq && aboutData?.faq?.faqs?.length > 0 && (
+    <FAQAccordionTailwind aboutData={aboutData} backgroundColor="white" />
   )}
 </BaseLayout>
 
