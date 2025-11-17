@@ -6005,7 +6005,7 @@ export async function getFAQCategories() {
     console.log('❓ [getFAQCategories] Fetching FAQ categories...');
     
     const data = await fetchAPI(
-      '/faq-categories?filters[displayOnFrontEnd][$eq]=true&sort=order:asc&populate=*'
+      '/faq-categories?filters[displayOnFrontEnd][$eq]=true&sort=order:asc&populate[faqSections][populate]=faqs'
     );
     
     if (!data || !data.data) {
@@ -6015,13 +6015,24 @@ export async function getFAQCategories() {
     
     const categories = data.data.map((item) => {
       const cat = item.attributes || item;
+      
+      // Calculate total FAQ count across all sections
+      let totalFaqs = 0;
+      if (cat.faqSections && Array.isArray(cat.faqSections)) {
+        cat.faqSections.forEach(section => {
+          if (section.faqs && Array.isArray(section.faqs)) {
+            totalFaqs += section.faqs.length;
+          }
+        });
+      }
+      
       return {
         id: item.id,
         title: cat.title,
         slug: cat.slug,
         eyebrow: cat.eyebrow,
         order: cat.order || 0,
-        faqCount: cat.faqSections?.reduce((total, section) => total + (section.faqs?.length || 0), 0) || 0
+        faqCount: totalFaqs
       };
     });
     

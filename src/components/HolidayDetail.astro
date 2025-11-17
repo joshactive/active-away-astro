@@ -1889,7 +1889,7 @@ const carouselSlideCount = holidayType === 'ski-holiday' ? 1 : (holidayType === 
                   <div class="hidden sm:flex w-12 h-12 bg-[#ad986c] text-white rounded-full items-center justify-center font-bold font-playfair text-base flex-shrink-0">
                     {index + 1}
                   </div>
-                  <h3 class="text-base lg:text-lg font-inter font-medium text-gray-900">{item.day || `Day ${index + 1}`}</h3>
+                  <h3 class="text-base lg:text-lg font-inter font-medium text-gray-900" set:html={item.day || `Day ${index + 1}`}></h3>
                 </div>
                 <svg class="w-5 h-5 text-gray-600 transition-transform duration-300 itinerary-chevron flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
