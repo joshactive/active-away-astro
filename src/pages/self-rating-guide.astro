@@ -1,0 +1,497 @@
+---
+// Self Rating Guide Page
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeroTailwind from '../components/PageHeroTailwind.astro';
+import BreadcrumbsTailwind from '../components/BreadcrumbsTailwind.astro';
+import { getSelfRatingGuidePage, getSelfRatingGuidePageSEO } from '../utils/strapi.js';
+import { parseMarkdown } from '../utils/markdown.js';
+
+// Fetch Self Rating Guide page data
+let pageData = null;
+try {
+  pageData = await getSelfRatingGuidePage();
+  console.log('📊 [self-rating-guide] Page data fetched');
+} catch (error) {
+  console.error('❌ [self-rating-guide] Error fetching page:', error.message);
+}
+
+// Fetch SEO data
+let seoData = null;
+try {
+  seoData = await getSelfRatingGuidePageSEO();
+  if (seoData) {
+    console.log('📄 [self-rating-guide] SEO data fetched');
+  }
+} catch (error) {
+  console.warn('⚠️  [self-rating-guide] Could not fetch SEO data:', error.message);
+}
+
+// Extract SEO fields
+const pageTitle = seoData?.metaTitle || pageData?.seo?.metaTitle || 'Self Rating Guide | Active Away';
+const pageDescription = seoData?.metaDescription || pageData?.seo?.metaDescription || 'Understand your skill level with our comprehensive self-rating guide for Tennis, Padel, and Pickleball.';
+
+// Extract meta image URL properly
+let metaImage = null;
+if (seoData?.metaImage) {
+  metaImage = typeof seoData.metaImage === 'string' ? seoData.metaImage : seoData.metaImage.url;
+} else if (pageData?.seo?.metaImage) {
+  metaImage = typeof pageData.seo.metaImage === 'string' ? pageData.seo.metaImage : pageData.seo.metaImage.url;
+}
+
+const metaImageAlt = seoData?.metaImageAlt || pageData?.seo?.metaImageAlt || null;
+const metaImageWidth = seoData?.metaImageWidth || pageData?.seo?.metaImageWidth || null;
+const metaImageHeight = seoData?.metaImageHeight || pageData?.seo?.metaImageHeight || null;
+const keywords = seoData?.keywords || pageData?.seo?.keywords || null;
+const canonicalURL = seoData?.canonicalURL || pageData?.seo?.canonicalURL || 'https://activeaway.com/self-rating-guide';
+
+// Parse markdown content
+const introTitle = pageData?.introTitle || 'Understanding Your Skill Level';
+const introContent = pageData?.introContent ? parseMarkdown(pageData.introContent) : '';
+const downloadGuideUrl = pageData?.downloadGuideUrl || '';
+
+const tennisTitle = pageData?.tennisTitle || 'Tennis Rating Guide';
+const tennisContent = pageData?.tennisContent ? parseMarkdown(pageData.tennisContent) : '';
+const tennisImage = pageData?.tennisImage;
+
+const padelTitle = pageData?.padelTitle || 'Padel Rating Guide';
+const padelContent = pageData?.padelContent ? parseMarkdown(pageData.padelContent) : '';
+const padelImage = pageData?.padelImage;
+
+const pickleballTitle = pageData?.pickleballTitle || 'Pickleball Rating Guide';
+const pickleballContent = pageData?.pickleballContent ? parseMarkdown(pageData.pickleballContent) : '';
+const pickleballImage = pageData?.pickleballImage;
+---
+
+<BaseLayout 
+  title={pageTitle}
+  description={pageDescription}
+  metaImage={metaImage}
+  metaImageAlt={metaImageAlt}
+  metaImageWidth={metaImageWidth}
+  metaImageHeight={metaImageHeight}
+  keywords={keywords}
+  canonicalURL={canonicalURL}
+>
+  <!-- Page Hero (Background Image) -->
+  {pageData?.pageHero && (
+    <PageHeroTailwind pageData={pageData} />
+  )}
+  
+  <!-- Breadcrumbs Section -->
+  {pageData?.pageHero?.showBreadcrumbs !== false && (
+    <BreadcrumbsTailwind 
+      breadcrumbs={[
+        { label: 'Home', href: '/' },
+        { label: 'Self Rating Guide' }
+      ]}
+    />
+  )}
+  
+  <!-- Main Content -->
+  <main class="w-full bg-white py-12 sm:py-16 lg:py-20">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      
+      <!-- Introduction Section -->
+      <div class="mb-12">
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-bold text-gray-900 mb-6">
+          {introTitle}
+        </h2>
+        {introContent && (
+          <div class="prose prose-lg max-w-none font-inter mb-8" set:html={introContent}></div>
+        )}
+      </div>
+      
+      <!-- Contents / Jump Links Section -->
+      <div class="mb-12 bg-white border-2 border-gray-200 rounded-xl p-6 sm:p-8 shadow-sm">
+        <h2 class="text-2xl font-playfair font-bold text-gray-900 mb-6">Contents</h2>
+        <nav class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <a href="#tennis" class="flex items-center gap-2 text-base font-inter text-gray-700 hover:text-[#ad986c] transition-colors py-2 px-3 rounded-lg hover:bg-gray-50">
+            <svg class="w-4 h-4 flex-shrink-0 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+            Tennis Rating Guide
+          </a>
+          <a href="#padel" class="flex items-center gap-2 text-base font-inter text-gray-700 hover:text-[#ad986c] transition-colors py-2 px-3 rounded-lg hover:bg-gray-50">
+            <svg class="w-4 h-4 flex-shrink-0 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+            Padel Rating Guide
+          </a>
+          <a href="#pickleball" class="flex items-center gap-2 text-base font-inter text-gray-700 hover:text-[#ad986c] transition-colors py-2 px-3 rounded-lg hover:bg-gray-50">
+            <svg class="w-4 h-4 flex-shrink-0 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+            Pickleball Rating Guide
+          </a>
+        </nav>
+        
+        <!-- Download Guide Button -->
+        {downloadGuideUrl && (
+          <div class="mt-6 pt-6 border-t border-gray-200">
+            <a 
+              href={downloadGuideUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-2 bg-[#ad986c] text-white px-6 py-3 rounded-lg font-inter font-medium hover:bg-[#8a7454] transition-colors"
+            >
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Download Full Guide
+            </a>
+          </div>
+        )}
+      </div>
+      
+      <!-- Tennis Section -->
+      <div id="tennis" class="mb-16 scroll-mt-20">
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-bold text-gray-900 mb-6">
+          {tennisTitle}
+        </h2>
+        {tennisContent && (
+          <div class="prose prose-lg max-w-none font-inter mb-8" set:html={tennisContent}></div>
+        )}
+        {tennisImage?.url && (
+          <div class="mt-8">
+            <img 
+              src={tennisImage.url}
+              alt={tennisImage.alt || 'Tennis Rating Guide'}
+              class="w-full rounded-xl shadow-lg cursor-pointer hover:opacity-90 transition-opacity"
+              loading="lazy"
+              data-lightbox-image
+              data-lightbox-src={tennisImage.url.split('?')[0]}
+              data-lightbox-alt={tennisImage.alt || 'Tennis Rating Guide'}
+            />
+            <p class="text-sm text-gray-600 mt-2 text-center font-inter italic">Click image to zoom</p>
+          </div>
+        )}
+      </div>
+      
+      <!-- Padel Section -->
+      <div id="padel" class="mb-16 scroll-mt-20">
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-bold text-gray-900 mb-6">
+          {padelTitle}
+        </h2>
+        {padelContent && (
+          <div class="prose prose-lg max-w-none font-inter mb-8" set:html={padelContent}></div>
+        )}
+        {padelImage?.url && (
+          <div class="mt-8">
+            <img 
+              src={padelImage.url}
+              alt={padelImage.alt || 'Padel Rating Guide'}
+              class="w-full rounded-xl shadow-lg cursor-pointer hover:opacity-90 transition-opacity"
+              loading="lazy"
+              data-lightbox-image
+              data-lightbox-src={padelImage.url.split('?')[0]}
+              data-lightbox-alt={padelImage.alt || 'Padel Rating Guide'}
+            />
+            <p class="text-sm text-gray-600 mt-2 text-center font-inter italic">Click image to zoom</p>
+          </div>
+        )}
+      </div>
+      
+      <!-- Pickleball Section -->
+      <div id="pickleball" class="mb-16 scroll-mt-20">
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-bold text-gray-900 mb-6">
+          {pickleballTitle}
+        </h2>
+        {pickleballContent && (
+          <div class="prose prose-lg max-w-none font-inter mb-8" set:html={pickleballContent}></div>
+        )}
+        {pickleballImage?.url && (
+          <div class="mt-8">
+            <img 
+              src={pickleballImage.url}
+              alt={pickleballImage.alt || 'Pickleball Rating Guide'}
+              class="w-full rounded-xl shadow-lg cursor-pointer hover:opacity-90 transition-opacity"
+              loading="lazy"
+              data-lightbox-image
+              data-lightbox-src={pickleballImage.url.split('?')[0]}
+              data-lightbox-alt={pickleballImage.alt || 'Pickleball Rating Guide'}
+            />
+            <p class="text-sm text-gray-600 mt-2 text-center font-inter italic">Click image to zoom</p>
+          </div>
+        )}
+      </div>
+      
+    </div>
+  </main>
+  
+  <!-- Image Lightbox Modal -->
+  <div id="imageLightbox" class="hidden fixed inset-0 z-50 bg-black/95 flex items-center justify-center">
+    <!-- Close Button -->
+    <button
+      id="closeLightbox"
+      class="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-20"
+      aria-label="Close lightbox"
+    >
+      <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+    
+    <!-- Zoom Controls -->
+    <div class="absolute top-4 left-4 flex gap-2 z-20">
+      <button
+        id="zoomIn"
+        class="bg-white/10 hover:bg-white/20 text-white p-2 rounded-lg transition-colors"
+        aria-label="Zoom in"
+        title="Zoom in"
+      >
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+        </svg>
+      </button>
+      <button
+        id="zoomOut"
+        class="bg-white/10 hover:bg-white/20 text-white p-2 rounded-lg transition-colors"
+        aria-label="Zoom out"
+        title="Zoom out"
+      >
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" />
+        </svg>
+      </button>
+      <button
+        id="zoomReset"
+        class="bg-white/10 hover:bg-white/20 text-white p-2 rounded-lg transition-colors"
+        aria-label="Reset zoom"
+        title="Reset zoom"
+      >
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+      </button>
+    </div>
+    
+    <!-- Image Container (scrollable and draggable) -->
+    <div id="lightboxContainer" class="w-full h-full overflow-auto cursor-grab active:cursor-grabbing">
+      <div class="min-h-full flex items-center justify-center p-4">
+        <img 
+          id="lightboxImage"
+          src=""
+          alt=""
+          class="max-w-none transition-transform duration-200"
+          style="transform-origin: center center;"
+        />
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+  
+  .prose p {
+    margin: 0 0 1rem 0;
+  }
+  
+  .prose p:last-child {
+    margin-bottom: 0;
+  }
+  
+  .prose h1,
+  .prose h2,
+  .prose h3,
+  .prose h4 {
+    font-family: 'Playfair Display', serif;
+    font-weight: 600;
+    color: rgb(17 24 39);
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .prose h1 {
+    font-size: 2rem;
+  }
+  
+  .prose h2 {
+    font-size: 1.75rem;
+  }
+  
+  .prose h3 {
+    font-size: 1.5rem;
+  }
+  
+  .prose h4 {
+    font-size: 1.25rem;
+  }
+  
+  .prose ul,
+  .prose ol {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    padding-left: 1.75rem;
+  }
+  
+  .prose li {
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Zoom button disabled state */
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+</style>
+
+<script>
+  // Image lightbox with zoom functionality
+  document.addEventListener('DOMContentLoaded', () => {
+    const lightbox = document.getElementById('imageLightbox');
+    const lightboxImage = document.getElementById('lightboxImage');
+    const lightboxContainer = document.getElementById('lightboxContainer');
+    const closeButton = document.getElementById('closeLightbox');
+    const zoomInButton = document.getElementById('zoomIn');
+    const zoomOutButton = document.getElementById('zoomOut');
+    const zoomResetButton = document.getElementById('zoomReset');
+    const lightboxImages = document.querySelectorAll('[data-lightbox-image]');
+    
+    if (!lightbox || !lightboxImage || !closeButton) return;
+    
+    let currentZoom = 1;
+    const minZoom = 1;
+    const maxZoom = 5;
+    const zoomStep = 0.5;
+    
+    // Apply zoom to image
+    const applyZoom = (zoom) => {
+      currentZoom = Math.max(minZoom, Math.min(maxZoom, zoom));
+      lightboxImage.style.transform = `scale(${currentZoom})`;
+      
+      // Update button states
+      if (zoomOutButton) zoomOutButton.disabled = currentZoom <= minZoom;
+      if (zoomInButton) zoomInButton.disabled = currentZoom >= maxZoom;
+    };
+    
+    // Open lightbox when clicking on any rating guide image
+    lightboxImages.forEach((img) => {
+      img.addEventListener('click', () => {
+        const src = img.getAttribute('data-lightbox-src');
+        const alt = img.getAttribute('data-lightbox-alt');
+        
+        if (src) {
+          lightboxImage.src = src;
+          lightboxImage.alt = alt || '';
+          currentZoom = 1;
+          applyZoom(1);
+          lightbox.classList.remove('hidden');
+          document.body.style.overflow = 'hidden';
+          
+          // Reset scroll position
+          if (lightboxContainer) {
+            lightboxContainer.scrollTop = 0;
+            lightboxContainer.scrollLeft = 0;
+          }
+        }
+      });
+    });
+    
+    // Zoom controls
+    if (zoomInButton) {
+      zoomInButton.addEventListener('click', () => {
+        applyZoom(currentZoom + zoomStep);
+      });
+    }
+    
+    if (zoomOutButton) {
+      zoomOutButton.addEventListener('click', () => {
+        applyZoom(currentZoom - zoomStep);
+      });
+    }
+    
+    if (zoomResetButton) {
+      zoomResetButton.addEventListener('click', () => {
+        applyZoom(1);
+        if (lightboxContainer) {
+          lightboxContainer.scrollTop = 0;
+          lightboxContainer.scrollLeft = 0;
+        }
+      });
+    }
+    
+    // Mouse wheel zoom
+    if (lightboxContainer) {
+      lightboxContainer.addEventListener('wheel', (e) => {
+        if (e.ctrlKey || e.metaKey) {
+          e.preventDefault();
+          const delta = e.deltaY > 0 ? -zoomStep : zoomStep;
+          applyZoom(currentZoom + delta);
+        }
+      }, { passive: false });
+    }
+    
+    // Close lightbox function
+    const closeLightbox = () => {
+      lightbox.classList.add('hidden');
+      document.body.style.overflow = '';
+      currentZoom = 1;
+      applyZoom(1);
+    };
+    
+    // Close on button click
+    closeButton.addEventListener('click', closeLightbox);
+    
+    // Close on backdrop click (but not on image)
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox || e.target === lightboxContainer) {
+        closeLightbox();
+      }
+    });
+    
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !lightbox.classList.contains('hidden')) {
+        closeLightbox();
+      }
+    });
+    
+    // Drag to pan when zoomed
+    let isDragging = false;
+    let startX, startY, scrollLeft, scrollTop;
+    
+    if (lightboxContainer) {
+      lightboxContainer.addEventListener('mousedown', (e) => {
+        if (currentZoom > 1 && e.target === lightboxImage) {
+          isDragging = true;
+          startX = e.pageX - lightboxContainer.offsetLeft;
+          startY = e.pageY - lightboxContainer.offsetTop;
+          scrollLeft = lightboxContainer.scrollLeft;
+          scrollTop = lightboxContainer.scrollTop;
+          lightboxContainer.style.cursor = 'grabbing';
+        }
+      });
+      
+      lightboxContainer.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        e.preventDefault();
+        const x = e.pageX - lightboxContainer.offsetLeft;
+        const y = e.pageY - lightboxContainer.offsetTop;
+        const walkX = (x - startX) * 1.5;
+        const walkY = (y - startY) * 1.5;
+        lightboxContainer.scrollLeft = scrollLeft - walkX;
+        lightboxContainer.scrollTop = scrollTop - walkY;
+      });
+      
+      lightboxContainer.addEventListener('mouseup', () => {
+        isDragging = false;
+        lightboxContainer.style.cursor = currentZoom > 1 ? 'grab' : 'default';
+      });
+      
+      lightboxContainer.addEventListener('mouseleave', () => {
+        isDragging = false;
+        lightboxContainer.style.cursor = currentZoom > 1 ? 'grab' : 'default';
+      });
+    }
+  });
+</script>
+

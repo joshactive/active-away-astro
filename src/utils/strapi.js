@@ -1601,6 +1601,245 @@ export async function getPreOrderById(identifier) {
 }
 
 /**
+ * ====================================
+ * FORMS
+ * ====================================
+ */
+
+/**
+ * Fetch all forms from Strapi
+ * @param {number} page - Page number for pagination
+ * @param {number} pageSize - Number of items per page
+ * @returns {Promise<Array>} Array of forms
+ */
+export async function getForms(page = 1, pageSize = 25) {
+  try {
+    const data = await fetchAPI(
+      `/forms?pagination[page]=${page}&pagination[pageSize]=${pageSize}&sort=createdAt:desc&filters[displayOnArchive][$eq]=true`
+    );
+    
+    if (!data || !data.data) {
+      console.log('📝 No forms found');
+      return [];
+    }
+
+    console.log(`📝 Forms fetched: ${data.data.length} items`);
+
+    return data.data.map(item => {
+      const form = item.attributes || item;
+
+      // Generate slug from title if not present
+      const slug = form.slug || 
+                   form.title?.toLowerCase()
+                     .replace(/[^a-z0-9]+/g, '-')
+                     .replace(/^-|-$/g, '') || 
+                   item.documentId || 
+                   item.id;
+
+      return {
+        id: item.id,
+        documentId: item.documentId || item.id,
+        title: form.title || 'Untitled Form',
+        slug: slug,
+        excerpt: form.excerpt || '',
+        description: form.description || '',
+        createdAt: form.createdAt || item.createdAt || new Date().toISOString(),
+        publishedAt: form.publishedAt || item.publishedAt || null
+      };
+    });
+
+  } catch (error) {
+    console.error('❌ Error fetching forms:', error);
+    return [];
+  }
+}
+
+/**
+ * Fetch Forms Page data from Strapi
+ * @returns {Promise<Object>} Forms page data
+ */
+export async function getFormsPage() {
+  try {
+    const data = await fetchAPI('/forms-page?populate=*');
+    
+    if (!data || !data.data) {
+      console.log('📝 No forms page data found');
+      return null;
+    }
+
+    const pageData = data.data.attributes || data.data;
+    console.log('📝 Forms page data fetched successfully');
+
+    return {
+      hero: {
+        title: pageData.heroTitle || 'Forms',
+        subtitle: pageData.heroSubtitle || 'Get in touch with us using one of our contact forms below.',
+        kicker: pageData.heroKicker || 'GET IN TOUCH',
+        backgroundImage: pageData.heroBackgroundImage ? getStrapiImageData(pageData.heroBackgroundImage) : null
+      },
+      meta: {
+        title: pageData.metaTitle || 'Forms - Active Away',
+        description: pageData.metaDescription || 'Contact Active Away using our forms.'
+      }
+    };
+
+  } catch (error) {
+    console.error('Error fetching forms page data:', error);
+    return null;
+  }
+}
+
+/**
+ * Get Forms Page SEO data
+ * @returns {Promise<Object|null>} SEO data
+ */
+export async function getFormsPageSEO() {
+  try {
+    console.log('📄 [getFormsPageSEO] Fetching SEO...');
+    
+    const data = await fetchAPI('/forms-page?populate[seo][populate]=metaImage');
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getFormsPageSEO] No page found');
+      return null;
+    }
+    
+    const page = data.data.attributes || data.data;
+    const seo = page.seo;
+    
+    if (!seo) {
+      console.warn('⚠️  [getFormsPageSEO] No SEO data');
+      return null;
+    }
+
+    // Extract meta image data with Cloudflare Images optimization
+    const metaImageData = getOptimizedSEOImage(seo.metaImage);
+    
+    if (metaImageData.url) {
+      console.log(`📸 Forms page meta image URL (optimized):`, metaImageData.url);
+    }
+    
+    const seoData = {
+      metaTitle: seo.metaTitle,
+      metaDescription: seo.metaDescription,
+      keywords: seo.keywords,
+      canonicalURL: seo.canonicalURL,
+      metaImage: metaImageData.url,
+      metaImageAlt: metaImageData.alt,
+      metaImageWidth: metaImageData.width,
+      metaImageHeight: metaImageData.height
+    };
+    
+    console.log('✅ [getFormsPageSEO] SEO fetched');
+    return seoData;
+  } catch (error) {
+    console.error('❌ [getFormsPageSEO] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * Normalize a form record returned by Strapi
+ * @param {Object} item - Raw item from Strapi response
+ * @returns {Object|null} Structured form data ready for rendering
+ */
+function transformFormDetail(item) {
+  if (!item) {
+    return null;
+  }
+
+  const form = item.attributes || item;
+
+  // Parse form fields JSON
+  let formFields = [];
+  try {
+    if (form.formFields) {
+      formFields = typeof form.formFields === 'string' 
+        ? JSON.parse(form.formFields) 
+        : form.formFields;
+    }
+  } catch (error) {
+    console.warn('Error parsing form fields JSON:', error);
+  }
+
+  // Extract SEO data
+  const seo = form.seo ? {
+    metaTitle: form.seo.metaTitle,
+    metaDescription: form.seo.metaDescription,
+    keywords: form.seo.keywords,
+    canonicalURL: form.seo.canonicalURL,
+    metaImage: form.seo.metaImage ? getStrapiImageData(form.seo.metaImage) : null,
+    metaImageAlt: form.seo.metaImageAlt
+  } : null;
+
+  return {
+    id: item.id,
+    documentId: item.documentId || item.id,
+    title: form.title || 'Untitled Form',
+    slug: form.slug,
+    excerpt: form.excerpt || '',
+    description: form.description || '',
+    descriptionTitle: form.descriptionTitle || '',
+    hero: {
+      title: form.heroTitle || form.title || 'Form',
+      subtitle: form.heroSubtitle || form.excerpt || '',
+      kicker: form.heroKicker || 'GET IN TOUCH',
+      backgroundImage: form.heroBackgroundImage ? getStrapiImageData(form.heroBackgroundImage) : null
+    },
+    formHeading: form.formHeading || 'Submit Your Information',
+    formSubtitle: form.formSubtitle || '',
+    formLayout: form.formLayout || 'one-column',
+    formFields: formFields,
+    formWebhookUrl: form.formWebhookUrl || null,
+    showOtherOptions: form.showOtherOptions || false,
+    seo: seo,
+    createdAt: form.createdAt || item.createdAt,
+    publishedAt: form.publishedAt || item.publishedAt
+  };
+}
+
+/**
+ * Fetch a single form by slug
+ * @param {string} slug - Form slug
+ * @param {Object} [fallbackIdentifiers] - Optional Strapi identifiers
+ * @returns {Promise<Object|null>} Form data with all fields
+ */
+export async function getFormBySlug(slug, fallbackIdentifiers) {
+  if (!slug) {
+    console.warn('No slug provided to getFormBySlug');
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/forms?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=*`
+    );
+    
+    if (!data || !data.data || data.data.length === 0) {
+      console.log(`📝 No form found with slug: ${slug}`);
+      return null;
+    }
+
+    const item = data.data[0];
+    const transformed = transformFormDetail(item);
+    if (transformed) {
+      console.log(`📝 Form fetched: ${transformed.title}`);
+    }
+    return transformed;
+
+  } catch (error) {
+    console.error(`❌ Error fetching form by slug (${slug}):`, error);
+    return null;
+  }
+}
+
+/**
+ * ====================================
+ * VENUES
+ * ====================================
+ */
+
+/**
  * Fetch Venues Page data from Strapi
  * @returns {Promise<Object>} Venues page data
  */
@@ -5986,6 +6225,121 @@ export async function getFlightsPageSEO() {
     return seoData;
   } catch (error) {
     console.error('❌ [getFlightsPageSEO] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * ====================================
+ * SELF RATING GUIDE PAGE
+ * ====================================
+ */
+
+/**
+ * Get Self Rating Guide Page data
+ * @returns {Promise<Object|null>} Self Rating Guide page data
+ */
+export async function getSelfRatingGuidePage() {
+  try {
+    console.log('📊 [getSelfRatingGuidePage] Fetching Self Rating Guide page...');
+    
+    const data = await fetchAPI(
+      '/self-rating-guide-page?' +
+      'populate[pageHero][populate]=*&' +
+      'populate[tennisImage][populate]=*&' +
+      'populate[padelImage][populate]=*&' +
+      'populate[pickleballImage][populate]=*&' +
+      'populate[seo][populate]=*'
+    );
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getSelfRatingGuidePage] No Self Rating Guide page found');
+      return null;
+    }
+    
+    const page = data.data;
+    
+    const selfRatingGuidePage = {
+      pageHero: page.pageHero ? {
+        kicker: page.pageHero.kicker,
+        heading: page.pageHero.heading,
+        subtitle: page.pageHero.subtitle,
+        backgroundImage: getStrapiImageData(page.pageHero.backgroundImage),
+        showBreadcrumbs: page.pageHero.showBreadcrumbs !== false
+      } : null,
+      
+      introTitle: page.introTitle,
+      introContent: page.introContent,
+      downloadGuideUrl: page.downloadGuideUrl,
+      
+      tennisTitle: page.tennisTitle,
+      tennisContent: page.tennisContent,
+      tennisImage: getStrapiImageData(page.tennisImage),
+      
+      padelTitle: page.padelTitle,
+      padelContent: page.padelContent,
+      padelImage: getStrapiImageData(page.padelImage),
+      
+      pickleballTitle: page.pickleballTitle,
+      pickleballContent: page.pickleballContent,
+      pickleballImage: getStrapiImageData(page.pickleballImage),
+      
+      seo: page.seo || null
+    };
+    
+    console.log('✅ [getSelfRatingGuidePage] Self Rating Guide page fetched');
+    return selfRatingGuidePage;
+  } catch (error) {
+    console.error('❌ [getSelfRatingGuidePage] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * Get Self Rating Guide Page SEO data
+ * @returns {Promise<Object|null>} SEO data
+ */
+export async function getSelfRatingGuidePageSEO() {
+  try {
+    console.log('📄 [getSelfRatingGuidePageSEO] Fetching SEO...');
+    
+    const data = await fetchAPI('/self-rating-guide-page?populate[seo][populate]=metaImage');
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getSelfRatingGuidePageSEO] No page found');
+      return null;
+    }
+    
+    const page = data.data.attributes || data.data;
+    const seo = page.seo;
+    
+    if (!seo) {
+      console.warn('⚠️  [getSelfRatingGuidePageSEO] No SEO data');
+      return null;
+    }
+
+    // Extract meta image data with Cloudflare Images optimization
+    const metaImageData = getOptimizedSEOImage(seo.metaImage);
+    
+    if (metaImageData.url) {
+      console.log(`📸 Self Rating Guide page meta image URL (optimized):`, metaImageData.url);
+    }
+    
+    const seoData = {
+      metaTitle: seo.metaTitle,
+      metaDescription: seo.metaDescription,
+      keywords: seo.keywords,
+      canonicalURL: seo.canonicalURL,
+      metaImage: metaImageData.url,
+      metaImageAlt: metaImageData.alt,
+      metaImageWidth: metaImageData.width,
+      metaImageHeight: metaImageData.height
+    };
+    
+    console.log('✅ [getSelfRatingGuidePageSEO] SEO fetched');
+    return seoData;
+  } catch (error) {
+    console.error('❌ [getSelfRatingGuidePageSEO] Error:', error);
     return null;
   }
 }
