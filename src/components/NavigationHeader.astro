@@ -619,7 +619,7 @@ const logoUrl = getImageByName('logo', { width: 180, height: 50, fit: 'cover', f
         <div class="p-8">
           <div class="grid grid-cols-3 gap-6">
             {aboutMegaMenuItems.map((megaItem) => (
-              <div class="group cursor-pointer">
+              <a href={megaItem.href} class="group block">
                 <div class={`relative overflow-hidden rounded-2xl mb-4 aspect-video bg-gradient-to-br ${megaItem.gradient}`}>
                   {megaItem.image && megaItem.image.url && (
                     <img 
@@ -634,13 +634,13 @@ const logoUrl = getImageByName('logo', { width: 180, height: 50, fit: 'cover', f
                   </div>
                 </div>
                 <p class="text-sm text-gray-600 mb-2">{megaItem.description}</p>
-                <a href={megaItem.href} class="text-sm text-gold hover:text-gold-700 font-medium inline-flex items-center gap-1">
+                <div class="text-sm text-gold group-hover:text-gold-700 font-medium inline-flex items-center gap-1 transition-colors">
                   Learn More
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
                     <path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
-                </a>
-              </div>
+                </div>
+              </a>
             ))}
           </div>
           

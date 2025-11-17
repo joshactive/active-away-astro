@@ -1,0 +1,124 @@
+---
+// Jamie Murray Tennis Programme Page
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeroTailwind from '../components/PageHeroTailwind.astro';
+import BreadcrumbsTailwind from '../components/BreadcrumbsTailwind.astro';
+import QuoteSectionTailwind from '../components/QuoteSectionTailwind.astro';
+import JamieMurrayTailwind from '../components/JamieMurrayTailwind.astro';
+import TwoColumnContentTailwind from '../components/TwoColumnContentTailwind.astro';
+import LocationsTailwind from '../components/LocationsTailwind.astro';
+import FAQAccordionTailwind from '../components/FAQAccordionTailwind.astro';
+import { getJamieMurrayPage, getJamieMurrayPageSEO } from '../utils/strapi.js';
+
+// Fetch Jamie Murray page data
+let jamieMurrayData = null;
+try {
+  jamieMurrayData = await getJamieMurrayPage();
+  console.log('🎾 [jamie-murray] Page data fetched');
+} catch (error) {
+  console.error('❌ [jamie-murray] Error fetching page:', error.message);
+}
+
+// Fetch SEO data
+let seoData = null;
+try {
+  seoData = await getJamieMurrayPageSEO();
+  if (seoData) {
+    console.log('📄 [jamie-murray] SEO data fetched');
+  }
+} catch (error) {
+  console.warn('⚠️  [jamie-murray] Could not fetch SEO data:', error.message);
+}
+
+// Extract SEO fields
+const pageTitle = seoData?.metaTitle || jamieMurrayData?.seo?.metaTitle || 'The Jamie Murray Tennis Programme | Active Away';
+const pageDescription = seoData?.metaDescription || jamieMurrayData?.seo?.metaDescription || 'Designed by 7-time Grand Slam champion Jamie Murray to make you a better doubles player.';
+
+// Extract meta image URL properly
+let metaImage = null;
+if (seoData?.metaImage) {
+  metaImage = typeof seoData.metaImage === 'string' ? seoData.metaImage : seoData.metaImage.url;
+} else if (jamieMurrayData?.seo?.metaImage) {
+  metaImage = typeof jamieMurrayData.seo.metaImage === 'string' ? jamieMurrayData.seo.metaImage : jamieMurrayData.seo.metaImage.url;
+}
+
+const metaImageAlt = seoData?.metaImageAlt || jamieMurrayData?.seo?.metaImageAlt || null;
+const metaImageWidth = seoData?.metaImageWidth || jamieMurrayData?.seo?.metaImageWidth || null;
+const metaImageHeight = seoData?.metaImageHeight || jamieMurrayData?.seo?.metaImageHeight || null;
+const keywords = seoData?.keywords || jamieMurrayData?.seo?.keywords || null;
+const canonicalURL = seoData?.canonicalURL || jamieMurrayData?.seo?.canonicalURL || 'https://activeaway.com/jamie-murray-tennis-programme';
+
+// Prepare data objects for components
+const quoteData = {
+  quote: jamieMurrayData?.quote || null
+};
+
+const homeData = {
+  jamieMurray: jamieMurrayData?.jamieMurrayProgramme ? {
+    ...jamieMurrayData.jamieMurrayProgramme,
+    buttonText: null // Remove button on this page
+  } : null
+};
+
+const productData = {
+  twoColumnContent: jamieMurrayData?.twoColumnContent || null
+};
+---
+
+<BaseLayout 
+  title={pageTitle}
+  description={pageDescription}
+  metaImage={metaImage}
+  metaImageAlt={metaImageAlt}
+  metaImageWidth={metaImageWidth}
+  metaImageHeight={metaImageHeight}
+  keywords={keywords}
+  canonicalURL={canonicalURL}
+>
+  <!-- Page Hero (Background Image) -->
+  {jamieMurrayData?.pageHero && (
+    <PageHeroTailwind pageData={jamieMurrayData} />
+  )}
+  
+  <!-- Breadcrumbs Section -->
+  {jamieMurrayData?.pageHero?.showBreadcrumbs !== false && (
+    <BreadcrumbsTailwind 
+      breadcrumbs={[
+        { label: 'Home', href: '/' },
+        { label: 'Jamie Murray Tennis Programme' }
+      ]}
+    />
+  )}
+  
+  <!-- Quote Section -->
+  {jamieMurrayData?.quote && (
+    <QuoteSectionTailwind productData={quoteData} />
+  )}
+  
+  <!-- Jamie Murray Programme Section -->
+  {jamieMurrayData?.jamieMurrayProgramme && (
+    <JamieMurrayTailwind homeData={homeData} />
+  )}
+  
+  <!-- Hosting & Tennis Standards Section -->
+  {jamieMurrayData?.twoColumnContent && (
+    <TwoColumnContentTailwind productData={productData} />
+  )}
+  
+  <!-- Explore Locations Section -->
+  {jamieMurrayData?.showLocations && (
+    <LocationsTailwind 
+      customHeading={jamieMurrayData?.locationsHeading}
+      customEyebrow={jamieMurrayData?.locationsEyebrow}
+      featuredSlugs={jamieMurrayData?.featuredLocationSlugs}
+    />
+  )}
+  
+  <!-- FAQ Section -->
+  {jamieMurrayData?.faq && jamieMurrayData?.faq?.faqs?.length > 0 && (
+    <FAQAccordionTailwind aboutData={jamieMurrayData} backgroundColor="grey" />
+  )}
+</BaseLayout>
+

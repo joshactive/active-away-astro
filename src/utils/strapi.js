@@ -5703,6 +5703,153 @@ export async function getDragonsDenPageSEO() {
 }
 
 /**
+ * ====================================
+ * JAMIE MURRAY PAGE
+ * ====================================
+ */
+
+/**
+ * Get Jamie Murray Page data
+ * @returns {Promise<Object|null>} Jamie Murray page data
+ */
+export async function getJamieMurrayPage() {
+  try {
+    console.log('🎾 [getJamieMurrayPage] Fetching Jamie Murray page...');
+    
+    const data = await fetchAPI(
+      '/jamie-murray-page?' +
+      'populate[pageHero][populate]=*&' +
+      'populate[quote][populate]=*&' +
+      'populate[jamieMurrayProgramme][populate]=*&' +
+      'populate[twoColumnContent][populate][leftBlock][populate]=*&' +
+      'populate[twoColumnContent][populate][rightBlock][populate]=*&' +
+      'populate[faq][populate]=*&' +
+      'populate[seo][populate]=*'
+    );
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getJamieMurrayPage] No Jamie Murray page found');
+      return null;
+    }
+    
+    const page = data.data.attributes || data.data;
+    
+    const jamieMurrayPage = {
+      title: page.title,
+      slug: page.slug,
+      displayOnFrontEnd: page.displayOnFrontEnd,
+      
+      pageHero: page.pageHero ? {
+        kicker: page.pageHero.kicker,
+        heading: page.pageHero.heading,
+        subtitle: page.pageHero.subtitle,
+        backgroundImage: getStrapiImageData(page.pageHero.backgroundImage),
+        showBreadcrumbs: page.pageHero.showBreadcrumbs !== false
+      } : null,
+      
+      quote: page.quote ? {
+        eyebrow: page.quote.eyebrow,
+        quoteText: page.quote.quoteText,
+        authorName: page.quote.authorName,
+        authorImages: getStrapiImagesData(page.quote.authorImages),
+        decorativeIcon: getStrapiImageData(page.quote.decorativeIcon)
+      } : null,
+      
+      jamieMurrayProgramme: page.jamieMurrayProgramme ? {
+        title: page.jamieMurrayProgramme.title,
+        description: page.jamieMurrayProgramme.description,
+        buttonText: page.jamieMurrayProgramme.buttonText,
+        videoUrl: page.jamieMurrayProgramme.videoUrl,
+        image: getStrapiImageData(page.jamieMurrayProgramme.image),
+        achievements: page.jamieMurrayProgramme.achievements || []
+      } : null,
+      
+      twoColumnContent: page.twoColumnContent ? {
+        eyebrow: page.twoColumnContent.eyebrow,
+        leftBlock: page.twoColumnContent.leftBlock ? {
+          heading: page.twoColumnContent.leftBlock.heading,
+          content: page.twoColumnContent.leftBlock.content,
+          image: getStrapiImageData(page.twoColumnContent.leftBlock.image),
+          imagePosition: page.twoColumnContent.leftBlock.imagePosition || 'bottom'
+        } : null,
+        rightBlock: page.twoColumnContent.rightBlock ? {
+          heading: page.twoColumnContent.rightBlock.heading,
+          content: page.twoColumnContent.rightBlock.content,
+          image: getStrapiImageData(page.twoColumnContent.rightBlock.image),
+          imagePosition: page.twoColumnContent.rightBlock.imagePosition || 'top'
+        } : null
+      } : null,
+      
+      showLocations: page.showLocations !== false,
+      locationsHeading: page.locationsHeading,
+      locationsEyebrow: page.locationsEyebrow,
+      featuredLocationSlugs: page.featuredLocationSlugs,
+      
+      faq: page.faq ? {
+        eyebrow: page.faq.eyebrow,
+        heading: page.faq.heading,
+        faqs: page.faq.faqs || []
+      } : null,
+      
+      seo: page.seo || null
+    };
+    
+    console.log('✅ [getJamieMurrayPage] Jamie Murray page fetched');
+    return jamieMurrayPage;
+  } catch (error) {
+    console.error('❌ [getJamieMurrayPage] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * Get Jamie Murray Page SEO data
+ * @returns {Promise<Object|null>} SEO data
+ */
+export async function getJamieMurrayPageSEO() {
+  try {
+    console.log('📄 [getJamieMurrayPageSEO] Fetching SEO...');
+    
+    const data = await fetchAPI('/jamie-murray-page?populate[seo][populate]=metaImage');
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getJamieMurrayPageSEO] No page found');
+      return null;
+    }
+    
+    const page = data.data.attributes || data.data;
+    const seo = page.seo;
+    
+    if (!seo) {
+      console.warn('⚠️  [getJamieMurrayPageSEO] No SEO data');
+      return null;
+    }
+    
+    const seoData = {
+      metaTitle: seo.metaTitle,
+      metaDescription: seo.metaDescription,
+      keywords: seo.keywords,
+      canonicalURL: seo.canonicalURL,
+      metaImage: null,
+      metaImageAlt: seo.metaImageAlt,
+      metaImageWidth: seo.metaImageWidth,
+      metaImageHeight: seo.metaImageHeight
+    };
+    
+    if (seo.metaImage?.data) {
+      const imageData = seo.metaImage.data.attributes || seo.metaImage.data;
+      seoData.metaImage = getStrapiImageUrl(imageData);
+    }
+    
+    console.log('✅ [getJamieMurrayPageSEO] SEO fetched');
+    return seoData;
+  } catch (error) {
+    console.error('❌ [getJamieMurrayPageSEO] Error:', error);
+    return null;
+  }
+}
+
+/**
  * Get all people/team members from Team single-type
  * @returns {Promise<Array>} Array of people
  */
