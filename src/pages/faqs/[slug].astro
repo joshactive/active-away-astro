@@ -1,0 +1,237 @@
+---
+// FAQ Category Page (Dynamic)
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeroTailwind from '../../components/PageHeroTailwind.astro';
+import BreadcrumbsTailwind from '../../components/BreadcrumbsTailwind.astro';
+import { getFAQCategories, getFAQCategoryBySlug, getFAQCategorySEO } from '../../utils/strapi.js';
+import { parseMarkdown } from '../../utils/markdown.js';
+
+// Generate static paths for all FAQ categories
+export async function getStaticPaths() {
+  try {
+    const categories = await getFAQCategories();
+    
+    if (!categories || categories.length === 0) {
+      console.warn('⚠️  [faq-categories] No categories found');
+      return [];
+    }
+    
+    console.log(`📦 [faq-categories] Generating ${categories.length} FAQ category pages`);
+    
+    return categories.map((category) => ({
+      params: { slug: category.slug },
+      props: { categorySlug: category.slug }
+    }));
+  } catch (error) {
+    console.error('❌ [faq-categories] Error generating paths:', error);
+    return [];
+  }
+}
+
+const { slug } = Astro.params;
+const { categorySlug } = Astro.props;
+
+// Fetch category data
+let categoryData = null;
+try {
+  categoryData = await getFAQCategoryBySlug(slug || categorySlug);
+  console.log(`❓ [faq-category] Data fetched: ${categoryData?.title || slug}`);
+} catch (error) {
+  console.error(`❌ [faq-category] Error fetching ${slug}:`, error);
+}
+
+// Fetch SEO data
+let seoData = null;
+try {
+  seoData = await getFAQCategorySEO(slug || categorySlug);
+  if (seoData) {
+    console.log(`📄 [faq-category] SEO data fetched for: ${slug}`);
+  }
+} catch (error) {
+  console.warn(`⚠️  [faq-category] Could not fetch SEO data:`, error);
+}
+
+// If no category found, return 404
+if (!categoryData) {
+  return Astro.redirect('/404');
+}
+
+// Extract SEO fields
+const pageTitle = seoData?.metaTitle || categoryData?.seo?.metaTitle || `${categoryData.title} FAQs | Active Away`;
+const pageDescription = seoData?.metaDescription || categoryData?.seo?.metaDescription || `Frequently asked questions about ${categoryData.title}.`;
+
+// Extract meta image
+let metaImage = null;
+if (seoData?.metaImage) {
+  metaImage = typeof seoData.metaImage === 'string' ? seoData.metaImage : seoData.metaImage.url;
+} else if (categoryData?.seo?.metaImage) {
+  metaImage = typeof categoryData.seo.metaImage === 'string' ? categoryData.seo.metaImage : categoryData.seo.metaImage.url;
+}
+
+const metaImageAlt = seoData?.metaImageAlt || categoryData?.seo?.metaImageAlt || null;
+const metaImageWidth = seoData?.metaImageWidth || categoryData?.seo?.metaImageWidth || null;
+const metaImageHeight = seoData?.metaImageHeight || categoryData?.seo?.metaImageHeight || null;
+const keywords = seoData?.keywords || categoryData?.seo?.keywords || null;
+const canonicalURL = seoData?.canonicalURL || categoryData?.seo?.canonicalURL || `https://activeaway.com/faqs/${slug}`;
+
+// Build table of contents
+const tableOfContents = categoryData.faqSections.map((section) => ({
+  id: section.sectionName.toLowerCase().replace(/\s+/g, '-'),
+  label: section.sectionName
+}));
+---
+
+<BaseLayout 
+  title={pageTitle}
+  description={pageDescription}
+  metaImage={metaImage}
+  metaImageAlt={metaImageAlt}
+  metaImageWidth={metaImageWidth}
+  metaImageHeight={metaImageHeight}
+  keywords={keywords}
+  canonicalURL={canonicalURL}
+>
+  <!-- Page Hero -->
+  {categoryData?.pageHero && (
+    <PageHeroTailwind pageData={categoryData} />
+  )}
+  
+  <!-- Breadcrumbs -->
+  <BreadcrumbsTailwind 
+    breadcrumbs={[
+      { label: 'Home', href: '/' },
+      { label: 'FAQs', href: '/faqs' },
+      { label: categoryData.title }
+    ]}
+  />
+  
+  <!-- Contents Section -->
+  {tableOfContents.length > 0 && (
+    <section class="w-full bg-white py-12 sm:py-16 lg:py-20">
+      <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+        <div class="bg-white border-2 border-gray-200 rounded-xl p-6 sm:p-8 shadow-sm">
+          <h2 class="text-2xl font-playfair font-bold text-gray-900 mb-6">
+            Contents
+          </h2>
+          <nav class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {tableOfContents.map((item) => (
+              <a 
+                href={`#${item.id}`}
+                class="flex items-center gap-2 text-base font-inter text-gray-700 hover:text-[#ad986c] transition-colors py-2 px-3 rounded-lg hover:bg-gray-50"
+              >
+                <svg class="w-4 h-4 flex-shrink-0 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+                {item.label}
+              </a>
+            ))}
+          </nav>
+        </div>
+      </div>
+    </section>
+  )}
+  
+  <!-- FAQ Sections -->
+  {categoryData.faqSections.map((section, sectionIndex) => {
+    const sectionId = section.sectionName.toLowerCase().replace(/\s+/g, '-');
+    const bgClass = sectionIndex % 2 === 0 ? 'bg-gray-50' : 'bg-white';
+    
+    // Parse markdown for all FAQs in this section
+    const parsedFaqs = section.faqs?.map(faq => ({
+      ...faq,
+      answer: faq.answer ? parseMarkdown(faq.answer) : ''
+    })) || [];
+    
+    return (
+      <section id={sectionId} class={`w-full ${bgClass} py-12 sm:py-16 lg:py-20 scroll-mt-20`}>
+        <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+          
+          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-8 sm:mb-12 text-center">
+            {section.sectionName}
+          </h2>
+          
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-8">
+            {parsedFaqs.map((faq, faqIndex) => (
+              <div class="faq-accordion bg-white border border-gray-200 rounded-xl overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md">
+                <div 
+                  class="faq-accordion-header flex items-center justify-between p-4 sm:p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                  onclick="toggleFaqAccordion(this)"
+                >
+                  <h3 class="text-base lg:text-lg font-inter font-medium text-gray-900 pr-4">
+                    {faq.question}
+                  </h3>
+                  <div class="flex-shrink-0">
+                    <div class="faq-arrow-icon w-6 h-6 flex items-center justify-center transition-transform duration-300">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M4 6L8 10L12 6" stroke="#1E1E1E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+                <div class="faq-accordion-content overflow-hidden transition-all duration-300 max-h-0 opacity-0">
+                  <div class="px-4 pb-4 sm:px-6 sm:pb-6 pt-0">
+                    <div class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed prose max-w-none">
+                      <Fragment set:html={faq.answer} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+        </div>
+      </section>
+    );
+  })}
+</BaseLayout>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+  
+  .prose p {
+    margin: 0 0 0.75rem 0;
+  }
+  
+  .prose p:last-child {
+    margin-bottom: 0;
+  }
+</style>
+
+<script is:inline>
+  function toggleFaqAccordion(header) {
+    const accordion = header.closest('.faq-accordion');
+    if (!accordion) return;
+    
+    const content = accordion.querySelector('.faq-accordion-content');
+    const arrow = accordion.querySelector('.faq-arrow-icon');
+    const isOpen = accordion.classList.contains('open');
+    
+    // Toggle current accordion
+    if (isOpen) {
+      accordion.classList.remove('open');
+      if (content) {
+        content.style.maxHeight = '0';
+        content.style.opacity = '0';
+      }
+      if (arrow) {
+        arrow.classList.remove('rotate-180');
+      }
+    } else {
+      accordion.classList.add('open');
+      if (content) {
+        content.style.maxHeight = content.scrollHeight + 'px';
+        content.style.opacity = '1';
+      }
+      if (arrow) {
+        arrow.classList.add('rotate-180');
+      }
+    }
+  }
+</script>
+

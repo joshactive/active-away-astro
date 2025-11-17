@@ -1,0 +1,152 @@
+---
+// Flights Page
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeroTailwind from '../components/PageHeroTailwind.astro';
+import BreadcrumbsTailwind from '../components/BreadcrumbsTailwind.astro';
+import { getFlightsPage, getFlightsPageSEO } from '../utils/strapi.js';
+import { parseMarkdown } from '../utils/markdown.js';
+
+// Fetch Flights page data
+let flightsData = null;
+try {
+  flightsData = await getFlightsPage();
+  console.log('✈️ [flights] Page data fetched');
+} catch (error) {
+  console.error('❌ [flights] Error fetching page:', error.message);
+}
+
+// Fetch SEO data
+let seoData = null;
+try {
+  seoData = await getFlightsPageSEO();
+  if (seoData) {
+    console.log('📄 [flights] SEO data fetched');
+  }
+} catch (error) {
+  console.warn('⚠️  [flights] Could not fetch SEO data:', error.message);
+}
+
+// Extract SEO fields
+const pageTitle = seoData?.metaTitle || flightsData?.seo?.metaTitle || 'Book Flights | Active Away';
+const pageDescription = seoData?.metaDescription || flightsData?.seo?.metaDescription || 'Find and book flights for your Active Away holiday.';
+
+// Extract meta image URL properly
+let metaImage = null;
+if (seoData?.metaImage) {
+  metaImage = typeof seoData.metaImage === 'string' ? seoData.metaImage : seoData.metaImage.url;
+} else if (flightsData?.seo?.metaImage) {
+  metaImage = typeof flightsData.seo.metaImage === 'string' ? flightsData.seo.metaImage : flightsData.seo.metaImage.url;
+}
+
+const metaImageAlt = seoData?.metaImageAlt || flightsData?.seo?.metaImageAlt || null;
+const metaImageWidth = seoData?.metaImageWidth || flightsData?.seo?.metaImageWidth || null;
+const metaImageHeight = seoData?.metaImageHeight || flightsData?.seo?.metaImageHeight || null;
+const keywords = seoData?.keywords || flightsData?.seo?.keywords || null;
+const canonicalURL = seoData?.canonicalURL || flightsData?.seo?.canonicalURL || 'https://activeaway.com/flights';
+
+// Extract content with defaults and parse markdown
+const introHeading = flightsData?.introHeading || 'We Love All Things Rackets';
+const introText = flightsData?.introText ? parseMarkdown(flightsData.introText) : '';
+const formHeading = flightsData?.formHeading || 'Submit Your Choice';
+const formDescription = flightsData?.formDescription ? parseMarkdown(flightsData.formDescription) : '';
+---
+
+<BaseLayout 
+  title={pageTitle}
+  description={pageDescription}
+  metaImage={metaImage}
+  metaImageAlt={metaImageAlt}
+  metaImageWidth={metaImageWidth}
+  metaImageHeight={metaImageHeight}
+  keywords={keywords}
+  canonicalURL={canonicalURL}
+>
+  <!-- Page Hero (Background Image) -->
+  {flightsData?.pageHero && (
+    <PageHeroTailwind pageData={flightsData} />
+  )}
+  
+  <!-- Breadcrumbs Section -->
+  {flightsData?.pageHero?.showBreadcrumbs !== false && (
+    <BreadcrumbsTailwind 
+      breadcrumbs={[
+        { label: 'Home', href: '/' },
+        { label: 'Flights' }
+      ]}
+    />
+  )}
+  
+  <!-- Intro Section (We Love All Things Rackets) -->
+  <section class="w-full bg-white py-12 sm:py-16 lg:py-24">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      
+      <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-4 sm:mb-6 text-center">
+        {introHeading}
+      </h2>
+      
+      {introText && (
+        <div class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed text-center max-w-4xl mx-auto prose prose-lg">
+          <Fragment set:html={introText} />
+        </div>
+      )}
+      
+    </div>
+  </section>
+  
+  <!-- Form Section -->
+  <section class="w-full bg-gray-50 py-12 sm:py-16 lg:py-24">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      
+      <!-- Form Header -->
+      <div class="mb-8 sm:mb-12 text-center">
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-4 sm:mb-6">
+          {formHeading}
+        </h2>
+        {formDescription && (
+          <div class="text-base sm:text-lg font-inter text-gray-700 leading-relaxed max-w-3xl mx-auto prose prose-lg">
+            <Fragment set:html={formDescription} />
+          </div>
+        )}
+      </div>
+      
+      <!-- Skyscanner Widget -->
+      <div class="max-w-5xl mx-auto bg-white rounded-2xl shadow-lg p-6 sm:p-8 lg:p-10">
+        <div
+          data-skyscanner-widget="SearchWidget"
+          data-locale="en-GB"
+          data-market="UK"
+          data-currency="GBP"
+          data-campaign-id="13416"
+          data-media-partner-id="3520277"
+          data-ad-id="1103263"
+          data-flight-type="return"
+          data-button-colour="#ad986c"
+        ></div>
+      </div>
+      
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+  
+  .prose p {
+    margin: 0 0 1rem 0;
+  }
+  
+  .prose p:last-child {
+    margin-bottom: 0;
+  }
+</style>
+
+<script src="https://widgets.skyscanner.net/widget-server/js/loader.js" async></script>
+

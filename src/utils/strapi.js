@@ -144,6 +144,38 @@ export function getStrapiImageData(imageData) {
 }
 
 /**
+ * Get optimized SEO meta image data from Strapi SEO component
+ * Applies Cloudflare Images optimization for Open Graph (1200x630)
+ * @param {Object} seoMetaImage - Strapi SEO metaImage object
+ * @returns {Object} Object with url, alt, width, height for Open Graph
+ */
+export function getOptimizedSEOImage(seoMetaImage) {
+  const metaImageWidth = 1200;
+  const metaImageHeight = 630;
+  
+  if (!seoMetaImage) {
+    return { url: null, alt: null, width: null, height: null };
+  }
+  
+  const imageData = getStrapiImageData(seoMetaImage);
+  
+  if (!imageData?.url) {
+    return { url: null, alt: null, width: null, height: null };
+  }
+  
+  // Use Cloudflare Images with explicit dimensions for Open Graph
+  const baseUrl = imageData.url.split('?')[0]; // Remove any existing query params
+  const optimizedUrl = `${baseUrl}?width=${metaImageWidth}&height=${metaImageHeight}&fit=cover&format=auto&quality=85`;
+  
+  return {
+    url: optimizedUrl,
+    alt: imageData.alt || 'Active Away',
+    width: metaImageWidth,
+    height: metaImageHeight
+  };
+}
+
+/**
  * Get multiple image URLs from Strapi
  * @param {Object} imagesData - Strapi images data object
  * @returns {Array<string>} Array of full image URLs
@@ -1216,31 +1248,19 @@ export async function getPageSEO(endpoint) {
     console.log(`✅ ${endpoint} SEO data fetched successfully`);
 
     // Extract meta image data with Cloudflare Images optimization
-    let metaImageUrl = null;
-    let metaImageAlt = null;
-    const metaImageWidth = 1200;
-    const metaImageHeight = 630;
+    const metaImageData = getOptimizedSEOImage(seoData.metaImage);
     
-    if (seoData.metaImage) {
-      const imageData = getStrapiImageData(seoData.metaImage);
-      
-      if (imageData?.url) {
-        // Use Cloudflare Images with explicit dimensions for Open Graph
-        const baseUrl = imageData.url.split('?')[0]; // Remove any existing query params
-        metaImageUrl = `${baseUrl}?width=${metaImageWidth}&height=${metaImageHeight}&fit=cover&format=auto&quality=85`;
-        metaImageAlt = imageData.alt || 'Active Away';
-        
-        console.log(`📸 ${endpoint} meta image URL (optimized):`, metaImageUrl);
-      }
+    if (metaImageData.url) {
+      console.log(`📸 ${endpoint} meta image URL (optimized):`, metaImageData.url);
     }
 
     return {
       metaTitle: seoData.metaTitle || null,
       metaDescription: seoData.metaDescription || null,
-      metaImage: metaImageUrl,
-      metaImageAlt: metaImageAlt,
-      metaImageWidth: metaImageUrl ? metaImageWidth : null,
-      metaImageHeight: metaImageUrl ? metaImageHeight : null,
+      metaImage: metaImageData.url,
+      metaImageAlt: metaImageData.alt,
+      metaImageWidth: metaImageData.width,
+      metaImageHeight: metaImageData.height,
       keywords: seoData.keywords || null,
       metaRobots: seoData.metaRobots || null,
       metaViewport: seoData.metaViewport || null,
@@ -5041,13 +5061,22 @@ export async function getGroupOrganiserSEO(slug) {
       const organiser = item.attributes || item;
       const seo = organiser.seo || {};
       
+      // Extract meta image data with Cloudflare Images optimization
+      const metaImageData = getOptimizedSEOImage(seo.metaImage);
+      
+      if (metaImageData.url) {
+        console.log(`📸 Group organiser meta image URL (optimized):`, metaImageData.url);
+      }
+      
       return {
         metaTitle: seo.metaTitle,
         metaDescription: seo.metaDescription,
         keywords: seo.keywords,
         canonicalURL: seo.canonicalURL,
-        metaImage: seo.metaImage ? getStrapiImageData(seo.metaImage).url : null,
-        metaImageAlt: seo.metaImage ? getStrapiImageData(seo.metaImage).alt : null
+        metaImage: metaImageData.url,
+        metaImageAlt: metaImageData.alt,
+        metaImageWidth: metaImageData.width,
+        metaImageHeight: metaImageData.height
       };
     }
     
@@ -5323,23 +5352,24 @@ export async function getProductPageSEO(slug) {
       console.warn(`⚠️  [getProductPageSEO] No SEO data for: ${slug}`);
       return null;
     }
+
+    // Extract meta image data with Cloudflare Images optimization
+    const metaImageData = getOptimizedSEOImage(seo.metaImage);
+    
+    if (metaImageData.url) {
+      console.log(`📸 Product page meta image URL (optimized):`, metaImageData.url);
+    }
     
     const seoData = {
       metaTitle: seo.metaTitle,
       metaDescription: seo.metaDescription,
       keywords: seo.keywords,
       canonicalURL: seo.canonicalURL,
-      metaImage: null,
-      metaImageAlt: seo.metaImageAlt,
-      metaImageWidth: seo.metaImageWidth,
-      metaImageHeight: seo.metaImageHeight
+      metaImage: metaImageData.url,
+      metaImageAlt: metaImageData.alt,
+      metaImageWidth: metaImageData.width,
+      metaImageHeight: metaImageData.height
     };
-    
-    // Process meta image
-    if (seo.metaImage?.data) {
-      const imageData = seo.metaImage.data.attributes || seo.metaImage.data;
-      seoData.metaImage = getStrapiImageUrl(imageData);
-    }
     
     console.log(`✅ [getProductPageSEO] SEO data fetched for: ${slug}`);
     return seoData;
@@ -5484,22 +5514,24 @@ export async function getAboutPageSEO() {
       console.warn('⚠️  [getAboutPageSEO] No SEO data');
       return null;
     }
+
+    // Extract meta image data with Cloudflare Images optimization
+    const metaImageData = getOptimizedSEOImage(seo.metaImage);
+    
+    if (metaImageData.url) {
+      console.log(`📸 About page meta image URL (optimized):`, metaImageData.url);
+    }
     
     const seoData = {
       metaTitle: seo.metaTitle,
       metaDescription: seo.metaDescription,
       keywords: seo.keywords,
       canonicalURL: seo.canonicalURL,
-      metaImage: null,
-      metaImageAlt: seo.metaImageAlt,
-      metaImageWidth: seo.metaImageWidth,
-      metaImageHeight: seo.metaImageHeight
+      metaImage: metaImageData.url,
+      metaImageAlt: metaImageData.alt,
+      metaImageWidth: metaImageData.width,
+      metaImageHeight: metaImageData.height
     };
-    
-    if (seo.metaImage?.data) {
-      const imageData = seo.metaImage.data.attributes || seo.metaImage.data;
-      seoData.metaImage = getStrapiImageUrl(imageData);
-    }
     
     console.log('✅ [getAboutPageSEO] SEO data fetched');
     return seoData;
@@ -5677,22 +5709,24 @@ export async function getDragonsDenPageSEO() {
       console.warn('⚠️  [getDragonsDenPageSEO] No SEO data');
       return null;
     }
+
+    // Extract meta image data with Cloudflare Images optimization
+    const metaImageData = getOptimizedSEOImage(seo.metaImage);
+    
+    if (metaImageData.url) {
+      console.log(`📸 Dragons Den meta image URL (optimized):`, metaImageData.url);
+    }
     
     const seoData = {
       metaTitle: seo.metaTitle,
       metaDescription: seo.metaDescription,
       keywords: seo.keywords,
       canonicalURL: seo.canonicalURL,
-      metaImage: null,
-      metaImageAlt: seo.metaImageAlt,
-      metaImageWidth: seo.metaImageWidth,
-      metaImageHeight: seo.metaImageHeight
+      metaImage: metaImageData.url,
+      metaImageAlt: metaImageData.alt,
+      metaImageWidth: metaImageData.width,
+      metaImageHeight: metaImageData.height
     };
-    
-    if (seo.metaImage?.data) {
-      const imageData = seo.metaImage.data.attributes || seo.metaImage.data;
-      seoData.metaImage = getStrapiImageUrl(imageData);
-    }
     
     console.log('✅ [getDragonsDenPageSEO] SEO fetched');
     return seoData;
@@ -5824,27 +5858,290 @@ export async function getJamieMurrayPageSEO() {
       console.warn('⚠️  [getJamieMurrayPageSEO] No SEO data');
       return null;
     }
+
+    // Extract meta image data with Cloudflare Images optimization
+    const metaImageData = getOptimizedSEOImage(seo.metaImage);
+    
+    if (metaImageData.url) {
+      console.log(`📸 Jamie Murray meta image URL (optimized):`, metaImageData.url);
+    }
     
     const seoData = {
       metaTitle: seo.metaTitle,
       metaDescription: seo.metaDescription,
       keywords: seo.keywords,
       canonicalURL: seo.canonicalURL,
-      metaImage: null,
-      metaImageAlt: seo.metaImageAlt,
-      metaImageWidth: seo.metaImageWidth,
-      metaImageHeight: seo.metaImageHeight
+      metaImage: metaImageData.url,
+      metaImageAlt: metaImageData.alt,
+      metaImageWidth: metaImageData.width,
+      metaImageHeight: metaImageData.height
     };
-    
-    if (seo.metaImage?.data) {
-      const imageData = seo.metaImage.data.attributes || seo.metaImage.data;
-      seoData.metaImage = getStrapiImageUrl(imageData);
-    }
     
     console.log('✅ [getJamieMurrayPageSEO] SEO fetched');
     return seoData;
   } catch (error) {
     console.error('❌ [getJamieMurrayPageSEO] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * ====================================
+ * FLIGHTS PAGE
+ * ====================================
+ */
+
+/**
+ * Get Flights Page data
+ * @returns {Promise<Object|null>} Flights page data
+ */
+export async function getFlightsPage() {
+  try {
+    console.log('✈️ [getFlightsPage] Fetching Flights page...');
+    
+    const data = await fetchAPI(
+      '/flights-page?' +
+      'populate[pageHero][populate]=*&' +
+      'populate[seo][populate]=*'
+    );
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getFlightsPage] No Flights page found');
+      return null;
+    }
+    
+    const page = data.data.attributes || data.data;
+    
+    const flightsPage = {
+      title: page.title,
+      slug: page.slug,
+      displayOnFrontEnd: page.displayOnFrontEnd,
+      
+      pageHero: page.pageHero ? {
+        kicker: page.pageHero.kicker,
+        heading: page.pageHero.heading,
+        subtitle: page.pageHero.subtitle,
+        backgroundImage: getStrapiImageData(page.pageHero.backgroundImage),
+        showBreadcrumbs: page.pageHero.showBreadcrumbs !== false
+      } : null,
+      
+      introHeading: page.introHeading,
+      introText: page.introText,
+      formHeading: page.formHeading,
+      formDescription: page.formDescription,
+      
+      seo: page.seo || null
+    };
+    
+    console.log('✅ [getFlightsPage] Flights page fetched');
+    return flightsPage;
+  } catch (error) {
+    console.error('❌ [getFlightsPage] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * Get Flights Page SEO data
+ * @returns {Promise<Object|null>} SEO data
+ */
+export async function getFlightsPageSEO() {
+  try {
+    console.log('📄 [getFlightsPageSEO] Fetching SEO...');
+    
+    const data = await fetchAPI('/flights-page?populate[seo][populate]=metaImage');
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getFlightsPageSEO] No page found');
+      return null;
+    }
+    
+    const page = data.data.attributes || data.data;
+    const seo = page.seo;
+    
+    if (!seo) {
+      console.warn('⚠️  [getFlightsPageSEO] No SEO data');
+      return null;
+    }
+
+    // Extract meta image data with Cloudflare Images optimization
+    const metaImageData = getOptimizedSEOImage(seo.metaImage);
+    
+    if (metaImageData.url) {
+      console.log(`📸 Flights page meta image URL (optimized):`, metaImageData.url);
+    }
+    
+    const seoData = {
+      metaTitle: seo.metaTitle,
+      metaDescription: seo.metaDescription,
+      keywords: seo.keywords,
+      canonicalURL: seo.canonicalURL,
+      metaImage: metaImageData.url,
+      metaImageAlt: metaImageData.alt,
+      metaImageWidth: metaImageData.width,
+      metaImageHeight: metaImageData.height
+    };
+    
+    console.log('✅ [getFlightsPageSEO] SEO fetched');
+    return seoData;
+  } catch (error) {
+    console.error('❌ [getFlightsPageSEO] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * ====================================
+ * FAQ CATEGORIES
+ * ====================================
+ */
+
+/**
+ * Get all FAQ categories
+ * @returns {Promise<Array>} Array of FAQ categories
+ */
+export async function getFAQCategories() {
+  try {
+    console.log('❓ [getFAQCategories] Fetching FAQ categories...');
+    
+    const data = await fetchAPI(
+      '/faq-categories?filters[displayOnFrontEnd][$eq]=true&sort=order:asc&populate=*'
+    );
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getFAQCategories] No FAQ categories found');
+      return [];
+    }
+    
+    const categories = data.data.map((item) => {
+      const cat = item.attributes || item;
+      return {
+        id: item.id,
+        title: cat.title,
+        slug: cat.slug,
+        eyebrow: cat.eyebrow,
+        order: cat.order || 0,
+        faqCount: cat.faqSections?.reduce((total, section) => total + (section.faqs?.length || 0), 0) || 0
+      };
+    });
+    
+    console.log(`✅ [getFAQCategories] Fetched ${categories.length} categories`);
+    return categories;
+  } catch (error) {
+    console.error('❌ [getFAQCategories] Error:', error);
+    return [];
+  }
+}
+
+/**
+ * Get FAQ category by slug with all FAQs
+ * @param {string} slug - Category slug
+ * @returns {Promise<Object|null>} FAQ category data
+ */
+export async function getFAQCategoryBySlug(slug) {
+  if (!slug) {
+    console.warn('⚠️  [getFAQCategoryBySlug] No slug provided');
+    return null;
+  }
+  
+  try {
+    console.log(`❓ [getFAQCategoryBySlug] Fetching category: ${slug}`);
+    
+    const data = await fetchAPI(
+      `/faq-categories?filters[slug][$eq]=${slug}&` +
+      'populate[pageHero][populate]=*&' +
+      'populate[faqSections][populate]=*&' +
+      'populate[seo][populate]=*'
+    );
+    
+    if (!data || !data.data || data.data.length === 0) {
+      console.warn(`⚠️  [getFAQCategoryBySlug] Category not found: ${slug}`);
+      return null;
+    }
+    
+    const item = data.data[0];
+    const cat = item.attributes || item;
+    
+    const category = {
+      id: item.id,
+      title: cat.title,
+      slug: cat.slug,
+      eyebrow: cat.eyebrow,
+      
+      pageHero: cat.pageHero ? {
+        kicker: cat.pageHero.kicker,
+        heading: cat.pageHero.heading,
+        subtitle: cat.pageHero.subtitle,
+        backgroundImage: getStrapiImageData(cat.pageHero.backgroundImage),
+        showBreadcrumbs: cat.pageHero.showBreadcrumbs !== false
+      } : null,
+      
+      faqSections: cat.faqSections || [],
+      
+      seo: cat.seo || null
+    };
+    
+    console.log(`✅ [getFAQCategoryBySlug] Category fetched: ${category.title}`);
+    return category;
+  } catch (error) {
+    console.error(`❌ [getFAQCategoryBySlug] Error fetching ${slug}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Get FAQ category SEO data by slug
+ * @param {string} slug - Category slug
+ * @returns {Promise<Object|null>} SEO data
+ */
+export async function getFAQCategorySEO(slug) {
+  if (!slug) {
+    console.warn('⚠️  [getFAQCategorySEO] No slug provided');
+    return null;
+  }
+  
+  try {
+    console.log(`📄 [getFAQCategorySEO] Fetching SEO for: ${slug}`);
+    
+    const data = await fetchAPI(
+      `/faq-categories?filters[slug][$eq]=${slug}&populate[seo][populate]=metaImage`
+    );
+    
+    if (!data || !data.data || data.data.length === 0) {
+      console.warn(`⚠️  [getFAQCategorySEO] Category not found: ${slug}`);
+      return null;
+    }
+    
+    const item = data.data[0];
+    const cat = item.attributes || item;
+    const seo = cat.seo;
+    
+    if (!seo) {
+      console.warn(`⚠️  [getFAQCategorySEO] No SEO data for: ${slug}`);
+      return null;
+    }
+    
+    const metaImageData = getOptimizedSEOImage(seo.metaImage);
+    
+    if (metaImageData.url) {
+      console.log(`📸 FAQ category meta image URL (optimized):`, metaImageData.url);
+    }
+    
+    const seoData = {
+      metaTitle: seo.metaTitle,
+      metaDescription: seo.metaDescription,
+      keywords: seo.keywords,
+      canonicalURL: seo.canonicalURL,
+      metaImage: metaImageData.url,
+      metaImageAlt: metaImageData.alt,
+      metaImageWidth: metaImageData.width,
+      metaImageHeight: metaImageData.height
+    };
+    
+    console.log(`✅ [getFAQCategorySEO] SEO fetched for: ${slug}`);
+    return seoData;
+  } catch (error) {
+    console.error(`❌ [getFAQCategorySEO] Error:`, error);
     return null;
   }
 }

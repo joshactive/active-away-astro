@@ -1,0 +1,107 @@
+---
+// FAQs Index Page
+export const prerender = true;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeroTailwind from '../../components/PageHeroTailwind.astro';
+import BreadcrumbsTailwind from '../../components/BreadcrumbsTailwind.astro';
+import { getFAQCategories } from '../../utils/strapi.js';
+
+// Fetch FAQ categories
+let categories = [];
+try {
+  categories = await getFAQCategories();
+  console.log('❓ [faqs] Fetched FAQ categories');
+} catch (error) {
+  console.error('❌ [faqs] Error fetching categories:', error);
+}
+
+// Hardcoded page hero data
+const pageHeroData = {
+  pageHero: {
+    kicker: 'FREQUENTLY ASKED QUESTIONS',
+    heading: 'How Can We Help?',
+    subtitle: 'Browse our FAQ categories to find answers to common questions',
+    backgroundImage: {
+      url: 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/45b69090-1c22-46cd-7f98-086ba71efc00/public',
+      alt: 'FAQs'
+    },
+    showBreadcrumbs: true
+  }
+};
+---
+
+<BaseLayout 
+  title="Frequently Asked Questions | Active Away"
+  description="Find answers to common questions about Active Away tennis holidays, bookings, and more."
+  canonicalURL="https://activeaway.com/faqs"
+>
+  <!-- Page Hero -->
+  <PageHeroTailwind pageData={pageHeroData} />
+  
+  <!-- Breadcrumbs -->
+  <BreadcrumbsTailwind 
+    breadcrumbs={[
+      { label: 'Home', href: '/' },
+      { label: 'FAQs' }
+    ]}
+  />
+  
+  <!-- FAQ Categories Grid -->
+  <section class="w-full bg-white py-12 sm:py-16 lg:py-24">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      
+      <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-8 sm:mb-12 text-center">
+        Browse by Category
+      </h2>
+      
+      {categories.length > 0 ? (
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          {categories.map((category) => (
+            <a 
+              href={`/faqs/${category.slug}`}
+              class="group bg-white border-2 border-gray-200 rounded-2xl p-6 sm:p-8 hover:shadow-lg hover:border-gray-300 transition-all duration-300"
+            >
+              {category.eyebrow && (
+                <div class="text-xs sm:text-sm font-inter font-semibold text-gray-600 tracking-[0.2em] uppercase mb-2">
+                  {category.eyebrow}
+                </div>
+              )}
+              
+              <h3 class="text-xl sm:text-2xl font-playfair font-semibold text-gray-900 mb-3 group-hover:text-[#ad986c] transition-colors">
+                {category.title}
+              </h3>
+              
+              <p class="text-sm sm:text-base font-inter text-gray-600 mb-4">
+                {category.faqCount} {category.faqCount === 1 ? 'question' : 'questions'}
+              </p>
+              
+              <div class="inline-flex items-center gap-2 text-sm sm:text-base font-inter font-semibold text-[#ad986c] group-hover:text-[#8a7454] transition-colors">
+                <span>View FAQs</span>
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </div>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div class="text-center py-12">
+          <p class="text-gray-600">No FAQ categories available at this time.</p>
+        </div>
+      )}
+      
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+</style>
+
