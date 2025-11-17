@@ -5,7 +5,7 @@ export const prerender = true;
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeroTailwind from '../../components/PageHeroTailwind.astro';
 import BreadcrumbsTailwind from '../../components/BreadcrumbsTailwind.astro';
-import { getFAQCategories } from '../../utils/strapi.js';
+import { getFAQCategories, getFAQsIndexPage, getFAQsIndexPageSEO } from '../../utils/strapi.js';
 
 // Fetch FAQ categories
 let categories = [];
@@ -16,8 +16,51 @@ try {
   console.error('❌ [faqs] Error fetching categories:', error);
 }
 
-// Hardcoded page hero data
-const pageHeroData = {
+// Fetch FAQs index page data
+let indexData = null;
+try {
+  indexData = await getFAQsIndexPage();
+  console.log('❓ [faqs] Index page data fetched');
+} catch (error) {
+  console.error('❌ [faqs] Error fetching index page:', error.message);
+}
+
+// Fetch SEO data
+let seoData = null;
+try {
+  seoData = await getFAQsIndexPageSEO();
+  if (seoData) {
+    console.log('📄 [faqs] SEO data fetched');
+  }
+} catch (error) {
+  console.warn('⚠️  [faqs] Could not fetch SEO data:', error.message);
+}
+
+// Extract SEO fields
+const pageTitle = seoData?.metaTitle || indexData?.seo?.metaTitle || 'Frequently Asked Questions | Active Away';
+const pageDescription = seoData?.metaDescription || indexData?.seo?.metaDescription || 'Find answers to common questions about Active Away tennis holidays, bookings, and more.';
+
+// Extract meta image
+let metaImage = null;
+if (seoData?.metaImage) {
+  metaImage = typeof seoData.metaImage === 'string' ? seoData.metaImage : seoData.metaImage.url;
+} else if (indexData?.seo?.metaImage) {
+  metaImage = typeof indexData.seo.metaImage === 'string' ? indexData.seo.metaImage : indexData.seo.metaImage.url;
+}
+
+const metaImageAlt = seoData?.metaImageAlt || indexData?.seo?.metaImageAlt || null;
+const metaImageWidth = seoData?.metaImageWidth || indexData?.seo?.metaImageWidth || null;
+const metaImageHeight = seoData?.metaImageHeight || indexData?.seo?.metaImageHeight || null;
+const keywords = seoData?.keywords || indexData?.seo?.keywords || null;
+const canonicalURL = seoData?.canonicalURL || indexData?.seo?.canonicalURL || 'https://activeaway.com/faqs';
+
+// Extract content with defaults
+const gridHeading = indexData?.gridHeading || 'Browse by Category';
+
+// Prepare page hero data
+const pageHeroData = indexData?.pageHero ? {
+  pageHero: indexData.pageHero
+} : {
   pageHero: {
     kicker: 'FREQUENTLY ASKED QUESTIONS',
     heading: 'How Can We Help?',
@@ -32,9 +75,14 @@ const pageHeroData = {
 ---
 
 <BaseLayout 
-  title="Frequently Asked Questions | Active Away"
-  description="Find answers to common questions about Active Away tennis holidays, bookings, and more."
-  canonicalURL="https://activeaway.com/faqs"
+  title={pageTitle}
+  description={pageDescription}
+  metaImage={metaImage}
+  metaImageAlt={metaImageAlt}
+  metaImageWidth={metaImageWidth}
+  metaImageHeight={metaImageHeight}
+  keywords={keywords}
+  canonicalURL={canonicalURL}
 >
   <!-- Page Hero -->
   <PageHeroTailwind pageData={pageHeroData} />
@@ -52,7 +100,7 @@ const pageHeroData = {
     <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
       
       <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-8 sm:mb-12 text-center">
-        Browse by Category
+        {gridHeading}
       </h2>
       
       {categories.length > 0 ? (

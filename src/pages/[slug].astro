@@ -14,40 +14,74 @@ import FAQAccordionTailwind from '../components/FAQAccordionTailwind.astro';
 import OurPartnersTailwind from '../components/OurPartnersTailwind.astro';
 import TwoColumnContentTailwind from '../components/TwoColumnContentTailwind.astro';
 import KeyInformationTailwind from '../components/KeyInformationTailwind.astro';
-import { getProductPages, getProductPageBySlug, getProductPageSEO, getHomeData } from '../utils/strapi.js';
+import BasicStaticPageTailwind from '../components/BasicStaticPageTailwind.astro';
+import PageHeroTailwind from '../components/PageHeroTailwind.astro';
+import BreadcrumbsTailwind from '../components/BreadcrumbsTailwind.astro';
+import { getProductPages, getProductPageBySlug, getProductPageSEO, getHomeData, getBasicStaticPages, getBasicStaticPageBySlug } from '../utils/strapi.js';
 
-// Generate static paths for all product pages
+// Generate static paths for all pages (product pages + static pages)
 export async function getStaticPaths() {
   try {
-    const productPages = await getProductPages();
+    const paths = [];
     
-    if (!productPages || productPages.length === 0) {
-      console.warn('⚠️  [product-pages] No product pages found for static generation');
-      return [];
+    // Get product pages
+    const productPages = await getProductPages();
+    if (productPages && productPages.length > 0) {
+      productPages.forEach(page => {
+        paths.push({
+          params: { slug: page.slug },
+          props: { pageSlug: page.slug, pageType: 'product' }
+        });
+      });
+      console.log(`📦 [pages] Added ${productPages.length} product pages`);
     }
     
-    console.log(`📦 [product-pages] Generating ${productPages.length} static product pages`);
+    // Get static pages
+    const staticPages = await getBasicStaticPages();
+    if (staticPages && staticPages.length > 0) {
+      staticPages.forEach(page => {
+        paths.push({
+          params: { slug: page.slug },
+          props: { pageSlug: page.slug, pageType: 'static' }
+        });
+      });
+      console.log(`📄 [pages] Added ${staticPages.length} static pages`);
+    }
     
-    return productPages.map((page) => ({
-      params: { slug: page.slug },
-      props: { pageSlug: page.slug }
-    }));
+    console.log(`📦 [pages] Generating ${paths.length} total pages`);
+    return paths;
   } catch (error) {
-    console.error('❌ [product-pages] Error generating static paths:', error);
+    console.error('❌ [pages] Error generating static paths:', error);
     return [];
   }
 }
 
 const { slug } = Astro.params;
-const { pageSlug } = Astro.props;
+const { pageSlug, pageType } = Astro.props;
 
-// Fetch product page data
+// Try fetching product page first
 let productData = null;
+let staticPageData = null;
+
 try {
   productData = await getProductPageBySlug(slug || pageSlug);
-  console.log(`📦 [product-page] Product page data fetched: ${productData?.title || slug}`);
+  if (productData) {
+    console.log(`📦 [page] Product page data fetched: ${productData.title}`);
+  }
 } catch (error) {
-  console.error(`❌ [product-page] Error fetching product page ${slug}:`, error.message);
+  console.error(`❌ [page] Error fetching product page:`, error.message);
+}
+
+// If no product page found, try static page
+if (!productData) {
+  try {
+    staticPageData = await getBasicStaticPageBySlug(slug || pageSlug);
+    if (staticPageData) {
+      console.log(`📄 [page] Static page data fetched: ${staticPageData.title}`);
+    }
+  } catch (error) {
+    console.error(`❌ [page] Error fetching static page:`, error.message);
+  }
 }
 
 // Fetch SEO data separately
@@ -70,28 +104,43 @@ try {
   console.warn(`⚠️  [product-page] Could not fetch homepage data:`, error.message);
 }
 
-// If no product data found, return 404
-if (!productData) {
+// If neither product nor static page found, return 404
+if (!productData && !staticPageData) {
   return Astro.redirect('/404');
 }
 
-// Extract SEO fields with fallbacks
-const pageTitle = seoData?.metaTitle || productData?.seo?.metaTitle || productData?.title || 'Product Page';
-const pageDescription = seoData?.metaDescription || productData?.seo?.metaDescription || productData?.hero?.subheading || 'Explore our products and services.';
+// Determine which type of page we're rendering
+const isStaticPage = !!staticPageData && !productData;
 
-// Extract meta image URL properly
+// Extract SEO fields with fallbacks (handle both page types)
+const pageTitle = seoData?.metaTitle 
+  || productData?.seo?.metaTitle 
+  || staticPageData?.seo?.metaTitle 
+  || productData?.title 
+  || staticPageData?.title 
+  || 'Page';
+  
+const pageDescription = seoData?.metaDescription 
+  || productData?.seo?.metaDescription 
+  || staticPageData?.seo?.metaDescription 
+  || productData?.hero?.subheading 
+  || 'Explore our products and services.';
+
+// Extract meta image URL properly (handle both page types)
 let metaImage = null;
 if (seoData?.metaImage) {
   metaImage = typeof seoData.metaImage === 'string' ? seoData.metaImage : seoData.metaImage.url;
 } else if (productData?.seo?.metaImage) {
   metaImage = typeof productData.seo.metaImage === 'string' ? productData.seo.metaImage : productData.seo.metaImage.url;
+} else if (staticPageData?.seo?.metaImage) {
+  metaImage = typeof staticPageData.seo.metaImage === 'string' ? staticPageData.seo.metaImage : staticPageData.seo.metaImage.url;
 }
 
-const metaImageAlt = seoData?.metaImageAlt || productData?.seo?.metaImageAlt || null;
-const metaImageWidth = seoData?.metaImageWidth || productData?.seo?.metaImageWidth || null;
-const metaImageHeight = seoData?.metaImageHeight || productData?.seo?.metaImageHeight || null;
-const keywords = seoData?.keywords || productData?.seo?.keywords || null;
-const canonicalURL = seoData?.canonicalURL || productData?.seo?.canonicalURL || `https://activeaway.com/${slug}`;
+const metaImageAlt = seoData?.metaImageAlt || productData?.seo?.metaImageAlt || staticPageData?.seo?.metaImageAlt || null;
+const metaImageWidth = seoData?.metaImageWidth || productData?.seo?.metaImageWidth || staticPageData?.seo?.metaImageWidth || null;
+const metaImageHeight = seoData?.metaImageHeight || productData?.seo?.metaImageHeight || staticPageData?.seo?.metaImageHeight || null;
+const keywords = seoData?.keywords || productData?.seo?.keywords || staticPageData?.seo?.keywords || null;
+const canonicalURL = seoData?.canonicalURL || productData?.seo?.canonicalURL || staticPageData?.seo?.canonicalURL || `https://activeaway.com/${slug}`;
 
 // Prepare data for reusable components
 const homeData = {
@@ -111,8 +160,32 @@ const homeData = {
   keywords={keywords}
   canonicalURL={canonicalURL}
 >
-  <!-- Hero Section -->
-  <ProductHeroTailwind productData={productData} />
+  {isStaticPage ? (
+    <!-- Static Page Layout -->
+    <>
+      <!-- Page Hero -->
+      {staticPageData?.pageHero && (
+        <PageHeroTailwind pageData={staticPageData} />
+      )}
+      
+      <!-- Breadcrumbs -->
+      {staticPageData?.pageHero?.showBreadcrumbs !== false && (
+        <BreadcrumbsTailwind 
+          breadcrumbs={[
+            { label: 'Home', href: '/' },
+            { label: staticPageData.title }
+          ]}
+        />
+      )}
+      
+      <!-- Static Page Content -->
+      <BasicStaticPageTailwind staticPageData={staticPageData} />
+    </>
+  ) : (
+    <!-- Product Page Layout -->
+    <>
+      <!-- Hero Section -->
+      <ProductHeroTailwind productData={productData} />
   
   <!-- Quote Section -->
   {productData?.quote && (
@@ -163,5 +236,7 @@ const homeData = {
   
   <!-- Partners Section -->
   <OurPartnersTailwind homeData={homeData} />
+    </>
+  )}
 </BaseLayout>
 

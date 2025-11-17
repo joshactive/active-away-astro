@@ -5992,6 +5992,106 @@ export async function getFlightsPageSEO() {
 
 /**
  * ====================================
+ * FAQS INDEX PAGE
+ * ====================================
+ */
+
+/**
+ * Get FAQs Index Page data
+ * @returns {Promise<Object|null>} FAQs index page data
+ */
+export async function getFAQsIndexPage() {
+  try {
+    console.log('❓ [getFAQsIndexPage] Fetching FAQs index page...');
+    
+    const data = await fetchAPI(
+      '/faqs-index-page?' +
+      'populate[pageHero][populate]=*&' +
+      'populate[seo][populate]=*'
+    );
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getFAQsIndexPage] No FAQs index page found');
+      return null;
+    }
+    
+    const page = data.data.attributes || data.data;
+    
+    const indexPage = {
+      title: page.title,
+      displayOnFrontEnd: page.displayOnFrontEnd,
+      
+      pageHero: page.pageHero ? {
+        kicker: page.pageHero.kicker,
+        heading: page.pageHero.heading,
+        subtitle: page.pageHero.subtitle,
+        backgroundImage: getStrapiImageData(page.pageHero.backgroundImage),
+        showBreadcrumbs: page.pageHero.showBreadcrumbs !== false
+      } : null,
+      
+      gridHeading: page.gridHeading,
+      
+      seo: page.seo || null
+    };
+    
+    console.log('✅ [getFAQsIndexPage] FAQs index page fetched');
+    return indexPage;
+  } catch (error) {
+    console.error('❌ [getFAQsIndexPage] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * Get FAQs Index Page SEO data
+ * @returns {Promise<Object|null>} SEO data
+ */
+export async function getFAQsIndexPageSEO() {
+  try {
+    console.log('📄 [getFAQsIndexPageSEO] Fetching SEO...');
+    
+    const data = await fetchAPI('/faqs-index-page?populate[seo][populate]=metaImage');
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getFAQsIndexPageSEO] No page found');
+      return null;
+    }
+    
+    const page = data.data.attributes || data.data;
+    const seo = page.seo;
+    
+    if (!seo) {
+      console.warn('⚠️  [getFAQsIndexPageSEO] No SEO data');
+      return null;
+    }
+    
+    const metaImageData = getOptimizedSEOImage(seo.metaImage);
+    
+    if (metaImageData.url) {
+      console.log(`📸 FAQs index meta image URL (optimized):`, metaImageData.url);
+    }
+    
+    const seoData = {
+      metaTitle: seo.metaTitle,
+      metaDescription: seo.metaDescription,
+      keywords: seo.keywords,
+      canonicalURL: seo.canonicalURL,
+      metaImage: metaImageData.url,
+      metaImageAlt: metaImageData.alt,
+      metaImageWidth: metaImageData.width,
+      metaImageHeight: metaImageData.height
+    };
+    
+    console.log('✅ [getFAQsIndexPageSEO] SEO fetched');
+    return seoData;
+  } catch (error) {
+    console.error('❌ [getFAQsIndexPageSEO] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * ====================================
  * FAQ CATEGORIES
  * ====================================
  */
@@ -6153,6 +6253,106 @@ export async function getFAQCategorySEO(slug) {
     return seoData;
   } catch (error) {
     console.error(`❌ [getFAQCategorySEO] Error:`, error);
+    return null;
+  }
+}
+
+/**
+ * ====================================
+ * BASIC STATIC PAGES
+ * ====================================
+ */
+
+/**
+ * Get all basic static pages
+ * @returns {Promise<Array>} Array of static pages
+ */
+export async function getBasicStaticPages() {
+  try {
+    console.log('📄 [getBasicStaticPages] Fetching all static pages...');
+    
+    const data = await fetchAPI(
+      '/basic-static-pages?filters[displayOnFrontEnd][$eq]=true'
+    );
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getBasicStaticPages] No static pages found');
+      return [];
+    }
+    
+    const pages = data.data.map((item) => {
+      const page = item.attributes || item;
+      return {
+        id: item.id,
+        slug: page.slug,
+        title: page.title,
+        pageType: page.pageType || 'static-page'
+      };
+    });
+    
+    console.log(`✅ [getBasicStaticPages] Fetched ${pages.length} static pages`);
+    return pages;
+  } catch (error) {
+    console.error('❌ [getBasicStaticPages] Error:', error);
+    return [];
+  }
+}
+
+/**
+ * Get basic static page by slug
+ * @param {string} slug - Page slug
+ * @returns {Promise<Object|null>} Static page data
+ */
+export async function getBasicStaticPageBySlug(slug) {
+  if (!slug) {
+    console.warn('⚠️  [getBasicStaticPageBySlug] No slug provided');
+    return null;
+  }
+  
+  try {
+    console.log(`📄 [getBasicStaticPageBySlug] Fetching static page: ${slug}`);
+    
+    const data = await fetchAPI(
+      `/basic-static-pages?filters[slug][$eq]=${slug}&` +
+      'populate[pageHero][populate]=*&' +
+      'populate[seo][populate]=*'
+    );
+    
+    if (!data || !data.data || data.data.length === 0) {
+      console.warn(`⚠️  [getBasicStaticPageBySlug] Page not found: ${slug}`);
+      return null;
+    }
+    
+    const item = data.data[0];
+    const page = item.attributes || item;
+    
+    const staticPage = {
+      id: item.id,
+      slug: page.slug,
+      title: page.title,
+      pageType: page.pageType || 'static-page',
+      displayOnFrontEnd: page.displayOnFrontEnd,
+      
+      pageHero: page.pageHero ? {
+        kicker: page.pageHero.kicker,
+        heading: page.pageHero.heading,
+        subtitle: page.pageHero.subtitle,
+        backgroundImage: getStrapiImageData(page.pageHero.backgroundImage),
+        showBreadcrumbs: page.pageHero.showBreadcrumbs !== false
+      } : null,
+      
+      importantEyebrow: page.importantEyebrow,
+      importantHeading: page.importantHeading,
+      importantContent: page.importantContent,
+      content: page.content,
+      
+      seo: page.seo || null
+    };
+    
+    console.log(`✅ [getBasicStaticPageBySlug] Static page fetched: ${staticPage.title}`);
+    return staticPage;
+  } catch (error) {
+    console.error(`❌ [getBasicStaticPageBySlug] Error fetching ${slug}:`, error);
     return null;
   }
 }

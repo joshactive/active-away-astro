@@ -1,0 +1,187 @@
+---
+// Basic Static Page component - Simple content pages
+import { parseMarkdown } from '../utils/markdown.js';
+
+interface Props {
+  staticPageData: any;
+}
+
+const { staticPageData } = Astro.props;
+
+// Parse markdown content
+const parsedContent = staticPageData.content ? parseMarkdown(staticPageData.content) : '';
+const parsedImportantContent = staticPageData.importantContent ? parseMarkdown(staticPageData.importantContent) : '';
+const showImportantSection = Boolean(
+  staticPageData.importantEyebrow ||
+  staticPageData.importantHeading ||
+  parsedImportantContent
+);
+---
+
+<main class="w-full bg-white">
+  
+  <!-- Important Notice Box (if set) -->
+  <!-- Main Content -->
+  <section class="w-full py-12 sm:py-16 lg:py-20">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      {showImportantSection && (
+        <div class="mb-12 bg-gray-50 border border-gray-200 rounded-xl p-6 sm:p-8 shadow-sm">
+          <div class="space-y-4">
+            <p class="text-xs font-inter font-semibold text-[#ad986c] tracking-[0.2em] uppercase">
+              {staticPageData.importantEyebrow || 'IMPORTANT'}
+            </p>
+            {staticPageData.importantHeading && (
+              <h2 class="text-2xl sm:text-3xl font-playfair font-bold text-gray-900">
+                {staticPageData.importantHeading}
+              </h2>
+            )}
+            {parsedImportantContent && (
+              <div class="prose prose-lg max-w-none font-inter" set:html={parsedImportantContent}></div>
+            )}
+          </div>
+        </div>
+      )}
+      
+      <div class="static-page-content prose prose-lg max-w-none">
+        <Fragment set:html={parsedContent} />
+      </div>
+    </div>
+  </section>
+  
+</main>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+  
+  /* Static page content styling */
+  :global(.static-page-content) {
+    font-family: 'Inter', sans-serif;
+    line-height: 1.75;
+    color: rgb(55 65 81);
+  }
+  
+  :global(.static-page-content h1),
+  :global(.static-page-content h2),
+  :global(.static-page-content h3),
+  :global(.static-page-content h4),
+  :global(.static-page-content h5),
+  :global(.static-page-content h6) {
+    font-family: 'Playfair Display', serif !important;
+    color: rgb(17 24 39) !important;
+    font-weight: 600 !important;
+    font-style: normal !important;
+    letter-spacing: normal !important;
+    text-transform: none !important;
+  }
+  
+  :global(.static-page-content h1) {
+    font-size: 2.25rem !important;
+    margin-top: 0 !important;
+    margin-bottom: 2rem !important;
+    line-height: 1.2 !important;
+  }
+  
+  :global(.static-page-content h2) {
+    font-size: 1.875rem !important;
+    margin-top: 3rem !important;
+    margin-bottom: 1.5rem !important;
+    line-height: 1.3 !important;
+  }
+  
+  :global(.static-page-content h3) {
+    font-size: 1.5rem !important;
+    margin-top: 2rem !important;
+    margin-bottom: 1rem !important;
+    line-height: 1.4 !important;
+  }
+  
+  :global(.static-page-content h4) {
+    font-size: 1.25rem !important;
+    margin-top: 1.5rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+  
+  @media (min-width: 640px) {
+    :global(.static-page-content h1) {
+      font-size: 2.5rem !important;
+    }
+    
+    :global(.static-page-content h2) {
+      font-size: 2rem !important;
+    }
+    
+    :global(.static-page-content h3) {
+      font-size: 1.625rem !important;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    :global(.static-page-content h1) {
+      font-size: 3rem !important;
+    }
+    
+    :global(.static-page-content h2) {
+      font-size: 2.25rem !important;
+    }
+    
+    :global(.static-page-content h3) {
+      font-size: 1.75rem !important;
+    }
+  }
+  
+  :global(.static-page-content p) {
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+    line-height: 1.75;
+  }
+  
+  @media (min-width: 640px) {
+    :global(.static-page-content p) {
+      font-size: 1.125rem;
+    }
+  }
+  
+  :global(.static-page-content ul),
+  :global(.static-page-content ol) {
+    margin-top: 1rem;
+    margin-bottom: 1.5rem;
+    padding-left: 1.75rem;
+  }
+  
+  :global(.static-page-content li) {
+    margin-bottom: 0.5rem;
+  }
+  
+  :global(.static-page-content a) {
+    color: #ad986c;
+    text-decoration: underline;
+  }
+  
+  :global(.static-page-content a:hover) {
+    color: #8a7454;
+  }
+  
+  :global(.static-page-content strong) {
+    font-weight: 600;
+    color: rgb(17 24 39);
+  }
+  
+  :global(.static-page-content em) {
+    font-style: italic;
+  }
+  
+  :global(.static-page-content blockquote) {
+    border-left: 4px solid #ad986c;
+    padding-left: 1.5rem;
+    font-style: italic;
+    color: rgb(75 85 99);
+    margin: 2rem 0;
+  }
+</style>
+
