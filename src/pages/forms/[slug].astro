@@ -595,6 +595,15 @@ const formDescriptionHtml = sanitizeDescription(formData.description || '');
                               class="w-full sm:flex-1 px-4 py-3 border border-gray-300 rounded-lg font-inter text-gray-900 focus:ring-2 focus:ring-gold focus:border-gold transition-all"
                             />
                           </div>
+                        ) : field.type === 'time' ? (
+                          <input
+                            type="time"
+                            id={field.name}
+                            name={field.name}
+                            required={field.required}
+                            data-query-param={field.queryParam || ''}
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg font-inter text-gray-900 focus:ring-2 focus:ring-gold focus:border-gold transition-all"
+                          />
                         ) : (
                           <input
                             type={field.type || 'text'}

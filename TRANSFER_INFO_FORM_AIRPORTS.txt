@@ -1,0 +1,74 @@
+Airport Options (use for both outbound and inbound airport fields):
+
+Please Select
+UK - Belfast - Harbour - BHD
+UK - Belfast International - BFS
+UK - Glasgow, Prestwick - PIK
+UK - Glasgow - GLA
+UK - Inverness - INV
+UK - Aberdeen - ABZ
+UK - Birmingham - BHX
+UK - Bournemouth - BOH
+UK - Bristol - BRS
+UK - Cambridge - CBG
+UK - Cardiff - CWL
+UK - Derby (East Midlands) - EMA
+UK - Derry (Londonderry) - LDY
+UK - Edinburgh - EDI
+UK - Exeter - EXT
+UK - Guernsey - GCI
+UK - Humberside - HUY
+UK - Isle of Man - IOM
+UK - Jersey - JER
+UK - Leeds/Bradford - LBA
+UK - Liverpool - LPL
+UK - London - City Airport - LCY
+UK - London - Gatwick - LGW
+UK - London - Heathrow - LHR
+UK - London - Luton - LTN
+UK - London - Stansted - STN
+UK - Manchester - MAN
+UK - Newcastle - NCL
+UK - Southampton - Eastleigh - SOU
+UK - Southend - SEN
+Austria - Vienna - VIE
+Cyprus - Larnaca - LCA
+Cyprus - Paphos - PFO
+Egypt - Hurghada - HRG
+Germany - Berlin - BER
+Germany - Frankfurt - FRA
+Germany - Munich - MUC
+Greece - Athens - ATH
+Greece - Corfu - CFU
+Greece - Heraklion - HER
+Greece - Kos - KGS
+Greece - Mykonos - JMK
+Greece - Rhodes - RHO
+Greece - Thessaloniki - SKG
+Greece - Zakynthos - ZTH
+Spain - Alicante - ALC
+Spain - Barcelona - BCN
+Spain - Ibiza - IBZ
+Spain - Malaga - AGP
+Spain - Palma de Mallorca - PMI
+Spain - Tenerife South - TFS
+Turkey - Antalya - AYT
+Turkey - Bodrum - BJV
+Turkey - Dalaman - DLM
+Turkey - Istanbul - IST
+France - Paris CDG - CDG
+France - Nice - NCE
+France - Lyon - LYS
+Italy - Milan - MXP
+Italy - Rome - FCO
+Italy - Venice - VCE
+Netherlands - Amsterdam - AMS
+Ireland - Dublin - DUB
+Portugal - Faro - FAO
+UAE - Dubai - DXB
+South Africa - Cape Town - CPT
+
+NOTE: This is a simplified list. The full WordPress list had 200+ airports. 
+If you need the complete list, I can add it, but it will make the JSON very large.
+For most use cases, this covers the main European + holiday destinations.
+
