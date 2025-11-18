@@ -1786,12 +1786,16 @@ function transformFormDetail(item) {
       kicker: form.heroKicker || 'GET IN TOUCH',
       backgroundImage: form.heroBackgroundImage ? getStrapiImageData(form.heroBackgroundImage) : null
     },
-    formHeading: form.formHeading || 'Submit Your Information',
+    formHeading: form.formHeading || '',
     formSubtitle: form.formSubtitle || '',
     formLayout: form.formLayout || 'one-column',
     formFields: formFields,
     formWebhookUrl: form.formWebhookUrl || null,
     showOtherOptions: form.showOtherOptions || false,
+    submitButtonConditional: form.submitButtonConditional || false,
+    submitButtonConditionalField: form.submitButtonConditionalField || '',
+    submitButtonConditionalOperator: form.submitButtonConditionalOperator || '',
+    submitButtonConditionalValue: form.submitButtonConditionalValue || '',
     seo: seo,
     createdAt: form.createdAt || item.createdAt,
     publishedAt: form.publishedAt || item.publishedAt

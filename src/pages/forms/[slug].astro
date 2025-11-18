@@ -44,6 +44,65 @@ if (!formData) {
   return Astro.redirect('/404');
 }
 
+// Helper to sanitize description HTML (allowing only <br>, <b>, <u>, and <a href> tags)
+const sanitizeDescription = (input = '') => {
+  if (!input) {
+    return '';
+  }
+
+  // Store safe HTML temporarily with tokens
+  const links = [];
+  const placeholders = [
+    { regex: /<br\s*\/?>/gi, token: '__BR__' },
+    { regex: /<b>/gi, token: '__B_OPEN__' },
+    { regex: /<\/b>/gi, token: '__B_CLOSE__' },
+    { regex: /<u>/gi, token: '__U_OPEN__' },
+    { regex: /<\/u>/gi, token: '__U_CLOSE__' }
+  ];
+
+  let output = input;
+
+  // Extract and tokenize anchor tags
+  output = output.replace(/<a\s+href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gi, (match, href, text) => {
+    // Only allow http, https, mailto, and tel protocols
+    if (href.match(/^(https?:\/\/|mailto:|tel:|\/)/)) {
+      const index = links.length;
+      links.push({ href, text });
+      return `__LINK_${index}__`;
+    }
+    return text; // Strip the link but keep the text if invalid protocol
+  });
+
+  // Replace allowed tags with tokens
+  placeholders.forEach(({ regex, token }) => {
+    output = output.replace(regex, token);
+  });
+
+  // Escape all remaining HTML
+  output = output
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  // Restore allowed tags
+  output = output
+    .replace(/__BR__/g, '<br />')
+    .replace(/__B_OPEN__/g, '<b>')
+    .replace(/__B_CLOSE__/g, '</b>')
+    .replace(/__U_OPEN__/g, '<u>')
+    .replace(/__U_CLOSE__/g, '</u>');
+
+  // Restore links
+  links.forEach((link, index) => {
+    output = output.replace(
+      `__LINK_${index}__`,
+      `<a href="${link.href}" class="text-[#ad986c] underline hover:text-[#8a7454] transition-colors">${link.text}</a>`
+    );
+  });
+
+  return output;
+};
+
 // Extract data with fallbacks
 const heroTitle = formData.hero?.title || formData.title || 'Form';
 const heroSubtitle = formData.hero?.subtitle || formData.excerpt || '';
@@ -62,6 +121,8 @@ const metaImage = formData.seo?.metaImage || null;
 const metaImageAlt = formData.seo?.metaImageAlt || null;
 const keywords = formData.seo?.keywords || null;
 const canonicalURL = formData.seo?.canonicalURL || `https://activeaway.com/forms/${slug}`;
+
+const formDescriptionHtml = sanitizeDescription(formData.description || '');
 ---
 
 <BaseLayout 
@@ -127,9 +188,7 @@ const canonicalURL = formData.seo?.canonicalURL || `https://activeaway.com/forms
             </h2>
           )}
           {formData.description && (
-            <div class="prose prose-lg max-w-none font-inter text-gray-800 leading-relaxed">
-              <p>{formData.description}</p>
-            </div>
+            <div class="prose prose-lg max-w-none font-inter text-gray-800 leading-relaxed" set:html={formDescriptionHtml}></div>
           )}
         </div>
       )}
@@ -137,9 +196,11 @@ const canonicalURL = formData.seo?.canonicalURL || `https://activeaway.com/forms
       <!-- Form Section -->
       <div class="w-full">
         <div class="bg-white border-2 border-gray-200 rounded-2xl p-8 sm:p-10 shadow-lg">
-          <h2 class="text-2xl sm:text-3xl font-playfair font-semibold text-gray-900 mb-4">
-            {formData.formHeading}
-          </h2>
+          {formData.formHeading && (
+            <h2 class="text-2xl sm:text-3xl font-playfair font-semibold text-gray-900 mb-4">
+              {formData.formHeading}
+            </h2>
+          )}
           {formData.formSubtitle && (
             <p class="text-base font-inter text-gray-700 mb-8 leading-relaxed">
               {formData.formSubtitle}
@@ -195,9 +256,25 @@ const canonicalURL = formData.seo?.canonicalURL || `https://activeaway.com/forms
               
               return (
               <>
-                {/* Section Heading - spans full width and adds visual separation */}
-                {field.type === 'section' ? (
-                  <div class={formData.formLayout === 'two-column' ? 'md:col-span-2 pt-6 pb-2' : 'pt-6 pb-2'}>
+                {/* Hidden Field - renders outside grid, takes no space */}
+                {field.type === 'hidden' ? (
+                  <input
+                    type="hidden"
+                    id={field.name}
+                    name={field.name}
+                    value={field.value || ''}
+                    data-query-param={field.queryParam || ''}
+                  />
+                ) : field.type === 'section' ? (
+                  /* Section Heading - spans full width and adds visual separation */
+                  <div 
+                    class={formData.formLayout === 'two-column' ? 'md:col-span-2 pt-6 pb-2' : 'pt-6 pb-2'}
+                    data-conditional={field.conditional ? 'true' : 'false'}
+                    data-condition-field={field.conditionalField || ''}
+                    data-condition-operator={field.conditionalOperator || ''}
+                    data-condition-value={field.conditionalValue || ''}
+                    style={field.conditional ? 'display: none;' : ''}
+                  >
                     <h3 class="text-xl sm:text-2xl font-playfair font-semibold text-gray-900 mb-2">
                       {field.label}
                     </h3>
@@ -210,9 +287,115 @@ const canonicalURL = formData.seo?.canonicalURL || `https://activeaway.com/forms
                   </div>
                 ) : (
                   /* Regular Form Field */
-                  <div class={shouldSpanFullWidth() ? 'md:col-span-2' : ''}>
-                    {/* Checkbox Field */}
-                    {field.type === 'checkbox' ? (
+                  <div 
+                    class={shouldSpanFullWidth() ? 'md:col-span-2' : ''}
+                    data-conditional={field.conditional ? 'true' : 'false'}
+                    data-condition-field={field.conditionalField || ''}
+                    data-condition-operator={field.conditionalOperator || ''}
+                    data-condition-value={field.conditionalValue || ''}
+                    style={field.conditional ? 'display: none;' : ''}
+                  >
+                    {/* Name Field */}
+                    {field.type === 'namefield' ? (
+                      /* Name Field - Display only with gold underline */
+                      <div class="name-field-display">
+                        {field.label && (
+                          <label class="block text-sm font-inter font-semibold text-gray-900 mb-2">
+                            {field.label}
+                          </label>
+                        )}
+                        <div class="mb-2">
+                          <div class="text-2xl font-playfair font-semibold text-gray-900 inline-block border-b-2 border-[#ad986c] pb-1">
+                            {field.value || field.placeholder || ''}
+                          </div>
+                        </div>
+                        <input
+                          type="hidden"
+                          id={field.name}
+                          name={field.name}
+                          value={field.value || ''}
+                          data-query-param={field.queryParam || ''}
+                        />
+                      </div>
+                    ) : field.type === 'repeater' ? (
+                      /* Repeater Field */
+                      <div class="repeater-container" data-repeater-name={field.name}>
+                        <div class="mb-4">
+                          <label class="block text-sm font-inter font-semibold text-gray-900 mb-2">
+                            {field.label}
+                            {field.required && <span class="text-red-500 ml-1">*</span>}
+                          </label>
+                          {field.description && (
+                            <p class="text-sm font-inter text-gray-600 mb-3 leading-relaxed">
+                              {field.description}
+                            </p>
+                          )}
+                        </div>
+                        
+                        <div class="repeater-items space-y-4" data-min-items={field.minItems || 0} data-max-items={field.maxItems || 999}>
+                          {/* Initial repeater item */}
+                          <div class="repeater-item border-2 border-gray-200 rounded-lg p-6 relative">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {field.fields && field.fields.map((subfield) => (
+                                <div class={subfield.type === 'textarea' ? 'md:col-span-2' : ''}>
+                                  <label class="block text-sm font-inter font-semibold text-gray-900 mb-2">
+                                    {subfield.label}
+                                    {subfield.required && <span class="text-red-500 ml-1">*</span>}
+                                  </label>
+                                  {subfield.description && (
+                                    <p class="text-sm font-inter text-gray-600 mb-2">
+                                      {subfield.description}
+                                    </p>
+                                  )}
+                                  {subfield.type === 'textarea' ? (
+                                    <textarea
+                                      name={`${field.name}[0][${subfield.name}]`}
+                                      required={subfield.required}
+                                      placeholder={subfield.placeholder || ''}
+                                      rows="3"
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg font-inter text-gray-900 focus:ring-2 focus:ring-gold focus:border-gold transition-all resize-vertical"
+                                    ></textarea>
+                                  ) : subfield.type === 'select' ? (
+                                    <select
+                                      name={`${field.name}[0][${subfield.name}]`}
+                                      required={subfield.required}
+                                      data-dynamic-options={subfield.dynamicOptions || ''}
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg font-inter text-gray-900 focus:ring-2 focus:ring-gold focus:border-gold transition-all"
+                                    >
+                                      <option value="">{subfield.placeholder || 'Select an option...'}</option>
+                                      {subfield.options && subfield.options.map((option) => (
+                                        <option value={option}>{option}</option>
+                                      ))}
+                                    </select>
+                                  ) : (
+                                    <input
+                                      type={subfield.type || 'text'}
+                                      name={`${field.name}[0][${subfield.name}]`}
+                                      required={subfield.required}
+                                      placeholder={subfield.placeholder || ''}
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg font-inter text-gray-900 focus:ring-2 focus:ring-gold focus:border-gold transition-all"
+                                    />
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                            <button
+                              type="button"
+                              class="remove-item absolute top-4 right-4 text-red-600 hover:text-red-800 font-inter font-semibold text-sm hidden"
+                            >
+                              ✕ Remove
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <button
+                          type="button"
+                          class="add-item mt-4 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-lg font-inter font-semibold transition-colors"
+                        >
+                          {field.addButtonText || '+ Add Item'}
+                        </button>
+                      </div>
+                    ) : field.type === 'checkbox' ? (
                       <div class="space-y-3">
                         {field.options && field.options.map((option) => (
                           <div class="flex items-start gap-3">
@@ -272,6 +455,7 @@ const canonicalURL = formData.seo?.canonicalURL || `https://activeaway.com/forms
                             id={field.name}
                             name={field.name}
                             required={field.required}
+                            data-dynamic-options={field.dynamicOptions || ''}
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg font-inter text-gray-900 focus:ring-2 focus:ring-gold focus:border-gold transition-all"
                           >
                             <option value="">{field.placeholder || 'Select an option...'}</option>
@@ -423,6 +607,7 @@ const canonicalURL = formData.seo?.canonicalURL || `https://activeaway.com/forms
                             maxlength={field.maxLength}
                             min={field.min}
                             max={field.max}
+                            data-query-param={field.queryParam || ''}
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg font-inter text-gray-900 focus:ring-2 focus:ring-gold focus:border-gold transition-all"
                           />
                         )}
@@ -442,7 +627,14 @@ const canonicalURL = formData.seo?.canonicalURL || `https://activeaway.com/forms
             </div>
             
             <!-- Submit Button -->
-            <div class={formData.formLayout === 'two-column' ? 'md:col-span-2' : ''}>
+            <div 
+              class={formData.formLayout === 'two-column' ? 'md:col-span-2' : ''}
+              data-conditional={formData.submitButtonConditional ? 'true' : 'false'}
+              data-condition-field={formData.submitButtonConditionalField || ''}
+              data-condition-operator={formData.submitButtonConditionalOperator || ''}
+              data-condition-value={formData.submitButtonConditionalValue || ''}
+              style={formData.submitButtonConditional ? 'display: none;' : ''}
+            >
               <button
                 type="submit"
                 class="w-full bg-[#ad986c] text-white px-8 py-4 rounded-lg font-inter font-semibold hover:bg-[#8a7454] transition-colors focus:ring-4 focus:ring-gold/30 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -572,22 +764,42 @@ const canonicalURL = formData.seo?.canonicalURL || `https://activeaway.com/forms
         const formDataObj = new FormData(form);
         const data = {};
         
-        // Handle all form fields, including multiple checkbox values
+        // Handle all form fields, including checkboxes and repeaters
         for (const [key, value] of formDataObj.entries()) {
-          if (data[key]) {
-            // If key already exists, convert to array or append to existing array
-            if (Array.isArray(data[key])) {
-              data[key].push(value);
-            } else {
-              data[key] = [data[key], value];
+          // Check if this is a repeater field (format: fieldname[index][subfieldname])
+          const repeaterMatch = key.match(/^(.+?)\[(\d+)\]\[(.+?)\]$/);
+          
+          if (repeaterMatch) {
+            // This is a repeater field
+            const [, repeaterName, index, subfieldName] = repeaterMatch;
+            const idx = parseInt(index);
+            
+            if (!data[repeaterName]) {
+              data[repeaterName] = [];
             }
+            
+            if (!data[repeaterName][idx]) {
+              data[repeaterName][idx] = {};
+            }
+            
+            data[repeaterName][idx][subfieldName] = value;
           } else {
-            // Check if this field has multiple values (checkboxes)
-            const allValues = formDataObj.getAll(key);
-            if (allValues.length > 1) {
-              data[key] = allValues;
+            // Regular field or checkbox
+            if (data[key]) {
+              // If key already exists, convert to array or append to existing array
+              if (Array.isArray(data[key])) {
+                data[key].push(value);
+              } else {
+                data[key] = [data[key], value];
+              }
             } else {
-              data[key] = value;
+              // Check if this field has multiple values (checkboxes)
+              const allValues = formDataObj.getAll(key);
+              if (allValues.length > 1) {
+                data[key] = allValues;
+              } else {
+                data[key] = value;
+              }
             }
           }
         }
@@ -668,6 +880,308 @@ const canonicalURL = formData.seo?.canonicalURL || `https://activeaway.com/forms
       }
     });
   }
+</script>
+
+<script>
+  // Combined script: Query params + Conditional logic
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('dynamicForm');
+    if (!form) return;
+    
+    // STEP 1: Populate form fields from URL query parameters FIRST
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Find all fields with data-query-param attribute
+    const fieldsWithQueryParams = document.querySelectorAll('[data-query-param]');
+    
+    fieldsWithQueryParams.forEach((field) => {
+      const queryParam = field.getAttribute('data-query-param');
+      if (queryParam && urlParams.has(queryParam)) {
+        const value = urlParams.get(queryParam);
+        if (value) {
+          field.value = value;
+          
+          // Also update the display text for namefield type
+          const parentDiv = field.closest('.name-field-display');
+          if (parentDiv) {
+            const textDiv = parentDiv.querySelector('.text-2xl');
+            if (textDiv) {
+              textDiv.textContent = value;
+            }
+          }
+        }
+      }
+    });
+    
+    console.log('✅ Form fields populated from query parameters');
+    
+    // STEP 1.5: Load dynamic options for select fields
+    const dynamicSelects = document.querySelectorAll('select[data-dynamic-options]');
+    
+    if (dynamicSelects.length > 0) {
+      dynamicSelects.forEach(async (select) => {
+        const dynamicType = select.getAttribute('data-dynamic-options');
+        
+        if (dynamicType === 'resorts') {
+          try {
+            const response = await fetch('/api/get-resorts.json');
+            const result = await response.json();
+            
+            if (result.success && result.resorts) {
+              // Keep the placeholder option
+              const placeholder = select.querySelector('option[value=""]');
+              select.innerHTML = '';
+              
+              if (placeholder) {
+                select.appendChild(placeholder);
+              }
+              
+              // Add resort options
+              result.resorts.forEach(resort => {
+                const option = document.createElement('option');
+                option.value = resort;
+                option.textContent = resort;
+                select.appendChild(option);
+              });
+              
+              console.log(`✅ Loaded ${result.resorts.length} resorts dynamically`);
+            }
+          } catch (error) {
+            console.error('Failed to load dynamic resorts:', error);
+          }
+        } else if (dynamicType === 'venues') {
+          try {
+            const response = await fetch('/api/get-venues.json');
+            const result = await response.json();
+            
+            if (result.success && result.venues) {
+              // Keep the placeholder option
+              const placeholder = select.querySelector('option[value=""]');
+              select.innerHTML = '';
+              
+              if (placeholder) {
+                select.appendChild(placeholder);
+              }
+              
+              // Add venue options
+              result.venues.forEach(venue => {
+                const option = document.createElement('option');
+                option.value = venue;
+                option.textContent = venue;
+                select.appendChild(option);
+              });
+              
+              console.log(`✅ Loaded ${result.venues.length} venues dynamically`);
+            }
+          } catch (error) {
+            console.error('Failed to load dynamic venues:', error);
+          }
+        } else if (dynamicType === 'clinics') {
+          try {
+            const response = await fetch('/api/get-clinics.json');
+            const result = await response.json();
+            
+            if (result.success && result.clinics) {
+              // Keep the placeholder option
+              const placeholder = select.querySelector('option[value=""]');
+              select.innerHTML = '';
+              
+              if (placeholder) {
+                select.appendChild(placeholder);
+              }
+              
+              // Add clinic options
+              result.clinics.forEach(clinic => {
+                const option = document.createElement('option');
+                option.value = clinic;
+                option.textContent = clinic;
+                select.appendChild(option);
+              });
+              
+              console.log(`✅ Loaded ${result.clinics.length} clinics dynamically`);
+            }
+          } catch (error) {
+            console.error('Failed to load dynamic clinics:', error);
+          }
+        }
+      });
+    }
+    
+    // STEP 2: Now handle conditional field display
+    
+    // Function to check if condition is met
+    function checkCondition(field, operator, value) {
+      if (!field) return false;
+      
+      const fieldValue = field.value || '';
+      
+      switch(operator) {
+        case 'contains':
+        case 'contain':
+          return fieldValue.includes(value);
+        case 'not_contain':
+          return !fieldValue.includes(value);
+        case 'equals':
+        case 'equal':
+          return fieldValue === value;
+        case 'not_equals':
+          return fieldValue !== value;
+        case 'not_empty':
+          return fieldValue.trim() !== '';
+        case 'empty':
+          return fieldValue.trim() === '';
+        case 'greater':
+          return fieldValue.length > parseInt(value);
+        case 'less':
+          return fieldValue.length < parseInt(value);
+        default:
+          return false;
+      }
+    }
+    
+    // Function to update conditional elements
+    function updateConditionals() {
+      const conditionalElements = document.querySelectorAll('[data-conditional="true"]');
+      
+      conditionalElements.forEach((element) => {
+        const conditionFieldName = element.getAttribute('data-condition-field');
+        const conditionOperator = element.getAttribute('data-condition-operator');
+        const conditionValue = element.getAttribute('data-condition-value');
+        
+        if (!conditionFieldName) return;
+        
+        const conditionField = form.querySelector(`[name="${conditionFieldName}"]`);
+        const conditionMet = checkCondition(conditionField, conditionOperator, conditionValue);
+        
+        // Show/hide element based on condition
+        element.style.display = conditionMet ? '' : 'none';
+        
+        // Disable fields inside hidden elements
+        if (!conditionMet) {
+          element.querySelectorAll('input, select, textarea').forEach(field => {
+            field.setAttribute('data-was-required', field.required);
+            field.required = false;
+          });
+        } else {
+          element.querySelectorAll('input[data-was-required="true"], select[data-was-required="true"], textarea[data-was-required="true"]').forEach(field => {
+            field.required = true;
+          });
+        }
+      });
+    }
+    
+    // Listen for changes on all form fields
+    form.addEventListener('input', updateConditionals);
+    form.addEventListener('change', updateConditionals);
+    
+    // STEP 3: Run initial conditional check AFTER query params are populated
+    updateConditionals();
+    
+    console.log('✅ Conditional field logic initialized');
+  });
+</script>
+
+<script>
+  // Handle repeater field add/remove functionality
+  document.addEventListener('DOMContentLoaded', () => {
+    const repeaterContainers = document.querySelectorAll('.repeater-container');
+    
+    repeaterContainers.forEach((container) => {
+      const repeaterName = container.getAttribute('data-repeater-name');
+      const itemsContainer = container.querySelector('.repeater-items');
+      const addButton = container.querySelector('.add-item');
+      const minItems = parseInt(itemsContainer.getAttribute('data-min-items') || '0');
+      const maxItems = parseInt(itemsContainer.getAttribute('data-max-items') || '999');
+      
+      // Function to update item indices and remove buttons
+      function updateItems() {
+        const items = itemsContainer.querySelectorAll('.repeater-item');
+        
+        items.forEach((item, index) => {
+          // Update all field names with correct index
+          item.querySelectorAll('input, select, textarea').forEach((field) => {
+            const name = field.getAttribute('name');
+            if (name) {
+              // Replace [X] with correct [index]
+              const newName = name.replace(/\[\d+\]/, `[${index}]`);
+              field.setAttribute('name', newName);
+            }
+          });
+          
+          // Show/hide remove button
+          const removeButton = item.querySelector('.remove-item');
+          if (items.length > minItems) {
+            removeButton.classList.remove('hidden');
+          } else {
+            removeButton.classList.add('hidden');
+          }
+        });
+        
+        // Show/hide add button based on max items
+        if (items.length >= maxItems) {
+          addButton.classList.add('hidden');
+        } else {
+          addButton.classList.remove('hidden');
+        }
+      }
+      
+      // Add item handler
+      addButton.addEventListener('click', () => {
+        const items = itemsContainer.querySelectorAll('.repeater-item');
+        if (items.length >= maxItems) return;
+        
+        // Clone the first item
+        const template = items[0].cloneNode(true);
+        
+        // Clear all values in cloned item
+        template.querySelectorAll('input, select, textarea').forEach((field) => {
+          if (field.type === 'checkbox' || field.type === 'radio') {
+            field.checked = false;
+          } else {
+            field.value = '';
+          }
+        });
+        
+        // Copy dynamic options to cloned selects
+        template.querySelectorAll('select[data-dynamic-options]').forEach((clonedSelect, idx) => {
+          const originalSelect = items[0].querySelectorAll('select[data-dynamic-options]')[idx];
+          if (originalSelect) {
+            clonedSelect.innerHTML = originalSelect.innerHTML;
+          }
+        });
+        
+        // Add to container
+        itemsContainer.appendChild(template);
+        
+        // Setup remove button for new item
+        const removeButton = template.querySelector('.remove-item');
+        removeButton.addEventListener('click', () => {
+          template.remove();
+          updateItems();
+        });
+        
+        // Update all items
+        updateItems();
+        
+        // Scroll to new item
+        template.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+      
+      // Setup remove buttons for existing items
+      itemsContainer.querySelectorAll('.repeater-item').forEach((item) => {
+        const removeButton = item.querySelector('.remove-item');
+        removeButton.addEventListener('click', () => {
+          item.remove();
+          updateItems();
+        });
+      });
+      
+      // Initial update
+      updateItems();
+    });
+    
+    console.log('✅ Repeater fields initialized');
+  });
 </script>
 
 <style>

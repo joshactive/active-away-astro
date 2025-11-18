@@ -1,0 +1,272 @@
+[
+  {
+    "name": "bookingid",
+    "label": "Booking ID",
+    "type": "hidden",
+    "required": false,
+    "queryParam": "bookingid"
+  },
+  {
+    "type": "section",
+    "label": "Emergency Contact Information #1",
+    "conditional": true,
+    "conditionalField": "bookingid",
+    "conditionalOperator": "contain",
+    "conditionalValue": "-"
+  },
+  {
+    "name": "first_name",
+    "label": "First Name",
+    "type": "text",
+    "required": true,
+    "queryParam": "fname",
+    "conditional": true,
+    "conditionalField": "bookingid",
+    "conditionalOperator": "contain",
+    "conditionalValue": "-"
+  },
+  {
+    "name": "surname",
+    "label": "Surname",
+    "type": "text",
+    "required": true,
+    "queryParam": "lname",
+    "conditional": true,
+    "conditionalField": "bookingid",
+    "conditionalOperator": "contain",
+    "conditionalValue": "-"
+  },
+  {
+    "name": "email",
+    "label": "Email",
+    "type": "email",
+    "required": true,
+    "queryParam": "email",
+    "conditional": true,
+    "conditionalField": "bookingid",
+    "conditionalOperator": "contain",
+    "conditionalValue": "-"
+  },
+  {
+    "name": "phone",
+    "label": "Phone",
+    "type": "tel",
+    "required": true,
+    "queryParam": "phone",
+    "conditional": true,
+    "conditionalField": "bookingid",
+    "conditionalOperator": "contain",
+    "conditionalValue": "-"
+  },
+  {
+    "type": "section",
+    "label": "Emergency Contact Information #2",
+    "conditional": true,
+    "conditionalField": "bookingid",
+    "conditionalOperator": "contain",
+    "conditionalValue": "-"
+  },
+  {
+    "name": "ec_first_name2",
+    "label": "First Name",
+    "type": "text",
+    "required": false,
+    "conditional": true,
+    "conditionalField": "bookingid",
+    "conditionalOperator": "contain",
+    "conditionalValue": "-"
+  },
+  {
+    "name": "ec_last_name2",
+    "label": "Surname",
+    "type": "text",
+    "required": false,
+    "conditional": true,
+    "conditionalField": "bookingid",
+    "conditionalOperator": "contain",
+    "conditionalValue": "-"
+  },
+  {
+    "name": "ec_email2",
+    "label": "Email",
+    "type": "email",
+    "required": false,
+    "conditional": true,
+    "conditionalField": "bookingid",
+    "conditionalOperator": "contain",
+    "conditionalValue": "-"
+  },
+  {
+    "name": "ecphone2",
+    "label": "Phone",
+    "type": "tel",
+    "required": false,
+    "conditional": true,
+    "conditionalField": "bookingid",
+    "conditionalOperator": "contain",
+    "conditionalValue": "-"
+  },
+  {
+    "type": "section",
+    "label": "Collection Information - Password",
+    "description": "Please enter a password that will be used by anyone collecting your child. This will be sent to you via email so you don't forget it.",
+    "conditional": true,
+    "conditionalField": "bookingid",
+    "conditionalOperator": "contain",
+    "conditionalValue": "-"
+  },
+  {
+    "name": "collection_password",
+    "label": "Collection Password",
+    "type": "text",
+    "required": true,
+    "conditional": true,
+    "conditionalField": "bookingid",
+    "conditionalOperator": "contain",
+    "conditionalValue": "-"
+  },
+  {
+    "type": "section",
+    "label": "Child Information",
+    "description": "Please complete this for each child attending. Note: For multiple children, please submit this form once per child.",
+    "conditional": true,
+    "conditionalField": "bookingid",
+    "conditionalOperator": "contain",
+    "conditionalValue": "-"
+  },
+  {
+    "name": "child_first_name",
+    "label": "Child First Name",
+    "type": "text",
+    "required": true,
+    "placeholder": "e.g James",
+    "conditional": true,
+    "conditionalField": "bookingid",
+    "conditionalOperator": "contain",
+    "conditionalValue": "-"
+  },
+  {
+    "name": "child_surname",
+    "label": "Child Surname",
+    "type": "text",
+    "required": true,
+    "placeholder": "e.g Dawson",
+    "conditional": true,
+    "conditionalField": "bookingid",
+    "conditionalOperator": "contain",
+    "conditionalValue": "-"
+  },
+  {
+    "name": "allergies",
+    "label": "Allergies",
+    "type": "text",
+    "required": false,
+    "placeholder": "e.g James is allergic to peanuts.",
+    "conditional": true,
+    "conditionalField": "bookingid",
+    "conditionalOperator": "contain",
+    "conditionalValue": "-"
+  },
+  {
+    "name": "medical_information",
+    "label": "Medical Information",
+    "type": "text",
+    "required": false,
+    "placeholder": "e.g James carries an Epipen",
+    "conditional": true,
+    "conditionalField": "bookingid",
+    "conditionalOperator": "contain",
+    "conditionalValue": "-"
+  },
+  {
+    "name": "dietary",
+    "label": "Dietary Requirements",
+    "type": "text",
+    "required": false,
+    "placeholder": "e.g James doesn't eat pineapple.",
+    "conditional": true,
+    "conditionalField": "bookingid",
+    "conditionalOperator": "contain",
+    "conditionalValue": "-"
+  },
+  {
+    "name": "first_aid",
+    "label": "Do you consent to our team conducting first aid on your child if required?",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "conditional": true,
+    "conditionalField": "bookingid",
+    "conditionalOperator": "contain",
+    "conditionalValue": "-"
+  },
+  {
+    "name": "sunscreen",
+    "label": "Do you consent to our team applying/re-applying sunscreen if required?",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "conditional": true,
+    "conditionalField": "bookingid",
+    "conditionalOperator": "contain",
+    "conditionalValue": "-"
+  },
+  {
+    "name": "medication",
+    "label": "Do you consent to our team administering medication as specified in the medical information box above?",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "conditional": true,
+    "conditionalField": "bookingid",
+    "conditionalOperator": "contain",
+    "conditionalValue": "-"
+  },
+  {
+    "name": "photo",
+    "label": "Do you consent to photography/videography of your child whilst attending? This may be used on Social Media/Website",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "conditional": true,
+    "conditionalField": "bookingid",
+    "conditionalOperator": "contain",
+    "conditionalValue": "-"
+  },
+  {
+    "name": "otherinfo",
+    "label": "Any other information that may be useful?",
+    "type": "textarea",
+    "required": false,
+    "conditional": true,
+    "conditionalField": "bookingid",
+    "conditionalOperator": "contain",
+    "conditionalValue": "-"
+  },
+  {
+    "type": "section",
+    "label": "Form Not Available",
+    "description": "This form is not available. Please check the link you've clicked - the form will show if this is an official link from Active Away.",
+    "conditional": true,
+    "conditionalField": "bookingid",
+    "conditionalOperator": "not_contain",
+    "conditionalValue": "-"
+  }
+]
+

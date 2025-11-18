@@ -1,0 +1,114 @@
+[
+  {
+    "name": "post_id",
+    "label": "Post ID",
+    "type": "hidden",
+    "required": false
+  },
+  {
+    "type": "section",
+    "label": "Your Information"
+  },
+  {
+    "name": "first_name",
+    "label": "First Name",
+    "type": "text",
+    "required": true,
+    "placeholder": "e.g James"
+  },
+  {
+    "name": "last_name",
+    "label": "Last Name",
+    "type": "text",
+    "required": true,
+    "placeholder": "e.g Thompson"
+  },
+  {
+    "name": "email",
+    "label": "Email",
+    "type": "email",
+    "required": true,
+    "placeholder": "e.g jamesthompson@gmail.com"
+  },
+  {
+    "type": "section",
+    "label": "Your Resort"
+  },
+  {
+    "name": "resort_name",
+    "label": "Resort Name",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "description": "Please enter CAREFULLY! As a wrong selection may not get back to your host.",
+    "dynamicOptions": "resorts",
+    "options": []
+  },
+  {
+    "name": "host_name",
+    "label": "Host Name",
+    "type": "text",
+    "required": true,
+    "placeholder": "e.g Josh Thompson",
+    "description": "The lead person on your holiday"
+  },
+  {
+    "type": "section",
+    "label": "Your Trip"
+  },
+  {
+    "name": "on_a_scale_of_1_10_how_is_your_holiday_going_1_awful_10_excellent",
+    "label": "On a scale of 1-10 how is your trip going? 1 = Awful 10 = Excellent",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "options": [
+      "10",
+      "9",
+      "8",
+      "7",
+      "6",
+      "5",
+      "4",
+      "3",
+      "2",
+      "1"
+    ]
+  },
+  {
+    "name": "please_tell_us_how_we_can_make_your_trip_better",
+    "label": "Please tell us how we can make your trip better?",
+    "type": "textarea",
+    "required": false
+  },
+  {
+    "type": "section",
+    "label": "Your Groups"
+  },
+  {
+    "name": "how_have_your_groups_and_matches_been_1_terrible_10_perfect",
+    "label": "How have your groups and matches been? 1 = Terrible. 10 = Perfect.",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "options": [
+      "10",
+      "9",
+      "8",
+      "7",
+      "6",
+      "5",
+      "4",
+      "3",
+      "2",
+      "1"
+    ]
+  },
+  {
+    "name": "please_tell_us_how_we_can_improve_your_match_ups",
+    "label": "Please tell us how we can improve your match-ups?",
+    "type": "textarea",
+    "required": false
+  }
+]
+

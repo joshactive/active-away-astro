@@ -1,0 +1,190 @@
+[
+  {
+    "type": "section",
+    "label": "Your Information",
+    "description": "Please feel free to leave blank if you'd prefer to stay anonymous"
+  },
+  {
+    "name": "yourname",
+    "label": "First Name",
+    "type": "text",
+    "required": false,
+    "placeholder": "e.g Michael"
+  },
+  {
+    "name": "surname",
+    "label": "Last Name",
+    "type": "text",
+    "required": false,
+    "placeholder": "e.g Cole"
+  },
+  {
+    "name": "email",
+    "label": "Email",
+    "type": "email",
+    "required": false,
+    "placeholder": "e.g michaelcole@gmail.com"
+  },
+  {
+    "type": "section",
+    "label": "Where did you go?",
+    "description": "Please feel free to leave blank if you'd prefer to stay anonymous"
+  },
+  {
+    "name": "resortname",
+    "label": "Resort Name",
+    "type": "text",
+    "required": false,
+    "placeholder": "e.g Liberty Lykia"
+  },
+  {
+    "name": "holidayhost",
+    "label": "Holiday Host",
+    "type": "text",
+    "required": false,
+    "placeholder": "e.g Matt Allen"
+  },
+  {
+    "type": "section",
+    "label": "Before your Tennis Coaching Experience",
+    "description": "Please use a 1-10 scale. 1 = AWFUL. 10 = FANTASTIC."
+  },
+  {
+    "name": "onboardingprocess",
+    "label": "Onboarding Process",
+    "type": "number",
+    "required": false,
+    "placeholder": "1 = Awful. 10 = Fantastic.",
+    "description": "1 = Awful. 10 = Fantastic.",
+    "min": 1,
+    "max": 10
+  },
+  {
+    "name": "onboardingprocesscomments",
+    "label": "Onboarding Process Comments",
+    "type": "textarea",
+    "required": false,
+    "placeholder": "e.g I felt well prepared for the event and knew exactly what the plan was"
+  },
+  {
+    "name": "travelinfo",
+    "label": "Travel Information & Scheduling",
+    "type": "number",
+    "required": false,
+    "placeholder": "1 = Awful. 10 = Fantastic.",
+    "description": "1 = Awful. 10 = Fantastic.",
+    "min": 1,
+    "max": 10
+  },
+  {
+    "name": "travelinfocomments",
+    "label": "Travel Information & Scheduling Comments",
+    "type": "textarea",
+    "required": false,
+    "placeholder": "e.g I had all of my information well ahead of time"
+  },
+  {
+    "type": "section",
+    "label": "During your Holiday",
+    "description": "Please use a 1-10 scale. 1 = AWFUL. 10 = FANTASTIC."
+  },
+  {
+    "name": "management",
+    "label": "Management 1-10",
+    "type": "number",
+    "required": false,
+    "placeholder": "1 = Awful. 10 = Fantastic.",
+    "description": "1 = Awful. 10 = Fantastic.",
+    "min": 1,
+    "max": 10
+  },
+  {
+    "name": "managementcomments",
+    "label": "Management Comments",
+    "type": "textarea",
+    "required": false,
+    "placeholder": "e.g I felt I was managed..."
+  },
+  {
+    "name": "tennisprogramme",
+    "label": "Tennis Programme 1-10",
+    "type": "number",
+    "required": false,
+    "placeholder": "1 = Awful. 10 = Fantastic.",
+    "description": "1 = Awful. 10 = Fantastic.",
+    "min": 1,
+    "max": 10
+  },
+  {
+    "name": "tennisprogrammecomments",
+    "label": "Tennis Programme Comments",
+    "type": "textarea",
+    "required": false,
+    "placeholder": "e.g I thought the tennis programme was..."
+  },
+  {
+    "name": "teambonding",
+    "label": "Team Bonding 1-10",
+    "type": "number",
+    "required": false,
+    "placeholder": "1 = Awful. 10 = Fantastic.",
+    "description": "1 = Awful. 10 = Fantastic.",
+    "min": 1,
+    "max": 10
+  },
+  {
+    "name": "teambondingcomments",
+    "label": "Team Bonding Comments",
+    "type": "textarea",
+    "required": false,
+    "placeholder": "e.g I felt the team..."
+  },
+  {
+    "name": "prep",
+    "label": "Preparation & Organisation 1-10",
+    "type": "number",
+    "required": false,
+    "placeholder": "1 = Awful. 10 = Fantastic.",
+    "description": "1 = Awful. 10 = Fantastic.",
+    "min": 1,
+    "max": 10
+  },
+  {
+    "name": "prepcomments",
+    "label": "Preparation & Organisation Comments",
+    "type": "textarea",
+    "required": false,
+    "placeholder": "e.g I felt the holiday was xx organised and i felt xx prepared"
+  },
+  {
+    "type": "section",
+    "label": "Your Overall Comments",
+    "description": "Please let us know your thoughts"
+  },
+  {
+    "name": "wedowell",
+    "label": "From a Coach Perspective, what do you think we do well?",
+    "type": "textarea",
+    "required": false,
+    "placeholder": "e.g I think you do .... well"
+  },
+  {
+    "name": "dobetter",
+    "label": "From a Coach Perspective, what do you think we could do better?",
+    "type": "textarea",
+    "required": false,
+    "placeholder": "e.g I think you could do .... better"
+  },
+  {
+    "type": "section",
+    "label": "Anything else?"
+  },
+  {
+    "name": "anythingelse",
+    "label": "Is there anything else you can think of that you'd like to share with us?",
+    "type": "textarea",
+    "required": false,
+    "placeholder": ""
+  }
+]
+

@@ -1,0 +1,49 @@
+[
+  {
+    "name": "resort_name",
+    "label": "Resort Name",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "dynamicOptions": "resorts",
+    "options": []
+  },
+  {
+    "name": "first_name",
+    "label": "First Name",
+    "type": "text",
+    "required": true,
+    "placeholder": "e.g Michael"
+  },
+  {
+    "name": "parent_surname",
+    "label": "Surname",
+    "type": "text",
+    "required": true,
+    "placeholder": "e.g Cole"
+  },
+  {
+    "name": "email",
+    "label": "Email",
+    "type": "email",
+    "required": true,
+    "placeholder": "e.g michaelcole@gmail.com"
+  },
+  {
+    "name": "whatsapp_number",
+    "label": "WhatsApp Number",
+    "type": "tel",
+    "required": true,
+    "placeholder": "e.g 7965123456"
+  },
+  {
+    "name": "consent",
+    "label": "",
+    "type": "checkbox",
+    "required": true,
+    "options": [
+      "I consent to Active Away updates and sharing my contact details with the coaching team to provide a report."
+    ]
+  }
+]
+

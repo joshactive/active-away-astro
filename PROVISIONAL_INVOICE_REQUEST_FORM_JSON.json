@@ -1,0 +1,173 @@
+[
+  {
+    "type": "section",
+    "label": "Your Information"
+  },
+  {
+    "name": "title",
+    "type": "select",
+    "label": "Title",
+    "options": [
+      "Mr",
+      "Mrs",
+      "Miss",
+      "Ms"
+    ],
+    "required": false,
+    "placeholder": "Please Select"
+  },
+  {
+    "name": "fname",
+    "type": "text",
+    "label": "First Name",
+    "required": false,
+    "placeholder": "e.g Michael"
+  },
+  {
+    "name": "lname",
+    "type": "text",
+    "label": "Surname",
+    "required": false,
+    "placeholder": "e.g Cole"
+  },
+  {
+    "name": "email",
+    "type": "email",
+    "label": "Email Address",
+    "required": true,
+    "placeholder": "e.g michaelcole@gmail.com"
+  },
+  {
+    "name": "tel",
+    "type": "tel",
+    "label": "Mobile Phone Number",
+    "required": true,
+    "placeholder": "e.g 07969477662"
+  },
+  {
+    "name": "dob",
+    "type": "date",
+    "label": "Date of Birth",
+    "required": false
+  },
+  {
+    "name": "emergencycontact",
+    "type": "text",
+    "label": "Emergency Phone Contact",
+    "required": false,
+    "placeholder": "e.g Matt Allen - 07969477466"
+  },
+  {
+    "name": "tennisstandard",
+    "type": "select",
+    "label": "Racket Standard",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "Coach",
+      "Non-Player",
+      "N/A"
+    ],
+    "required": false,
+    "placeholder": "Please Select"
+  },
+  {
+    "name": "standardmoreinfo",
+    "type": "textarea",
+    "label": "Racket Standard More Information",
+    "required": false,
+    "placeholder": "e.g I am a Team player who plays 2-3 times a week"
+  },
+  {
+    "type": "section",
+    "label": "Your Address"
+  },
+  {
+    "name": "address1",
+    "type": "text",
+    "label": "Street Address 1",
+    "required": false,
+    "placeholder": "e.g 5 Marvell Road"
+  },
+  {
+    "name": "address2",
+    "type": "text",
+    "label": "Street Address 2",
+    "required": false,
+    "placeholder": "e.g Scawsby"
+  },
+  {
+    "name": "city",
+    "type": "text",
+    "label": "City",
+    "required": false,
+    "placeholder": "e.g Doncaster"
+  },
+  {
+    "name": "postcode",
+    "type": "text",
+    "label": "Post Code",
+    "required": false,
+    "placeholder": "e.g DN6 8PT"
+  },
+  {
+    "type": "section",
+    "label": "Your Booking"
+  },
+  {
+    "name": "location",
+    "type": "select",
+    "label": "Location Name",
+    "required": false,
+    "placeholder": "Please Select",
+    "dynamicOptions": "venues",
+    "options": []
+  },
+  {
+    "name": "referrer",
+    "type": "text",
+    "label": "Coach/Group Organiser Referrer",
+    "required": false,
+    "placeholder": "if none - leave blank"
+  },
+  {
+    "name": "eventstart",
+    "type": "date",
+    "label": "Event Start Date",
+    "required": false
+  },
+  {
+    "name": "eventend",
+    "type": "date",
+    "label": "Event End Date",
+    "required": false
+  },
+  {
+    "name": "discount_code",
+    "type": "text",
+    "label": "Discount Code",
+    "required": false,
+    "placeholder": "If applicable"
+  },
+  {
+    "name": "otherinfo",
+    "type": "textarea",
+    "label": "Any Other Information",
+    "required": false,
+    "placeholder": "e.g Who you are sharing a room with or a room type (twin/double)."
+  },
+  {
+    "name": "consent_updates",
+    "type": "checkbox",
+    "label": "",
+    "options": [
+      "I consent to updates from Active Away"
+    ],
+    "required": true
+  }
+]

@@ -1,0 +1,477 @@
+[
+  {
+    "name": "p1fname",
+    "type": "hidden",
+    "queryParam": "p1fname"
+  },
+  {
+    "name": "p2fname",
+    "type": "hidden",
+    "queryParam": "p2fname"
+  },
+  {
+    "name": "p3fname",
+    "type": "hidden",
+    "queryParam": "p3fname"
+  },
+  {
+    "name": "p4fname",
+    "type": "hidden",
+    "queryParam": "p4fname"
+  },
+  {
+    "name": "p5fname",
+    "type": "hidden",
+    "queryParam": "p5fname"
+  },
+  {
+    "name": "p6fname",
+    "type": "hidden",
+    "queryParam": "p6fname"
+  },
+  {
+    "name": "bkid",
+    "type": "hidden",
+    "queryParam": "bkid"
+  },
+  {
+    "name": "p1lname",
+    "type": "hidden",
+    "queryParam": "p1lname"
+  },
+  {
+    "name": "p2lname",
+    "type": "hidden",
+    "queryParam": "p2lname"
+  },
+  {
+    "name": "p3lname",
+    "type": "hidden",
+    "queryParam": "p3lname"
+  },
+  {
+    "name": "p4lname",
+    "type": "hidden",
+    "queryParam": "p4lname"
+  },
+  {
+    "name": "p5lname",
+    "type": "hidden",
+    "queryParam": "p5lname"
+  },
+  {
+    "name": "p6lname",
+    "type": "hidden",
+    "queryParam": "p6lname"
+  },
+  {
+    "name": "p1lvl",
+    "type": "hidden",
+    "queryParam": "p1lvl"
+  },
+  {
+    "name": "p2lvl",
+    "type": "hidden",
+    "queryParam": "p2lvl"
+  },
+  {
+    "name": "p3lvl",
+    "type": "hidden",
+    "queryParam": "p3lvl"
+  },
+  {
+    "name": "p4lvl",
+    "type": "hidden",
+    "queryParam": "p4lvl"
+  },
+  {
+    "name": "p5lvl",
+    "type": "hidden",
+    "queryParam": "p5lvl"
+  },
+  {
+    "name": "p6lvl",
+    "type": "hidden",
+    "queryParam": "p6lvl"
+  },
+  {
+    "name": "display_booking_id",
+    "label": "Your Booking ID",
+    "type": "namefield",
+    "queryParam": "bkid",
+    "conditional": true,
+    "conditionalField": "bkid",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": ""
+  },
+  {
+    "type": "section",
+    "label": "Lead Attendee Racket Standard Information",
+    "conditional": true,
+    "conditionalField": "p1fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": ""
+  },
+  {
+    "name": "display_p1_fname",
+    "label": "First Name",
+    "type": "namefield",
+    "queryParam": "p1fname",
+    "conditional": true,
+    "conditionalField": "p1fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": ""
+  },
+  {
+    "name": "display_p1_lname",
+    "label": "Surname",
+    "type": "namefield",
+    "queryParam": "p1lname",
+    "conditional": true,
+    "conditionalField": "p1fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": ""
+  },
+  {
+    "name": "display_p1_lvl",
+    "label": "Current Level",
+    "type": "namefield",
+    "queryParam": "p1lvl",
+    "conditional": true,
+    "conditionalField": "p1fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": ""
+  },
+  {
+    "name": "new_level_p1",
+    "label": "New Level",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "queryParam": "p1lvl",
+    "conditional": true,
+    "conditionalField": "p1fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": "",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "Non-Player"
+    ]
+  },
+  {
+    "type": "section",
+    "label": "Attendee #2 Racket Standard Information",
+    "conditional": true,
+    "conditionalField": "p2fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": ""
+  },
+  {
+    "name": "display_p2_fname",
+    "label": "First Name",
+    "type": "namefield",
+    "queryParam": "p2fname",
+    "conditional": true,
+    "conditionalField": "p2fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": ""
+  },
+  {
+    "name": "display_p2_lname",
+    "label": "Surname",
+    "type": "namefield",
+    "queryParam": "p2lname",
+    "conditional": true,
+    "conditionalField": "p2fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": ""
+  },
+  {
+    "name": "display_p2_lvl",
+    "label": "Current Level",
+    "type": "namefield",
+    "queryParam": "p2lvl",
+    "conditional": true,
+    "conditionalField": "p2fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": ""
+  },
+  {
+    "name": "new_level_p2",
+    "label": "New Level",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "queryParam": "p2lvl",
+    "conditional": true,
+    "conditionalField": "p2fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": "",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "Non-Player"
+    ]
+  },
+  {
+    "type": "section",
+    "label": "Attendee #3 Racket Standard Information",
+    "conditional": true,
+    "conditionalField": "p3fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": ""
+  },
+  {
+    "name": "display_p3_fname",
+    "label": "First Name",
+    "type": "namefield",
+    "queryParam": "p3fname",
+    "conditional": true,
+    "conditionalField": "p3fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": ""
+  },
+  {
+    "name": "display_p3_lname",
+    "label": "Surname",
+    "type": "namefield",
+    "queryParam": "p3lname",
+    "conditional": true,
+    "conditionalField": "p3fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": ""
+  },
+  {
+    "name": "display_p3_lvl",
+    "label": "Current Level",
+    "type": "namefield",
+    "queryParam": "p3lvl",
+    "conditional": true,
+    "conditionalField": "p3fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": ""
+  },
+  {
+    "name": "new_level_p3",
+    "label": "New Level",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "queryParam": "p3lvl",
+    "conditional": true,
+    "conditionalField": "p3fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": "",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "Non-Player"
+    ]
+  },
+  {
+    "type": "section",
+    "label": "Attendee #4 Racket Standard Information",
+    "conditional": true,
+    "conditionalField": "p4fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": ""
+  },
+  {
+    "name": "display_p4_fname",
+    "label": "First Name",
+    "type": "namefield",
+    "queryParam": "p4fname",
+    "conditional": true,
+    "conditionalField": "p4fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": ""
+  },
+  {
+    "name": "display_p4_lname",
+    "label": "Surname",
+    "type": "namefield",
+    "queryParam": "p4lname",
+    "conditional": true,
+    "conditionalField": "p4fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": ""
+  },
+  {
+    "name": "display_p4_lvl",
+    "label": "Current Level",
+    "type": "namefield",
+    "queryParam": "p4lvl",
+    "conditional": true,
+    "conditionalField": "p4fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": ""
+  },
+  {
+    "name": "new_level_p4",
+    "label": "New Level",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "queryParam": "p4lvl",
+    "conditional": true,
+    "conditionalField": "p4fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": "",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "Non-Player"
+    ]
+  },
+  {
+    "type": "section",
+    "label": "Attendee #5 Racket Standard Information",
+    "conditional": true,
+    "conditionalField": "p5fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": ""
+  },
+  {
+    "name": "display_p5_fname",
+    "label": "First Name",
+    "type": "namefield",
+    "queryParam": "p5fname",
+    "conditional": true,
+    "conditionalField": "p5fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": ""
+  },
+  {
+    "name": "display_p5_lname",
+    "label": "Surname",
+    "type": "namefield",
+    "queryParam": "p5lname",
+    "conditional": true,
+    "conditionalField": "p5fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": ""
+  },
+  {
+    "name": "display_p5_lvl",
+    "label": "Current Level",
+    "type": "namefield",
+    "queryParam": "p5lvl",
+    "conditional": true,
+    "conditionalField": "p5fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": ""
+  },
+  {
+    "name": "new_level_p5",
+    "label": "New Level",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "queryParam": "p5lvl",
+    "conditional": true,
+    "conditionalField": "p5fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": "",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "Non-Player"
+    ]
+  },
+  {
+    "type": "section",
+    "label": "Attendee #6 Racket Standard Information",
+    "conditional": true,
+    "conditionalField": "p6fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": ""
+  },
+  {
+    "name": "display_p6_fname",
+    "label": "First Name",
+    "type": "namefield",
+    "queryParam": "p6fname",
+    "conditional": true,
+    "conditionalField": "p6fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": ""
+  },
+  {
+    "name": "display_p6_lname",
+    "label": "Surname",
+    "type": "namefield",
+    "queryParam": "p6lname",
+    "conditional": true,
+    "conditionalField": "p6fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": ""
+  },
+  {
+    "name": "display_p6_lvl",
+    "label": "Current Level",
+    "type": "namefield",
+    "queryParam": "p6lvl",
+    "conditional": true,
+    "conditionalField": "p6fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": ""
+  },
+  {
+    "name": "new_level_p6",
+    "label": "New Level",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "queryParam": "p6lvl",
+    "conditional": true,
+    "conditionalField": "p6fname",
+    "conditionalOperator": "not_empty",
+    "conditionalValue": "",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "Non-Player"
+    ]
+  },
+  {
+    "type": "section",
+    "label": "Form Not Available",
+    "description": "This form is not visible to you. Please click the link from an official Active Away link.",
+    "conditional": true,
+    "conditionalField": "p1fname",
+    "conditionalOperator": "empty",
+    "conditionalValue": ""
+  }
+]
+

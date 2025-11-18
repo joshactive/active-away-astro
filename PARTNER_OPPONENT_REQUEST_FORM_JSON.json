@@ -1,0 +1,96 @@
+[
+  {
+    "name": "post_id",
+    "type": "hidden"
+  },
+  {
+    "type": "section",
+    "label": "Your Resort"
+  },
+  {
+    "name": "important_your_current_resort",
+    "label": "Important - your current resort",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "description": "If you enter the wrong resort, your host will NOT receive your request",
+    "dynamicOptions": "resorts",
+    "options": []
+  },
+  {
+    "type": "section",
+    "label": "Your Information"
+  },
+  {
+    "name": "first_name",
+    "label": "First Name",
+    "type": "text",
+    "required": true,
+    "placeholder": "e.g James"
+  },
+  {
+    "name": "surname",
+    "label": "Surname",
+    "type": "text",
+    "required": true,
+    "placeholder": "e.g Allen"
+  },
+  {
+    "name": "email",
+    "label": "Email",
+    "type": "email",
+    "required": true,
+    "placeholder": "e.g jamesallen@gmail.com"
+  },
+  {
+    "type": "section",
+    "label": "Potential Partners"
+  },
+  {
+    "name": "1_name_1x_player_you_haven_t_player_with",
+    "label": "1. Name 1x Player you haven't played with",
+    "type": "text",
+    "required": false,
+    "placeholder": ""
+  },
+  {
+    "name": "2_name_another_player_you_haven_t_played_with",
+    "label": "2. Name Another player you haven't played with",
+    "type": "text",
+    "required": false,
+    "placeholder": ""
+  },
+  {
+    "name": "3_name_someone_else_you_d_like_to_play_with",
+    "label": "3. Name someone else you'd like to play with",
+    "type": "text",
+    "required": false,
+    "placeholder": ""
+  },
+  {
+    "name": "4_if_you_can_t_remember_names_tell_us_what_you_d_like_from_this__",
+    "label": "4. If you can't remember names - tell us what you'd like from this afternoon",
+    "type": "text",
+    "required": false,
+    "placeholder": ""
+  },
+  {
+    "type": "section",
+    "label": "Potential Opponents"
+  },
+  {
+    "name": "1_name_someone_you_d_like_to_play_against",
+    "label": "1. Name someone you'd like to play against",
+    "type": "text",
+    "required": false,
+    "placeholder": ""
+  },
+  {
+    "name": "2_name_another_player_you_d_like_to_play_against",
+    "label": "2. Name another player you'd like to play against",
+    "type": "text",
+    "required": false,
+    "placeholder": ""
+  }
+]
+

@@ -1,0 +1,38 @@
+[
+  {
+    "name": "cfname",
+    "type": "hidden",
+    "queryParam": "cfname"
+  },
+  {
+    "name": "bruniq1",
+    "type": "hidden",
+    "queryParam": "uniq1"
+  },
+  {
+    "name": "uniq2",
+    "type": "hidden",
+    "queryParam": "uniq2"
+  },
+  {
+    "name": "school",
+    "type": "hidden",
+    "queryParam": "school"
+  },
+  {
+    "name": "dest",
+    "type": "hidden",
+    "queryParam": "dest"
+  },
+  {
+    "name": "sdate",
+    "type": "hidden",
+    "queryParam": "sdate"
+  },
+  {
+    "name": "enddate",
+    "type": "hidden",
+    "queryParam": "enddate"
+  }
+]
+

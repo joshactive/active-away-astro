@@ -1,7 +1,8 @@
 [
   {
     "type": "section",
-    "label": "Your Information"
+    "label": "Your Information",
+    "description": "Please feel free to leave blank if you'd prefer to stay anonymous"
   },
   {
     "name": "yourname",
@@ -30,27 +31,27 @@
   },
   {
     "type": "section",
-    "label": "Header"
+    "label": "Where did you go?"
   },
   {
     "name": "resortname",
-    "label": "Clinic Venue",
+    "label": "Resort Name",
     "type": "select",
     "required": false,
     "placeholder": "Please Select",
-    "dynamicOptions": "clinics",
+    "dynamicOptions": "resorts",
     "options": []
   },
   {
     "name": "holidayhost",
-    "label": "Clinic Host",
+    "label": "Holiday Host",
     "type": "text",
     "required": false,
     "placeholder": "e.g Matt Allen"
   },
   {
     "type": "section",
-    "label": "Recommend Us?"
+    "label": "Would you recommend us or book again? Please use a 1-10 scale. 1 = NEVER. 10 = ABSOLUTELY."
   },
   {
     "name": "recommendnumber",
@@ -132,7 +133,11 @@
   },
   {
     "type": "section",
-    "label": "Before your Clinic"
+    "label": "Divider"
+  },
+  {
+    "type": "section",
+    "label": "Before you travelled. Please use a 1-10 scale. 1 = AWFUL. 10 = FANTASTIC."
   },
   {
     "name": "bookingprocess",
@@ -163,7 +168,7 @@
   },
   {
     "name": "pretravel",
-    "label": "Pre Clinic Organisation/Administration 1-10",
+    "label": "Pre Travel Organisation/Administration 1-10",
     "type": "select",
     "required": false,
     "placeholder": "Please Select",
@@ -183,14 +188,18 @@
   },
   {
     "name": "pretravelcomments",
-    "label": "Pre-Clinic Comments",
+    "label": "Pre-Travel Comments",
     "type": "textarea",
     "required": false,
-    "placeholder": "e.g I thought the pre clinic process was ...."
+    "placeholder": "e.g I thought the pre travel process was ...."
   },
   {
     "type": "section",
-    "label": "During your Clinic"
+    "label": "Divider"
+  },
+  {
+    "type": "section",
+    "label": "During your Holiday. Please use a 1-10 scale. 1 = AWFUL. 10 = FANTASTIC."
   },
   {
     "name": "organisation",
@@ -275,7 +284,7 @@
   },
   {
     "name": "hotelstaff",
-    "label": "Venue & Staff 1-10",
+    "label": "Hotel & Staff 1-10",
     "type": "select",
     "required": false,
     "placeholder": "Please Select",
@@ -295,14 +304,18 @@
   },
   {
     "name": "hotelstaffcomments",
-    "label": "Venue & Staff Comments",
+    "label": "Hotel & Staff Comments",
     "type": "textarea",
     "required": false,
-    "placeholder": "e.g I thought the venue and staff were ...."
+    "placeholder": "e.g I thought the hotel and staff were ...."
   },
   {
     "type": "section",
-    "label": "Your Overall Comments"
+    "label": "Divider"
+  },
+  {
+    "type": "section",
+    "label": "Your Overall Comments - Please let us know your thoughts"
   },
   {
     "name": "wedowell",
@@ -316,7 +329,11 @@
     "label": "What do you think we could do better?",
     "type": "textarea",
     "required": false,
-    "placeholder": "e.g I think you could do .... better"
+    "placeholder": "e.g I think you do .... better"
+  },
+  {
+    "type": "section",
+    "label": "Divider"
   },
   {
     "type": "section",
@@ -327,13 +344,7 @@
     "label": "Short Testimonial that may be displayed on our website. (Should you wish).",
     "type": "textarea",
     "required": false,
-    "placeholder": "e.g We had a brilliant experience on our Active Away Clinic..."
-  },
-  {
-    "name": "bookingid",
-    "label": "No Label bookingid",
-    "type": "text",
-    "required": false,
-    "placeholder": ""
+    "placeholder": "e.g We had a brilliant experience on our Active Away Holiday..."
   }
 ]
+
