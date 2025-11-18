@@ -126,7 +126,7 @@ const canonicalURL = seoData?.canonicalURL || 'https://activeaway.com/forms';
         <div id="formsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {forms.map((form) => (
             <a 
-              href={`/forms/${form.slug}`}
+              href={`/forms/${form.slug}/`}
               class="form-card group bg-white border-2 border-gray-200 rounded-2xl p-8 shadow-md hover:shadow-xl hover:border-gold transition-all duration-300 hover:-translate-y-1"
               data-title={form.title}
               data-created={form.createdAt}

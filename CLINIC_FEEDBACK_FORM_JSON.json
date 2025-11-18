@@ -1,0 +1,337 @@
+[
+  {
+    "type": "section",
+    "label": "Your Information"
+  },
+  {
+    "name": "yourname",
+    "label": "First Name",
+    "type": "text",
+    "required": false,
+    "placeholder": "e.g Michael"
+  },
+  {
+    "name": "surname",
+    "label": "Last Name",
+    "type": "text",
+    "required": false,
+    "placeholder": "e.g Cole"
+  },
+  {
+    "name": "email",
+    "label": "Email",
+    "type": "email",
+    "required": false,
+    "placeholder": "e.g michaelcole@gmail.com"
+  },
+  {
+    "type": "section",
+    "label": "Divider"
+  },
+  {
+    "type": "section",
+    "label": "Header"
+  },
+  {
+    "name": "resortname",
+    "label": "Clinic Venue",
+    "type": "text",
+    "required": false,
+    "placeholder": "e.g David Lloyd Chorley"
+  },
+  {
+    "name": "holidayhost",
+    "label": "Clinic Host",
+    "type": "text",
+    "required": false,
+    "placeholder": "e.g Matt Allen"
+  },
+  {
+    "type": "section",
+    "label": "Recommend Us?"
+  },
+  {
+    "name": "recommendnumber",
+    "label": "Would you recommend us?",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "description": "Scale of 1 to 10. 1 = Never. 10 = Absolutely.",
+    "options": [
+      "10",
+      "9",
+      "8",
+      "7",
+      "6",
+      "5",
+      "4",
+      "3",
+      "2",
+      "1"
+    ]
+  },
+  {
+    "name": "bookagain",
+    "label": "Would you book again?",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "description": "Scale of 1 to 10. 1 = Never. 10 = Absolutely.",
+    "options": [
+      "10",
+      "9",
+      "8",
+      "7",
+      "6",
+      "5",
+      "4",
+      "3",
+      "2",
+      "1"
+    ]
+  },
+  {
+    "name": "value",
+    "label": "Value for Money<br><small>1 = Poor Value / 10 = Exceptional Value</small>",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "options": [
+      "10",
+      "9",
+      "8",
+      "7",
+      "6",
+      "5",
+      "4",
+      "3",
+      "2",
+      "1"
+    ]
+  },
+  {
+    "name": "expectations",
+    "label": "Met Expectations<br><small>1 = Didn't Meet / 10 = Exceeded</small>",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "options": [
+      "10",
+      "9",
+      "8",
+      "7",
+      "6",
+      "5",
+      "4",
+      "3",
+      "2",
+      "1"
+    ]
+  },
+  {
+    "type": "section",
+    "label": "Before your Clinic"
+  },
+  {
+    "name": "bookingprocess",
+    "label": "Booking Process 1-10",
+    "type": "select",
+    "required": false,
+    "placeholder": "Please Select",
+    "description": "1 = Awful. 10 = Fantastic.",
+    "options": [
+      "10",
+      "9",
+      "8",
+      "7",
+      "6",
+      "5",
+      "4",
+      "3",
+      "2",
+      "1"
+    ]
+  },
+  {
+    "name": "bookingprocesscomments",
+    "label": "Booking Process Comments",
+    "type": "textarea",
+    "required": false,
+    "placeholder": "e.g I thought the booking process was ...."
+  },
+  {
+    "name": "pretravel",
+    "label": "Pre Clinic Organisation/Administration 1-10",
+    "type": "select",
+    "required": false,
+    "placeholder": "Please Select",
+    "description": "1 = Awful. 10 = Fantastic.",
+    "options": [
+      "10",
+      "9",
+      "8",
+      "7",
+      "6",
+      "5",
+      "4",
+      "3",
+      "2",
+      "1"
+    ]
+  },
+  {
+    "name": "pretravelcomments",
+    "label": "Pre-Clinic Comments",
+    "type": "textarea",
+    "required": false,
+    "placeholder": "e.g I thought the pre clinic process was ...."
+  },
+  {
+    "type": "section",
+    "label": "During your Clinic"
+  },
+  {
+    "name": "organisation",
+    "label": "Organisation 1-10",
+    "type": "select",
+    "required": false,
+    "placeholder": "Please Select",
+    "description": "1 = Awful. 10 = Fantastic.",
+    "options": [
+      "10",
+      "9",
+      "8",
+      "7",
+      "6",
+      "5",
+      "4",
+      "3",
+      "2",
+      "1"
+    ]
+  },
+  {
+    "name": "organisationcomments",
+    "label": "Organisation Comments",
+    "type": "textarea",
+    "required": false,
+    "placeholder": "e.g I thought the organisation was ...."
+  },
+  {
+    "name": "hosting",
+    "label": "Hosts 1-10",
+    "type": "select",
+    "required": false,
+    "placeholder": "Please Select",
+    "description": "1 = Awful. 10 = Fantastic.",
+    "options": [
+      "10",
+      "9",
+      "8",
+      "7",
+      "6",
+      "5",
+      "4",
+      "3",
+      "2",
+      "1"
+    ]
+  },
+  {
+    "name": "hostingcomments",
+    "label": "Hosting Comments",
+    "type": "textarea",
+    "required": false,
+    "placeholder": "e.g I thought the hosting was ...."
+  },
+  {
+    "name": "tenniscoaching",
+    "label": "Coaching 1-10",
+    "type": "select",
+    "required": false,
+    "placeholder": "Please Select",
+    "description": "1 = Awful. 10 = Fantastic.",
+    "options": [
+      "10",
+      "9",
+      "8",
+      "7",
+      "6",
+      "5",
+      "4",
+      "3",
+      "2",
+      "1"
+    ]
+  },
+  {
+    "name": "tenniscoachingcomments",
+    "label": "Coaching Comments",
+    "type": "textarea",
+    "required": false,
+    "placeholder": "e.g I thought the coaching was ...."
+  },
+  {
+    "name": "hotelstaff",
+    "label": "Venue & Staff 1-10",
+    "type": "select",
+    "required": false,
+    "placeholder": "Please Select",
+    "description": "1 = Awful. 10 = Fantastic.",
+    "options": [
+      "10",
+      "9",
+      "8",
+      "7",
+      "6",
+      "5",
+      "4",
+      "3",
+      "2",
+      "1"
+    ]
+  },
+  {
+    "name": "hotelstaffcomments",
+    "label": "Venue & Staff Comments",
+    "type": "textarea",
+    "required": false,
+    "placeholder": "e.g I thought the venue and staff were ...."
+  },
+  {
+    "type": "section",
+    "label": "Your Overall Comments"
+  },
+  {
+    "name": "wedowell",
+    "label": "What do you think we do well?",
+    "type": "textarea",
+    "required": false,
+    "placeholder": "e.g I think you do .... well"
+  },
+  {
+    "name": "dobetter",
+    "label": "What do you think we could do better?",
+    "type": "textarea",
+    "required": false,
+    "placeholder": "e.g I think you could do .... better"
+  },
+  {
+    "type": "section",
+    "label": "Leave a Testimonial?"
+  },
+  {
+    "name": "shorttestimonial",
+    "label": "Short Testimonial that may be displayed on our website. (Should you wish).",
+    "type": "textarea",
+    "required": false,
+    "placeholder": "e.g We had a brilliant experience on our Active Away Clinic..."
+  },
+  {
+    "name": "bookingid",
+    "label": "No Label bookingid",
+    "type": "text",
+    "required": false,
+    "placeholder": ""
+  }
+]

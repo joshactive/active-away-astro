@@ -79,6 +79,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Fetch webhook URL from Strapi (secure - not exposed to client)
     let webhookUrl;
+    let formFields: any[] = [];
+    let webhookFormat = 'labels';
+    let formTitle = '';
     try {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json'
@@ -109,13 +112,27 @@ export const POST: APIRoute = async ({ request, locals }) => {
       
       const form = strapiData.data[0];
       webhookUrl = form.formWebhookUrl;
+      formTitle = form.title || formSlug;
+      webhookFormat = form.webhookFormat || 'labels'; // 'labels' or 'names'
       
       if (!webhookUrl) {
         console.error(`❌ No webhook URL configured for form: ${formSlug}`);
         throw new Error('Webhook URL not configured for this form');
       }
       
+      // Parse form fields to create name->label mapping
+      try {
+        if (form.formFields) {
+          formFields = typeof form.formFields === 'string' 
+            ? JSON.parse(form.formFields) 
+            : form.formFields;
+        }
+      } catch (error) {
+        console.warn('⚠️  Could not parse form fields:', error);
+      }
+      
       console.log(`✅ Webhook URL fetched securely from Strapi for form: ${formSlug}`);
+      console.log(`📋 Webhook format: ${webhookFormat}`);
     } catch (strapiError) {
       console.error('❌ Failed to fetch form config from Strapi:', strapiError);
       return new Response(JSON.stringify({ 
@@ -187,12 +204,42 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Forward to webhook
     try {
-      const webhookPayload = {
-        ...formData,
-        formSlug,
-        timestamp: new Date().toISOString(),
-        source: 'Active Away Website - Form'
-      };
+      let webhookPayload;
+      
+      if (webhookFormat === 'labels') {
+        // Transform field names to labels for webhook (WordPress-style)
+        const transformedData: Record<string, any> = {};
+        
+        // Add sections and fields in order with labels as keys
+        for (const field of formFields) {
+          if (field.type === 'section') {
+            // Sections are added with empty string value
+            transformedData[field.label] = '';
+          } else if (field.name && formData[field.name] !== undefined) {
+            // Regular fields use label as key
+            transformedData[field.label] = formData[field.name];
+          }
+        }
+        
+        // Add form metadata
+        transformedData['form_id'] = formSlug;
+        transformedData['form_name'] = formTitle;
+        
+        webhookPayload = {
+          ...transformedData,
+          timestamp: new Date().toISOString(),
+          source: 'Active Away Website - Form'
+        };
+      } else {
+        // Use field names directly (clean format)
+        webhookPayload = {
+          ...formData,
+          formSlug,
+          formTitle,
+          timestamp: new Date().toISOString(),
+          source: 'Active Away Website - Form'
+        };
+      }
 
       console.log('📤 Sending to webhook:', webhookUrl);
       console.log('📦 Payload:', webhookPayload);

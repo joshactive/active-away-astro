@@ -1,0 +1,118 @@
+[
+  {
+    "type": "section",
+    "label": "Your Information",
+    "description": "Leave blank if you'd like to remain anonymous"
+  },
+  {
+    "name": "first_name",
+    "label": "First Name",
+    "type": "text",
+    "required": false,
+    "placeholder": "e.g. John"
+  },
+  {
+    "name": "last_name",
+    "label": "Last Name",
+    "type": "text",
+    "required": false,
+    "placeholder": "e.g. Smith"
+  },
+  {
+    "name": "email",
+    "label": "Email",
+    "type": "email",
+    "required": false,
+    "placeholder": "e.g. john.smith@example.com"
+  },
+  {
+    "type": "section",
+    "label": "What did you think of the Tennis Courts?"
+  },
+  {
+    "name": "court-rating-1-10",
+    "label": "Court Rating 1-10",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "description": "1 = Lowest / 10 = Highest",
+    "options": [
+      "10",
+      "9",
+      "8",
+      "7",
+      "6",
+      "5",
+      "4",
+      "3",
+      "2",
+      "1",
+      "0"
+    ]
+  },
+  {
+    "name": "court_comments",
+    "label": "Court Comments",
+    "type": "textarea",
+    "required": false,
+    "placeholder": "e.g. The courts were well maintained and in excellent condition..."
+  },
+  {
+    "type": "section",
+    "label": "What did you think of the Tennis Coaching?"
+  },
+  {
+    "name": "coach-rating-1-10",
+    "label": "Coaching Rating 1-10",
+    "type": "select",
+    "required": false,
+    "placeholder": "Please Select",
+    "description": "1 = Lowest / 10 = Highest",
+    "options": [
+      "10",
+      "9",
+      "8",
+      "7",
+      "6",
+      "5",
+      "4",
+      "3",
+      "2",
+      "1",
+      "0",
+      "Not Applicable - I didn't have coaching"
+    ]
+  },
+  {
+    "name": "coach_comments",
+    "label": "Coaching Comments",
+    "type": "textarea",
+    "required": false,
+    "placeholder": "e.g. The coach was very knowledgeable and helped improve my technique..."
+  },
+  {
+    "type": "section",
+    "label": "Any suggestions to improve?"
+  },
+  {
+    "name": "suggestions",
+    "label": "Are there any suggestions on how the centre could be improved?",
+    "type": "textarea",
+    "required": false,
+    "placeholder": "e.g. Perhaps add more water fountains near the courts..."
+  },
+  {
+    "type": "section",
+    "label": "Consent"
+  },
+  {
+    "name": "consent",
+    "label": "",
+    "type": "checkbox",
+    "required": true,
+    "options": [
+      "I consent to my feedback being processed, and if I entered an email address I will enter the active away database which may include marketing emails - from which you can opt out at any time."
+    ]
+  }
+]
+
