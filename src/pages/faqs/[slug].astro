@@ -3,38 +3,19 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeroTailwind from '../../components/PageHeroTailwind.astro';
 import BreadcrumbsTailwind from '../../components/BreadcrumbsTailwind.astro';
-import { getFAQCategories, getFAQCategoryBySlug, getFAQCategorySEO } from '../../utils/strapi.js';
+import { getFAQCategoryBySlug, getFAQCategorySEO } from '../../utils/strapi.js';
 import { parseMarkdown } from '../../utils/markdown.js';
 
-// Generate static paths for all FAQ categories
-export async function getStaticPaths() {
-  try {
-    const categories = await getFAQCategories();
-    
-    if (!categories || categories.length === 0) {
-      console.warn('⚠️  [faq-categories] No categories found');
-      return [];
-    }
-    
-    console.log(`📦 [faq-categories] Generating ${categories.length} FAQ category pages`);
-    
-    return categories.map((category) => ({
-      params: { slug: category.slug },
-      props: { categorySlug: category.slug }
-    }));
-  } catch (error) {
-    console.error('❌ [faq-categories] Error generating paths:', error);
-    return [];
-  }
-}
-
 const { slug } = Astro.params;
-const { categorySlug } = Astro.props;
+
+if (!slug) {
+  return Astro.redirect('/404');
+}
 
 // Fetch category data
 let categoryData = null;
 try {
-  categoryData = await getFAQCategoryBySlug(slug || categorySlug);
+  categoryData = slug ? await getFAQCategoryBySlug(slug) : null;
   console.log(`❓ [faq-category] Data fetched: ${categoryData?.title || slug}`);
 } catch (error) {
   console.error(`❌ [faq-category] Error fetching ${slug}:`, error);
@@ -43,7 +24,7 @@ try {
 // Fetch SEO data
 let seoData = null;
 try {
-  seoData = await getFAQCategorySEO(slug || categorySlug);
+  seoData = slug ? await getFAQCategorySEO(slug) : null;
   if (seoData) {
     console.log(`📄 [faq-category] SEO data fetched for: ${slug}`);
   }

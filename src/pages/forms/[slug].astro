@@ -597,7 +597,9 @@ const canonicalURL = formData.seo?.canonicalURL || `https://activeaway.com/forms
           if (key.endsWith('_country')) {
             const phoneFieldName = key.replace('_country', '');
             if (data[phoneFieldName]) {
-              data[phoneFieldName] = `${data[key]} ${data[phoneFieldName]}`;
+              // Remove + symbol and spaces, then combine without space
+              const cleanCountryCode = String(data[key]).replace(/[\+\s]/g, '');
+              data[phoneFieldName] = `${cleanCountryCode}${data[phoneFieldName]}`;
               delete data[key]; // Remove the country code field from submission
             }
           }
