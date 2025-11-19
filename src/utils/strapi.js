@@ -6510,6 +6510,119 @@ export async function getBookingProcessPageSEO() {
 
 /**
  * ====================================
+ * AIRPORT TRANSFERS PAGE
+ * ====================================
+ */
+
+/**
+ * Get Airport Transfers Page data
+ * @returns {Promise<Object|null>} Airport transfers page data
+ */
+export async function getAirportTransfersPage() {
+  try {
+    console.log('✈️  [getAirportTransfersPage] Fetching Airport Transfers page...');
+    
+    const data = await fetchAPI(
+      '/airport-transfers-page?' +
+      'populate[pageHero][populate]=*&' +
+      'populate[contentsItems][populate]=*&' +
+      'populate[keyInfoAccordions][populate]=*&' +
+      'populate[pricingTable][populate]=*&' +
+      'populate[seo][populate]=*'
+    );
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getAirportTransfersPage] No Airport Transfers page found');
+      return null;
+    }
+    
+    const page = data.data;
+    
+    const airportTransfersPage = {
+      pageHero: page.pageHero ? {
+        kicker: page.pageHero.kicker,
+        heading: page.pageHero.heading,
+        subtitle: page.pageHero.subtitle,
+        backgroundImage: getStrapiImageData(page.pageHero.backgroundImage),
+        showBreadcrumbs: page.pageHero.showBreadcrumbs !== false
+      } : null,
+      
+      importantEyebrow: page.importantEyebrow || 'IMPORTANT',
+      importantContent: page.importantContent,
+      
+      showContents: page.showContents !== false,
+      contentsItems: page.contentsItems || [],
+      
+      keyInfoTitle: page.keyInfoTitle || 'Key Information',
+      keyInfoSubtitle: page.keyInfoSubtitle,
+      keyInfoAccordions: page.keyInfoAccordions || [],
+      
+      pricingTitle: page.pricingTitle || 'Pricing',
+      pricingSubtitle: page.pricingSubtitle,
+      pricingTable: page.pricingTable || [],
+      
+      seo: page.seo || null
+    };
+    
+    console.log('✅ [getAirportTransfersPage] Airport Transfers page fetched');
+    return airportTransfersPage;
+  } catch (error) {
+    console.error('❌ [getAirportTransfersPage] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * Get Airport Transfers Page SEO data
+ * @returns {Promise<Object|null>} SEO data
+ */
+export async function getAirportTransfersPageSEO() {
+  try {
+    console.log('📄 [getAirportTransfersPageSEO] Fetching SEO...');
+    
+    const data = await fetchAPI('/airport-transfers-page?populate[seo][populate]=metaImage');
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getAirportTransfersPageSEO] No page found');
+      return null;
+    }
+    
+    const page = data.data.attributes || data.data;
+    const seo = page.seo;
+    
+    if (!seo) {
+      console.warn('⚠️  [getAirportTransfersPageSEO] No SEO data');
+      return null;
+    }
+
+    // Extract meta image data with Cloudflare Images optimization
+    const metaImageData = getOptimizedSEOImage(seo.metaImage);
+    
+    if (metaImageData.url) {
+      console.log(`📸 Airport Transfers page meta image URL (optimized):`, metaImageData.url);
+    }
+    
+    const seoData = {
+      metaTitle: seo.metaTitle,
+      metaDescription: seo.metaDescription,
+      keywords: seo.keywords,
+      canonicalURL: seo.canonicalURL,
+      metaImage: metaImageData.url,
+      metaImageAlt: metaImageData.alt,
+      metaImageWidth: metaImageData.width,
+      metaImageHeight: metaImageData.height
+    };
+    
+    console.log('✅ [getAirportTransfersPageSEO] SEO fetched');
+    return seoData;
+  } catch (error) {
+    console.error('❌ [getAirportTransfersPageSEO] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * ====================================
  * FAQS INDEX PAGE
  * ====================================
  */

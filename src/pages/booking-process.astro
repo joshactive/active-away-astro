@@ -8,6 +8,29 @@ import BreadcrumbsTailwind from '../components/BreadcrumbsTailwind.astro';
 import { getBookingProcessPage, getBookingProcessPageSEO } from '../utils/strapi.js';
 import { parseMarkdown } from '../utils/markdown.js';
 
+function extractYouTubeId(url) {
+  if (!url) return null;
+  try {
+    const cleanedUrl = url.trim();
+    const regex =
+      /(?:youtube\.com\/(?:embed\/|watch\?v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const match = cleanedUrl.match(regex);
+    if (match && match[1]) {
+      return match[1];
+    }
+
+    const parsedUrl = new URL(cleanedUrl);
+    if (parsedUrl.hostname === 'youtu.be') {
+      return parsedUrl.pathname.slice(1);
+    }
+
+    return parsedUrl.searchParams.get('v');
+  } catch (error) {
+    console.warn('⚠️  [extractYouTubeId] Could not parse URL:', url);
+    return null;
+  }
+}
+
 // Fetch Booking Process page data
 let pageData = null;
 try {
@@ -50,12 +73,17 @@ const canonicalURL = seoData?.canonicalURL || pageData?.seo?.canonicalURL || 'ht
 const introTitle = pageData?.introTitle || 'How to Book';
 const introSubtitle = pageData?.introSubtitle || '';
 
+const youTubeId = pageData?.videoGuideUrl ? extractYouTubeId(pageData.videoGuideUrl) : null;
+const youTubeThumbnail = youTubeId
+  ? `https://i.ytimg.com/vi/${youTubeId}/hqdefault.jpg`
+  : null;
+
 // Tab data
 const tabs = [
   {
     id: 'video',
     title: pageData?.videoGuideTitle || 'Video Guide',
-    hasContent: !!pageData?.videoGuideUrl
+    hasContent: !!youTubeId
   },
   {
     id: 'general',
@@ -119,7 +147,7 @@ const firstTabId = tabs.length > 0 ? tabs[0].id : 'video';
     <div class="container mx-auto max-w-[1400px] px-4 sm:px-10 py-12 sm:py-16 lg:py-20">
       
       <!-- Introduction Section -->
-      <div class="mb-12 text-center max-w-4xl mx-auto">
+      <div class="text-center max-w-4xl mx-auto">
         <h2 class="text-3xl sm:text-4xl lg:text-5xl font-playfair font-bold text-gray-900 mb-4">
           {introTitle}
         </h2>
@@ -153,24 +181,33 @@ const firstTabId = tabs.length > 0 ? tabs[0].id : 'video';
     )}
     
     <!-- Tab Content Sections -->
-    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10 py-8 sm:py-12 lg:py-16">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10 py-8 sm:py-12 lg:py-16 mb-12 sm:mb-16 lg:mb-20">
       
       <!-- Video Guide Tab -->
-      {pageData?.videoGuideUrl && (
+      {youTubeId && (
         <div 
           id="tab-video" 
           class={`tab-content ${firstTabId === 'video' ? 'active' : ''}`}
         >
           <div class="max-w-5xl mx-auto">
-            <div class="relative w-full" style="padding-bottom: 56.25%;">
-              <iframe 
-                src={pageData.videoGuideUrl}
-                class="absolute top-0 left-0 w-full h-full rounded-xl shadow-lg"
-                frameborder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowfullscreen
-                title={pageData.videoGuideTitle || 'Video Guide'}
-              ></iframe>
+            <div class="relative w-full aspect-video rounded-xl overflow-hidden shadow-lg">
+              <button 
+                type="button"
+                class="lite-youtube-booking group"
+                data-video-id={youTubeId}
+                aria-label={pageData?.videoGuideTitle || 'Play booking process video guide'}
+              >
+                {youTubeThumbnail && (
+                  <img 
+                    src={youTubeThumbnail}
+                    alt={pageData?.videoGuideTitle || 'Booking process video guide thumbnail'}
+                    loading="lazy"
+                    decoding="async"
+                    class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                )}
+                <span class="lite-youtube__play"></span>
+              </button>
             </div>
           </div>
         </div>
@@ -182,9 +219,7 @@ const firstTabId = tabs.length > 0 ? tabs[0].id : 'video';
           id="tab-general" 
           class={`tab-content ${firstTabId === 'general' ? 'active' : ''}`}
         >
-          <div class="max-w-4xl mx-auto">
-            <div class="prose prose-lg max-w-none font-inter" set:html={generalInfoContent}></div>
-          </div>
+          <div class="prose prose-lg max-w-none font-inter" set:html={generalInfoContent}></div>
         </div>
       )}
       
@@ -194,9 +229,55 @@ const firstTabId = tabs.length > 0 ? tabs[0].id : 'video';
           id="tab-included" 
           class={`tab-content ${firstTabId === 'included' ? 'active' : ''}`}
         >
-          <div class="max-w-4xl mx-auto">
-            <div class="prose prose-lg max-w-none font-inter" set:html={accommodationIncludedContent}></div>
+          <!-- Payment Calculator -->
+          <div class="bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 rounded-2xl p-6 sm:p-8 mb-8 shadow-sm">
+            <h3 class="text-xl sm:text-2xl font-playfair font-bold text-gray-900 mb-2">
+              Payment Calculator
+            </h3>
+            <p class="text-sm sm:text-base text-gray-600 font-inter mb-6">
+              Find out if you need to pay a deposit or the full balance based on your trip date.
+            </p>
+            
+            <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+              <div class="flex-1 w-full">
+                <label for="trip-date" class="block text-sm font-inter font-semibold text-gray-700 mb-2">
+                  Trip Start Date
+                </label>
+                <input 
+                  type="date" 
+                  id="trip-date"
+                  class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg font-inter text-base focus:outline-none focus:ring-2 focus:ring-[#ad986c] focus:border-transparent transition-all"
+                  placeholder="Select your trip date"
+                />
+              </div>
+              <button 
+                id="calculate-payment"
+                class="w-full sm:w-auto px-6 py-3 bg-[#ad986c] hover:bg-[#8a7454] text-white font-inter font-semibold rounded-lg transition-all duration-300 hover:shadow-lg"
+              >
+                Calculate
+              </button>
+            </div>
+            
+            <!-- Result Display -->
+            <div id="payment-result" class="hidden mt-6 p-4 sm:p-6 bg-white rounded-xl border-2 border-gray-200">
+              <div class="flex items-start gap-3">
+                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-[#ad986c]/10 flex items-center justify-center">
+                  <svg class="w-5 h-5 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <p class="text-sm font-inter text-gray-600 mb-1" id="days-until"></p>
+                  <p class="text-lg sm:text-xl font-playfair font-bold text-gray-900 mb-1">
+                    You need to pay: <span id="payment-type" class="text-[#ad986c]"></span>
+                  </p>
+                  <p class="text-sm font-inter text-gray-600" id="payment-explanation"></p>
+                </div>
+              </div>
+            </div>
           </div>
+          
+          <div class="prose prose-lg max-w-none font-inter" set:html={accommodationIncludedContent}></div>
         </div>
       )}
       
@@ -206,9 +287,7 @@ const firstTabId = tabs.length > 0 ? tabs[0].id : 'video';
           id="tab-excluded" 
           class={`tab-content ${firstTabId === 'excluded' ? 'active' : ''}`}
         >
-          <div class="max-w-4xl mx-auto">
-            <div class="prose prose-lg max-w-none font-inter" set:html={accommodationExcludedContent}></div>
-          </div>
+          <div class="prose prose-lg max-w-none font-inter" set:html={accommodationExcludedContent}></div>
         </div>
       )}
       
@@ -218,9 +297,7 @@ const firstTabId = tabs.length > 0 ? tabs[0].id : 'video';
           id="tab-changes" 
           class={`tab-content ${firstTabId === 'changes' ? 'active' : ''}`}
         >
-          <div class="max-w-4xl mx-auto">
-            <div class="prose prose-lg max-w-none font-inter" set:html={makingChangesContent}></div>
-          </div>
+          <div class="prose prose-lg max-w-none font-inter" set:html={makingChangesContent}></div>
         </div>
       )}
       
@@ -235,6 +312,60 @@ const firstTabId = tabs.length > 0 ? tabs[0].id : 'video';
   
   .font-playfair {
     font-family: 'Playfair Display', serif;
+  }
+  
+  .lite-youtube-booking {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+  }
+
+  .lite-youtube-booking::before {
+    content: '';
+    display: block;
+    padding-top: 56.25%;
+  }
+
+  .lite-youtube-booking img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .lite-youtube__play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 72px;
+    height: 52px;
+    transform: translate(-50%, -50%);
+    background: rgba(13, 28, 78, 0.85);
+    border-radius: 16px;
+    transition: background 0.3s ease, transform 0.3s ease;
+    box-shadow: 0 15px 30px rgba(13, 28, 78, 0.35);
+  }
+
+  .lite-youtube__play::before {
+    content: '';
+    position: absolute;
+    left: 26px;
+    top: 16px;
+    border-style: solid;
+    border-width: 10px 0 10px 18px;
+    border-color: transparent transparent transparent #fff;
+  }
+
+  .lite-youtube-booking:hover .lite-youtube__play {
+    background: rgba(173, 152, 108, 0.95);
+    transform: translate(-50%, -50%) scale(1.05);
   }
   
   /* Tab Navigation Styles */
@@ -288,88 +419,133 @@ const firstTabId = tabs.length > 0 ? tabs[0].id : 'video';
     display: none;
   }
   
-  /* Prose Styles */
-  .prose p {
-    margin: 0 0 1rem 0;
+  /* Prose Styles - Using :global() to properly target markdown content */
+  :global(.prose p) {
+    margin: 0 0 1.5rem 0;
     line-height: 1.75;
+    font-size: 1rem;
   }
   
-  .prose p:last-child {
+  @media (min-width: 640px) {
+    :global(.prose p) {
+      font-size: 1.125rem;
+    }
+  }
+  
+  :global(.prose p:last-child) {
     margin-bottom: 0;
   }
   
-  .prose h1,
-  .prose h2,
-  .prose h3,
-  .prose h4 {
-    font-family: 'Playfair Display', serif;
-    font-weight: 600;
-    color: rgb(17 24 39);
-    margin-top: 2rem;
-    margin-bottom: 1rem;
+  :global(.prose h1),
+  :global(.prose h2),
+  :global(.prose h3),
+  :global(.prose h4),
+  :global(.prose h5),
+  :global(.prose h6) {
+    font-family: 'Playfair Display', serif !important;
+    color: rgb(17 24 39) !important;
+    font-weight: 600 !important;
+    font-style: normal !important;
+    letter-spacing: normal !important;
+    text-transform: none !important;
   }
   
-  .prose h1 {
-    font-size: 2.25rem;
-    line-height: 2.5rem;
+  :global(.prose h1) {
+    font-size: 2.25rem !important;
+    margin-top: 0 !important;
+    margin-bottom: 2rem !important;
+    line-height: 1.2 !important;
   }
   
-  .prose h2 {
-    font-size: 1.875rem;
-    line-height: 2.25rem;
+  :global(.prose h2) {
+    font-size: 1.875rem !important;
+    margin-top: 3rem !important;
+    margin-bottom: 1.5rem !important;
+    line-height: 1.3 !important;
   }
   
-  .prose h3 {
-    font-size: 1.5rem;
-    line-height: 2rem;
+  :global(.prose h3) {
+    font-size: 1.5rem !important;
+    margin-top: 2rem !important;
+    margin-bottom: 1rem !important;
+    line-height: 1.4 !important;
   }
   
-  .prose h4 {
-    font-size: 1.25rem;
-    line-height: 1.75rem;
+  :global(.prose h4) {
+    font-size: 1.25rem !important;
+    margin-top: 1.5rem !important;
+    margin-bottom: 0.75rem !important;
   }
   
-  .prose ul,
-  .prose ol {
+  @media (min-width: 640px) {
+    :global(.prose h1) {
+      font-size: 2.5rem !important;
+    }
+    
+    :global(.prose h2) {
+      font-size: 2rem !important;
+    }
+    
+    :global(.prose h3) {
+      font-size: 1.625rem !important;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    :global(.prose h1) {
+      font-size: 3rem !important;
+    }
+    
+    :global(.prose h2) {
+      font-size: 2.25rem !important;
+    }
+    
+    :global(.prose h3) {
+      font-size: 1.75rem !important;
+    }
+  }
+  
+  :global(.prose ul),
+  :global(.prose ol) {
     margin-top: 1rem;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
     padding-left: 1.75rem;
   }
   
-  .prose li {
+  :global(.prose li) {
     margin-bottom: 0.5rem;
   }
   
-  .prose strong {
+  :global(.prose strong) {
     font-weight: 600;
     color: rgb(17 24 39);
   }
   
-  .prose a {
+  :global(.prose a) {
     color: #ad986c;
     text-decoration: underline;
   }
   
-  .prose a:hover {
+  :global(.prose a:hover) {
     color: #8a7454;
   }
   
-  .prose blockquote {
+  :global(.prose blockquote) {
     border-left: 4px solid #ad986c;
-    padding-left: 1rem;
+    padding-left: 1.5rem;
     font-style: italic;
-    color: #6b7280;
-    margin: 1.5rem 0;
+    color: rgb(75 85 99);
+    margin: 2rem 0;
   }
   
-  .prose code {
+  :global(.prose code) {
     background: #f3f4f6;
     padding: 0.125rem 0.25rem;
     border-radius: 0.25rem;
     font-size: 0.875em;
   }
   
-  .prose pre {
+  :global(.prose pre) {
     background: #1f2937;
     color: #f9fafb;
     padding: 1rem;
@@ -378,31 +554,31 @@ const firstTabId = tabs.length > 0 ? tabs[0].id : 'video';
     margin: 1.5rem 0;
   }
   
-  .prose pre code {
+  :global(.prose pre code) {
     background: transparent;
     padding: 0;
     color: inherit;
   }
   
-  .prose table {
+  :global(.prose table) {
     width: 100%;
     border-collapse: collapse;
     margin: 1.5rem 0;
   }
   
-  .prose th,
-  .prose td {
+  :global(.prose th),
+  :global(.prose td) {
     border: 1px solid #e5e7eb;
     padding: 0.75rem;
     text-align: left;
   }
   
-  .prose th {
+  :global(.prose th) {
     background: #f9fafb;
     font-weight: 600;
   }
   
-  .prose hr {
+  :global(.prose hr) {
     border: none;
     border-top: 1px solid #e5e7eb;
     margin: 2rem 0;
@@ -410,35 +586,144 @@ const firstTabId = tabs.length > 0 ? tabs[0].id : 'video';
 </style>
 
 <script>
-  // Tab switching functionality
+  // Tab switching + lite YouTube embeds + Payment Calculator
   document.addEventListener('DOMContentLoaded', () => {
     const tabButtons = document.querySelectorAll('.booking-tab');
     const tabContents = document.querySelectorAll('.tab-content');
     
-    if (!tabButtons.length || !tabContents.length) return;
-    
-    tabButtons.forEach(button => {
-      button.addEventListener('click', () => {
-        const tabId = button.getAttribute('data-tab');
-        
-        // Remove active class from all tabs and contents
-        tabButtons.forEach(btn => btn.classList.remove('active'));
-        tabContents.forEach(content => content.classList.remove('active'));
-        
-        // Add active class to clicked tab
-        button.classList.add('active');
-        
-        // Show corresponding content
-        const targetContent = document.getElementById(`tab-${tabId}`);
-        if (targetContent) {
-          targetContent.classList.add('active');
+    if (tabButtons.length && tabContents.length) {
+      tabButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const tabId = button.getAttribute('data-tab');
           
-          // Smooth scroll to content on mobile
-          if (window.innerWidth < 768) {
-            targetContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          // Remove active class from all tabs and contents
+          tabButtons.forEach((btn) => btn.classList.remove('active'));
+          tabContents.forEach((content) => content.classList.remove('active'));
+          
+          // Add active class to clicked tab
+          button.classList.add('active');
+          
+          // Show corresponding content
+          const targetContent = document.getElementById(`tab-${tabId}`);
+          if (targetContent) {
+            targetContent.classList.add('active');
+            
+            // Smooth scroll to content on mobile
+            if (window.innerWidth < 768) {
+              targetContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
           }
-        }
+        });
       });
+    }
+
+    // Payment Calculator Logic
+    const calculateButton = document.getElementById('calculate-payment');
+    const tripDateInput = document.getElementById('trip-date');
+    const resultDiv = document.getElementById('payment-result');
+    const daysUntilText = document.getElementById('days-until');
+    const paymentTypeText = document.getElementById('payment-type');
+    const paymentExplanationText = document.getElementById('payment-explanation');
+
+    // Set minimum date to today (prevent past dates)
+    if (tripDateInput) {
+      const today = new Date();
+      const todayString = today.toISOString().split('T')[0];
+      tripDateInput.setAttribute('min', todayString);
+    }
+
+    if (calculateButton && tripDateInput) {
+      calculateButton.addEventListener('click', () => {
+        const tripDate = tripDateInput.value;
+        
+        if (!tripDate) {
+          alert('Please select your trip start date');
+          return;
+        }
+
+        // Calculate days between today and trip date
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Reset time to start of day
+        
+        const selectedDate = new Date(tripDate);
+        selectedDate.setHours(0, 0, 0, 0); // Reset time to start of day
+        
+        const diffTime = selectedDate.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        // Determine payment type based on 84-day threshold
+        let paymentType = '';
+        let explanation = '';
+        
+        if (diffDays < 0) {
+          // Past date
+          daysUntilText.textContent = 'This date has already passed';
+          paymentTypeText.textContent = 'N/A';
+          explanationText.textContent = 'Please select a future date for your trip.';
+        } else if (diffDays < 84) {
+          // Less than 84 days - Balance due
+          paymentType = 'Full Balance';
+          daysUntilText.textContent = `Your trip is ${diffDays} day${diffDays !== 1 ? 's' : ''} away`;
+          explanation = 'Since your trip is less than 84 days away, the full balance is due now.';
+        } else {
+          // 84 days or more - Deposit due
+          paymentType = 'Deposit';
+          daysUntilText.textContent = `Your trip is ${diffDays} day${diffDays !== 1 ? 's' : ''} away`;
+          explanation = 'Since your trip is 84 days or more away, you only need to pay a deposit now. The balance will be due 84 days before your trip.';
+        }
+
+        // Update result display
+        paymentTypeText.textContent = paymentType;
+        paymentExplanationText.textContent = explanation;
+        
+        // Show result
+        resultDiv.classList.remove('hidden');
+        
+        // Smooth scroll to result
+        setTimeout(() => {
+          resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+      });
+    }
+
+    const liteYouTubeTriggers = document.querySelectorAll('.lite-youtube-booking');
+    liteYouTubeTriggers.forEach((trigger) => {
+      trigger.addEventListener(
+        'click',
+        () => {
+          const videoId = trigger.getAttribute('data-video-id');
+          if (!videoId) return;
+
+          const iframe = document.createElement('iframe');
+          iframe.setAttribute('allowfullscreen', '');
+          iframe.setAttribute('loading', 'lazy');
+          iframe.setAttribute(
+            'title',
+            trigger.getAttribute('aria-label') || 'Booking process video guide'
+          );
+          iframe.setAttribute(
+            'src',
+            `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`
+          );
+          iframe.setAttribute(
+            'allow',
+            'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
+          );
+          iframe.style.position = 'absolute';
+          iframe.style.inset = '0';
+          iframe.style.width = '100%';
+          iframe.style.height = '100%';
+
+          const wrapper = document.createElement('div');
+          wrapper.style.position = 'relative';
+          wrapper.style.width = '100%';
+          wrapper.style.height = '100%';
+          wrapper.appendChild(iframe);
+
+          trigger.replaceWith(wrapper);
+        },
+        { once: true }
+      );
     });
   });
 </script>
