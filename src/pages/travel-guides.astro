@@ -1,0 +1,319 @@
+---
+// Travel Guides Page
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeroTailwind from '../components/PageHeroTailwind.astro';
+import BreadcrumbsTailwind from '../components/BreadcrumbsTailwind.astro';
+import { getTravelGuidesPage, getTravelGuidesPageSEO } from '../utils/strapi.js';
+import { parseMarkdown } from '../utils/markdown.js';
+
+// Slugify function to create URL-friendly anchors
+function slugify(text) {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+// Fetch Travel Guides page data
+let pageData = null;
+try {
+  pageData = await getTravelGuidesPage();
+  console.log('🗺️  [travel-guides] Page data fetched');
+} catch (error) {
+  console.error('❌ [travel-guides] Error fetching page:', error.message);
+}
+
+// Fetch SEO data
+let seoData = null;
+try {
+  seoData = await getTravelGuidesPageSEO();
+  if (seoData) {
+    console.log('📄 [travel-guides] SEO data fetched');
+  }
+} catch (error) {
+  console.warn('⚠️  [travel-guides] Could not fetch SEO data:', error.message);
+}
+
+// Extract SEO fields
+const pageTitle = seoData?.metaTitle || pageData?.seo?.metaTitle || 'Travel Guides | Active Away';
+const pageDescription = seoData?.metaDescription || pageData?.seo?.metaDescription || 'Important travel notices and guides for your tennis holiday with Active Away.';
+
+// Extract meta image URL properly
+let metaImage = null;
+if (seoData?.metaImage) {
+  metaImage = typeof seoData.metaImage === 'string' ? seoData.metaImage : seoData.metaImage.url;
+} else if (pageData?.seo?.metaImage) {
+  metaImage = typeof pageData.seo.metaImage === 'string' ? pageData.seo.metaImage : pageData.seo.metaImage.url;
+}
+
+const metaImageAlt = seoData?.metaImageAlt || pageData?.seo?.metaImageAlt || null;
+const metaImageWidth = seoData?.metaImageWidth || pageData?.seo?.metaImageWidth || null;
+const metaImageHeight = seoData?.metaImageHeight || pageData?.seo?.metaImageHeight || null;
+const keywords = seoData?.keywords || pageData?.seo?.keywords || null;
+const canonicalURL = seoData?.canonicalURL || pageData?.seo?.canonicalURL || 'https://activeaway.com/travel-guides';
+
+// Parse markdown content
+const importantContent = pageData?.importantContent ? parseMarkdown(pageData.importantContent) : '';
+
+// Generate anchors for notices (for table of contents)
+const noticesWithAnchors = pageData?.notices?.map(notice => ({
+  ...notice,
+  anchor: slugify(notice.title),
+  parsedContent: notice.content ? parseMarkdown(notice.content) : ''
+})) || [];
+---
+
+<BaseLayout 
+  title={pageTitle}
+  description={pageDescription}
+  metaImage={metaImage}
+  metaImageAlt={metaImageAlt}
+  metaImageWidth={metaImageWidth}
+  metaImageHeight={metaImageHeight}
+  keywords={keywords}
+  canonicalURL={canonicalURL}
+>
+  <!-- Page Hero (Background Image) -->
+  {pageData?.pageHero && (
+    <PageHeroTailwind pageData={pageData} />
+  )}
+  
+  <!-- Breadcrumbs Section -->
+  {pageData?.pageHero?.showBreadcrumbs !== false && (
+    <BreadcrumbsTailwind 
+      breadcrumbs={[
+        { label: 'Home', href: '/' },
+        { label: 'Travel Guides' }
+      ]}
+    />
+  )}
+  
+  <!-- Main Content -->
+  <main class="w-full bg-white py-12 sm:py-16 lg:py-20">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      
+      <!-- Important Notice -->
+      {importantContent && (
+        <div class="mb-12 bg-gray-50 border border-gray-200 rounded-xl p-6 sm:p-8">
+          <p class="text-xs font-inter font-semibold text-[#ad986c] tracking-wider uppercase mb-3">
+            {pageData.importantEyebrow || 'IMPORTANT'}
+          </p>
+          <div class="prose prose-lg max-w-none font-inter" set:html={importantContent}></div>
+        </div>
+      )}
+
+      <!-- Dynamic Table of Contents -->
+      {pageData?.showContents && noticesWithAnchors.length > 0 && (
+        <div class="mb-12 bg-white border-2 border-gray-200 rounded-xl p-6 sm:p-8 shadow-sm">
+          <h2 class="text-2xl font-playfair font-bold text-gray-900 mb-6">
+            {pageData.contentsTitle || 'Contents'}
+          </h2>
+          <nav class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {noticesWithAnchors.map((notice) => (
+              <a 
+                href={`#${notice.anchor}`} 
+                class="flex items-center gap-2 text-base font-inter text-gray-700 hover:text-[#ad986c] transition-colors py-2 px-3 rounded-lg hover:bg-gray-50"
+              >
+                <svg class="w-4 h-4 flex-shrink-0 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+                {notice.title}
+              </a>
+            ))}
+          </nav>
+        </div>
+      )}
+
+      <!-- Notices Section -->
+      {noticesWithAnchors.length > 0 && (
+        <section class="space-y-6">
+          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-8 sm:mb-12 text-center">
+            {pageData.noticesTitle || 'Travel Notices'}
+          </h2>
+
+          {noticesWithAnchors.map((notice) => (
+            <div 
+              id={notice.anchor}
+              class="bg-white border border-gray-200 rounded-xl p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow scroll-mt-20"
+            >
+              <h3 class="text-2xl sm:text-3xl font-playfair font-semibold text-gray-900 mb-6">
+                {notice.title}
+              </h3>
+              <div class="prose prose-lg max-w-none font-inter" set:html={notice.parsedContent}></div>
+            </div>
+          ))}
+        </section>
+      )}
+
+      <!-- Empty State -->
+      {!noticesWithAnchors || noticesWithAnchors.length === 0 && (
+        <div class="text-center py-12">
+          <p class="text-lg font-inter text-gray-600">
+            No travel notices at this time. Check back later for updates.
+          </p>
+        </div>
+      )}
+      
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+
+  /* Prose Styles - Using :global() to properly target markdown content */
+  :global(.prose p) {
+    margin: 0 0 1.5rem 0;
+    line-height: 1.75;
+    font-size: 1rem;
+  }
+  
+  @media (min-width: 640px) {
+    :global(.prose p) {
+      font-size: 1.125rem;
+    }
+  }
+  
+  :global(.prose p:last-child) {
+    margin-bottom: 0;
+  }
+  
+  :global(.prose h1),
+  :global(.prose h2),
+  :global(.prose h3),
+  :global(.prose h4),
+  :global(.prose h5),
+  :global(.prose h6) {
+    font-family: 'Playfair Display', serif !important;
+    color: rgb(17 24 39) !important;
+    font-weight: 600 !important;
+    font-style: normal !important;
+    letter-spacing: normal !important;
+    text-transform: none !important;
+  }
+  
+  :global(.prose h1) {
+    font-size: 2.25rem !important;
+    margin-top: 0 !important;
+    margin-bottom: 2rem !important;
+    line-height: 1.2 !important;
+  }
+  
+  :global(.prose h2) {
+    font-size: 1.875rem !important;
+    margin-top: 3rem !important;
+    margin-bottom: 1.5rem !important;
+    line-height: 1.3 !important;
+  }
+  
+  :global(.prose h3) {
+    font-size: 1.5rem !important;
+    margin-top: 2rem !important;
+    margin-bottom: 1rem !important;
+    line-height: 1.4 !important;
+  }
+  
+  :global(.prose h4) {
+    font-size: 1.25rem !important;
+    margin-top: 1.5rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+  
+  @media (min-width: 640px) {
+    :global(.prose h1) {
+      font-size: 2.5rem !important;
+    }
+    
+    :global(.prose h2) {
+      font-size: 2rem !important;
+    }
+    
+    :global(.prose h3) {
+      font-size: 1.625rem !important;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    :global(.prose h1) {
+      font-size: 3rem !important;
+    }
+    
+    :global(.prose h2) {
+      font-size: 2.25rem !important;
+    }
+    
+    :global(.prose h3) {
+      font-size: 1.75rem !important;
+    }
+  }
+  
+  :global(.prose ul),
+  :global(.prose ol) {
+    margin-top: 1rem;
+    margin-bottom: 1.5rem;
+    padding-left: 1.75rem;
+  }
+  
+  :global(.prose li) {
+    margin-bottom: 0.5rem;
+  }
+  
+  :global(.prose strong) {
+    font-weight: 600;
+    color: rgb(17 24 39);
+  }
+  
+  :global(.prose a) {
+    color: #ad986c;
+    text-decoration: underline;
+  }
+  
+  :global(.prose a:hover) {
+    color: #8a7454;
+  }
+  
+  :global(.prose blockquote) {
+    border-left: 4px solid #ad986c;
+    padding-left: 1.5rem;
+    font-style: italic;
+    color: rgb(75 85 99);
+    margin: 2rem 0;
+  }
+</style>
+
+<script>
+  // Smooth scroll for table of contents links
+  document.addEventListener('DOMContentLoaded', () => {
+    const tocLinks = document.querySelectorAll('nav a[href^="#"]');
+    
+    tocLinks.forEach((link) => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetId = link.getAttribute('href')?.slice(1);
+        if (!targetId) return;
+        
+        const targetElement = document.getElementById(targetId);
+        if (targetElement) {
+          targetElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+          });
+          
+          // Update URL without triggering page reload
+          history.pushState(null, '', `#${targetId}`);
+        }
+      });
+    });
+  });
+</script>
+

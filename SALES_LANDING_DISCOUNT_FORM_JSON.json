@@ -1,0 +1,96 @@
+[
+  {
+    "name": "landing_source",
+    "type": "hidden",
+    "value": "sales-landing-page",
+    "queryParam": "source"
+  },
+  {
+    "type": "section",
+    "label": "Tell us about you"
+  },
+  {
+    "name": "first_name",
+    "label": "First Name",
+    "type": "text",
+    "required": true,
+    "placeholder": "e.g. Jamie"
+  },
+  {
+    "name": "last_name",
+    "label": "Last Name",
+    "type": "text",
+    "required": true,
+    "placeholder": "e.g. Murray"
+  },
+  {
+    "name": "email",
+    "label": "Email Address",
+    "type": "email",
+    "required": true,
+    "placeholder": "e.g. you@example.com"
+  },
+  {
+    "name": "phone",
+    "label": "WhatsApp / Mobile Number",
+    "type": "tel",
+    "required": false,
+    "placeholder": "Include country code",
+    "description": "We’ll only use this to send your discount."
+  },
+  {
+    "type": "section",
+    "label": "Holiday preferences"
+  },
+  {
+    "name": "tennis_club",
+    "label": "Tennis Club Name",
+    "type": "text",
+    "required": false,
+    "placeholder": "e.g. Roehampton Club"
+  },
+  {
+    "name": "group_size",
+    "label": "Group Size",
+    "type": "select",
+    "required": true,
+    "placeholder": "Select group size",
+    "options": [
+      "Just me",
+      "2 travellers",
+      "3-4 travellers",
+      "5+ travellers"
+    ]
+  },
+  {
+    "name": "travel_timeframe",
+    "label": "When would you like to travel?",
+    "type": "select",
+    "required": true,
+    "placeholder": "Choose timeframe",
+    "options": [
+      "Next 3 months",
+      "3-6 months",
+      "6-12 months",
+      "Just exploring options"
+    ]
+  },
+  {
+    "name": "notes",
+    "label": "Anything else we should know?",
+    "type": "textarea",
+    "required": false,
+    "placeholder": "Preferred destinations, standards, budget..."
+  },
+  {
+    "name": "marketing_consent",
+    "label": "",
+    "type": "checkbox",
+    "required": true,
+    "options": [
+      "I’m happy for Active Away to contact me about discounts and agree to the privacy policy."
+    ]
+  }
+]
+
+

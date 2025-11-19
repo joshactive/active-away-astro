@@ -6623,6 +6623,112 @@ export async function getAirportTransfersPageSEO() {
 
 /**
  * ====================================
+ * TRAVEL GUIDES PAGE
+ * ====================================
+ */
+
+/**
+ * Get Travel Guides Page data
+ * @returns {Promise<Object|null>} Travel guides page data
+ */
+export async function getTravelGuidesPage() {
+  try {
+    console.log('🗺️  [getTravelGuidesPage] Fetching Travel Guides page...');
+    
+    const data = await fetchAPI(
+      '/travel-guides-page?' +
+      'populate[pageHero][populate]=*&' +
+      'populate[notices][populate]=*&' +
+      'populate[seo][populate]=*'
+    );
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getTravelGuidesPage] No Travel Guides page found');
+      return null;
+    }
+    
+    const page = data.data;
+    
+    const travelGuidesPage = {
+      pageHero: page.pageHero ? {
+        kicker: page.pageHero.kicker,
+        heading: page.pageHero.heading,
+        subtitle: page.pageHero.subtitle,
+        backgroundImage: getStrapiImageData(page.pageHero.backgroundImage),
+        showBreadcrumbs: page.pageHero.showBreadcrumbs !== false
+      } : null,
+      
+      importantEyebrow: page.importantEyebrow || 'IMPORTANT',
+      importantContent: page.importantContent,
+      
+      showContents: page.showContents !== false,
+      contentsTitle: page.contentsTitle || 'Contents',
+      
+      noticesTitle: page.noticesTitle || 'Travel Notices',
+      notices: page.notices || [],
+      
+      seo: page.seo || null
+    };
+    
+    console.log('✅ [getTravelGuidesPage] Travel Guides page fetched');
+    return travelGuidesPage;
+  } catch (error) {
+    console.error('❌ [getTravelGuidesPage] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * Get Travel Guides Page SEO data
+ * @returns {Promise<Object|null>} SEO data
+ */
+export async function getTravelGuidesPageSEO() {
+  try {
+    console.log('📄 [getTravelGuidesPageSEO] Fetching SEO...');
+    
+    const data = await fetchAPI('/travel-guides-page?populate[seo][populate]=metaImage');
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getTravelGuidesPageSEO] No page found');
+      return null;
+    }
+    
+    const page = data.data.attributes || data.data;
+    const seo = page.seo;
+    
+    if (!seo) {
+      console.warn('⚠️  [getTravelGuidesPageSEO] No SEO data');
+      return null;
+    }
+
+    // Extract meta image data with Cloudflare Images optimization
+    const metaImageData = getOptimizedSEOImage(seo.metaImage);
+    
+    if (metaImageData.url) {
+      console.log(`📸 Travel Guides page meta image URL (optimized):`, metaImageData.url);
+    }
+    
+    const seoData = {
+      metaTitle: seo.metaTitle,
+      metaDescription: seo.metaDescription,
+      keywords: seo.keywords,
+      canonicalURL: seo.canonicalURL,
+      metaImage: metaImageData.url,
+      metaImageAlt: metaImageData.alt,
+      metaImageWidth: metaImageData.width,
+      metaImageHeight: metaImageData.height
+    };
+    
+    console.log('✅ [getTravelGuidesPageSEO] SEO fetched');
+    return seoData;
+  } catch (error) {
+    console.error('❌ [getTravelGuidesPageSEO] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * ====================================
  * FAQS INDEX PAGE
  * ====================================
  */
