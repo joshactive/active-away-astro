@@ -1,0 +1,445 @@
+---
+// Booking Process Page
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeroTailwind from '../components/PageHeroTailwind.astro';
+import BreadcrumbsTailwind from '../components/BreadcrumbsTailwind.astro';
+import { getBookingProcessPage, getBookingProcessPageSEO } from '../utils/strapi.js';
+import { parseMarkdown } from '../utils/markdown.js';
+
+// Fetch Booking Process page data
+let pageData = null;
+try {
+  pageData = await getBookingProcessPage();
+  console.log('📋 [booking-process] Page data fetched');
+} catch (error) {
+  console.error('❌ [booking-process] Error fetching page:', error.message);
+}
+
+// Fetch SEO data
+let seoData = null;
+try {
+  seoData = await getBookingProcessPageSEO();
+  if (seoData) {
+    console.log('📄 [booking-process] SEO data fetched');
+  }
+} catch (error) {
+  console.warn('⚠️  [booking-process] Could not fetch SEO data:', error.message);
+}
+
+// Extract SEO fields
+const pageTitle = seoData?.metaTitle || pageData?.seo?.metaTitle || 'The Booking Process | Active Away';
+const pageDescription = seoData?.metaDescription || pageData?.seo?.metaDescription || 'Learn how to book your tennis holiday with Active Away. Find information about accommodation, payments, and making changes to your booking.';
+
+// Extract meta image URL properly
+let metaImage = null;
+if (seoData?.metaImage) {
+  metaImage = typeof seoData.metaImage === 'string' ? seoData.metaImage : seoData.metaImage.url;
+} else if (pageData?.seo?.metaImage) {
+  metaImage = typeof pageData.seo.metaImage === 'string' ? pageData.seo.metaImage : pageData.seo.metaImage.url;
+}
+
+const metaImageAlt = seoData?.metaImageAlt || pageData?.seo?.metaImageAlt || null;
+const metaImageWidth = seoData?.metaImageWidth || pageData?.seo?.metaImageWidth || null;
+const metaImageHeight = seoData?.metaImageHeight || pageData?.seo?.metaImageHeight || null;
+const keywords = seoData?.keywords || pageData?.seo?.keywords || null;
+const canonicalURL = seoData?.canonicalURL || pageData?.seo?.canonicalURL || 'https://activeaway.com/booking-process';
+
+// Parse markdown content
+const introTitle = pageData?.introTitle || 'How to Book';
+const introSubtitle = pageData?.introSubtitle || '';
+
+// Tab data
+const tabs = [
+  {
+    id: 'video',
+    title: pageData?.videoGuideTitle || 'Video Guide',
+    hasContent: !!pageData?.videoGuideUrl
+  },
+  {
+    id: 'general',
+    title: pageData?.generalInfoTitle || 'General Info',
+    hasContent: !!pageData?.generalInfoContent
+  },
+  {
+    id: 'included',
+    title: pageData?.accommodationIncludedTitle || 'Accommodation Included',
+    hasContent: !!pageData?.accommodationIncludedContent
+  },
+  {
+    id: 'excluded',
+    title: pageData?.accommodationExcludedTitle || 'Accommodation Excluded',
+    hasContent: !!pageData?.accommodationExcludedContent
+  },
+  {
+    id: 'changes',
+    title: pageData?.makingChangesTitle || 'Making Changes',
+    hasContent: !!pageData?.makingChangesContent
+  }
+].filter(tab => tab.hasContent);
+
+// Parse content for rich text tabs
+const generalInfoContent = pageData?.generalInfoContent ? parseMarkdown(pageData.generalInfoContent) : '';
+const accommodationIncludedContent = pageData?.accommodationIncludedContent ? parseMarkdown(pageData.accommodationIncludedContent) : '';
+const accommodationExcludedContent = pageData?.accommodationExcludedContent ? parseMarkdown(pageData.accommodationExcludedContent) : '';
+const makingChangesContent = pageData?.makingChangesContent ? parseMarkdown(pageData.makingChangesContent) : '';
+
+// Get first tab with content as default
+const firstTabId = tabs.length > 0 ? tabs[0].id : 'video';
+---
+
+<BaseLayout 
+  title={pageTitle}
+  description={pageDescription}
+  metaImage={metaImage}
+  metaImageAlt={metaImageAlt}
+  metaImageWidth={metaImageWidth}
+  metaImageHeight={metaImageHeight}
+  keywords={keywords}
+  canonicalURL={canonicalURL}
+>
+  <!-- Page Hero (Background Image) -->
+  {pageData?.pageHero && (
+    <PageHeroTailwind pageData={pageData} />
+  )}
+  
+  <!-- Breadcrumbs Section -->
+  {pageData?.pageHero?.showBreadcrumbs !== false && (
+    <BreadcrumbsTailwind 
+      breadcrumbs={[
+        { label: 'Home', href: '/' },
+        { label: 'The Booking Process' }
+      ]}
+    />
+  )}
+  
+  <!-- Main Content -->
+  <main class="w-full bg-white">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10 py-12 sm:py-16 lg:py-20">
+      
+      <!-- Introduction Section -->
+      <div class="mb-12 text-center max-w-4xl mx-auto">
+        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-playfair font-bold text-gray-900 mb-4">
+          {introTitle}
+        </h2>
+        {introSubtitle && (
+          <p class="text-lg sm:text-xl text-gray-600 font-inter">
+            {introSubtitle}
+          </p>
+        )}
+      </div>
+      
+    </div>
+    
+    <!-- Tab Navigation - Sticky -->
+    {tabs.length > 0 && (
+      <nav class="sticky top-0 z-30 w-full bg-white border-b border-gray-200 shadow-sm">
+        <div class="w-full overflow-x-auto scrollbar-hide">
+          <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+            <div class="flex items-center justify-start sm:justify-center gap-2 py-3">
+              {tabs.map((tab, index) => (
+                <button 
+                  class={`booking-tab ${index === 0 ? 'active' : ''} px-6 py-3 text-sm font-medium font-inter rounded-full whitespace-nowrap transition-all`}
+                  data-tab={tab.id}
+                >
+                  {tab.title}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </nav>
+    )}
+    
+    <!-- Tab Content Sections -->
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10 py-8 sm:py-12 lg:py-16">
+      
+      <!-- Video Guide Tab -->
+      {pageData?.videoGuideUrl && (
+        <div 
+          id="tab-video" 
+          class={`tab-content ${firstTabId === 'video' ? 'active' : ''}`}
+        >
+          <div class="max-w-5xl mx-auto">
+            <div class="relative w-full" style="padding-bottom: 56.25%;">
+              <iframe 
+                src={pageData.videoGuideUrl}
+                class="absolute top-0 left-0 w-full h-full rounded-xl shadow-lg"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+                title={pageData.videoGuideTitle || 'Video Guide'}
+              ></iframe>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <!-- General Info Tab -->
+      {generalInfoContent && (
+        <div 
+          id="tab-general" 
+          class={`tab-content ${firstTabId === 'general' ? 'active' : ''}`}
+        >
+          <div class="max-w-4xl mx-auto">
+            <div class="prose prose-lg max-w-none font-inter" set:html={generalInfoContent}></div>
+          </div>
+        </div>
+      )}
+      
+      <!-- Accommodation Included Tab -->
+      {accommodationIncludedContent && (
+        <div 
+          id="tab-included" 
+          class={`tab-content ${firstTabId === 'included' ? 'active' : ''}`}
+        >
+          <div class="max-w-4xl mx-auto">
+            <div class="prose prose-lg max-w-none font-inter" set:html={accommodationIncludedContent}></div>
+          </div>
+        </div>
+      )}
+      
+      <!-- Accommodation Excluded Tab -->
+      {accommodationExcludedContent && (
+        <div 
+          id="tab-excluded" 
+          class={`tab-content ${firstTabId === 'excluded' ? 'active' : ''}`}
+        >
+          <div class="max-w-4xl mx-auto">
+            <div class="prose prose-lg max-w-none font-inter" set:html={accommodationExcludedContent}></div>
+          </div>
+        </div>
+      )}
+      
+      <!-- Making Changes Tab -->
+      {makingChangesContent && (
+        <div 
+          id="tab-changes" 
+          class={`tab-content ${firstTabId === 'changes' ? 'active' : ''}`}
+        >
+          <div class="max-w-4xl mx-auto">
+            <div class="prose prose-lg max-w-none font-inter" set:html={makingChangesContent}></div>
+          </div>
+        </div>
+      )}
+      
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+  
+  /* Tab Navigation Styles */
+  .booking-tab {
+    background: white;
+    color: #6b7280;
+    border: 1px solid #e5e7eb;
+  }
+  
+  .booking-tab:hover {
+    background: #f9fafb;
+    color: #ad986c;
+    border-color: #ad986c;
+  }
+  
+  .booking-tab.active {
+    background: #ad986c;
+    color: white;
+    border-color: #ad986c;
+  }
+  
+  /* Tab Content Styles */
+  .tab-content {
+    display: none;
+    opacity: 0;
+    animation: fadeIn 0.3s ease-in-out forwards;
+  }
+  
+  .tab-content.active {
+    display: block;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Prose Styles */
+  .prose p {
+    margin: 0 0 1rem 0;
+    line-height: 1.75;
+  }
+  
+  .prose p:last-child {
+    margin-bottom: 0;
+  }
+  
+  .prose h1,
+  .prose h2,
+  .prose h3,
+  .prose h4 {
+    font-family: 'Playfair Display', serif;
+    font-weight: 600;
+    color: rgb(17 24 39);
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+  }
+  
+  .prose h1 {
+    font-size: 2.25rem;
+    line-height: 2.5rem;
+  }
+  
+  .prose h2 {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+  }
+  
+  .prose h3 {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+  
+  .prose h4 {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+  }
+  
+  .prose ul,
+  .prose ol {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    padding-left: 1.75rem;
+  }
+  
+  .prose li {
+    margin-bottom: 0.5rem;
+  }
+  
+  .prose strong {
+    font-weight: 600;
+    color: rgb(17 24 39);
+  }
+  
+  .prose a {
+    color: #ad986c;
+    text-decoration: underline;
+  }
+  
+  .prose a:hover {
+    color: #8a7454;
+  }
+  
+  .prose blockquote {
+    border-left: 4px solid #ad986c;
+    padding-left: 1rem;
+    font-style: italic;
+    color: #6b7280;
+    margin: 1.5rem 0;
+  }
+  
+  .prose code {
+    background: #f3f4f6;
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    font-size: 0.875em;
+  }
+  
+  .prose pre {
+    background: #1f2937;
+    color: #f9fafb;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+  }
+  
+  .prose pre code {
+    background: transparent;
+    padding: 0;
+    color: inherit;
+  }
+  
+  .prose table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+  }
+  
+  .prose th,
+  .prose td {
+    border: 1px solid #e5e7eb;
+    padding: 0.75rem;
+    text-align: left;
+  }
+  
+  .prose th {
+    background: #f9fafb;
+    font-weight: 600;
+  }
+  
+  .prose hr {
+    border: none;
+    border-top: 1px solid #e5e7eb;
+    margin: 2rem 0;
+  }
+</style>
+
+<script>
+  // Tab switching functionality
+  document.addEventListener('DOMContentLoaded', () => {
+    const tabButtons = document.querySelectorAll('.booking-tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    if (!tabButtons.length || !tabContents.length) return;
+    
+    tabButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const tabId = button.getAttribute('data-tab');
+        
+        // Remove active class from all tabs and contents
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        tabContents.forEach(content => content.classList.remove('active'));
+        
+        // Add active class to clicked tab
+        button.classList.add('active');
+        
+        // Show corresponding content
+        const targetContent = document.getElementById(`tab-${tabId}`);
+        if (targetContent) {
+          targetContent.classList.add('active');
+          
+          // Smooth scroll to content on mobile
+          if (window.innerWidth < 768) {
+            targetContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }
+      });
+    });
+  });
+</script>
+

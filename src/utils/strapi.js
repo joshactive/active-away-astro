@@ -1,12 +1,56 @@
 // Strapi API utility functions
-// Support both Astro (import.meta.env) and Node.js (process.env) environments
+// Support Astro (import.meta.env), Node.js (process.env) and Cloudflare runtime environments
 import { getCloudflareImageUrl } from './cloudflareImages.js';
-const STRAPI_URL = (typeof import.meta !== 'undefined' && import.meta.env?.STRAPI_URL) 
-  || process.env.STRAPI_URL 
-  || 'http://localhost:1337';
-const STRAPI_TOKEN = (typeof import.meta !== 'undefined' && import.meta.env?.STRAPI_API_TOKEN) 
-  || process.env.STRAPI_API_TOKEN 
-  || '';
+
+const DEFAULT_STRAPI_URL = 'http://localhost:1337';
+const DEFAULT_STRAPI_TOKEN = '';
+
+/**
+ * Resolve runtime environment from multiple execution contexts (Cloudflare, Node, etc.)
+ * @returns {Record<string, any>|undefined}
+ */
+function getRuntimeEnv() {
+  if (typeof globalThis === 'undefined') return undefined;
+  return globalThis.__RUNTIME_ENV__
+    || globalThis.__env
+    || globalThis.__env__
+    || globalThis.ENV;
+}
+
+/**
+ * Safely resolve an environment variable from available sources.
+ * @param {string} key
+ * @param {string} fallback
+ * @returns {string}
+ */
+function getEnvValue(key, fallback = '') {
+  try {
+    if (typeof import.meta !== 'undefined' && import.meta.env?.[key]) {
+      return import.meta.env[key];
+    }
+  } catch (error) {
+    // ignore - import.meta may not exist in some runtimes
+  }
+
+  if (typeof process !== 'undefined' && process.env?.[key]) {
+    return process.env[key];
+  }
+
+  const runtimeEnv = getRuntimeEnv();
+  if (runtimeEnv && runtimeEnv[key]) {
+    return runtimeEnv[key];
+  }
+
+  return fallback;
+}
+
+function getStrapiUrl() {
+  return getEnvValue('STRAPI_URL', DEFAULT_STRAPI_URL);
+}
+
+function getStrapiToken() {
+  return getEnvValue('STRAPI_API_TOKEN', DEFAULT_STRAPI_TOKEN);
+}
 
 const EVENT_PLACEHOLDER_URL = getCloudflareImageUrl('45b69090-1c22-46cd-7f98-086ba71efc00', {
   width: 402,
@@ -31,6 +75,8 @@ const GENERIC_PLACEHOLDER_URL = getCloudflareImageUrl('placeholder', {
  * @returns {Promise<Object>} Response data
  */
 export async function fetchAPI(endpoint, options = {}) {
+  const strapiUrl = getStrapiUrl();
+  const strapiToken = getStrapiToken();
   const defaultOptions = {
     headers: {
       'Content-Type': 'application/json',
@@ -38,13 +84,13 @@ export async function fetchAPI(endpoint, options = {}) {
   };
 
   // Add authorization header if token is available.
-  if (STRAPI_TOKEN) {
-    defaultOptions.headers['Authorization'] = `Bearer ${STRAPI_TOKEN}`;
+  if (strapiToken) {
+    defaultOptions.headers['Authorization'] = `Bearer ${strapiToken}`;
   }
 
   try {
     const response = await fetch(
-      `${STRAPI_URL}/api${endpoint}`,
+      `${strapiUrl}/api${endpoint}`,
       { ...defaultOptions, ...options }
     );
 
@@ -84,7 +130,7 @@ export function getStrapiImageUrl(imageData) {
   }
   
   // Otherwise, prepend Strapi URL
-  return `${STRAPI_URL}${url}`;
+  return `${getStrapiUrl()}${url}`;
 }
 
 /**
@@ -194,7 +240,7 @@ export function getStrapiImageUrls(imagesData) {
       );
     }
     
-    return url.startsWith('http') ? url : `${STRAPI_URL}${url}`;
+    return url.startsWith('http') ? url : `${getStrapiUrl()}${url}`;
   });
 }
 
@@ -219,7 +265,7 @@ export function getStrapiImagesData(imagesData) {
           'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/'
         );
       } else if (url && !url.startsWith('http')) {
-        url = `${STRAPI_URL}${url}`;
+        url = `${getStrapiUrl()}${url}`;
       }
       
       return {
@@ -245,7 +291,7 @@ export function getStrapiImagesData(imagesData) {
           'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/'
         );
       } else if (!url.startsWith('http')) {
-        url = `${STRAPI_URL}${url}`;
+        url = `${getStrapiUrl()}${url}`;
       }
       
       return {
@@ -1223,7 +1269,7 @@ export async function getBlogs(limit = 8) {
  */
 export async function getPageSEO(endpoint) {
   try {
-    const response = await fetch(`${STRAPI_URL}/api/${endpoint}?populate=seo.metaImage`);
+    const response = await fetch(`${getStrapiUrl()}/api/${endpoint}?populate=seo.metaImage`);
     
     if (!response.ok) {
       console.warn(`⚠️ Could not fetch ${endpoint} SEO data:`, response.status);
@@ -1395,7 +1441,7 @@ function transformPreOrderDetail(item) {
         
         // Transform URL if needed
         if (fileUrl && !fileUrl.startsWith('http')) {
-          fileUrl = `${STRAPI_URL}${fileUrl}`;
+          fileUrl = `${getStrapiUrl()}${fileUrl}`;
         }
         
         menuFiles.push({
@@ -6344,6 +6390,120 @@ export async function getSelfRatingGuidePageSEO() {
     return seoData;
   } catch (error) {
     console.error('❌ [getSelfRatingGuidePageSEO] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * ====================================
+ * BOOKING PROCESS PAGE
+ * ====================================
+ */
+
+/**
+ * Get Booking Process Page data
+ * @returns {Promise<Object|null>} Booking process page data
+ */
+export async function getBookingProcessPage() {
+  try {
+    console.log('📋 [getBookingProcessPage] Fetching Booking Process page...');
+    
+    const data = await fetchAPI(
+      '/booking-process-page?' +
+      'populate[pageHero][populate]=*&' +
+      'populate[seo][populate]=*'
+    );
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getBookingProcessPage] No Booking Process page found');
+      return null;
+    }
+    
+    const page = data.data;
+    
+    const bookingProcessPage = {
+      pageHero: page.pageHero ? {
+        kicker: page.pageHero.kicker,
+        heading: page.pageHero.heading,
+        subtitle: page.pageHero.subtitle,
+        backgroundImage: getStrapiImageData(page.pageHero.backgroundImage),
+        showBreadcrumbs: page.pageHero.showBreadcrumbs !== false
+      } : null,
+      
+      introTitle: page.introTitle,
+      introSubtitle: page.introSubtitle,
+      
+      videoGuideTitle: page.videoGuideTitle || 'Video Guide',
+      videoGuideUrl: page.videoGuideUrl,
+      
+      generalInfoTitle: page.generalInfoTitle || 'General Info',
+      generalInfoContent: page.generalInfoContent,
+      
+      accommodationIncludedTitle: page.accommodationIncludedTitle || 'Accommodation Included',
+      accommodationIncludedContent: page.accommodationIncludedContent,
+      
+      accommodationExcludedTitle: page.accommodationExcludedTitle || 'Accommodation Excluded',
+      accommodationExcludedContent: page.accommodationExcludedContent,
+      
+      makingChangesTitle: page.makingChangesTitle || 'Making Changes',
+      makingChangesContent: page.makingChangesContent,
+      
+      seo: page.seo || null
+    };
+    
+    console.log('✅ [getBookingProcessPage] Booking Process page fetched');
+    return bookingProcessPage;
+  } catch (error) {
+    console.error('❌ [getBookingProcessPage] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * Get Booking Process Page SEO data
+ * @returns {Promise<Object|null>} SEO data
+ */
+export async function getBookingProcessPageSEO() {
+  try {
+    console.log('📄 [getBookingProcessPageSEO] Fetching SEO...');
+    
+    const data = await fetchAPI('/booking-process-page?populate[seo][populate]=metaImage');
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getBookingProcessPageSEO] No page found');
+      return null;
+    }
+    
+    const page = data.data.attributes || data.data;
+    const seo = page.seo;
+    
+    if (!seo) {
+      console.warn('⚠️  [getBookingProcessPageSEO] No SEO data');
+      return null;
+    }
+
+    // Extract meta image data with Cloudflare Images optimization
+    const metaImageData = getOptimizedSEOImage(seo.metaImage);
+    
+    if (metaImageData.url) {
+      console.log(`📸 Booking Process page meta image URL (optimized):`, metaImageData.url);
+    }
+    
+    const seoData = {
+      metaTitle: seo.metaTitle,
+      metaDescription: seo.metaDescription,
+      keywords: seo.keywords,
+      canonicalURL: seo.canonicalURL,
+      metaImage: metaImageData.url,
+      metaImageAlt: metaImageData.alt,
+      metaImageWidth: metaImageData.width,
+      metaImageHeight: metaImageData.height
+    };
+    
+    console.log('✅ [getBookingProcessPageSEO] SEO fetched');
+    return seoData;
+  } catch (error) {
+    console.error('❌ [getBookingProcessPageSEO] Error:', error);
     return null;
   }
 }

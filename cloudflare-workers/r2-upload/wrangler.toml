@@ -1,0 +1,13 @@
+name = "active-away-r2-upload"
+main = "src/index.js"
+compatibility_date = "2025-11-19"
+# Set this to a Cloudflare zone route if you want to run behind a custom domain.
+# For workers.dev deployments comment out the routes stanza and use `wrangler deploy`.
+# routes = [
+#   { pattern = "upload.example.com/*", zone_name = "example.com" }
+# ]
+
+[[r2_buckets]]
+binding = "ACTIVE_AWAY_R2"
+bucket_name = "active-away"
+
