@@ -1550,7 +1550,7 @@ const carouselSlideCount = holidayType === 'ski-holiday' ? 1 : (holidayType === 
         {/* Getting There tab - for tennis-clinic and junior-tennis-camp */}
         {holidayData.gettingThere && (
           <div class={`facility-tab-content ${(holidayType === 'tennis-clinic' || holidayType === 'junior-tennis-camp') ? 'active' : 'hidden'}`} data-tab-content="getting-there">
-            <div class="prose max-w-none font-inter" set:html={holidayData.gettingThere.startsWith('<') ? holidayData.gettingThere : `<p>${holidayData.gettingThere}</p>`}></div>
+            <div class="prose max-w-none font-inter" set:html={marked.parse(holidayData.gettingThere || '')}></div>
           </div>
         )}
 

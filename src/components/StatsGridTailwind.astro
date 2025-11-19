@@ -1,33 +1,52 @@
 ---
 // Stats Grid section component - Tailwind CSS Version
 
-interface Props {
-  aboutData?: any;
+interface StatItem {
+  number: string;
+  label: string;
 }
 
-const { aboutData } = Astro.props;
+interface Props {
+  aboutData?: any;
+  stats?: StatItem[];
+  backgroundClass?: string;
+  numberColorClass?: string;
+  labelColorClass?: string;
+}
 
-const statsData = {
-  stats: aboutData?.stats?.stats || []
-};
+const {
+  aboutData,
+  stats,
+  backgroundClass = 'bg-gray-50',
+  numberColorClass = 'text-[#ad986c]',
+  labelColorClass = 'text-gray-700'
+} = Astro.props;
 
-const hasStats = statsData.stats && statsData.stats.length > 0;
+const statsData: StatItem[] = Array.isArray(stats) && stats.length > 0
+  ? stats
+  : (aboutData?.stats?.stats || []);
+
+const hasStats = statsData.length > 0;
+const componentId = `stats-grid-${Math.random().toString(36).slice(2, 9)}`;
 ---
 
 {hasStats && (
-  <section class="w-full bg-gray-50 py-12 sm:py-16 lg:py-20">
+  <section 
+    class={`w-full ${backgroundClass} py-12 sm:py-16 lg:py-20`}
+    data-stats-grid-id={componentId}
+  >
     <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 lg:gap-12">
-        {statsData.stats.map((stat, index) => (
+        {statsData.map((stat, index) => (
           <div class="text-center">
             <div 
-              class="stat-number text-4xl sm:text-5xl lg:text-6xl font-playfair font-bold text-[#ad986c] mb-2"
+              class={`stat-number text-4xl sm:text-5xl lg:text-6xl font-playfair font-bold mb-2 ${numberColorClass}`}
               data-target={stat.number}
               data-index={index}
             >
               0
             </div>
-            <div class="text-sm sm:text-base lg:text-lg font-inter font-medium text-gray-700">
+            <div class={`text-sm sm:text-base lg:text-lg font-inter font-medium ${labelColorClass}`}>
               {stat.label}
             </div>
           </div>
@@ -47,23 +66,28 @@ const hasStats = statsData.stats && statsData.stats.length > 0;
   }
 </style>
 
-<script>
+<script define:vars={{ statsGridId: componentId }}>
   document.addEventListener('DOMContentLoaded', () => {
-    const statNumbers = document.querySelectorAll('.stat-number');
+    const section = document.querySelector(`[data-stats-grid-id="${statsGridId}"]`);
+    if (!section) return;
+    
+    const statNumbers = section.querySelectorAll('.stat-number');
+    if (statNumbers.length === 0) {
+      return;
+    }
+    
     let hasAnimated = false;
     
-    // Extract number from string like "7,000+" or "20+"
     function extractNumber(str) {
       const cleaned = str.replace(/[,+]/g, '');
       return parseInt(cleaned) || 0;
     }
     
-    // Animate a single stat
     function animateStat(element, targetStr) {
-      const suffix = '+'; // Always add + symbol
+      const suffix = targetStr.trim().endsWith('+') ? '+' : '';
       const hasComma = targetStr.includes(',');
       const target = extractNumber(targetStr);
-      const duration = 2000; // 2 seconds
+      const duration = 2000;
       const fps = 60;
       const totalFrames = (duration / 1000) * fps;
       const increment = target / totalFrames;
@@ -88,7 +112,6 @@ const hasStats = statsData.stats && statsData.stats.length > 0;
       }, 1000 / fps);
     }
     
-    // Use Intersection Observer to trigger when in viewport
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting && !hasAnimated) {
@@ -105,12 +128,7 @@ const hasStats = statsData.stats && statsData.stats.length > 0;
       threshold: 0.3
     });
     
-    if (statNumbers.length > 0) {
-      const section = statNumbers[0].closest('section');
-      if (section) {
-        observer.observe(section);
-      }
-    }
+    observer.observe(section);
   });
 </script>
 
