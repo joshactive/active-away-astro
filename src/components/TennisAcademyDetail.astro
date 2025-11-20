@@ -747,6 +747,21 @@ const canonicalURL = academyData.seo?.canonicalURL || `https://activeaway.com/te
 </style>
 
 <script>
+  const scrollToSection = (sectionId) => {
+    const section = document.getElementById(sectionId);
+    if (section) {
+      requestAnimationFrame(() => {
+        const yOffset = -100;
+        const y = section.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      });
+    }
+  };
+
+  if (!window.scrollToSection) {
+    window.scrollToSection = scrollToSection;
+  }
+
   // Smooth scroll to sections when tabs are clicked
   document.addEventListener('DOMContentLoaded', () => {
     const navTabs = document.querySelectorAll('.page-nav-tab');
@@ -760,7 +775,7 @@ const canonicalURL = academyData.seo?.canonicalURL || `https://activeaway.com/te
         tab.classList.add('active');
         
         // Scroll to section
-        window.scrollToSection(sectionId);
+        scrollToSection(sectionId);
       });
     });
 
