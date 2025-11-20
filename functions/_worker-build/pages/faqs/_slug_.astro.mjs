@@ -5,7 +5,7 @@ import { $ as $$BaseLayout } from '../../chunks/BaseLayout_BFSQUzS2.mjs';
 import { $ as $$PageHeroTailwind, a as $$BreadcrumbsTailwind } from '../../chunks/BreadcrumbsTailwind_DpvF7--Y.mjs';
 import { s as getFAQCategoryBySlug, t as getFAQCategorySEO } from '../../chunks/strapi_C3n-BgGz.mjs';
 import { p as parseMarkdown } from '../../chunks/markdown_C9eAVA1x.mjs';
-/* empty css                                     */
+//* empty css                                     */
 export { renderers } from '../../renderers.mjs';
 
 var __freeze = Object.freeze;
