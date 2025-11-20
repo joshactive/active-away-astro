@@ -34,30 +34,54 @@ Added intelligent "read more" / "read less" toggle for truncated descriptions:
 - **Automatic detection**: Checks if text is actually truncated before showing button
 - **Toggle behavior**: Click to expand/collapse text
 - **Visual feedback**: Button text changes between "Read more" and "Read less"
-- **Prevents navigation**: Stops the card link click when toggling
+- **Prevents navigation**: Stops the card link click when toggling (card restructured with separate links)
 - **Font-aware**: Re-checks after fonts load to ensure accurate detection
+- **Smooth transitions**: Added CSS transitions for better UX
+
+#### Card Structure Update:
+Changed from having the entire card as a single link to having multiple clickable areas:
+- Image is clickable
+- Title is clickable
+- "View Details" button is clickable
+- "Read more" button works independently without triggering navigation
 
 #### Implementation:
 ```javascript
-// Check if text is clamped (truncated)
-const lineHeight = parseInt(window.getComputedStyle(description).lineHeight);
-const maxHeight = lineHeight * 3; // 3 lines
-
-if (description.scrollHeight > maxHeight) {
-  readMoreBtn.classList.remove('hidden');
+const initReadMore = () => {
+  const cards = document.querySelectorAll('.quick-link-card');
   
-  readMoreBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  cards.forEach((card) => {
+    const description = card.querySelector(`[class*="quick-link-description-"]`);
+    const readMoreBtn = card.querySelector(`[class*="read-more-btn-"]`);
     
-    if (description.classList.contains('line-clamp-3')) {
-      description.classList.remove('line-clamp-3');
-      readMoreBtn.textContent = 'Read less';
-    } else {
-      description.classList.add('line-clamp-3');
-      readMoreBtn.textContent = 'Read more';
+    if (!description || !readMoreBtn) return;
+
+    // Check if text is actually truncated
+    const isTruncated = description.scrollHeight > description.clientHeight;
+    
+    if (isTruncated) {
+      readMoreBtn.classList.remove('hidden');
+      
+      readMoreBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (description.classList.contains('line-clamp-3')) {
+          description.classList.remove('line-clamp-3');
+          readMoreBtn.textContent = 'Read less';
+        } else {
+          description.classList.add('line-clamp-3');
+          readMoreBtn.textContent = 'Read more';
+        }
+      });
     }
   });
+};
+
+// Run after delay to ensure styles are applied
+setTimeout(initReadMore, 100);
+if (document.fonts) {
+  document.fonts.ready.then(() => setTimeout(initReadMore, 100));
 }
 ```
 

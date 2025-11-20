@@ -343,53 +343,57 @@ const canonicalURL = academyData.seo?.canonicalURL || `https://activeaway.com/te
             'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
           }`}>
             {academyData.quickLinks.map((link, index) => (
-              <a 
-                href={link.url} 
-                class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 transform hover:-translate-y-1 border-2 border-gray-200"
-              >
-                <div class="aspect-video relative overflow-hidden bg-gray-100">
-                  {link.image && (() => {
-                    const imgAttrs = getStrapiImageAttrs({ url: link.image, alt: link.imageAlt }, {
-                      displayWidth: 400,
-                      sizes: '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw'
-                    });
-                    return (
-                      <img 
-                        {...imgAttrs}
-                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        alt={link.imageAlt}
-                        loading="lazy"
-                      />
-                    );
-                  })()}
-                  <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                </div>
+              <div class="quick-link-card group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 transform hover:-translate-y-1 border-2 border-gray-200">
+                <a href={link.url} class="block">
+                  <div class="aspect-video relative overflow-hidden bg-gray-100">
+                    {link.image && (() => {
+                      const imgAttrs = getStrapiImageAttrs({ url: link.image, alt: link.imageAlt }, {
+                        displayWidth: 400,
+                        sizes: '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw'
+                      });
+                      return (
+                        <img 
+                          {...imgAttrs}
+                          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          alt={link.imageAlt}
+                          loading="lazy"
+                        />
+                      );
+                    })()}
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  </div>
+                </a>
                 <div class="p-6">
-                  <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3 group-hover:text-[#ad986c] transition-colors leading-tight">
-                    {link.title}
-                  </h3>
+                  <a href={link.url}>
+                    <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3 group-hover:text-[#ad986c] transition-colors leading-tight">
+                      {link.title}
+                    </h3>
+                  </a>
                   {link.description && (
-                    <div class="mb-4">
+                    <div class="mb-4 quick-link-description-wrapper">
                       <p class={`quick-link-description-${index} text-sm text-gray-600 font-inter line-clamp-3`}>
                         {link.description}
                       </p>
                       <button 
                         type="button"
-                        class={`read-more-btn-${index} text-[#ad986c] text-xs font-inter font-medium mt-2 hover:underline hidden`}
+                        class={`read-more-btn-${index} read-more-btn text-[#ad986c] text-xs font-inter font-medium mt-2 hover:underline hidden`}
                         data-index={index}
+                        style="position: relative; z-index: 10;"
                       >
                         Read more
                       </button>
                     </div>
                   )}
-                  <div class="mt-4 flex items-center gap-2 text-[#ad986c] font-inter font-semibold text-sm group-hover:gap-3 transition-all">
-                    <span>{link.buttonText}</span>
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                    </svg>
-                  </div>
+                  <a href={link.url} class="inline-block mt-4">
+                    <div class="flex items-center gap-2 text-[#ad986c] font-inter font-semibold text-sm group-hover:gap-3 transition-all">
+                      <span>{link.buttonText}</span>
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
+                    </div>
+                  </a>
                 </div>
-              </a>
+              </div>
             ))}
           </div>
         </div>
@@ -755,6 +759,27 @@ const canonicalURL = academyData.seo?.canonicalURL || `https://activeaway.com/te
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+
+  /* Read More Button */
+  .read-more-btn,
+  [class*="read-more-btn-"] {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    pointer-events: auto;
+    position: relative;
+    z-index: 10;
+  }
+
+  /* Quick Link Description Wrapper - prevent pointer events from bubbling */
+  .quick-link-description-wrapper {
+    position: relative;
+    z-index: 5;
+  }
+
+  /* Quick Link Description Transition */
+  [class*="quick-link-description-"] {
+    transition: all 0.3s ease;
+  }
 </style>
 
 <script>
@@ -791,38 +816,99 @@ const canonicalURL = academyData.seo?.canonicalURL || `https://activeaway.com/te
     });
 
     // Quick Links "Read More" functionality
-    const checkTextOverflow = () => {
-      document.querySelectorAll('[class*="quick-link-description-"]').forEach((description, index) => {
-        const readMoreBtn = document.querySelector(`.read-more-btn-${index}`);
-        if (!readMoreBtn) return;
-
-        // Check if text is clamped (truncated)
-        const lineHeight = parseInt(window.getComputedStyle(description).lineHeight);
-        const maxHeight = lineHeight * 3; // 3 lines
+    const initReadMore = () => {
+      console.log('🔗 [Quick Links] Initializing read more functionality...');
+      
+      // Find all read more buttons (they have the class "read-more-btn")
+      const readMoreButtons = document.querySelectorAll('.read-more-btn');
+      console.log('🔗 [Quick Links] Found', readMoreButtons.length, 'read more buttons');
+      
+      readMoreButtons.forEach((btn, index) => {
+        console.log('🔍 [Quick Links] Processing button', index);
         
-        if (description.scrollHeight > maxHeight) {
-          readMoreBtn.classList.remove('hidden');
+        // Skip if already initialized
+        if (btn.hasAttribute('data-initialized')) {
+          console.log('⏭️ [Quick Links] Button', index, 'already initialized');
+          return;
+        }
+        
+        // Find the description paragraph (it's the previous sibling)
+        const wrapper = btn.closest('.quick-link-description-wrapper');
+        if (!wrapper) {
+          console.log('⚠️ [Quick Links] Button', index, 'no wrapper found');
+          return;
+        }
+        
+        const description = wrapper.querySelector('p[class*="quick-link-description-"]');
+        if (!description) {
+          console.log('⚠️ [Quick Links] Button', index, 'no description found');
+          return;
+        }
+        
+        console.log('📏 [Quick Links] Button', index, 
+          'scrollHeight:', description.scrollHeight, 
+          'clientHeight:', description.clientHeight,
+          'offsetHeight:', description.offsetHeight);
+        
+        // Check if text is truncated - add a small buffer
+        const isTruncated = description.scrollHeight > (description.clientHeight + 2);
+        
+        console.log('📊 [Quick Links] Button', index, 'is truncated:', isTruncated);
+        
+        if (isTruncated) {
+          console.log('✅ [Quick Links] Showing button', index);
+          btn.classList.remove('hidden');
+          btn.style.display = 'inline-block';
+          btn.setAttribute('data-initialized', 'true');
           
-          readMoreBtn.addEventListener('click', (e) => {
+          // Add click handler
+          btn.addEventListener('click', function(e) {
+            console.log('🖱️ [Quick Links] Button', index, 'clicked!');
             e.preventDefault();
             e.stopPropagation();
+            e.stopImmediatePropagation();
             
             if (description.classList.contains('line-clamp-3')) {
               description.classList.remove('line-clamp-3');
-              readMoreBtn.textContent = 'Read less';
+              btn.textContent = 'Read less';
+              console.log('📖 [Quick Links] Expanded', index);
             } else {
               description.classList.add('line-clamp-3');
-              readMoreBtn.textContent = 'Read more';
+              btn.textContent = 'Read more';
+              console.log('📕 [Quick Links] Collapsed', index);
             }
-          });
+            
+            return false;
+          }, { capture: true });
+        } else {
+          console.log('❌ [Quick Links] Button', index, 'text not truncated, hiding');
         }
       });
     };
 
-    // Run on load and after fonts are loaded
-    checkTextOverflow();
+    // Run multiple times with increasing delays to ensure CSS is loaded
+    console.log('⏰ [Quick Links] Scheduling initialization...');
+    setTimeout(() => {
+      console.log('⏰ [Quick Links] First attempt (100ms)');
+      initReadMore();
+    }, 100);
+    
+    setTimeout(() => {
+      console.log('⏰ [Quick Links] Second attempt (300ms)');
+      initReadMore();
+    }, 300);
+    
+    setTimeout(() => {
+      console.log('⏰ [Quick Links] Third attempt (500ms)');
+      initReadMore();
+    }, 500);
+    
+    // Also run after fonts are loaded
     if (document.fonts) {
-      document.fonts.ready.then(checkTextOverflow);
+      document.fonts.ready.then(() => {
+        console.log('⏰ [Quick Links] Fonts loaded, attempting again');
+        setTimeout(initReadMore, 100);
+      });
     }
 
     // Update active tab on scroll
