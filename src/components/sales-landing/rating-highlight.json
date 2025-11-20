@@ -1,0 +1,24 @@
+{
+  "collectionName": "components_sales_landing_rating_highlights",
+  "info": {
+    "displayName": "Rating Highlight",
+    "icon": "star",
+    "description": "Score + label for footer strip"
+  },
+  "options": {},
+  "attributes": {
+    "score": {
+      "type": "string",
+      "required": true
+    },
+    "label": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "string"
+    }
+  }
+}
+
+

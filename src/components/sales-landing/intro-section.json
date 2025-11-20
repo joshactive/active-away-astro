@@ -1,0 +1,40 @@
+{
+  "collectionName": "components_sales_landing_intro_sections",
+  "info": {
+    "displayName": "Intro Section",
+    "icon": "align-left",
+    "description": "Split content intro with optional bullets and image"
+  },
+  "options": {},
+  "attributes": {
+    "eyebrow": {
+      "type": "string"
+    },
+    "heading": {
+      "type": "string"
+    },
+    "description": {
+      "type": "richtext"
+    },
+    "bulletPoints": {
+      "type": "component",
+      "repeatable": true,
+      "component": "sales-landing.bullet"
+    },
+    "buttonLabel": {
+      "type": "string"
+    },
+    "buttonUrl": {
+      "type": "string"
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    }
+  }
+}
+
+

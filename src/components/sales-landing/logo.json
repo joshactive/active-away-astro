@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_sales_landing_logos",
+  "info": {
+    "displayName": "Logo",
+    "icon": "smile",
+    "description": "Partner logo entry"
+  },
+  "options": {},
+  "attributes": {
+    "logoLabel": {
+      "type": "string"
+    },
+    "logoImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos"
+      ]
+    }
+  }
+}
+
+

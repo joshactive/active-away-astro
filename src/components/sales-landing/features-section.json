@@ -1,0 +1,24 @@
+{
+  "collectionName": "components_sales_landing_features_sections",
+  "info": {
+    "displayName": "Features Section",
+    "icon": "th-large",
+    "description": "Logos or partner section"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "subtitle": {
+      "type": "string"
+    },
+    "logos": {
+      "type": "component",
+      "repeatable": true,
+      "component": "sales-landing.logo"
+    }
+  }
+}
+
+

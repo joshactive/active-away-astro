@@ -1,0 +1,16 @@
+{
+  "collectionName": "components_sales_landing_term_items",
+  "info": {
+    "displayName": "Term Item",
+    "icon": "file-alt",
+    "description": "Single term or note"
+  },
+  "options": {},
+  "attributes": {
+    "text": {
+      "type": "text"
+    }
+  }
+}
+
+

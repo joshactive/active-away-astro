@@ -1,0 +1,17 @@
+{
+  "collectionName": "components_sales_landing_bullets",
+  "info": {
+    "displayName": "Bullet",
+    "icon": "dot-circle",
+    "description": "Single bullet item for intro section"
+  },
+  "options": {},
+  "attributes": {
+    "text": {
+      "type": "string",
+      "required": true
+    }
+  }
+}
+
+

@@ -1,0 +1,44 @@
+{
+  "collectionName": "components_sales_landing_reviews_sections",
+  "info": {
+    "displayName": "Reviews Section",
+    "icon": "comments",
+    "description": "Heading, summary and review cards"
+  },
+  "options": {},
+  "attributes": {
+    "eyebrow": {
+      "type": "string"
+    },
+    "heading": {
+      "type": "string"
+    },
+    "subtitle": {
+      "type": "string"
+    },
+    "description": {
+      "type": "richtext"
+    },
+    "backgroundImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "ctaLabel": {
+      "type": "string"
+    },
+    "ctaUrl": {
+      "type": "string"
+    },
+    "reviews": {
+      "type": "component",
+      "repeatable": true,
+      "component": "sales-landing.review-card",
+      "max": 6
+    }
+  }
+}
+
+

@@ -1,0 +1,33 @@
+{
+  "collectionName": "components_sales_landing_gallery_sections",
+  "info": {
+    "displayName": "Gallery Section",
+    "icon": "images",
+    "description": "Media grid with CTA"
+  },
+  "options": {},
+  "attributes": {
+    "eyebrow": {
+      "type": "string"
+    },
+    "heading": {
+      "type": "string"
+    },
+    "description": {
+      "type": "richtext"
+    },
+    "tiles": {
+      "type": "component",
+      "repeatable": true,
+      "component": "sales-landing.gallery-tile"
+    },
+    "ctaLabel": {
+      "type": "string"
+    },
+    "ctaUrl": {
+      "type": "string"
+    }
+  }
+}
+
+

@@ -7095,6 +7095,235 @@ export async function getBasicStaticPageBySlug(slug) {
 }
 
 /**
+ * ====================================
+ * SALES LANDING PAGES
+ * ====================================
+ */
+
+export async function getSalesLandingPages() {
+  try {
+    console.log('🎯 [getSalesLandingPages] Fetching sales landing pages...');
+    
+    const data = await fetchAPI(
+      '/sales-landing-pages?' +
+      'filters[displayOnFrontEnd][$eq]=true&' +
+      'fields[0]=slug&fields[1]=title'
+    );
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getSalesLandingPages] No landing pages found');
+      return [];
+    }
+    
+    const pages = data.data.map((item) => {
+      const attributes = item.attributes || item;
+      return {
+        id: item.id,
+        slug: attributes.slug,
+        title: attributes.title
+      };
+    });
+    
+    console.log(`✅ [getSalesLandingPages] Loaded ${pages.length} landing pages`);
+    return pages;
+  } catch (error) {
+    console.error('❌ [getSalesLandingPages] Error:', error);
+    return [];
+  }
+}
+
+export async function getSalesLandingPageBySlug(slug) {
+  if (!slug) {
+    console.warn('⚠️  [getSalesLandingPageBySlug] No slug provided');
+    return null;
+  }
+  
+  try {
+    console.log(`🎯 [getSalesLandingPageBySlug] Fetching landing page: ${slug}`);
+    
+    const data = await fetchAPI(`/sales-landing-pages?filters[slug][$eq]=${slug}&pLevel=5`);
+    
+    if (!data || !data.data || data.data.length === 0) {
+      console.warn(`⚠️  [getSalesLandingPageBySlug] Landing page not found: ${slug}`);
+      return null;
+    }
+    
+    const item = data.data[0];
+    const page = item.attributes || item;
+    
+    // Get form data directly from formJson field
+    const form = page.formSection?.formJson || null;
+    
+    const seoData = page.seo ? (() => {
+      const metaImage = getOptimizedSEOImage(page.seo.metaImage);
+      return {
+        ...page.seo,
+        metaImage: metaImage.url,
+        metaImageAlt: metaImage.alt,
+        metaImageWidth: metaImage.width,
+        metaImageHeight: metaImage.height
+      };
+    })() : null;
+    
+    const landingPage = {
+      id: item.id,
+      documentId: item.documentId || null,
+      slug: page.slug,
+      title: page.title,
+      displayOnFrontEnd: page.displayOnFrontEnd !== false,
+      hero: page.hero ? {
+        kicker: page.hero.kicker,
+        heading: page.hero.heading,
+        subheading: page.hero.subheading,
+        backgroundImage: getStrapiImageData(page.hero.backgroundImage),
+        primaryButtonLabel: page.hero.primaryButtonLabel,
+        primaryButtonUrl: page.hero.primaryButtonUrl,
+        secondaryButtonLabel: page.hero.secondaryButtonLabel,
+        secondaryButtonUrl: page.hero.secondaryButtonUrl
+      } : null,
+      highlightCards: page.highlightCards?.map((card) => ({
+        id: card.id,
+        label: card.label,
+        description: card.description,
+        linkLabel: card.linkLabel,
+        linkUrl: card.linkUrl
+      })) || [],
+      introSection: page.introSection ? {
+        eyebrow: page.introSection.eyebrow,
+        heading: page.introSection.heading,
+        description: page.introSection.description,
+        bulletPoints: page.introSection.bulletPoints?.map((bullet) => ({
+          text: bullet.text || bullet
+        })) || [],
+        buttonLabel: page.introSection.buttonLabel,
+        buttonUrl: page.introSection.buttonUrl,
+        image: getStrapiImageData(page.introSection.image)
+      } : null,
+      reviewsSection: page.reviewsSection ? {
+        eyebrow: page.reviewsSection.eyebrow,
+        heading: page.reviewsSection.heading,
+        subtitle: page.reviewsSection.subtitle,
+        description: page.reviewsSection.description,
+        backgroundImage: getStrapiImageData(page.reviewsSection.backgroundImage),
+        ctaLabel: page.reviewsSection.ctaLabel,
+        ctaUrl: page.reviewsSection.ctaUrl,
+        reviews: page.reviewsSection.reviews?.map((review) => ({
+          quote: review.quote,
+          authorName: review.authorName,
+          authorMeta: review.authorMeta,
+          photo: getStrapiImageData(review.photo)
+        })) || []
+      } : null,
+      formSection: page.formSection ? {
+        eyebrow: page.formSection.eyebrow,
+        heading: page.formSection.heading,
+        description: page.formSection.description,
+        privacyNote: page.formSection.privacyNote,
+        form,
+        webhookUrl: page.formSection.webhookUrl || null
+      } : null,
+      statsSection: page.statsSection ? {
+        stats: page.statsSection.stats?.map((stat) => ({
+          number: stat.number,
+          label: stat.label
+        })) || []
+      } : null,
+      featuresSection: page.featuresSection ? {
+        title: page.featuresSection.title,
+        subtitle: page.featuresSection.subtitle,
+        logos: page.featuresSection.logos?.map((logo) => ({
+          logoLabel: logo.logoLabel,
+          logoImage: getStrapiImageData(logo.logoImage)
+        })) || []
+      } : null,
+      gallerySection: page.gallerySection ? {
+        eyebrow: page.gallerySection.eyebrow,
+        heading: page.gallerySection.heading,
+        description: page.gallerySection.description,
+        ctaLabel: page.gallerySection.ctaLabel,
+        ctaUrl: page.gallerySection.ctaUrl,
+        tiles: page.gallerySection.tiles?.map((tile) => ({
+          label: tile.label,
+          subLabel: tile.subLabel,
+          image: getStrapiImageData(tile.image)
+        })) || []
+      } : null,
+      termsSection: page.termsSection ? {
+        heading: page.termsSection.heading,
+        footerNote: page.termsSection.footerNote,
+        terms: page.termsSection.terms?.map((term) => ({
+          text: term.text || term
+        })) || []
+      } : null,
+      ratingHighlights: page.ratingHighlights?.map((rating) => ({
+        score: rating.score,
+        label: rating.label,
+        description: rating.description
+      })) || [],
+      seo: seoData
+    };
+    
+    console.log(`✅ [getSalesLandingPageBySlug] Landing page fetched: ${landingPage.title}`);
+    return landingPage;
+  } catch (error) {
+    console.error(`❌ [getSalesLandingPageBySlug] Error fetching ${slug}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Fetch redirects managed in Strapi
+ */
+export async function getRedirects() {
+  try {
+    const params = [
+      'filters[enabled][$eq]=true',
+      'pagination[pageSize]=500',
+      'sort[0]=sourcePath:desc'
+    ].join('&');
+
+    const data = await fetchAPI(`/redirects?${params}`);
+
+    if (!data || !data.data) {
+      return [];
+    }
+
+    const normalizePath = (value) => {
+      if (!value) return null;
+      let path = value.trim().toLowerCase();
+      if (!path) return null;
+      if (!path.startsWith('/')) {
+        path = `/${path}`;
+      }
+      // collapse multiple slashes
+      path = path.replace(/\/{2,}/g, '/');
+      return path;
+    };
+
+    return data.data
+      .map((item) => item.attributes || item)
+      .map((redirect) => {
+        const sourcePath = normalizePath(redirect.sourcePath);
+        const destinationPath = normalizePath(redirect.destinationPath);
+        if (!sourcePath || !destinationPath) {
+          return null;
+        }
+        return {
+          sourcePath,
+          destinationPath,
+          statusCode: parseInt(redirect.statusCode, 10) === 301 ? 301 : 302,
+          notes: redirect.notes || null
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.sourcePath.length - a.sourcePath.length);
+  } catch (error) {
+    console.error('❌ [getRedirects] Failed to load redirects:', error);
+    return [];
+  }
+}
+
+/**
  * Get all people/team members from Team single-type
  * @returns {Promise<Array>} Array of people
  */

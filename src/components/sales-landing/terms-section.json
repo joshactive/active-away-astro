@@ -1,0 +1,24 @@
+{
+  "collectionName": "components_sales_landing_terms_sections",
+  "info": {
+    "displayName": "Terms Section",
+    "icon": "list",
+    "description": "Terms list with optional footer note"
+  },
+  "options": {},
+  "attributes": {
+    "heading": {
+      "type": "string"
+    },
+    "terms": {
+      "type": "component",
+      "repeatable": true,
+      "component": "sales-landing.term-item"
+    },
+    "footerNote": {
+      "type": "string"
+    }
+  }
+}
+
+

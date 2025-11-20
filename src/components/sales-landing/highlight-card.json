@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_sales_landing_highlight_cards",
+  "info": {
+    "displayName": "Highlight Card",
+    "icon": "star",
+    "description": "Eyebrow, copy and CTA card"
+  },
+  "options": {},
+  "attributes": {
+    "label": {
+      "type": "string"
+    },
+    "description": {
+      "type": "richtext"
+    },
+    "linkLabel": {
+      "type": "string"
+    },
+    "linkUrl": {
+      "type": "string"
+    }
+  }
+}
+
+

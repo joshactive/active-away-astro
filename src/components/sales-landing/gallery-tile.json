@@ -1,0 +1,26 @@
+{
+  "collectionName": "components_sales_landing_gallery_tiles",
+  "info": {
+    "displayName": "Gallery Tile",
+    "icon": "picture",
+    "description": "Image with label/sub-label"
+  },
+  "options": {},
+  "attributes": {
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "label": {
+      "type": "string"
+    },
+    "subLabel": {
+      "type": "string"
+    }
+  }
+}
+
+

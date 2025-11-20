@@ -1,0 +1,42 @@
+{
+  "collectionName": "components_sales_landing_heroes",
+  "info": {
+    "displayName": "Hero",
+    "icon": "image",
+    "description": "Hero area for sales landing pages"
+  },
+  "options": {},
+  "attributes": {
+    "kicker": {
+      "type": "string"
+    },
+    "heading": {
+      "type": "string",
+      "required": true
+    },
+    "subheading": {
+      "type": "richtext"
+    },
+    "backgroundImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "primaryButtonLabel": {
+      "type": "string"
+    },
+    "primaryButtonUrl": {
+      "type": "string"
+    },
+    "secondaryButtonLabel": {
+      "type": "string"
+    },
+    "secondaryButtonUrl": {
+      "type": "string"
+    }
+  }
+}
+
+

@@ -66,7 +66,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
     
-    const { formSlug, data: formData, turnstileToken } = body;
+    const { formSlug, data: formData, turnstileToken, webhookUrl: providedWebhookUrl } = body;
 
     if (!formSlug || !formData) {
       return new Response(JSON.stringify({ 
@@ -78,11 +78,22 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // Fetch webhook URL from Strapi (secure - not exposed to client)
+    // OR use provided webhook URL for inline forms (sales landing pages)
     let webhookUrl;
     let formFields: any[] = [];
     let webhookFormat = 'labels';
     let formTitle = '';
-    try {
+    
+    if (providedWebhookUrl) {
+      // Use provided webhook for inline/embedded forms (JSON-based)
+      webhookUrl = providedWebhookUrl;
+      formTitle = formSlug;
+      webhookFormat = 'names';
+      formFields = [];
+      console.log('✅ Using provided webhook URL for inline form');
+    } else {
+      // Fetch from Strapi for regular forms
+      try {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json'
       };
@@ -142,6 +153,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });
+    }
     }
 
     // Verify Turnstile token (skip in development mode)

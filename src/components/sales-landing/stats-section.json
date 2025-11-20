@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_sales_landing_stats_sections",
+  "info": {
+    "displayName": "Stats Section",
+    "icon": "chart-bar",
+    "description": "Repeating counter stats"
+  },
+  "options": {},
+  "attributes": {
+    "stats": {
+      "type": "component",
+      "repeatable": true,
+      "component": "sales-landing.stat-item"
+    }
+  }
+}
+
+

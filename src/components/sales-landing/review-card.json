@@ -1,0 +1,29 @@
+{
+  "collectionName": "components_sales_landing_review_cards",
+  "info": {
+    "displayName": "Review Card",
+    "icon": "quote-right",
+    "description": "Customer review snippet"
+  },
+  "options": {},
+  "attributes": {
+    "quote": {
+      "type": "richtext"
+    },
+    "authorName": {
+      "type": "string"
+    },
+    "authorMeta": {
+      "type": "string"
+    },
+    "photo": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    }
+  }
+}
+
+

@@ -1,0 +1,426 @@
+---
+import StrapiImage from './StrapiImage.astro';
+import DynamicFormTailwind from './DynamicFormTailwind.astro';
+import StatsGridTailwind from './StatsGridTailwind.astro';
+import OurPartnersTailwind from './OurPartnersTailwind.astro';
+
+interface Props {
+  pageData: any;
+  homeData?: any;
+}
+
+const { pageData, homeData } = Astro.props;
+
+if (!pageData) {
+  console.warn('SalesLandingPageTailwind: pageData is required');
+}
+
+const hero = pageData?.hero || {};
+const highlightCards = pageData?.highlightCards || [];
+const introSection = pageData?.introSection || null;
+const reviewsSection = pageData?.reviewsSection || null;
+const formSection = pageData?.formSection || null;
+const statsSection = pageData?.statsSection || null;
+const featuresSection = pageData?.featuresSection || null;
+const gallerySection = pageData?.gallerySection || null;
+const termsSection = pageData?.termsSection || null;
+const ratingHighlights = pageData?.ratingHighlights || [];
+
+// Wrap formJson array in the structure DynamicFormTailwind expects
+const formData = formSection?.form ? {
+  slug: 'sales-landing-form',
+  formHeading: ' ',
+  formSubtitle: ' ',
+  formFields: Array.isArray(formSection.form) ? formSection.form : [],
+  webhookUrl: formSection.webhookUrl || 'https://hook.eu2.make.com/your-webhook-url',
+  formLayout: 'two-column',
+  showOtherOptions: false
+} : null;
+
+const sanitizeRichText = (input = '') => {
+  if (!input) return '';
+  return input
+    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
+    .replace(/on\w+="[^"]*"/gi, '')
+    .replace(/javascript:/gi, '')
+    .trim();
+};
+
+const highlightColumns = highlightCards.length > 2 ? 'md:grid-cols-3' : 'md:grid-cols-2';
+const galleryTiles = gallerySection?.tiles || [];
+const terms = termsSection?.terms || [];
+---
+
+<main class="bg-white">
+  <!-- Hero -->
+  <section class="relative w-full min-h-[620px] bg-[#0D1C4E] overflow-hidden">
+    {hero?.backgroundImage ? (
+      <StrapiImage 
+        image={hero.backgroundImage}
+        class="absolute inset-0 w-full h-full object-cover"
+        loading="eager"
+        fetchpriority="high"
+      />
+    ) : (
+      <div class="absolute inset-0 bg-[#0D1C4E]"></div>
+    )}
+    <div class="absolute inset-0 bg-gradient-to-b from-[#030920]/60 via-[#030920]/50 to-[#030920]/20"></div>
+    <div class="relative z-10 container mx-auto max-w-[1400px] px-4 sm:px-10 py-20 flex flex-col items-center justify-center min-h-[620px] text-center">
+      {hero?.kicker && (
+        <div class="hidden sm:block text-xs sm:text-sm font-inter font-semibold text-gold tracking-[0.2em] uppercase mb-4 sm:mb-6 border-t border-b border-gold/50 py-2 px-6">
+          {hero.kicker}
+        </div>
+      )}
+      {hero?.heading && (
+        <h1 class="text-4xl sm:text-5xl lg:text-7xl font-playfair font-bold text-white max-w-4xl leading-tight mb-6">
+          {hero.heading}
+        </h1>
+      )}
+      {hero?.subheading && (
+        <p class="text-base sm:text-lg lg:text-xl font-inter text-white max-w-3xl leading-relaxed mb-10" set:html={sanitizeRichText(hero.subheading)}></p>
+      )}
+      <div class="flex flex-col sm:flex-row gap-4">
+        {hero?.primaryButtonLabel && (
+          <a 
+            href={hero.primaryButtonUrl || '#access-discounts'}
+            class="inline-flex items-center justify-center text-base bg-[#ad986c] text-white font-semibold font-inter px-8 py-4 rounded-full shadow-lg shadow-[#ad986c]/30 hover:bg-[#8a7454] transition-colors"
+          >
+            {hero.primaryButtonLabel}
+          </a>
+        )}
+        {hero?.secondaryButtonLabel && (
+          <a 
+            href={hero.secondaryButtonUrl || '#'}
+            class="inline-flex items-center justify-center text-base border-2 border-white/60 text-white font-semibold font-inter px-8 py-4 rounded-full hover:bg-white hover:text-[#0D1C4E] transition-colors"
+          >
+            {hero.secondaryButtonLabel}
+          </a>
+        )}
+      </div>
+    </div>
+  </section>
+
+  {highlightCards.length > 0 && (
+    <section class="relative z-10 -mt-16 pb-6">
+      <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+        <div class={`grid grid-cols-1 ${highlightColumns} gap-6`}>
+          {highlightCards.map((card) => (
+            <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8 hover:-translate-y-1 transition-transform">
+              {card.label && (
+                <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3 leading-tight">
+                  {card.label}
+                </h3>
+              )}
+              {card.description && (
+                <div class="text-base font-inter text-gray-800 leading-relaxed" set:html={sanitizeRichText(card.description)}></div>
+              )}
+              {(card.linkLabel && card.linkUrl) && (
+                <a href={card.linkUrl} class="inline-flex items-center gap-2 text-gray-900 font-semibold font-inter mt-5 hover:text-[#ad986c] transition-colors">
+                  {card.linkLabel}
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </a>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  {introSection && (
+    <section class="py-16 sm:py-20 bg-white">
+      <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div>
+            {introSection.eyebrow && (
+              <p class="text-xs sm:text-sm font-inter font-semibold text-gold uppercase tracking-[0.2em] mb-4">
+                {introSection.eyebrow}
+              </p>
+            )}
+            {introSection.heading && (
+              <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-6">
+                {introSection.heading}
+              </h2>
+            )}
+            {introSection.description && (
+              <div class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed mb-6" set:html={sanitizeRichText(introSection.description)}></div>
+            )}
+            {introSection.bulletPoints?.length > 0 && (
+              <ul class="space-y-3 mb-6">
+                {introSection.bulletPoints.map((point) => (
+                  <li class="flex items-start gap-3 text-base font-inter text-gray-800">
+                    <span class="mt-1 w-2 h-2 rounded-full bg-[#ad986c] flex-shrink-0"></span>
+                    <span>{point?.text || point}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {introSection.buttonLabel && (
+              <a 
+                href={introSection.buttonUrl || '#'}
+                class="inline-flex items-center gap-2 text-base text-gray-900 font-semibold font-inter hover:text-[#ad986c] transition-colors"
+              >
+                {introSection.buttonLabel}
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </a>
+            )}
+          </div>
+          {introSection.image && (
+            <div class="relative">
+              <div class="absolute inset-0 bg-[#ad986c]/10 blur-3xl rounded-3xl"></div>
+              <div class="relative rounded-3xl overflow-hidden shadow-2xl border border-gray-100">
+                <StrapiImage image={introSection.image} class="w-full h-full object-cover" />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  )}
+
+  {reviewsSection && (
+    <section class="relative py-20 sm:py-24 text-white">
+      {reviewsSection.backgroundImage && (
+        <StrapiImage image={reviewsSection.backgroundImage} class="absolute inset-0 w-full h-full object-cover" />
+      )}
+      <div class="absolute inset-0 bg-[#1a1329]/70"></div>
+      <div class="relative z-10 container mx-auto max-w-[1400px] px-4 sm:px-10">
+        {reviewsSection.eyebrow && (
+          <p class="text-xs sm:text-sm font-inter font-semibold uppercase tracking-[0.2em] text-white/70 mb-4 text-center">
+            {reviewsSection.eyebrow}
+          </p>
+        )}
+        {reviewsSection.heading && (
+          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-center mb-6">
+            {reviewsSection.heading}
+          </h2>
+        )}
+        {reviewsSection.subtitle && (
+          <p class="text-base sm:text-lg font-inter text-white/80 text-center mb-4">
+            {reviewsSection.subtitle}
+          </p>
+        )}
+        {reviewsSection.description && (
+          <div class="text-base font-inter text-white/70 text-center max-w-3xl mx-auto mb-10" set:html={sanitizeRichText(reviewsSection.description)}></div>
+        )}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10">
+          {reviewsSection.reviews?.map((review) => (
+            <div class="bg-white text-gray-900 rounded-2xl p-6 sm:p-8 shadow-xl">
+              {review.quote && (
+                <div class="text-base sm:text-lg font-inter text-gray-700 leading-relaxed mb-6" set:html={sanitizeRichText(review.quote)}></div>
+              )}
+              <div class="flex items-center gap-4">
+                {review.photo && (
+                  <div class="w-14 h-14 rounded-full overflow-hidden">
+                    <StrapiImage image={review.photo} class="w-full h-full object-cover" />
+                  </div>
+                )}
+                <div>
+                  <p class="text-base font-inter font-semibold text-gray-900">{review.authorName}</p>
+                  {review.authorMeta && (
+                    <p class="text-sm font-inter text-gray-600">{review.authorMeta}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        {reviewsSection.ctaLabel && reviewsSection.ctaUrl && (
+          <div class="text-center mt-12">
+            <a 
+              href={reviewsSection.ctaUrl}
+              class="inline-flex items-center justify-center text-base bg-white text-[#0D1C4E] font-semibold font-inter px-8 py-3 rounded-full shadow-lg hover:bg-gray-100 transition-colors"
+            >
+              {reviewsSection.ctaLabel}
+            </a>
+          </div>
+        )}
+      </div>
+    </section>
+  )}
+
+  {formSection && (
+    <section id="discount" class="py-16 sm:py-20 bg-white">
+      <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+        <div class="max-w-4xl mx-auto text-center mb-10">
+          {formSection.eyebrow && (
+            <p class="text-xs sm:text-sm font-inter font-semibold text-gold uppercase tracking-[0.2em] mb-4">
+              {formSection.eyebrow}
+            </p>
+          )}
+          {formSection.heading && (
+            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-6">
+              {formSection.heading}
+            </h2>
+          )}
+          {formSection.description && (
+            <div class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed mb-6" set:html={sanitizeRichText(formSection.description)}></div>
+          )}
+        </div>
+        {formData && (
+          <div class="w-full">
+            <DynamicFormTailwind 
+              formData={formData}
+              formSlug={formData.slug}
+              heading=""
+              subtitle=""
+              showOtherOptions={false}
+            />
+            {formSection.privacyNote && (
+              <p class="text-sm font-inter text-gray-600 text-center mt-6">
+                {formSection.privacyNote}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
+  )}
+
+  {statsSection?.stats?.length > 0 && (
+    <StatsGridTailwind 
+      stats={statsSection.stats}
+      backgroundClass="bg-gold-50"
+      numberColorClass="text-gold-700"
+      labelColorClass="text-gold-800"
+    />
+  )}
+
+  {homeData?.partners?.length > 0 && (
+    <OurPartnersTailwind homeData={homeData} />
+  )}
+
+  {featuresSection?.logos?.length > 0 && (
+    <section class="py-16 sm:py-20 bg-white">
+      <div class="container mx-auto max-w-[1200px] px-4 sm:px-10 text-center">
+        {featuresSection.subtitle && (
+          <p class="text-xs sm:text-sm font-inter font-semibold uppercase tracking-[0.2em] text-gray-500 mb-3">
+            {featuresSection.subtitle}
+          </p>
+        )}
+        {featuresSection.title && (
+          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-10">
+            {featuresSection.title}
+          </h2>
+        )}
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 sm:gap-10 items-center">
+          {featuresSection.logos.map((logo) => (
+            <div class="px-6 py-4 border border-gray-100 rounded-2xl bg-white shadow-sm">
+              {logo.logoImage ? (
+                <StrapiImage image={logo.logoImage} class="max-h-12 mx-auto object-contain" />
+              ) : (
+                <p class="text-lg font-inter text-gray-600">{logo.logoLabel}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  {galleryTiles.length > 0 && (
+    <section class="py-16 sm:py-20 bg-gray-50">
+      <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+        {gallerySection?.eyebrow && (
+          <p class="text-xs sm:text-sm font-inter font-semibold text-gold uppercase tracking-[0.2em] text-center mb-4">
+            {gallerySection.eyebrow}
+          </p>
+        )}
+        {gallerySection?.heading && (
+          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-center mb-4">
+            {gallerySection.heading}
+          </h2>
+        )}
+        {gallerySection?.description && (
+          <div class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed text-center max-w-3xl mx-auto mb-10" set:html={sanitizeRichText(gallerySection.description)}></div>
+        )}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {galleryTiles.map((tile) => (
+            <div class="rounded-3xl overflow-hidden relative group min-h-[260px]">
+              {tile.image && (
+                <StrapiImage image={tile.image} class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+              )}
+              <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+              <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
+                {tile.label && (
+                  <p class="text-base sm:text-lg font-playfair font-semibold">{tile.label}</p>
+                )}
+                {tile.subLabel && (
+                  <p class="text-sm font-inter text-white/80">{tile.subLabel}</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+        {gallerySection?.ctaLabel && gallerySection?.ctaUrl && (
+          <div class="text-center mt-10">
+            <a 
+              href={gallerySection.ctaUrl}
+              class="inline-flex items-center justify-center text-base bg-[#0D1C4E] text-white font-semibold font-inter px-8 py-3 rounded-full hover:bg-[#192b6a] transition-colors"
+            >
+              {gallerySection.ctaLabel}
+            </a>
+          </div>
+        )}
+      </div>
+    </section>
+  )}
+
+  {terms.length > 0 && (
+    <section class="py-16 sm:py-20 bg-white">
+      <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+        {termsSection?.heading && (
+          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-8">
+            {termsSection.heading}
+          </h2>
+        )}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {terms.map((term) => (
+            <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm text-base font-inter text-gray-800 leading-relaxed">
+              {term.text || term}
+            </div>
+          ))}
+        </div>
+        {termsSection?.footerNote && (
+          <p class="text-sm font-inter text-gray-600 mt-8">
+            {termsSection.footerNote}
+          </p>
+        )}
+      </div>
+    </section>
+  )}
+
+  {ratingHighlights.length > 0 && (
+    <section class="py-10 bg-white border-t border-gray-200">
+      <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {ratingHighlights.map((rating) => (
+            <div class="text-center p-4 border border-gray-100 rounded-2xl shadow-sm">
+              <p class="text-2xl sm:text-3xl font-playfair font-bold text-[#ad986c]">{rating.score}</p>
+              <p class="text-xs sm:text-sm font-inter uppercase tracking-[0.2em] text-gray-500 mt-2">{rating.label}</p>
+              {rating.description && (
+                <p class="text-sm font-inter text-gray-600 mt-2">{rating.description}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+</main>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+</style>
+
+

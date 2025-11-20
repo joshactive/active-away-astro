@@ -1,0 +1,97 @@
+{
+  "kind": "collectionType",
+  "collectionName": "sales_landing_pages",
+  "info": {
+    "singularName": "sales-landing-page",
+    "pluralName": "sales-landing-pages",
+    "displayName": "Sales Landing Page",
+    "description": "Campaign style landing pages managed in Strapi"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "title",
+      "required": true,
+      "unique": true
+    },
+    "pageType": {
+      "type": "enumeration",
+      "enum": [
+        "product-page",
+        "static-page",
+        "landing-page",
+        "campaign-page"
+      ],
+      "default": "landing-page"
+    },
+    "displayOnFrontEnd": {
+      "type": "boolean",
+      "default": true
+    },
+    "hero": {
+      "type": "component",
+      "repeatable": false,
+      "component": "sales-landing.hero"
+    },
+    "highlightCards": {
+      "type": "component",
+      "repeatable": true,
+      "component": "sales-landing.highlight-card"
+    },
+    "introSection": {
+      "type": "component",
+      "repeatable": false,
+      "component": "sales-landing.intro-section"
+    },
+    "reviewsSection": {
+      "type": "component",
+      "repeatable": false,
+      "component": "sales-landing.reviews-section"
+    },
+    "formSection": {
+      "type": "component",
+      "repeatable": false,
+      "component": "sales-landing.form-section"
+    },
+    "statsSection": {
+      "type": "component",
+      "repeatable": false,
+      "component": "sales-landing.stats-section"
+    },
+    "featuresSection": {
+      "type": "component",
+      "repeatable": false,
+      "component": "sales-landing.features-section"
+    },
+    "gallerySection": {
+      "type": "component",
+      "repeatable": false,
+      "component": "sales-landing.gallery-section"
+    },
+    "termsSection": {
+      "type": "component",
+      "repeatable": false,
+      "component": "sales-landing.terms-section"
+    },
+    "ratingHighlights": {
+      "type": "component",
+      "repeatable": true,
+      "component": "sales-landing.rating-highlight"
+    },
+    "seo": {
+      "type": "component",
+      "repeatable": false,
+      "component": "shared.seo"
+    }
+  }
+}
+
+
