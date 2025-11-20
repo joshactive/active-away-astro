@@ -338,9 +338,11 @@ const canonicalURL = academyData.seo?.canonicalURL || `https://activeaway.com/te
             academyData.quickLinks.length === 1 ? 'grid-cols-1 max-w-md mx-auto' :
             academyData.quickLinks.length === 2 ? 'grid-cols-1 sm:grid-cols-2 max-w-3xl mx-auto' :
             academyData.quickLinks.length === 3 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' :
-            'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
+            academyData.quickLinks.length === 4 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' :
+            academyData.quickLinks.length === 5 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5' :
+            'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
           }`}>
-            {academyData.quickLinks.map((link) => (
+            {academyData.quickLinks.map((link, index) => (
               <a 
                 href={link.url} 
                 class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 transform hover:-translate-y-1 border-2 border-gray-200"
@@ -367,9 +369,18 @@ const canonicalURL = academyData.seo?.canonicalURL || `https://activeaway.com/te
                     {link.title}
                   </h3>
                   {link.description && (
-                    <p class="text-sm text-gray-600 font-inter mb-4 line-clamp-3">
-                      {link.description}
-                    </p>
+                    <div class="mb-4">
+                      <p class={`quick-link-description-${index} text-sm text-gray-600 font-inter line-clamp-3`}>
+                        {link.description}
+                      </p>
+                      <button 
+                        type="button"
+                        class={`read-more-btn-${index} text-[#ad986c] text-xs font-inter font-medium mt-2 hover:underline hidden`}
+                        data-index={index}
+                      >
+                        Read more
+                      </button>
+                    </div>
                   )}
                   <div class="mt-4 flex items-center gap-2 text-[#ad986c] font-inter font-semibold text-sm group-hover:gap-3 transition-all">
                     <span>{link.buttonText}</span>
@@ -778,6 +789,41 @@ const canonicalURL = academyData.seo?.canonicalURL || `https://activeaway.com/te
         scrollToSection(sectionId);
       });
     });
+
+    // Quick Links "Read More" functionality
+    const checkTextOverflow = () => {
+      document.querySelectorAll('[class*="quick-link-description-"]').forEach((description, index) => {
+        const readMoreBtn = document.querySelector(`.read-more-btn-${index}`);
+        if (!readMoreBtn) return;
+
+        // Check if text is clamped (truncated)
+        const lineHeight = parseInt(window.getComputedStyle(description).lineHeight);
+        const maxHeight = lineHeight * 3; // 3 lines
+        
+        if (description.scrollHeight > maxHeight) {
+          readMoreBtn.classList.remove('hidden');
+          
+          readMoreBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (description.classList.contains('line-clamp-3')) {
+              description.classList.remove('line-clamp-3');
+              readMoreBtn.textContent = 'Read less';
+            } else {
+              description.classList.add('line-clamp-3');
+              readMoreBtn.textContent = 'Read more';
+            }
+          });
+        }
+      });
+    };
+
+    // Run on load and after fonts are loaded
+    checkTextOverflow();
+    if (document.fonts) {
+      document.fonts.ready.then(checkTextOverflow);
+    }
 
     // Update active tab on scroll
     const observer = new IntersectionObserver(
