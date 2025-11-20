@@ -4,7 +4,8 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "astro build && npm run copy-worker",
+    "copy-worker": "rm -rf functions/_worker-build && mkdir -p functions/_worker-build && cp -R dist/_worker.js/* functions/_worker-build/",
     "preview": "astro preview",
     "astro": "astro"
   },

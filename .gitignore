@@ -1,5 +1,6 @@
 # build output
 dist/
+functions/_worker-build/
 
 # generated types
 .astro/
