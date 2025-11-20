@@ -1,3 +1,2 @@
-export { default } from '../dist/_worker.js';
-
+export { default } from '../dist/_worker.js/index.js';
 
