@@ -1,6 +1,6 @@
 globalThis.process ??= {}; globalThis.process.env ??= {};
 import { e as createAstro, f as createComponent, m as maybeRenderHead, h as addAttribute, s as spreadAttributes, r as renderTemplate, k as renderComponent, l as Fragment } from './astro/server_BeIGjyuI.mjs';
-import { b as getStrapiImageAttrs } from './strapi_C3n-BgGz.mjs';
+import { b as getStrapiImageAttrs } from './strapi_o4DRQMSu.mjs';
 /* empty css                          */
 
 const $$Astro$1 = createAstro("https://active-away-astro.pages.dev");

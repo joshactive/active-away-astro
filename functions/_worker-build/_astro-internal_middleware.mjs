@@ -1,5 +1,5 @@
 globalThis.process ??= {}; globalThis.process.env ??= {};
-import { g as getRedirects } from './chunks/strapi_C3n-BgGz.mjs';
+import { g as getRedirects } from './chunks/strapi_o4DRQMSu.mjs';
 import './chunks/astro-designed-error-pages_vRC5pxF8.mjs';
 import './chunks/astro/server_BeIGjyuI.mjs';
 import { s as sequence } from './chunks/index_mB7vn6XK.mjs';

@@ -1700,6 +1700,42 @@ async function getPadelHolidayPage() {
     "PADEL HOLIDAYS"
   );
 }
+async function getWelcomepacksPage() {
+  return await getArchivePage(
+    "welcomepacks-page",
+    "Itineraries",
+    "Download your event itineraries here (subject to change)",
+    "BOOKING"
+  );
+}
+async function getWelcomepacksPageSEO() {
+  try {
+    const data = await fetchAPI("/welcomepacks-page?populate[seo][populate]=*");
+    if (!data || !data.data) {
+      console.log("📍 No welcomepacks SEO data found");
+      return null;
+    }
+    const pageData = data.data.attributes || data.data;
+    if (pageData.seo) {
+      const seo = pageData.seo;
+      const metaImageData = seo.metaImage ? getStrapiImageData(seo.metaImage) : null;
+      return {
+        metaTitle: seo.metaTitle || null,
+        metaDescription: seo.metaDescription || null,
+        metaImage: metaImageData?.url || null,
+        metaImageAlt: metaImageData?.alt || null,
+        metaImageWidth: metaImageData?.width || null,
+        metaImageHeight: metaImageData?.height || null,
+        keywords: seo.keywords || null,
+        canonicalURL: seo.canonicalURL || null
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error("Error fetching welcomepacks SEO data:", error);
+    return null;
+  }
+}
 async function getPickleballHolidayPage() {
   return await getArchivePage(
     "pickleball-holiday-page",
@@ -1747,6 +1783,62 @@ async function getEventsPage() {
     "Discover all our upcoming tennis, padel, pickleball, and ski events. Filter by type, location, price, and dates to find your perfect experience.",
     "EVENTS"
   );
+}
+async function getVideoArchivePage() {
+  return await getArchivePage(
+    "video-archive-page",
+    "Videos",
+    "Watch our collection of tennis, padel, and sporting videos. Learn techniques, get inspired, and see what Active Away is all about.",
+    "VIDEOS"
+  );
+}
+async function getAllVideos() {
+  try {
+    console.log("🎥 [getAllVideos] Fetching videos...");
+    const data = await fetchAPI(
+      "/videos?filters[displayOnFrontEnd][$eq]=true&sort=ordering:asc&pagination[pageSize]=100"
+    );
+    if (!data || !data.data || data.data.length === 0) {
+      console.log("🎥 [getAllVideos] No videos found");
+      return {
+        videos: [],
+        metadata: {
+          total: 0,
+          videoCategories: []
+        }
+      };
+    }
+    const videos = data.data.map((item) => {
+      const video = item.attributes || item;
+      return {
+        id: item.id,
+        title: video.title || "",
+        videoDescription: video.videoDescription || "",
+        youtubeUrl: video.youtubeUrl || "",
+        videoCategory: video.videoCategory || "",
+        ordering: video.ordering || 50
+      };
+    });
+    const videoCategories = [...new Set(videos.map((v) => v.videoCategory).filter(Boolean))].sort();
+    console.log(`🎥 [getAllVideos] Fetched ${videos.length} videos`);
+    console.log(`📊 Video categories: ${videoCategories.join(", ")}`);
+    return {
+      videos,
+      metadata: {
+        total: videos.length,
+        videoCategories
+      }
+    };
+  } catch (error) {
+    console.error("❌ [getAllVideos] Error fetching videos:", error);
+    return {
+      videos: [],
+      metadata: {
+        total: 0,
+        videoCategories: []
+      }
+    };
+  }
 }
 async function getTermsPage() {
   try {
@@ -5520,6 +5612,158 @@ async function getPeople() {
     return [];
   }
 }
+async function getJoinTheTeamPage() {
+  try {
+    console.log("👥 [getJoinTheTeamPage] Fetching page data...");
+    const data = await fetchAPI(
+      "/join-the-team-page?populate[0]=pageHero.backgroundImage&populate[1]=quote.authorImages&populate[2]=quote.decorativeIcon&populate[3]=twoColumnContent.leftBlock.image&populate[4]=twoColumnContent.rightBlock.image&populate[5]=ourValues&populate[6]=learnAboutUs.backgroundImage&populate[7]=formSection&populate[8]=faq.faqs&populate[9]=seo.metaImage"
+    );
+    if (!data || !data.data) {
+      console.warn("⚠️  [getJoinTheTeamPage] No page data found");
+      return null;
+    }
+    const attributes = data.data.attributes || data.data;
+    console.log("🔍 [getJoinTheTeamPage] Attributes keys:", Object.keys(attributes));
+    if (attributes.twoColumnContent) {
+      console.log("🔍 [getJoinTheTeamPage] twoColumnContent exists");
+      console.log("🔍 [getJoinTheTeamPage] leftBlock exists?", !!attributes.twoColumnContent.leftBlock);
+      console.log("🔍 [getJoinTheTeamPage] rightBlock exists?", !!attributes.twoColumnContent.rightBlock);
+      if (attributes.twoColumnContent.leftBlock) {
+        console.log("🔍 [getJoinTheTeamPage] leftBlock.image exists?", !!attributes.twoColumnContent.leftBlock.image);
+        console.log("🔍 [getJoinTheTeamPage] leftBlock.image:", attributes.twoColumnContent.leftBlock.image);
+      }
+      if (attributes.twoColumnContent.rightBlock) {
+        console.log("🔍 [getJoinTheTeamPage] rightBlock.image exists?", !!attributes.twoColumnContent.rightBlock.image);
+      }
+    }
+    return {
+      pageHero: attributes.pageHero ? {
+        heading: attributes.pageHero.heading,
+        subtitle: attributes.pageHero.subtitle,
+        kicker: attributes.pageHero.kicker,
+        backgroundImage: getStrapiImageData(attributes.pageHero.backgroundImage),
+        showBreadcrumbs: attributes.pageHero.showBreadcrumbs ?? true
+      } : null,
+      quote: attributes.quote ? {
+        eyebrow: attributes.quote.eyebrow,
+        quoteText: attributes.quote.quoteText,
+        authorName: attributes.quote.authorName,
+        authorImages: getStrapiImagesData(attributes.quote.authorImages),
+        decorativeIcon: getStrapiImageData(attributes.quote.decorativeIcon)
+      } : null,
+      twoColumnContent: attributes.twoColumnContent ? {
+        eyebrow: attributes.twoColumnContent.eyebrow,
+        leftBlock: attributes.twoColumnContent.leftBlock ? {
+          heading: attributes.twoColumnContent.leftBlock.heading,
+          content: attributes.twoColumnContent.leftBlock.content,
+          image: getStrapiImageData(attributes.twoColumnContent.leftBlock.image)
+        } : null,
+        rightBlock: attributes.twoColumnContent.rightBlock ? {
+          heading: attributes.twoColumnContent.rightBlock.heading,
+          content: attributes.twoColumnContent.rightBlock.content,
+          image: getStrapiImageData(attributes.twoColumnContent.rightBlock.image)
+        } : null
+      } : null,
+      valuesEyebrow: attributes.valuesEyebrow || "WHY JOIN US",
+      valuesHeading: attributes.valuesHeading || "Our Values",
+      ourValues: (attributes.ourValues || []).map((value) => ({
+        title: value.title,
+        description: value.description
+      })),
+      learnAboutUs: attributes.learnAboutUs ? {
+        eyebrow: attributes.learnAboutUs.eyebrow,
+        heading: attributes.learnAboutUs.heading,
+        description: attributes.learnAboutUs.description,
+        buttonText: attributes.learnAboutUs.buttonText,
+        buttonLink: attributes.learnAboutUs.buttonLink,
+        backgroundImage: getStrapiImageData(attributes.learnAboutUs.backgroundImage)
+      } : null,
+      formSection: attributes.formSection ? {
+        eyebrow: attributes.formSection.eyebrow,
+        heading: attributes.formSection.heading,
+        description: attributes.formSection.description,
+        privacyNote: attributes.formSection.privacyNote,
+        formJson: attributes.formSection.formJson,
+        webhookUrl: attributes.formSection.webhookUrl
+      } : null,
+      faq: attributes.faq ? {
+        eyebrow: attributes.faq.eyebrow,
+        heading: attributes.faq.heading || "Frequently Asked Questions",
+        faqs: (attributes.faq.faqs || []).map((item) => ({
+          question: item.question,
+          answer: item.answer
+        }))
+      } : null,
+      seo: attributes.seo ? {
+        metaTitle: attributes.seo.metaTitle,
+        metaDescription: attributes.seo.metaDescription,
+        metaImage: getStrapiImageData(attributes.seo.metaImage),
+        metaImageAlt: attributes.seo.metaImageAlt,
+        metaImageWidth: attributes.seo.metaImageWidth,
+        metaImageHeight: attributes.seo.metaImageHeight,
+        keywords: attributes.seo.keywords,
+        canonicalURL: attributes.seo.canonicalURL
+      } : null
+    };
+  } catch (error) {
+    console.error("❌ [getJoinTheTeamPage] Error:", error);
+    throw error;
+  }
+}
+async function getJoinTheTeamPageSEO() {
+  try {
+    const data = await fetchAPI("/join-the-team-page?fields[0]=id&populate[seo][populate]=metaImage");
+    if (!data || !data.data || !data.data.attributes?.seo) {
+      return null;
+    }
+    const seo = data.data.attributes.seo;
+    return {
+      metaTitle: seo.metaTitle,
+      metaDescription: seo.metaDescription,
+      metaImage: getStrapiImageData(seo.metaImage),
+      metaImageAlt: seo.metaImageAlt,
+      metaImageWidth: seo.metaImageWidth,
+      metaImageHeight: seo.metaImageHeight,
+      keywords: seo.keywords,
+      canonicalURL: seo.canonicalURL
+    };
+  } catch (error) {
+    console.warn("⚠️  [getJoinTheTeamPageSEO] Could not fetch SEO data:", error.message);
+    return null;
+  }
+}
+async function getWhatsappGroupsPageSEO() {
+  try {
+    console.log("📄 [getWhatsappGroupsPageSEO] Fetching SEO...");
+    const data = await fetchAPI("/whatsapp-groups-page?populate[seo][populate]=metaImage");
+    if (!data || !data.data) {
+      console.warn("⚠️  [getWhatsappGroupsPageSEO] No page found");
+      return null;
+    }
+    const page = data.data.attributes || data.data;
+    const seo = page.seo;
+    if (!seo) {
+      console.warn("⚠️  [getWhatsappGroupsPageSEO] No SEO data");
+      return null;
+    }
+    const metaImageData = getOptimizedSEOImage(seo.metaImage);
+    const seoData = {
+      metaTitle: seo.metaTitle,
+      metaDescription: seo.metaDescription,
+      keywords: seo.keywords,
+      canonicalURL: seo.canonicalURL || "https://activeaway.com/whatsapp-groups",
+      metaImage: metaImageData.url,
+      metaImageAlt: metaImageData.alt,
+      metaImageWidth: metaImageData.width,
+      metaImageHeight: metaImageData.height
+    };
+    console.log("✅ [getWhatsappGroupsPageSEO] SEO fetched");
+    return seoData;
+  } catch (error) {
+    console.error("❌ [getWhatsappGroupsPageSEO] Error:", error);
+    return null;
+  }
+}
 
 const strapi = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
@@ -5530,6 +5774,7 @@ const strapi = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   getAirportTransfersPage,
   getAirportTransfersPageSEO,
   getAllVenues,
+  getAllVideos,
   getAnnouncementBar,
   getBasicStaticPageBySlug,
   getBasicStaticPages,
@@ -5567,6 +5812,8 @@ const strapi = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   getHomeSEO,
   getJamieMurrayPage,
   getJamieMurrayPageSEO,
+  getJoinTheTeamPage,
+  getJoinTheTeamPageSEO,
   getJuniorCampPage,
   getJuniorTennisCampByDocumentId,
   getJuniorTennisCampById,
@@ -5656,7 +5903,11 @@ const strapi = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   getTermsPage,
   getTravelGuidesPage,
   getTravelGuidesPageSEO,
-  getVenuesPage
+  getVenuesPage,
+  getVideoArchivePage,
+  getWelcomepacksPage,
+  getWelcomepacksPageSEO,
+  getWhatsappGroupsPageSEO
 }, Symbol.toStringTag, { value: 'Module' }));
 
-export { getFeaturedLocations as $, getForms as A, getFormsPage as B, getFormsPageSEO as C, getGroupOrganiserBySlug as D, getMasterPageData as E, getGroupOrganiserNestedData as F, getGroupOrganiserSEO as G, getGroupOrganisers as H, getEventsByDocumentIds as I, getGroupOrganiserPage as J, getJamieMurrayPage as K, getJamieMurrayPageSEO as L, getJuniorTennisCampBySlug as M, getJuniorTennisCampNestedData as N, getJuniorTennisCampSEO as O, getJuniorTennisCamps as P, getEventsByUniqueValue as Q, getJuniorCampPage as R, getPadelHolidayBySlug as S, getPadelHolidayNestedData as T, getPadelHolidaySEO as U, getPadelTennisHolidays as V, getAnnouncementBar as W, getNavigationMenu as X, getImageByName as Y, getResponsiveImageByName as Z, getProducts as _, getResponsiveImageAttrs as a, getPadelHolidayPage as a0, getPickleballHolidayBySlug as a1, getPickleballHolidayNestedData as a2, getPickleballHolidaySEO as a3, getPickleballHolidays as a4, getPickleballHolidayPage as a5, getPlayAndWatchBySlug as a6, getPlayAndWatchNestedData as a7, getPlayAndWatchSEO as a8, getPlayAndWatchHolidays as a9, getTennisClinicPage as aA, getTennisHolidayBySlug as aB, getTennisHolidayNestedData as aC, getTennisHolidaySEO as aD, getTennisHolidayPage as aE, getVenuesPage as aF, getAllVenues as aG, getStrapiImageData as aH, getCloudflareImageVariant as aI, getProductPageBySlug as aJ, getBasicStaticPageBySlug as aK, getSalesLandingPageBySlug as aL, getProductPageSEO as aM, getProductPages as aN, getBasicStaticPages as aO, getSalesLandingPages as aP, getFutureEvents as aQ, getBlogs as aR, getHomePage as aS, getHomeSEO as aT, strapi as aU, getTennisHolidays as aa, getPlayAndWatchPage as ab, getPreOrders as ac, getPreOrdersPage as ad, getSchoolTennisTourBySlug as ae, getSchoolTennisTourNestedData as af, getSchoolTennisTourSEO as ag, getSchoolTennisTours as ah, getSchoolTourPage as ai, getSelfRatingGuidePage as aj, getSelfRatingGuidePageSEO as ak, getSkiHolidayBySlug as al, getSkiHolidayNestedData as am, getSkiHolidaySEO as an, getSkiHolidays as ao, getSkiHolidayPage as ap, getTennisAcademyBySlug as aq, getTennisAcademyNestedData as ar, getTennisAcademySEO as as, getTennisAcademiesForCards as at, getTennisAcademies as au, getTennisAcademyPage as av, getTennisClinicBySlug as aw, getTennisClinicNestedData as ax, getTennisClinicSEO as ay, getTennisClinics as az, getStrapiImageAttrs as b, getPeople as c, getAboutPage as d, getAboutPageSEO as e, getHomeData as f, getRedirects as g, getTravelGuidesPage as h, getTravelGuidesPageSEO as i, getAirportTransfersPage as j, getAirportTransfersPageSEO as k, getPreOrderBySlug as l, getBookingProcessPage as m, getBookingProcessPageSEO as n, getTermsPage as o, getPageSEO as p, getDragonsDenPage as q, getDragonsDenPageSEO as r, getFAQCategoryBySlug as s, getFAQCategorySEO as t, getFAQCategories as u, getFAQsIndexPage as v, getFAQsIndexPageSEO as w, getFlightsPage as x, getFlightsPageSEO as y, getFormBySlug as z };
+export { getPadelHolidayNestedData as $, getForms as A, getFormsPage as B, getFormsPageSEO as C, getGroupOrganiserBySlug as D, getMasterPageData as E, getGroupOrganiserNestedData as F, getGroupOrganiserSEO as G, getGroupOrganisers as H, getEventsByDocumentIds as I, getGroupOrganiserPage as J, getJamieMurrayPage as K, getJamieMurrayPageSEO as L, getJoinTheTeamPage as M, getJoinTheTeamPageSEO as N, getJuniorTennisCampBySlug as O, getJuniorTennisCampNestedData as P, getJuniorTennisCampSEO as Q, getJuniorTennisCamps as R, getEventsByUniqueValue as S, getAnnouncementBar as T, getNavigationMenu as U, getImageByName as V, getResponsiveImageByName as W, getProducts as X, getFeaturedLocations as Y, getJuniorCampPage as Z, getPadelHolidayBySlug as _, getResponsiveImageAttrs as a, getPadelHolidaySEO as a0, getPadelTennisHolidays as a1, getPadelHolidayPage as a2, getPickleballHolidayBySlug as a3, getPickleballHolidayNestedData as a4, getPickleballHolidaySEO as a5, getPickleballHolidays as a6, getPickleballHolidayPage as a7, getPlayAndWatchBySlug as a8, getPlayAndWatchNestedData as a9, getTennisClinicSEO as aA, getTennisClinics as aB, getTennisClinicPage as aC, getTennisHolidayBySlug as aD, getTennisHolidayNestedData as aE, getTennisHolidaySEO as aF, getTennisHolidayPage as aG, getVenuesPage as aH, getAllVenues as aI, getWelcomepacksPageSEO as aJ, getWhatsappGroupsPageSEO as aK, getStrapiImageData as aL, getCloudflareImageVariant as aM, getProductPageBySlug as aN, getBasicStaticPageBySlug as aO, getSalesLandingPageBySlug as aP, getProductPageSEO as aQ, getProductPages as aR, getBasicStaticPages as aS, getSalesLandingPages as aT, getFutureEvents as aU, getBlogs as aV, getHomePage as aW, getHomeSEO as aX, strapi as aY, getPlayAndWatchSEO as aa, getPlayAndWatchHolidays as ab, getTennisHolidays as ac, getPlayAndWatchPage as ad, getPreOrders as ae, getPreOrdersPage as af, getSchoolTennisTourBySlug as ag, getSchoolTennisTourNestedData as ah, getSchoolTennisTourSEO as ai, getSchoolTennisTours as aj, getSchoolTourPage as ak, getSelfRatingGuidePage as al, getSelfRatingGuidePageSEO as am, getSkiHolidayBySlug as an, getSkiHolidayNestedData as ao, getSkiHolidaySEO as ap, getSkiHolidays as aq, getSkiHolidayPage as ar, getTennisAcademyBySlug as as, getTennisAcademyNestedData as at, getTennisAcademySEO as au, getTennisAcademiesForCards as av, getTennisAcademies as aw, getTennisAcademyPage as ax, getTennisClinicBySlug as ay, getTennisClinicNestedData as az, getStrapiImageAttrs as b, getPeople as c, getAboutPage as d, getAboutPageSEO as e, getHomeData as f, getRedirects as g, getTravelGuidesPage as h, getTravelGuidesPageSEO as i, getAirportTransfersPage as j, getAirportTransfersPageSEO as k, getPreOrderBySlug as l, getBookingProcessPage as m, getBookingProcessPageSEO as n, getTermsPage as o, getPageSEO as p, getDragonsDenPage as q, getDragonsDenPageSEO as r, getFAQCategoryBySlug as s, getFAQCategorySEO as t, getFAQCategories as u, getFAQsIndexPage as v, getFAQsIndexPageSEO as w, getFlightsPage as x, getFlightsPageSEO as y, getFormBySlug as z };

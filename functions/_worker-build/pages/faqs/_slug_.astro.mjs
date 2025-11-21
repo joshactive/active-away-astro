@@ -1,11 +1,11 @@
 globalThis.process ??= {}; globalThis.process.env ??= {};
 /* empty css                                     */
 import { e as createAstro, f as createComponent, r as renderTemplate, k as renderComponent, m as maybeRenderHead, h as addAttribute, l as Fragment, u as unescapeHTML } from '../../chunks/astro/server_BeIGjyuI.mjs';
-import { $ as $$BaseLayout } from '../../chunks/BaseLayout_BFSQUzS2.mjs';
-import { $ as $$PageHeroTailwind, a as $$BreadcrumbsTailwind } from '../../chunks/BreadcrumbsTailwind_DpvF7--Y.mjs';
-import { s as getFAQCategoryBySlug, t as getFAQCategorySEO } from '../../chunks/strapi_C3n-BgGz.mjs';
+import { $ as $$BaseLayout } from '../../chunks/BaseLayout_e9z-o-Yt.mjs';
+import { $ as $$PageHeroTailwind, a as $$BreadcrumbsTailwind } from '../../chunks/BreadcrumbsTailwind_De0EKU-M.mjs';
+import { s as getFAQCategoryBySlug, t as getFAQCategorySEO } from '../../chunks/strapi_o4DRQMSu.mjs';
 import { p as parseMarkdown } from '../../chunks/markdown_C9eAVA1x.mjs';
-//* empty css                                     */
+/* empty css                                     */
 export { renderers } from '../../renderers.mjs';
 
 var __freeze = Object.freeze;

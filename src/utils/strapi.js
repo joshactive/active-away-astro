@@ -2135,6 +2135,79 @@ export async function getEventsPage() {
   );
 }
 
+// Video Archive Page
+export async function getVideoArchivePage() {
+  return await getArchivePage(
+    'video-archive-page',
+    'Videos',
+    'Watch our collection of tennis, padel, and sporting videos. Learn techniques, get inspired, and see what Active Away is all about.',
+    'VIDEOS'
+  );
+}
+
+/**
+ * Fetch all videos from Strapi
+ * @returns {Promise<Object>} Object with videos array and metadata
+ */
+export async function getAllVideos() {
+  try {
+    console.log('🎥 [getAllVideos] Fetching videos...');
+    
+    // Fetch all videos where displayOnFrontEnd is true, sorted by ordering
+    const data = await fetchAPI(
+      '/videos?filters[displayOnFrontEnd][$eq]=true&sort=ordering:asc&pagination[pageSize]=100'
+    );
+    
+    if (!data || !data.data || data.data.length === 0) {
+      console.log('🎥 [getAllVideos] No videos found');
+      return {
+        videos: [],
+        metadata: {
+          total: 0,
+          videoCategories: []
+        }
+      };
+    }
+    
+    // Process videos
+    const videos = data.data.map(item => {
+      const video = item.attributes || item;
+      
+      return {
+        id: item.id,
+        title: video.title || '',
+        videoDescription: video.videoDescription || '',
+        youtubeUrl: video.youtubeUrl || '',
+        videoCategory: video.videoCategory || '',
+        ordering: video.ordering || 50
+      };
+    });
+    
+    // Extract unique video categories
+    const videoCategories = [...new Set(videos.map(v => v.videoCategory).filter(Boolean))].sort();
+    
+    console.log(`🎥 [getAllVideos] Fetched ${videos.length} videos`);
+    console.log(`📊 Video categories: ${videoCategories.join(', ')}`);
+    
+    return {
+      videos,
+      metadata: {
+        total: videos.length,
+        videoCategories
+      }
+    };
+  } catch (error) {
+    console.error('❌ [getAllVideos] Error fetching videos:', error);
+    return {
+      videos: [],
+      metadata: {
+        total: 0,
+        videoCategories: []
+      }
+    };
+  }
+}
+
 /**
  * Fetch Terms and Conditions Page from Strapi
  * @returns {Promise<Object|null>} Terms page data
@@ -7564,6 +7637,50 @@ export async function getJoinTheTeamPageSEO() {
     
   } catch (error) {
     console.warn('⚠️  [getJoinTheTeamPageSEO] Could not fetch SEO data:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Get WhatsApp Groups Page SEO data
+ * @returns {Promise<Object|null>} SEO data for WhatsApp Groups page
+ */
+export async function getWhatsappGroupsPageSEO() {
+  try {
+    console.log('📄 [getWhatsappGroupsPageSEO] Fetching SEO...');
+    
+    const data = await fetchAPI('/whatsapp-groups-page?populate[seo][populate]=metaImage');
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getWhatsappGroupsPageSEO] No page found');
+      return null;
+    }
+    
+    const page = data.data.attributes || data.data;
+    const seo = page.seo;
+    
+    if (!seo) {
+      console.warn('⚠️  [getWhatsappGroupsPageSEO] No SEO data');
+      return null;
+    }
+
+    const metaImageData = getOptimizedSEOImage(seo.metaImage);
+    
+    const seoData = {
+      metaTitle: seo.metaTitle,
+      metaDescription: seo.metaDescription,
+      keywords: seo.keywords,
+      canonicalURL: seo.canonicalURL || 'https://activeaway.com/whatsapp-groups',
+      metaImage: metaImageData.url,
+      metaImageAlt: metaImageData.alt,
+      metaImageWidth: metaImageData.width,
+      metaImageHeight: metaImageData.height
+    };
+    
+    console.log('✅ [getWhatsappGroupsPageSEO] SEO fetched');
+    return seoData;
+  } catch (error) {
+    console.error('❌ [getWhatsappGroupsPageSEO] Error:', error);
     return null;
   }
 }
