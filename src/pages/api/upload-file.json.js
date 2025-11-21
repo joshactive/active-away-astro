@@ -1,7 +1,7 @@
 // API endpoint to upload files to Cloudflare R2
 export const prerender = false;
 
-export const POST = async ({ request }) => {
+export const POST = async ({ request, locals }) => {
   try {
     const formData = await request.formData();
     const file = formData.get('file');
@@ -13,9 +13,19 @@ export const POST = async ({ request }) => {
       });
     }
 
-    // Get environment variables
-    const R2_UPLOAD_URL = import.meta.env.R2_UPLOAD_URL || 'https://r2-upload.activeaway.workers.dev';
-    const UPLOAD_TOKEN = import.meta.env.UPLOAD_TOKEN || '';
+    // Resolve environment variables (supports Cloudflare runtime and import.meta)
+    const runtimeEnv = locals?.runtime?.env || {};
+    const globalEnv = (globalThis && (globalThis.__env || globalThis.ENV)) || {};
+    const R2_UPLOAD_URL =
+      runtimeEnv.R2_UPLOAD_URL ||
+      globalEnv.R2_UPLOAD_URL ||
+      (import.meta.env && import.meta.env.R2_UPLOAD_URL) ||
+      'https://r2-upload.activeaway.workers.dev';
+    const UPLOAD_TOKEN =
+      runtimeEnv.UPLOAD_TOKEN ||
+      globalEnv.UPLOAD_TOKEN ||
+      (import.meta.env && import.meta.env.UPLOAD_TOKEN) ||
+      '';
 
     if (!UPLOAD_TOKEN) {
       console.error('❌ [upload-file] UPLOAD_TOKEN not configured');
@@ -59,6 +69,8 @@ export const POST = async ({ request }) => {
     
     // Build the public URL (served via files.activeaway.com)
     const publicBase =
+      (runtimeEnv.R2_PUBLIC_BASE_URL && runtimeEnv.R2_PUBLIC_BASE_URL.trim()) ||
+      (globalEnv.R2_PUBLIC_BASE_URL && globalEnv.R2_PUBLIC_BASE_URL.trim()) ||
       (import.meta.env.R2_PUBLIC_BASE_URL && import.meta.env.R2_PUBLIC_BASE_URL.trim()) ||
       'https://files.activeaway.com';
     const publicUrl = `${publicBase.replace(/\/+$/, '')}/${fileKey}`;
