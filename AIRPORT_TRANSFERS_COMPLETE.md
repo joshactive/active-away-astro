@@ -325,3 +325,4 @@ The airport-transfers page is now live and ready for content. The page provides 
 - ✅ `src/utils/strapi.js` - Added 2 functions
 - ✅ `src/pages/airport-transfers.astro` - Full page implementation
 
+

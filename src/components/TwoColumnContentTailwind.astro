@@ -16,6 +16,10 @@ const contentData = {
   rightBlock: productData?.twoColumnContent?.rightBlock || null
 };
 
+console.log('🔍 [TwoColumnContentTailwind] contentData:', contentData);
+console.log('🔍 [TwoColumnContentTailwind] leftBlock image:', contentData.leftBlock?.image);
+console.log('🔍 [TwoColumnContentTailwind] leftBlock imagePosition:', contentData.leftBlock?.imagePosition);
+
 // Process left block image
 let leftImageAttrs = null;
 if (contentData.leftBlock?.image) {
@@ -74,6 +78,9 @@ if (contentData.rightBlock?.image) {
   }
 }
 
+console.log('🔍 [TwoColumnContentTailwind] leftImageAttrs:', leftImageAttrs);
+console.log('🔍 [TwoColumnContentTailwind] rightImageAttrs:', rightImageAttrs);
+
 const hasContent = contentData.leftBlock || contentData.rightBlock;
 ---
 
@@ -107,7 +114,7 @@ const hasContent = contentData.leftBlock || contentData.rightBlock;
             )}
             
             {/* Image */}
-            {leftImageAttrs && contentData.leftBlock.imagePosition === 'bottom' && (
+            {leftImageAttrs && (
               <div class="rounded-2xl overflow-hidden shadow-lg">
                 <img 
                   src={leftImageAttrs.src || leftImageAttrs.url}
@@ -128,8 +135,9 @@ const hasContent = contentData.leftBlock || contentData.rightBlock;
         <!-- Right Block -->
         {contentData.rightBlock && (
           <div class="space-y-6">
-            {/* Image - Top Position */}
-            {rightImageAttrs && contentData.rightBlock.imagePosition === 'top' && (
+            
+            {/* Image - Show at TOP for right block */}
+            {rightImageAttrs && (
               <div class="rounded-2xl overflow-hidden shadow-lg">
                 <img 
                   src={rightImageAttrs.src || rightImageAttrs.url}
@@ -156,23 +164,6 @@ const hasContent = contentData.leftBlock || contentData.rightBlock;
             {contentData.rightBlock.content && (
               <div class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed prose prose-lg max-w-none">
                 <Fragment set:html={marked.parse(contentData.rightBlock.content)} />
-              </div>
-            )}
-            
-            {/* Image - Bottom Position */}
-            {rightImageAttrs && contentData.rightBlock.imagePosition === 'bottom' && (
-              <div class="rounded-2xl overflow-hidden shadow-lg">
-                <img 
-                  src={rightImageAttrs.src || rightImageAttrs.url}
-                  {...(rightImageAttrs.srcset && { srcset: rightImageAttrs.srcset })}
-                  {...(rightImageAttrs.sizes && { sizes: rightImageAttrs.sizes })}
-                  alt={rightImageAttrs.alt}
-                  width={rightImageAttrs.width || 700}
-                  height={rightImageAttrs.height || 500}
-                  class="w-full h-auto object-cover"
-                  loading="lazy"
-                  decoding="async"
-                />
               </div>
             )}
           </div>

@@ -34,8 +34,8 @@ const errorMessageId = `${sanitizedFormIdBase}-error`;
 const errorTextId = `${sanitizedFormIdBase}-error-text`;
 const submitTextId = `${sanitizedFormIdBase}-submit-text`;
 
-const computedHeading = heading || formData?.formHeading || formData?.title || 'Get in touch';
-const computedSubtitle = subtitle || formData?.formSubtitle || formData?.excerpt || '';
+const computedHeading = heading !== undefined ? heading : (formData?.formHeading || formData?.title || 'Get in touch');
+const computedSubtitle = subtitle !== undefined ? subtitle : (formData?.formSubtitle || formData?.excerpt || '');
 const computedPrivacyNote = privacyNote || '';
 
 const computedShowOtherOptions = typeof showOtherOptions === 'boolean'
@@ -439,6 +439,24 @@ const sanitizeRichText = (input = '') => {
                         data-query-param={field.queryParam || ''}
                         class="w-full px-4 py-3 border border-gray-300 rounded-lg font-inter text-gray-900 focus:ring-2 focus:ring-gold focus:border-gold transition-all"
                       />
+                    ) : field.type === 'file' ? (
+                      <div>
+                        <input
+                          type="file"
+                          id={field.name}
+                          name={field.name}
+                          required={field.required}
+                          accept={field.accept || '*'}
+                          multiple={field.multiple || false}
+                          data-upload-to-r2="true"
+                          class="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg font-inter text-gray-900 focus:ring-2 focus:ring-gold focus:border-gold transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#ad986c] file:text-white hover:file:bg-[#8a7454] cursor-pointer"
+                        />
+                        <div class="mt-2 text-sm font-inter text-gray-600">
+                          {field.description || 'Files will be uploaded securely'}
+                        </div>
+                        <div id={`${field.name}_status`} class="mt-2 text-sm font-inter"></div>
+                        <input type="hidden" id={`${field.name}_url`} name={`${field.name}_url`} />
+                      </div>
                     ) : (
                       <input
                         type={field.type || 'text'}
@@ -617,6 +635,81 @@ const sanitizeRichText = (input = '') => {
           submitButtonText.textContent = 'Submitting...';
         }
         
+        // Handle file uploads first
+        const fileInputs = form.querySelectorAll('input[type="file"][data-upload-to-r2="true"]');
+        const fileUploads = {};
+        
+        if (fileInputs.length > 0) {
+          if (submitButtonText) {
+            submitButtonText.textContent = 'Uploading files...';
+          }
+          
+          for (const fileInput of fileInputs) {
+            const files = fileInput.files;
+            if (files && files.length > 0) {
+              const fieldName = fileInput.name;
+              const statusDiv = document.getElementById(`${fieldName}_status`);
+              const urlInput = document.getElementById(`${fieldName}_url`);
+              
+              try {
+                const uploadedUrls = [];
+                
+                for (let i = 0; i < files.length; i++) {
+                  const file = files[i];
+                  
+                  if (statusDiv) {
+                    statusDiv.textContent = `Uploading ${file.name}...`;
+                    statusDiv.className = 'mt-2 text-sm font-inter text-blue-600';
+                  }
+                  
+                  const uploadFormData = new FormData();
+                  uploadFormData.append('file', file);
+                  
+                  const uploadResponse = await fetch('/api/upload-file.json', {
+                    method: 'POST',
+                    body: uploadFormData
+                  });
+                  
+                  if (!uploadResponse.ok) {
+                    throw new Error(`Failed to upload ${file.name}`);
+                  }
+                  
+                  const uploadResult = await uploadResponse.json();
+                  uploadedUrls.push({
+                    url: uploadResult.url,
+                    fileName: uploadResult.fileName,
+                    fileSize: uploadResult.fileSize,
+                    fileType: uploadResult.fileType
+                  });
+                }
+                
+                fileUploads[fieldName] = uploadedUrls.length === 1 ? uploadedUrls[0] : uploadedUrls;
+                
+                if (statusDiv) {
+                  statusDiv.textContent = '✓ Upload complete';
+                  statusDiv.className = 'mt-2 text-sm font-inter text-green-600';
+                }
+                
+                if (urlInput) {
+                  urlInput.value = JSON.stringify(uploadedUrls);
+                }
+                
+              } catch (uploadError) {
+                console.error('File upload error:', uploadError);
+                if (statusDiv) {
+                  statusDiv.textContent = `✗ Upload failed: ${uploadError.message}`;
+                  statusDiv.className = 'mt-2 text-sm font-inter text-red-600';
+                }
+                throw uploadError;
+              }
+            }
+          }
+          
+          if (submitButtonText) {
+            submitButtonText.textContent = 'Submitting form...';
+          }
+        }
+        
         const formDataObj = new FormData(form);
         const data = {};
         
@@ -664,6 +757,11 @@ const sanitizeRichText = (input = '') => {
             }
           }
         });
+        
+        // Merge file uploads into data
+        if (Object.keys(fileUploads).length > 0) {
+          Object.assign(data, fileUploads);
+        }
         
         const response = await fetch('/api/submit-form.json', {
           method: 'POST',

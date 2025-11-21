@@ -1,0 +1,156 @@
+---
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeroTailwind from '../components/PageHeroTailwind.astro';
+import BreadcrumbsTailwind from '../components/BreadcrumbsTailwind.astro';
+import QuoteSectionTailwind from '../components/QuoteSectionTailwind.astro';
+import TwoColumnContentTailwind from '../components/TwoColumnContentTailwind.astro';
+import OurValuesTailwind from '../components/OurValuesTailwind.astro';
+import DiscountCTATailwind from '../components/DiscountCTATailwind.astro';
+import DynamicFormTailwind from '../components/DynamicFormTailwind.astro';
+import FAQAccordionTailwind from '../components/FAQAccordionTailwind.astro';
+import { getJoinTheTeamPage, getJoinTheTeamPageSEO } from '../utils/strapi.js';
+
+let joinTeamData = null;
+try {
+  joinTeamData = await getJoinTheTeamPage();
+  console.log('👥 [join-the-team] Page data fetched');
+  console.log('🔍 [join-the-team] twoColumnContent:', JSON.stringify(joinTeamData?.twoColumnContent, null, 2));
+  console.log('🔍 [join-the-team] Has leftBlock image?', !!joinTeamData?.twoColumnContent?.leftBlock?.image);
+  console.log('🔍 [join-the-team] Has rightBlock image?', !!joinTeamData?.twoColumnContent?.rightBlock?.image);
+} catch (error) {
+  console.error('❌ [join-the-team] Error fetching page:', error.message);
+}
+
+let seoData = null;
+try {
+  seoData = await getJoinTheTeamPageSEO();
+  if (seoData) {
+    console.log('📄 [join-the-team] SEO data fetched');
+  }
+} catch (error) {
+  console.warn('⚠️  [join-the-team] Could not fetch SEO data:', error.message);
+}
+
+const pageTitle = seoData?.metaTitle || joinTeamData?.seo?.metaTitle || 'Join The Team | Active Away';
+const pageDescription = seoData?.metaDescription || joinTeamData?.seo?.metaDescription || 'Become part of the Active Away team and help deliver unforgettable racket sport experiences.';
+
+let metaImage = null;
+if (seoData?.metaImage) {
+  metaImage = typeof seoData.metaImage === 'string' ? seoData.metaImage : seoData.metaImage?.url;
+} else if (joinTeamData?.seo?.metaImage) {
+  metaImage = typeof joinTeamData.seo.metaImage === 'string' ? joinTeamData.seo.metaImage : joinTeamData.seo.metaImage?.url;
+}
+
+const metaImageAlt = seoData?.metaImageAlt || joinTeamData?.seo?.metaImageAlt || null;
+const metaImageWidth = seoData?.metaImageWidth || joinTeamData?.seo?.metaImageWidth || null;
+const metaImageHeight = seoData?.metaImageHeight || joinTeamData?.seo?.metaImageHeight || null;
+const keywords = seoData?.keywords || joinTeamData?.seo?.keywords || null;
+const canonicalURL = seoData?.canonicalURL || joinTeamData?.seo?.canonicalURL || 'https://activeaway.com/join-the-team';
+
+const quoteData = joinTeamData?.quote ? { quote: joinTeamData.quote } : null;
+const productData = joinTeamData?.twoColumnContent ? { twoColumnContent: joinTeamData.twoColumnContent } : null;
+
+const learnAboutUsData = joinTeamData?.learnAboutUs
+  ? { discount: joinTeamData.learnAboutUs }
+  : null;
+
+const formSection = joinTeamData?.formSection;
+const hasValues = (joinTeamData?.ourValues?.length || 0) > 0;
+const formData = formSection?.formJson ? {
+  slug: 'join-the-team-form',
+  formHeading: ' ',
+  formSubtitle: ' ',
+  formFields: Array.isArray(formSection.formJson) ? formSection.formJson : [],
+  webhookUrl: formSection.webhookUrl,
+  formLayout: 'two-column',
+  showOtherOptions: false
+} : null;
+---
+
+<BaseLayout 
+  title={pageTitle}
+  description={pageDescription}
+  metaImage={metaImage}
+  metaImageAlt={metaImageAlt}
+  metaImageWidth={metaImageWidth}
+  metaImageHeight={metaImageHeight}
+  keywords={keywords}
+  canonicalURL={canonicalURL}
+>
+  {joinTeamData?.pageHero && (
+    <PageHeroTailwind pageData={joinTeamData} />
+  )}
+
+  {joinTeamData?.pageHero?.showBreadcrumbs !== false && (
+    <BreadcrumbsTailwind 
+      breadcrumbs={[
+        { label: 'Home', href: '/' },
+        { label: 'Join The Team' }
+      ]}
+    />
+  )}
+
+  {quoteData?.quote && (
+    <QuoteSectionTailwind productData={quoteData} />
+  )}
+
+  {productData?.twoColumnContent && (
+    <TwoColumnContentTailwind productData={productData} />
+  )}
+
+  {hasValues && (
+    <OurValuesTailwind
+      pageData={{
+        ourValues: joinTeamData?.ourValues || [],
+        valuesHeading: joinTeamData?.valuesHeading,
+        valuesEyebrow: joinTeamData?.valuesEyebrow
+      }}
+    />
+  )}
+
+  {learnAboutUsData?.discount && (
+    <DiscountCTATailwind productData={learnAboutUsData} />
+  )}
+
+  {formSection && formData && (
+    <section class="py-16 sm:py-20 bg-gray-50">
+      <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+        <div class="max-w-4xl mx-auto text-center mb-10">
+          {formSection.eyebrow && (
+            <p class="text-xs sm:text-sm font-inter font-semibold text-gold uppercase tracking-[0.2em] mb-4">
+              {formSection.eyebrow}
+            </p>
+          )}
+          {formSection.heading && (
+            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-6">
+              {formSection.heading}
+            </h2>
+          )}
+          {formSection.description && (
+            <div class="text-base sm:text-lg font-inter text-gray-800 leading-relaxed mb-6" set:html={formSection.description}></div>
+          )}
+        </div>
+        <div class="w-full">
+          <DynamicFormTailwind 
+            formData={formData}
+            formSlug={formData.slug}
+            heading=""
+            subtitle=""
+            showOtherOptions={false}
+          />
+          {formSection.privacyNote && (
+            <p class="text-sm font-inter text-gray-600 text-center mt-6">
+              {formSection.privacyNote}
+            </p>
+          )}
+        </div>
+      </div>
+    </section>
+  )}
+
+  {joinTeamData?.faq?.faqs?.length > 0 && (
+    <FAQAccordionTailwind aboutData={joinTeamData} backgroundColor="white" />
+  )}
+</BaseLayout>

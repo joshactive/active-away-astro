@@ -2030,6 +2030,51 @@ export async function getPadelHolidayPage() {
   );
 }
 
+// Welcomepacks Page
+export async function getWelcomepacksPage() {
+  return await getArchivePage(
+    'welcomepacks-page',
+    'Itineraries',
+    'Download your event itineraries here (subject to change)',
+    'BOOKING'
+  );
+}
+
+// Welcomepacks Page SEO
+export async function getWelcomepacksPageSEO() {
+  try {
+    const data = await fetchAPI('/welcomepacks-page?populate[seo][populate]=*');
+    
+    if (!data || !data.data) {
+      console.log('📍 No welcomepacks SEO data found');
+      return null;
+    }
+
+    const pageData = data.data.attributes || data.data;
+    
+    if (pageData.seo) {
+      const seo = pageData.seo;
+      const metaImageData = seo.metaImage ? getStrapiImageData(seo.metaImage) : null;
+      
+      return {
+        metaTitle: seo.metaTitle || null,
+        metaDescription: seo.metaDescription || null,
+        metaImage: metaImageData?.url || null,
+        metaImageAlt: metaImageData?.alt || null,
+        metaImageWidth: metaImageData?.width || null,
+        metaImageHeight: metaImageData?.height || null,
+        keywords: seo.keywords || null,
+        canonicalURL: seo.canonicalURL || null
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error fetching welcomepacks SEO data:', error);
+    return null;
+  }
+}
+
 // Pickleball Holiday Page
 export async function getPickleballHolidayPage() {
   return await getArchivePage(
@@ -7362,5 +7407,163 @@ export async function getPeople() {
   } catch (error) {
     console.error('❌ [getPeople] Error:', error);
     return [];
+  }
+}
+/**
+ * Get Join The Team page data from Strapi
+ * @returns {Promise<Object>} Join the team page data
+ */
+export async function getJoinTheTeamPage() {
+  try {
+    console.log('👥 [getJoinTheTeamPage] Fetching page data...');
+    
+    const data = await fetchAPI(
+      '/join-the-team-page?' +
+      'populate[0]=pageHero.backgroundImage&' +
+      'populate[1]=quote.authorImages&' +
+      'populate[2]=quote.decorativeIcon&' +
+      'populate[3]=twoColumnContent.leftBlock.image&' +
+      'populate[4]=twoColumnContent.rightBlock.image&' +
+      'populate[5]=ourValues&' +
+      'populate[6]=learnAboutUs.backgroundImage&' +
+      'populate[7]=formSection&' +
+      'populate[8]=faq.faqs&' +
+      'populate[9]=seo.metaImage'
+    );
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getJoinTheTeamPage] No page data found');
+      return null;
+    }
+    
+    const attributes = data.data.attributes || data.data;
+    
+    console.log('🔍 [getJoinTheTeamPage] Attributes keys:', Object.keys(attributes));
+    
+    // Debug two column content
+    if (attributes.twoColumnContent) {
+      console.log('🔍 [getJoinTheTeamPage] twoColumnContent exists');
+      console.log('🔍 [getJoinTheTeamPage] leftBlock exists?', !!attributes.twoColumnContent.leftBlock);
+      console.log('🔍 [getJoinTheTeamPage] rightBlock exists?', !!attributes.twoColumnContent.rightBlock);
+      if (attributes.twoColumnContent.leftBlock) {
+        console.log('🔍 [getJoinTheTeamPage] leftBlock.image exists?', !!attributes.twoColumnContent.leftBlock.image);
+        console.log('🔍 [getJoinTheTeamPage] leftBlock.image:', attributes.twoColumnContent.leftBlock.image);
+      }
+      if (attributes.twoColumnContent.rightBlock) {
+        console.log('🔍 [getJoinTheTeamPage] rightBlock.image exists?', !!attributes.twoColumnContent.rightBlock.image);
+      }
+    }
+    
+    return {
+      pageHero: attributes.pageHero ? {
+        heading: attributes.pageHero.heading,
+        subtitle: attributes.pageHero.subtitle,
+        kicker: attributes.pageHero.kicker,
+        backgroundImage: getStrapiImageData(attributes.pageHero.backgroundImage),
+        showBreadcrumbs: attributes.pageHero.showBreadcrumbs ?? true
+      } : null,
+      
+      quote: attributes.quote ? {
+        eyebrow: attributes.quote.eyebrow,
+        quoteText: attributes.quote.quoteText,
+        authorName: attributes.quote.authorName,
+        authorImages: getStrapiImagesData(attributes.quote.authorImages),
+        decorativeIcon: getStrapiImageData(attributes.quote.decorativeIcon)
+      } : null,
+      
+      twoColumnContent: attributes.twoColumnContent ? {
+        eyebrow: attributes.twoColumnContent.eyebrow,
+        leftBlock: attributes.twoColumnContent.leftBlock ? {
+          heading: attributes.twoColumnContent.leftBlock.heading,
+          content: attributes.twoColumnContent.leftBlock.content,
+          image: getStrapiImageData(attributes.twoColumnContent.leftBlock.image)
+        } : null,
+        rightBlock: attributes.twoColumnContent.rightBlock ? {
+          heading: attributes.twoColumnContent.rightBlock.heading,
+          content: attributes.twoColumnContent.rightBlock.content,
+          image: getStrapiImageData(attributes.twoColumnContent.rightBlock.image)
+        } : null
+      } : null,
+      
+      valuesEyebrow: attributes.valuesEyebrow || 'WHY JOIN US',
+      valuesHeading: attributes.valuesHeading || 'Our Values',
+      ourValues: (attributes.ourValues || []).map(value => ({
+        title: value.title,
+        description: value.description
+      })),
+      
+      learnAboutUs: attributes.learnAboutUs ? {
+        eyebrow: attributes.learnAboutUs.eyebrow,
+        heading: attributes.learnAboutUs.heading,
+        description: attributes.learnAboutUs.description,
+        buttonText: attributes.learnAboutUs.buttonText,
+        buttonLink: attributes.learnAboutUs.buttonLink,
+        backgroundImage: getStrapiImageData(attributes.learnAboutUs.backgroundImage)
+      } : null,
+      
+      formSection: attributes.formSection ? {
+        eyebrow: attributes.formSection.eyebrow,
+        heading: attributes.formSection.heading,
+        description: attributes.formSection.description,
+        privacyNote: attributes.formSection.privacyNote,
+        formJson: attributes.formSection.formJson,
+        webhookUrl: attributes.formSection.webhookUrl
+      } : null,
+      
+      faq: attributes.faq ? {
+        eyebrow: attributes.faq.eyebrow,
+        heading: attributes.faq.heading || 'Frequently Asked Questions',
+        faqs: (attributes.faq.faqs || []).map(item => ({
+          question: item.question,
+          answer: item.answer
+        }))
+      } : null,
+      
+      seo: attributes.seo ? {
+        metaTitle: attributes.seo.metaTitle,
+        metaDescription: attributes.seo.metaDescription,
+        metaImage: getStrapiImageData(attributes.seo.metaImage),
+        metaImageAlt: attributes.seo.metaImageAlt,
+        metaImageWidth: attributes.seo.metaImageWidth,
+        metaImageHeight: attributes.seo.metaImageHeight,
+        keywords: attributes.seo.keywords,
+        canonicalURL: attributes.seo.canonicalURL
+      } : null
+    };
+    
+  } catch (error) {
+    console.error('❌ [getJoinTheTeamPage] Error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get Join The Team page SEO data
+ * @returns {Promise<Object|null>} SEO data or null
+ */
+export async function getJoinTheTeamPageSEO() {
+  try {
+    const data = await fetchAPI('/join-the-team-page?fields[0]=id&populate[seo][populate]=metaImage');
+    
+    if (!data || !data.data || !data.data.attributes?.seo) {
+      return null;
+    }
+    
+    const seo = data.data.attributes.seo;
+    
+    return {
+      metaTitle: seo.metaTitle,
+      metaDescription: seo.metaDescription,
+      metaImage: getStrapiImageData(seo.metaImage),
+      metaImageAlt: seo.metaImageAlt,
+      metaImageWidth: seo.metaImageWidth,
+      metaImageHeight: seo.metaImageHeight,
+      keywords: seo.keywords,
+      canonicalURL: seo.canonicalURL
+    };
+    
+  } catch (error) {
+    console.warn('⚠️  [getJoinTheTeamPageSEO] Could not fetch SEO data:', error.message);
+    return null;
   }
 }

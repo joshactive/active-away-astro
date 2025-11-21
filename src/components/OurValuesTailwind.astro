@@ -1,0 +1,52 @@
+---
+interface Props {
+  pageData?: {
+    ourValues?: Array<{ title?: string; description?: string }>
+    valuesHeading?: string
+    valuesEyebrow?: string
+  }
+}
+
+const { pageData }: Props = Astro.props;
+
+const values = pageData?.ourValues || [];
+const valuesHeading = pageData?.valuesHeading || 'Our Values';
+const valuesEyebrow = pageData?.valuesEyebrow || 'WHY JOIN US';
+---
+
+{values.length > 0 && (
+  <section class="w-full bg-white py-12 sm:py-16 lg:py-24">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      <div class="mx-auto max-w-2xl text-center mb-8 sm:mb-12">
+        <div class="text-xs sm:text-sm font-inter font-semibold text-gray-600 tracking-[0.2em] uppercase mb-3 sm:mb-4">
+          {valuesEyebrow}
+        </div>
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900">
+          {valuesHeading}
+        </h2>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10">
+        {values.map((value) => (
+          <div class="flex flex-col items-center text-center bg-white border-2 border-gray-200 rounded-2xl p-6 sm:p-8 hover:shadow-lg hover:border-gray-300 transition-all duration-300">
+            <h3 class="text-lg sm:text-xl font-playfair font-semibold text-[#ad986c] mb-2 sm:mb-3">
+              {value.title}
+            </h3>
+            <p class="text-base sm:text-lg font-inter text-gray-700 leading-relaxed">
+              {value.description}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+)}
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+</style>
