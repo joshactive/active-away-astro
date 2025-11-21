@@ -4,7 +4,7 @@ export const prerender = true;
 
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import DynamicFormTailwind from '../../components/DynamicFormTailwind.astro';
-import { getForms, getFormBySlug } from '../../utils/strapi.js';
+import { getForms, getFormBySlug, getFormSEO } from '../../utils/strapi.js';
 
 // Generate static paths for all forms
 export async function getStaticPaths() {
@@ -43,6 +43,17 @@ try {
 // If no data found, show 404
 if (!formData) {
   return Astro.redirect('/404');
+}
+
+// SEPARATE API CALL: Fetch SEO data with metaImage
+try {
+  const seoData = await getFormSEO(slug);
+  if (seoData) {
+    formData.seo = seoData;
+    console.log(`📄 [${slug}] SEO data merged: ${seoData.metaTitle || 'No title'}, metaImage: ${seoData.metaImage ? 'Yes' : 'No'}`);
+  }
+} catch (error) {
+  console.error(`[${slug}] Error fetching SEO data:`, error.message);
 }
 
 // Helper to sanitize description HTML (allowing only <br>, <b>, <u>, and <a href> tags)

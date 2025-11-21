@@ -53,7 +53,7 @@ const terms = termsSection?.terms || [];
 
 <main class="bg-white">
   <!-- Hero -->
-  <section class="relative w-full min-h-[620px] bg-[#0D1C4E] overflow-hidden">
+  <section class="relative w-full min-h-[480px] sm:min-h-[620px] bg-[#0D1C4E] overflow-hidden">
     {hero?.backgroundImage ? (
       <StrapiImage 
         image={hero.backgroundImage}
@@ -65,9 +65,9 @@ const terms = termsSection?.terms || [];
       <div class="absolute inset-0 bg-[#0D1C4E]"></div>
     )}
     <div class="absolute inset-0 bg-gradient-to-b from-[#030920]/60 via-[#030920]/50 to-[#030920]/20"></div>
-    <div class="relative z-10 container mx-auto max-w-[1400px] px-4 sm:px-10 py-20 flex flex-col items-center justify-center min-h-[620px] text-center">
+    <div class="relative z-10 container mx-auto max-w-[1400px] px-4 sm:px-10 py-20 flex flex-col items-center justify-center min-h-[434px] sm:min-h-[620px] text-center">
       {hero?.kicker && (
-        <div class="hidden sm:block text-xs sm:text-sm font-inter font-semibold text-gold tracking-[0.2em] uppercase mb-4 sm:mb-6 border-t border-b border-gold/50 py-2 px-6">
+        <div class="block text-xs sm:text-sm font-inter font-semibold text-gold tracking-[0.2em] uppercase mb-4 sm:mb-6 border-t border-b border-gold/50 py-2 px-6">
           {hero.kicker}
         </div>
       )}
@@ -374,7 +374,7 @@ const terms = termsSection?.terms || [];
     <section class="py-16 sm:py-20 bg-white">
       <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
         {termsSection?.heading && (
-          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-8">
+          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-8 text-center sm:text-left">
             {termsSection.heading}
           </h2>
         )}

@@ -1884,6 +1884,55 @@ export async function getFormBySlug(slug, fallbackIdentifiers) {
 }
 
 /**
+ * SEPARATE API CALL: Fetch SEO data with metaImage for form
+ * @param {string} slug - Form slug
+ * @returns {Promise<Object|null>} SEO data object or null
+ */
+export async function getFormSEO(slug) {
+  if (!slug) {
+    console.warn('No slug provided to getFormSEO');
+    return null;
+  }
+
+  try {
+    const data = await fetchAPI(
+      `/forms?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=seo.metaImage`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      const item = data.data[0];
+      const form = item.attributes || item;
+      
+      if (form.seo) {
+        const seo = form.seo;
+        const metaImageData = seo.metaImage ? getStrapiImageData(seo.metaImage) : null;
+        
+        const seoData = {
+          metaTitle: seo.metaTitle || null,
+          metaDescription: seo.metaDescription || null,
+          metaImage: metaImageData?.url || null,
+          metaImageAlt: metaImageData?.alt || null,
+          keywords: seo.keywords || null,
+          canonicalURL: seo.canonicalURL || null
+        };
+        
+        console.log(`📄 SEO data fetched for form ${slug}:`, {
+          hasMetaImage: !!seoData.metaImage,
+          metaTitle: seoData.metaTitle
+        });
+        
+        return seoData;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching SEO data for form (${slug}):`, error);
+    return null;
+  }
+}
+
+/**
  * ====================================
  * VENUES
  * ====================================
@@ -2259,6 +2308,60 @@ export async function getTermsPage() {
 
   } catch (error) {
     console.error('Error fetching terms page data:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch Privacy Policy Page data from Strapi
+ * @returns {Promise<Object>} Privacy policy page data
+ */
+export async function getPrivacyPolicyPage() {
+  try {
+    const data = await fetchAPI('/privacy-policy-page?populate[sections][populate]=*&populate[heroBackgroundImage][populate]=*&populate[seo][populate]=*');
+    
+    if (!data?.data) {
+      console.log('📄 No privacy policy page data found');
+      return null;
+    }
+    
+    const page = data.data.attributes || data.data;
+    console.log('📄 Privacy policy page data fetched successfully');
+    
+    // Process SEO data
+    let seoData = null;
+    if (page.seo) {
+      const seo = page.seo;
+      const metaImageData = seo.metaImage ? getStrapiImageData(seo.metaImage) : null;
+      
+      seoData = {
+        metaTitle: seo.metaTitle || null,
+        metaDescription: seo.metaDescription || null,
+        metaImage: metaImageData?.url || null,
+        metaImageAlt: metaImageData?.alt || null,
+        keywords: seo.keywords || null,
+        canonicalURL: seo.canonicalURL || null
+      };
+    }
+    
+    return {
+      pageTitle: page.pageTitle || 'Privacy Policy',
+      introText: page.introText || '',
+      lastUpdated: page.lastUpdated || null,
+      heroBackgroundImage: page.heroBackgroundImage ? getStrapiImageData(page.heroBackgroundImage) : null,
+      sections: (page.sections || []).map(section => ({
+        sectionTitle: section.sectionTitle || '',
+        sectionSlug: section.sectionSlug || '',
+        content: section.content || '',
+        showForm: section.showForm || false,
+        formFields: section.formFields || null,
+        formWebhookUrl: section.formWebhookUrl || null,
+        formSuccessMessage: section.formSuccessMessage || null
+      })),
+      seo: seoData
+    };
+  } catch (error) {
+    console.error('Error fetching privacy policy page:', error);
     return null;
   }
 }
