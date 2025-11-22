@@ -8295,3 +8295,56 @@ export async function getWhatsappGroupsPageSEO() {
     return null;
   }
 }
+
+/**
+ * ====================================
+ * SEARCH RESULTS PAGE
+ * ====================================
+ */
+
+/**
+ * Fetch search-results page data from Strapi
+ * @returns {Promise<Object|null>} Search results page data with hero and SEO
+ */
+export async function getSearchResultsPage() {
+  try {
+    console.log('🔍 [getSearchResultsPage] Fetching search results page data...');
+    
+    const data = await fetchAPI(
+      '/search-results-page?populate[pageHero][populate]=*&populate[seo][populate]=*'
+    );
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getSearchResultsPage] No data found');
+      return null;
+    }
+    
+    const pageData = data.data.attributes || data.data;
+    
+    const result = {
+      pageHero: pageData.pageHero ? {
+        kicker: pageData.pageHero.kicker || '',
+        heading: pageData.pageHero.heading || 'Your Event Search',
+        subtitle: pageData.pageHero.subtitle || 'Please complete your booking below',
+        backgroundImage: getStrapiImageData(pageData.pageHero.backgroundImage),
+        showBreadcrumbs: pageData.pageHero.showBreadcrumbs !== false
+      } : null,
+      
+      seo: pageData.seo || null
+    };
+    
+    console.log('✅ [getSearchResultsPage] Data fetched successfully');
+    return result;
+  } catch (error) {
+    console.error('❌ [getSearchResultsPage] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch search-results page SEO data from Strapi
+ * @returns {Promise<Object|null>} SEO data
+ */
+export async function getSearchResultsPageSEO() {
+  return getPageSEO('search-results-page');
+}
