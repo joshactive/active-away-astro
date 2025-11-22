@@ -309,3 +309,4 @@ For each form section, you'll need to:
 
 **Next:** Restart Strapi and create your privacy policy content!
 
+

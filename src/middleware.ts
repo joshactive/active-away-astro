@@ -50,7 +50,14 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
 
   if (match && match.destinationPath !== normalizedPath) {
     const destinationUrl = new URL(match.destinationPath, requestUrl.origin);
-    destinationUrl.search = requestUrl.search;
+
+    const finalSearchParams = new URLSearchParams(requestUrl.search);
+    for (const [key, value] of destinationUrl.searchParams.entries()) {
+      finalSearchParams.set(key, value);
+    }
+    const finalSearch = finalSearchParams.toString();
+    destinationUrl.search = finalSearch ? `?${finalSearch}` : '';
+
     destinationUrl.hash = requestUrl.hash;
 
     if (runtimeEnv?.DEV) {

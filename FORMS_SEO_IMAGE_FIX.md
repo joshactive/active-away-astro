@@ -78,3 +78,4 @@ To verify the fix works:
 - This fix applies to all form single pages automatically
 - No changes needed in Strapi CMS - SEO images work as configured
 
+
