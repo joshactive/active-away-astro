@@ -1247,7 +1247,8 @@ export async function getBlogs(limit = 8) {
           creationDate: creationDate, // Keep raw date for sorting
           image: headerImage.url,
           imageAlt: headerImage.alt || blog.title || 'Blog post image',
-          slug: blog.slug || `post-${item.id}`
+          slug: blog.slug || `post-${item.id}`,
+          categorySlug: blog.categorySlug || 'uncategorized' // Add categorySlug for new URL structure
         };
       })
       .filter(blog => blog !== null) // Remove blogs without images
@@ -1258,6 +1259,513 @@ export async function getBlogs(limit = 8) {
   } catch (error) {
     console.error('❌ Error fetching blogs:', error);
     return [];
+  }
+}
+
+/**
+ * Fetch blog posts by category
+ * @param {string} categorySlug - Category slug to filter by
+ * @param {number} limit - Number of blog posts to fetch (0 = no limit)
+ * @returns {Promise<Array>} Array of blog posts for the category
+ */
+export async function getBlogsByCategory(categorySlug, limit = 0) {
+  if (!categorySlug) {
+    console.warn('⚠️ [getBlogsByCategory] No categorySlug provided');
+    return [];
+  }
+
+  try {
+    console.log(`📝 [getBlogsByCategory] Fetching blogs for category: ${categorySlug}`);
+    
+    // Build query - if categorySlug is 'uncategorized', we need special handling
+    let query = '/blogs?populate=headerImage&sort=CreationDate:desc&filters[publishedAt][$notNull]=true';
+    
+    if (categorySlug === 'uncategorized') {
+      // For uncategorized, we might want to include posts with null categorySlug
+      // For now, just filter by the enum value
+      query += `&filters[categorySlug][$eq]=${categorySlug}`;
+    } else {
+      query += `&filters[categorySlug][$eq]=${categorySlug}`;
+    }
+    
+    if (limit > 0) {
+      query += `&pagination[limit]=${limit * 2}`; // Fetch more to account for filtering
+    } else {
+      query += `&pagination[limit]=1000`; // Get all posts for category
+    }
+    
+    const data = await fetchAPI(query);
+    
+    if (!data || !data.data || data.data.length === 0) {
+      console.log(`📝 [getBlogsByCategory] No blogs found for category: ${categorySlug}`);
+      return [];
+    }
+
+    const blogs = data.data
+      .map((item, index) => {
+        const blog = item.attributes || item;
+        
+        // Get header image
+        const headerImage = blog.headerImage ? getStrapiImageData(blog.headerImage) : null;
+
+        // Skip blogs without header image
+        if (!headerImage || !headerImage.url) {
+          return null;
+        }
+
+        // Format date
+        const creationDate = blog.CreationDate || blog.creation_date;
+        let formattedDate = '';
+        if (creationDate) {
+          const date = new Date(creationDate);
+          formattedDate = date.toLocaleDateString('en-GB', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          });
+        }
+
+        return {
+          id: item.id || index + 1,
+          title: blog.title || 'Untitled Post',
+          description: blog.blogExcerpt || blog.blog_excerpt || '',
+          author: blog.authorFullName || blog.author_full_name || 'Active Away',
+          date: formattedDate,
+          creationDate: creationDate,
+          image: headerImage.url,
+          imageAlt: headerImage.alt || blog.title || 'Blog post image',
+          slug: blog.slug || `post-${item.id}`,
+          categorySlug: blog.categorySlug || categorySlug
+        };
+      })
+      .filter(blog => blog !== null); // Remove blogs without images
+
+    // Apply limit if specified
+    const finalBlogs = limit > 0 ? blogs.slice(0, limit) : blogs;
+
+    console.log(`✅ [getBlogsByCategory] Fetched ${finalBlogs.length} blogs for ${categorySlug}`);
+    return finalBlogs;
+
+  } catch (error) {
+    console.error(`❌ [getBlogsByCategory] Error fetching blogs for ${categorySlug}:`, error);
+    return [];
+  }
+}
+
+/**
+ * Helper function to format category slug into readable text
+ * @param {string} slug - Category slug (e.g., 'tennis-coaching')
+ * @returns {string} Formatted category name (e.g., 'Tennis Coaching')
+ */
+export function formatCategorySlug(slug) {
+  if (!slug) return '';
+  
+  return slug
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+/**
+ * Fetch all blog posts for static path generation
+ * @returns {Promise<Array>} Array of blog posts with id, slug, categorySlug, documentId
+ */
+export async function getAllBlogPosts() {
+  try {
+    console.log('📝 [getAllBlogPosts] Fetching all blog posts...');
+    
+    const data = await fetchAPI('/blogs?filters[publishedAt][$notNull]=true&pagination[limit]=1000');
+    
+    if (!data || !data.data || data.data.length === 0) {
+      console.warn('⚠️ [getAllBlogPosts] No blog posts found');
+      return [];
+    }
+
+    const posts = data.data
+      .map((item) => {
+        const blog = item.attributes || item;
+        
+        // Skip posts without slug or categorySlug
+        if (!blog.slug) {
+          console.warn(`⚠️ [getAllBlogPosts] Skipping blog post ${item.id} - missing slug`);
+          return null;
+        }
+        
+        // Default to 'uncategorized' if categorySlug is missing or null
+        const categorySlug = blog.categorySlug || 'uncategorized';
+        
+        if (!blog.categorySlug) {
+          console.warn(`⚠️ [getAllBlogPosts] Blog post "${blog.title}" (${item.id}) has no categorySlug, using 'uncategorized'`);
+        }
+        
+        return {
+          id: item.id,
+          documentId: item.documentId || item.id,
+          slug: blog.slug,
+          categorySlug: categorySlug
+        };
+      })
+      .filter(post => post !== null); // Remove invalid posts
+
+    console.log(`✅ [getAllBlogPosts] Fetched ${posts.length} blog posts`);
+    return posts;
+  } catch (error) {
+    console.error('❌ [getAllBlogPosts] Error:', error);
+    return [];
+  }
+}
+
+/**
+ * Fetch a single blog post by categorySlug and slug
+ * @param {string} categorySlug - Category slug (e.g., 'tennis-coaching')
+ * @param {string} slug - Blog post slug
+ * @param {Object} [fallbackIdentifiers] - Optional Strapi identifiers
+ * @returns {Promise<Object|null>} Blog post data
+ */
+export async function getBlogBySlug(categorySlug, slug, fallbackIdentifiers = {}) {
+  if (!categorySlug || !slug) {
+    console.warn('⚠️ [getBlogBySlug] Missing categorySlug or slug');
+    return null;
+  }
+
+  try {
+    console.log(`📝 [getBlogBySlug] Fetching blog: ${categorySlug}/${slug}`);
+    
+    // First try to find by categorySlug and slug
+    let data = await fetchAPI(
+      `/blogs?filters[categorySlug][$eq]=${categorySlug}&filters[slug][$eq]=${slug}&populate=headerImage`
+    );
+    
+    // If not found and categorySlug is 'uncategorized', also try to find posts with null categorySlug
+    if ((!data || !data.data || data.data.length === 0) && categorySlug === 'uncategorized') {
+      console.log(`📝 [getBlogBySlug] Trying to find post with null categorySlug...`);
+      data = await fetchAPI(
+        `/blogs?filters[slug][$eq]=${slug}&populate=headerImage`
+      );
+    }
+    
+    if (!data || !data.data || data.data.length === 0) {
+      console.warn(`⚠️ [getBlogBySlug] Blog post not found: ${categorySlug}/${slug}`);
+      return null;
+    }
+    
+    const item = data.data[0];
+    const blog = item.attributes || item;
+    
+    // Get header image
+    const headerImage = blog.headerImage ? getStrapiImageData(blog.headerImage) : null;
+    
+    // Format date
+    const creationDate = blog.CreationDate || blog.creation_date;
+    let formattedDate = '';
+    if (creationDate) {
+      const date = new Date(creationDate);
+      formattedDate = date.toLocaleDateString('en-GB', { 
+        day: 'numeric',
+        month: 'long', 
+        year: 'numeric' 
+      });
+    }
+    
+    // Format category name - use provided categorySlug or fall back to blog's categorySlug
+    const actualCategorySlug = blog.categorySlug || categorySlug || 'uncategorized';
+    const categoryName = formatCategorySlug(actualCategorySlug);
+    
+    const blogPost = {
+      id: item.id,
+      documentId: item.documentId || item.id,
+      title: blog.title || 'Untitled Post',
+      slug: blog.slug,
+      categorySlug: actualCategorySlug,
+      categoryName: categoryName,
+      content: blog.content || '',
+      blogExcerpt: blog.blogExcerpt || '',
+      authorFullName: blog.authorFullName || 'Active Away',
+      creationDate: creationDate,
+      formattedDate: formattedDate,
+      headerImage: headerImage,
+      seo: blog.seo || null,
+      publishedAt: blog.publishedAt || item.publishedAt
+    };
+    
+    console.log(`✅ [getBlogBySlug] Blog post fetched: ${blogPost.title}`);
+    return blogPost;
+  } catch (error) {
+    console.error(`❌ [getBlogBySlug] Error fetching ${categorySlug}/${slug}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Fetch SEO data for a blog post
+ * @param {string} categorySlug - Category slug
+ * @param {string} slug - Blog post slug
+ * @returns {Promise<Object|null>} SEO data with metaImage
+ */
+export async function getBlogSEO(categorySlug, slug) {
+  if (!categorySlug || !slug) {
+    console.warn('⚠️ [getBlogSEO] Missing categorySlug or slug');
+    return null;
+  }
+
+  try {
+    console.log(`📝 [getBlogSEO] Fetching SEO data for: ${categorySlug}/${slug}`);
+    
+    // First try to find by categorySlug and slug
+    let data = await fetchAPI(
+      `/blogs?filters[categorySlug][$eq]=${categorySlug}&filters[slug][$eq]=${slug}&populate[seo][populate]=metaImage`
+    );
+    
+    // If not found and categorySlug is 'uncategorized', also try to find posts with null categorySlug
+    if ((!data || !data.data || data.data.length === 0) && categorySlug === 'uncategorized') {
+      console.log(`📝 [getBlogSEO] Trying to find post with null categorySlug...`);
+      data = await fetchAPI(
+        `/blogs?filters[slug][$eq]=${slug}&populate[seo][populate]=metaImage`
+      );
+    }
+    
+    if (!data || !data.data || data.data.length === 0) {
+      console.warn(`⚠️ [getBlogSEO] Blog post not found: ${categorySlug}/${slug}`);
+      return null;
+    }
+    
+    const item = data.data[0];
+    const blog = item.attributes || item;
+    const seoData = blog.seo;
+    
+    if (!seoData) {
+      console.log(`📝 [getBlogSEO] No SEO component found for ${categorySlug}/${slug}`);
+      return null;
+    }
+
+    // Extract meta image data with Cloudflare Images optimization
+    const metaImageData = getOptimizedSEOImage(seoData.metaImage);
+    
+    console.log(`✅ [getBlogSEO] SEO data fetched for ${categorySlug}/${slug}`);
+    
+    return {
+      metaTitle: seoData.metaTitle || null,
+      metaDescription: seoData.metaDescription || null,
+      keywords: seoData.keywords || null,
+      canonicalURL: seoData.canonicalURL || null,
+      metaImage: metaImageData.url || null,
+      metaImageAlt: metaImageData.alt || null,
+      metaImageWidth: metaImageData.width || null,
+      metaImageHeight: metaImageData.height || null
+    };
+  } catch (error) {
+    console.error(`❌ [getBlogSEO] Error fetching SEO for ${categorySlug}/${slug}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Fetch blog page data (index page with categories)
+ * @returns {Promise<Object|null>} Blog page data with categories
+ */
+export async function getBlogPage() {
+  try {
+    console.log('📝 [getBlogPage] Fetching blog page data...');
+    
+    const data = await fetchAPI('/blog-page?populate[categories][populate]=image&populate=heroBackgroundImage');
+    
+    if (!data || !data.data) {
+      console.warn('⚠️ [getBlogPage] No blog page data found');
+      return null;
+    }
+    
+    const pageData = data.data.attributes || data.data;
+    
+    // Process categories
+    const categories = (pageData.categories || [])
+      .map((cat) => {
+        const image = cat.image ? getStrapiImageData(cat.image) : null;
+        const categoryName = formatCategorySlug(cat.categorySlug);
+        
+        return {
+          categorySlug: cat.categorySlug,
+          categoryName: categoryName,
+          title: cat.title,
+          description: cat.description,
+          image: image,
+          order: cat.order || 0
+        };
+      })
+      .sort((a, b) => a.order - b.order); // Sort by order field
+    
+    const heroBackgroundImage = pageData.heroBackgroundImage ? getStrapiImageData(pageData.heroBackgroundImage) : null;
+    
+    const blogPageData = {
+      pageTitle: pageData.pageTitle || 'Blog',
+      pageSubtitle: pageData.pageSubtitle || '',
+      heroBackgroundImage: heroBackgroundImage,
+      categories: categories,
+      seo: pageData.seo || null
+    };
+    
+    console.log(`✅ [getBlogPage] Blog page data fetched with ${categories.length} categories`);
+    return blogPageData;
+  } catch (error) {
+    console.error('❌ [getBlogPage] Error fetching blog page:', error);
+    return null;
+  }
+}
+
+/**
+ * Get category-specific data from blog-page (basic info only)
+ * @param {string} categorySlug - Category slug to find
+ * @returns {Promise<Object|null>} Category data (title, description, image)
+ */
+export async function getBlogCategoryData(categorySlug) {
+  if (!categorySlug) {
+    console.warn('⚠️ [getBlogCategoryData] No categorySlug provided');
+    return null;
+  }
+
+  try {
+    console.log(`📝 [getBlogCategoryData] Fetching category data for: ${categorySlug}`);
+    
+    // Simple populate for categories with image only
+    const data = await fetchAPI('/blog-page?populate[categories][populate]=image');
+    
+    if (!data || !data.data) {
+      console.warn('⚠️ [getBlogCategoryData] No blog page data found');
+      return null;
+    }
+    
+    const pageData = data.data.attributes || data.data;
+    const categories = pageData.categories || [];
+    
+    console.log(`📝 [getBlogCategoryData] Found ${categories.length} categories in blog-page`);
+    
+    // Find the matching category
+    const category = categories.find(cat => cat.categorySlug === categorySlug);
+    
+    if (!category) {
+      console.log(`📝 [getBlogCategoryData] No category data found for: ${categorySlug}`);
+      return null;
+    }
+    
+    console.log(`📝 [getBlogCategoryData] Found category:`, category.title);
+    console.log(`📝 [getBlogCategoryData] Category image object:`, category.image);
+    
+    const image = category.image ? getStrapiImageData(category.image) : null;
+    const categoryName = formatCategorySlug(category.categorySlug);
+    
+    console.log(`📝 [getBlogCategoryData] Processed image:`, image);
+    
+    const categoryData = {
+      categorySlug: category.categorySlug,
+      categoryName: categoryName,
+      title: category.title,
+      description: category.description,
+      image: image,
+      order: category.order || 0
+    };
+    
+    console.log(`✅ [getBlogCategoryData] Category data fetched for: ${categorySlug}`);
+    return categoryData;
+  } catch (error) {
+    console.error(`❌ [getBlogCategoryData] Error fetching category data for ${categorySlug}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Get category SEO data from blog-page
+ * @param {string} categorySlug - Category slug to find
+ * @returns {Promise<Object|null>} SEO data for the category
+ */
+export async function getBlogCategorySEO(categorySlug) {
+  if (!categorySlug) {
+    console.warn('⚠️ [getBlogCategorySEO] No categorySlug provided');
+    return null;
+  }
+
+  try {
+    console.log(`📝 [getBlogCategorySEO] Fetching SEO data for: ${categorySlug}`);
+    
+    // Separate API call for SEO data
+    const data = await fetchAPI('/blog-page?populate[categories][populate][seo][populate]=metaImage');
+    
+    if (!data || !data.data) {
+      console.warn('⚠️ [getBlogCategorySEO] No blog page data found');
+      return null;
+    }
+    
+    const pageData = data.data.attributes || data.data;
+    const categories = pageData.categories || [];
+    
+    // Find the matching category
+    const category = categories.find(cat => cat.categorySlug === categorySlug);
+    
+    if (!category || !category.seo) {
+      console.log(`📝 [getBlogCategorySEO] No SEO data found for: ${categorySlug}`);
+      return null;
+    }
+    
+    const seoData = category.seo;
+    const metaImageData = getOptimizedSEOImage(seoData.metaImage);
+    
+    console.log(`✅ [getBlogCategorySEO] SEO data fetched for: ${categorySlug}`);
+    
+    return {
+      metaTitle: seoData.metaTitle || null,
+      metaDescription: seoData.metaDescription || null,
+      keywords: seoData.keywords || null,
+      canonicalURL: seoData.canonicalURL || null,
+      metaImage: metaImageData.url || null,
+      metaImageAlt: metaImageData.alt || null,
+      metaImageWidth: metaImageData.width || null,
+      metaImageHeight: metaImageData.height || null
+    };
+  } catch (error) {
+    console.error(`❌ [getBlogCategorySEO] Error fetching SEO for ${categorySlug}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Fetch SEO data for blog page
+ * @returns {Promise<Object|null>} SEO data with metaImage
+ */
+export async function getBlogPageSEO() {
+  try {
+    console.log('📝 [getBlogPageSEO] Fetching SEO data for blog page...');
+    
+    const data = await fetchAPI('/blog-page?populate[seo][populate]=metaImage');
+    
+    if (!data || !data.data) {
+      console.warn('⚠️ [getBlogPageSEO] No blog page data found');
+      return null;
+    }
+    
+    const pageData = data.data.attributes || data.data;
+    const seoData = pageData.seo;
+    
+    if (!seoData) {
+      console.log('📝 [getBlogPageSEO] No SEO component found for blog page');
+      return null;
+    }
+
+    // Extract meta image data with Cloudflare Images optimization
+    const metaImageData = getOptimizedSEOImage(seoData.metaImage);
+    
+    console.log('✅ [getBlogPageSEO] SEO data fetched for blog page');
+    
+    return {
+      metaTitle: seoData.metaTitle || null,
+      metaDescription: seoData.metaDescription || null,
+      keywords: seoData.keywords || null,
+      canonicalURL: seoData.canonicalURL || null,
+      metaImage: metaImageData.url || null,
+      metaImageAlt: metaImageData.alt || null,
+      metaImageWidth: metaImageData.width || null,
+      metaImageHeight: metaImageData.height || null
+    };
+  } catch (error) {
+    console.error('❌ [getBlogPageSEO] Error fetching SEO for blog page:', error);
+    return null;
   }
 }
 

@@ -1,0 +1,210 @@
+---
+// Blog Index Page
+export const prerender = true;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getBlogPage, getBlogPageSEO } from '../../utils/strapi.js';
+import { marked } from 'marked';
+
+// Configure marked
+marked.setOptions({
+  breaks: true,
+  gfm: true
+});
+
+// Fetch blog page data
+let blogPageData = null;
+try {
+  blogPageData = await getBlogPage();
+  if (blogPageData) {
+    console.log('📝 [blog/index] Blog page data fetched successfully');
+  } else {
+    console.warn('📝 [blog/index] Blog page data not found');
+  }
+} catch (error) {
+  console.error('[blog/index] Error fetching blog page:', error.message);
+}
+
+// Fetch SEO data separately
+try {
+  const seoData = await getBlogPageSEO();
+  if (seoData && blogPageData) {
+    blogPageData.seo = seoData;
+    console.log(`📄 [blog/index] SEO data merged: ${seoData.metaTitle || 'No title'}, metaImage: ${seoData.metaImage ? 'Yes' : 'No'}`);
+  }
+} catch (error) {
+  console.error('[blog/index] Error fetching SEO data:', error.message);
+}
+
+// Extract data with fallbacks
+const pageTitle = blogPageData?.pageTitle || 'Blog';
+const pageSubtitle = blogPageData?.pageSubtitle || '';
+const categories = blogPageData?.categories || [];
+
+// Extract SEO fields
+const metaTitle = blogPageData?.seo?.metaTitle || `${pageTitle} | Active Away`;
+const metaDescription = blogPageData?.seo?.metaDescription || 'Read the latest articles and insights from Active Away about tennis holidays, padel, pickleball, and more.';
+const metaImage = blogPageData?.seo?.metaImage || null;
+const metaImageAlt = blogPageData?.seo?.metaImageAlt || pageTitle;
+const metaImageWidth = blogPageData?.seo?.metaImageWidth || null;
+const metaImageHeight = blogPageData?.seo?.metaImageHeight || null;
+const keywords = blogPageData?.seo?.keywords || null;
+const canonicalURL = blogPageData?.seo?.canonicalURL || 'https://activeaway.com/blog';
+
+// Hero content
+const heroBackgroundImage = blogPageData?.heroBackgroundImage?.url || 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/45b69090-1c22-46cd-7f98-086ba71efc00/public';
+const heroBackgroundImageAlt = blogPageData?.heroBackgroundImage?.alt || pageTitle;
+---
+
+<BaseLayout 
+  title={metaTitle}
+  description={metaDescription}
+  metaImage={metaImage}
+  metaImageAlt={metaImageAlt}
+  metaImageWidth={metaImageWidth}
+  metaImageHeight={metaImageHeight}
+  keywords={keywords}
+  canonicalURL={canonicalURL}
+>
+  <!-- Hero Header Section -->
+  <section class="relative w-full h-[300px] sm:h-[400px] lg:h-[450px] overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-r from-[#0D1C4E]/75 to-[#0D1C4E]/60 z-10"></div>
+    <img 
+      src={heroBackgroundImage}
+      alt={heroBackgroundImageAlt}
+      class="absolute inset-0 w-full h-full object-cover"
+      loading="eager"
+    />
+    
+    <div class="relative z-20 container mx-auto max-w-[1400px] px-4 sm:px-10 h-full flex flex-col justify-center items-center text-center">
+      <h1 class="text-4xl sm:text-5xl lg:text-7xl font-playfair font-bold text-white mb-4 leading-tight max-w-4xl">
+        {pageTitle}
+      </h1>
+      {pageSubtitle && (
+        <p class="text-base sm:text-lg font-inter text-gray-100 max-w-2xl">
+          {pageSubtitle}
+        </p>
+      )}
+    </div>
+  </section>
+
+  <!-- Breadcrumb Navigation -->
+  <section class="w-full bg-gray-50 py-4 border-b border-gray-200">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      <nav class="flex items-center space-x-2 text-sm font-inter">
+        <a href="/" class="text-gray-600 hover:text-[#ad986c] transition-colors">Home</a>
+        <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+        <span class="text-gray-900 font-medium">Blog</span>
+      </nav>
+    </div>
+  </section>
+
+  <!-- Introduction Section -->
+  <section class="w-full bg-gray-50 py-8 sm:py-12">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      <div class="max-w-4xl mx-auto text-center">
+        <p class="text-lg sm:text-xl lg:text-2xl font-inter text-gray-900 leading-relaxed">
+          Our Rackets Blog written by Rackets Experts. With over 100 years of Rackets Experience on our team you'll gain some serious Rackets Knowledge by reading this blog!
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Blog Categories Grid -->
+  <main class="w-full bg-white py-12 sm:py-16 lg:py-20">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      
+      {categories.length > 0 ? (
+        <div class="space-y-6 lg:space-y-8">
+          {categories.map((category) => {
+            const imageUrl = category.image?.url || 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/45b69090-1c22-46cd-7f98-086ba71efc00/public';
+            const imageAlt = category.image?.alt || category.title;
+            
+            return (
+              <article 
+                class="group bg-white border-2 border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300"
+              >
+                <div class="flex flex-col sm:flex-row">
+                  <!-- Content Section -->
+                  <div class="sm:w-3/5 p-6 sm:p-8 flex flex-col justify-center order-2 sm:order-1">
+                    <a href={`/blog/${category.categorySlug}`} class="block mb-4">
+                      <h2 class="text-2xl sm:text-3xl font-playfair font-bold text-gray-900 group-hover:text-[#ad986c] transition-colors">
+                        {category.title}
+                      </h2>
+                    </a>
+                    
+                    {category.description && (
+                      <div class="category-description prose prose-sm max-w-none font-inter text-gray-600">
+                        <Fragment set:html={marked.parse(category.description)} />
+                      </div>
+                    )}
+                    
+                    <a href={`/blog/${category.categorySlug}`} class="mt-6 flex items-center text-[#ad986c] font-inter font-medium w-fit">
+                      <span>View {category.categoryName} Posts</span>
+                      <svg class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </a>
+                  </div>
+                  
+                  <!-- Image Section -->
+                  <a href={`/blog/${category.categorySlug}`} class="sm:w-2/5 aspect-video sm:aspect-square overflow-hidden bg-gray-100 relative order-1 sm:order-2 block">
+                    <img 
+                      src={imageUrl}
+                      alt={imageAlt}
+                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                    />
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  </a>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <div class="text-center py-12">
+          <p class="text-gray-500 font-inter text-lg">No blog categories available at the moment.</p>
+        </div>
+      )}
+      
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  .category-description :global(p) {
+    margin-bottom: 0.75rem;
+    line-height: 1.6;
+  }
+
+  .category-description :global(ul),
+  .category-description :global(ol) {
+    margin-left: 1.25rem;
+    margin-bottom: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .category-description :global(li) {
+    margin-bottom: 0.375rem;
+    line-height: 1.5;
+  }
+
+  .category-description :global(strong) {
+    color: #111827;
+    font-weight: 600;
+  }
+
+  .category-description :global(a) {
+    color: #ad986c;
+    text-decoration: underline;
+    transition: color 0.2s ease;
+  }
+
+  .category-description :global(a:hover) {
+    color: #8d7a56;
+  }
+</style>
+
