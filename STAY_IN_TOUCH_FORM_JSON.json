@@ -1,0 +1,196 @@
+[
+  {
+    "name": "post_id",
+    "type": "hidden"
+  },
+  {
+    "name": "InfusionsoftID",
+    "type": "hidden",
+    "queryParam": "ifid"
+  },
+  {
+    "type": "section",
+    "label": "Your Information"
+  },
+  {
+    "name": "first_name",
+    "label": "First Name",
+    "type": "text",
+    "required": true,
+    "placeholder": "e.g. John",
+    "queryParam": "fname"
+  },
+  {
+    "name": "surname",
+    "label": "Surname",
+    "type": "text",
+    "required": true,
+    "placeholder": "e.g. Smith",
+    "queryParam": "surname"
+  },
+  {
+    "name": "Email",
+    "label": "Email",
+    "type": "email",
+    "required": true,
+    "placeholder": "e.g. john.smith@example.com",
+    "queryParam": "email"
+  },
+  {
+    "name": "mobile_phone",
+    "label": "Mobile Phone",
+    "type": "text",
+    "required": true,
+    "placeholder": "e.g. +44 7700 900000",
+    "queryParam": "phone"
+  },
+  {
+    "type": "section",
+    "label": "Please select what you are interested in"
+  },
+  {
+    "name": "adult_tennis",
+    "label": "Adult Tennis",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "options": [
+      { "label": "Yes", "value": "1" },
+      { "label": "No", "value": "0" }
+    ],
+    "queryParam": "ath"
+  },
+  {
+    "name": "JuniorTennis",
+    "label": "Junior Tennis",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "options": [
+      { "label": "Yes", "value": "1" },
+      { "label": "No", "value": "0" }
+    ],
+    "queryParam": "jt"
+  },
+  {
+    "name": "AdultPadel",
+    "label": "Adult Padel",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "options": [
+      { "label": "Yes", "value": "1" },
+      { "label": "No", "value": "0" }
+    ],
+    "queryParam": "ap"
+  },
+  {
+    "name": "JuniorPadel",
+    "label": "Junior Padel",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "options": [
+      { "label": "Yes", "value": "1" },
+      { "label": "No", "value": "0" }
+    ],
+    "queryParam": "JP"
+  },
+  {
+    "name": "AdultPickleball",
+    "label": "Adult Pickleball",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "options": [
+      { "label": "Yes", "value": "1" },
+      { "label": "No", "value": "0" }
+    ],
+    "queryParam": "APick"
+  },
+  {
+    "name": "JuniorPickleball",
+    "label": "Junior Pickleball",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "options": [
+      { "label": "Yes", "value": "1" },
+      { "label": "No", "value": "0" }
+    ],
+    "queryParam": "JPick"
+  },
+  {
+    "name": "bspoke",
+    "label": "Bespoke Holidays (e.g Beach Holiday)",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "options": [
+      { "label": "Yes", "value": "1" },
+      { "label": "No", "value": "0" }
+    ],
+    "queryParam": "bspoke"
+  },
+  {
+    "name": "GolfHolidays",
+    "label": "Golf Holidays",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "options": [
+      { "label": "Yes", "value": "1" },
+      { "label": "No", "value": "0" }
+    ],
+    "queryParam": "golf"
+  },
+  {
+    "name": "WalkingHolidays",
+    "label": "Walking Holidays",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "options": [
+      { "label": "Yes", "value": "1" },
+      { "label": "No", "value": "0" }
+    ],
+    "queryParam": "Walk"
+  },
+  {
+    "name": "adult_ski_snowboarding",
+    "label": "Adult Ski/Snowboarding",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "options": [
+      { "label": "Yes", "value": "1" },
+      { "label": "No", "value": "0" }
+    ],
+    "queryParam": "aski"
+  },
+  {
+    "name": "FamilySkiSnowboarding",
+    "label": "Family Ski/Snowboarding",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "options": [
+      { "label": "Yes", "value": "1" },
+      { "label": "No", "value": "0" }
+    ],
+    "queryParam": "famski"
+  },
+  {
+    "type": "section",
+    "label": "Consent"
+  },
+  {
+    "name": "consent",
+    "label": "",
+    "type": "checkbox",
+    "required": true,
+    "options": [
+      "I consent to receiving updates from Active Away"
+    ]
+  }
+]

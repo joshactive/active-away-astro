@@ -239,7 +239,7 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
         
         <button 
           type="submit"
-          class="w-full bg-gold hover:bg-gold-700 text-white font-inter font-semibold py-3 px-4 rounded-lg transition-colors"
+          class="w-full bg-gold hover:bg-gold-700 text-white font-inter font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Unlock
         </button>
@@ -539,6 +539,21 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
   const passwordInput = document.getElementById('passwordInput');
   const passwordError = document.getElementById('passwordError');
   const protectedContent = document.getElementById('protectedContent');
+
+  // Form validation - disable submit until password is entered
+  const passwordSubmitButton = passwordForm?.querySelector('button[type="submit"]');
+  
+  function validatePasswordForm() {
+    if (!passwordSubmitButton || !passwordInput) return;
+    const password = passwordInput.value.trim();
+    passwordSubmitButton.disabled = !password;
+  }
+  
+  // Run validation on page load
+  validatePasswordForm();
+  
+  // Add event listener for validation
+  passwordInput?.addEventListener('input', validatePasswordForm);
 
   // Check if already authenticated (session storage)
   const isAuthenticated = sessionStorage.getItem('whatsapp_auth') === 'true';

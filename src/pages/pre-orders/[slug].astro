@@ -386,6 +386,56 @@ const canonicalURL = preOrderData.seo?.canonicalURL || `https://activeaway.com/p
   const statusMessage = document.getElementById('statusMessage');
 
   if (form) {
+    // Form validation - disable submit until all required fields are filled
+    function validatePreOrderForm() {
+      if (!submitButton) return;
+      
+      const requiredFields = form.querySelectorAll('input[required], select[required], textarea[required]');
+      let allValid = true;
+      
+      requiredFields.forEach((field) => {
+        // Skip file inputs and hidden inputs
+        if (field.type === 'file' || field.type === 'hidden') return;
+        
+        // Handle checkboxes
+        if (field.type === 'checkbox') {
+          const checkboxName = field.name;
+          const checkboxes = form.querySelectorAll(`input[type="checkbox"][name="${checkboxName}"]`);
+          const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+          if (!anyChecked) {
+            allValid = false;
+          }
+        }
+        // Handle radio buttons
+        else if (field.type === 'radio') {
+          const radioName = field.name;
+          const radios = form.querySelectorAll(`input[type="radio"][name="${radioName}"]`);
+          const anyChecked = Array.from(radios).some(r => r.checked);
+          if (!anyChecked) {
+            allValid = false;
+          }
+        }
+        // Handle all other input types
+        else {
+          if (!field.value || field.value.trim() === '') {
+            allValid = false;
+          }
+        }
+      });
+      
+      submitButton.disabled = !allValid;
+    }
+    
+    // Run validation on page load
+    validatePreOrderForm();
+    
+    // Add event listeners to all form inputs
+    const allFormInputs = form.querySelectorAll('input, select, textarea');
+    allFormInputs.forEach((input) => {
+      const eventType = (input.tagName === 'SELECT' || input.type === 'checkbox' || input.type === 'radio') ? 'change' : 'input';
+      input.addEventListener(eventType, validatePreOrderForm);
+    });
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -461,9 +511,9 @@ const canonicalURL = preOrderData.seo?.canonicalURL || `https://activeaway.com/p
             console.warn('Could not reset Turnstile:', err);
           }
           
-          // Reset button
+          // Reset button text and re-validate
           buttonText.innerHTML = '<svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Submit';
-          submitButton.disabled = false;
+          validatePreOrderForm();
           
           // Scroll to success message
           statusMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -496,9 +546,9 @@ const canonicalURL = preOrderData.seo?.canonicalURL || `https://activeaway.com/p
           console.warn('Could not reset Turnstile:', err);
         }
         
-        // Re-enable button
+        // Reset button text and re-validate
         buttonText.innerHTML = '<svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Submit';
-        submitButton.disabled = false;
+        validatePreOrderForm();
       }
     });
   }

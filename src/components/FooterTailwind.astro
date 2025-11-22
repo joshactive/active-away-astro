@@ -184,6 +184,11 @@ console.log('Footer Images URLs:', {
               <FooterArrow class="w-3 h-3 text-gold" />
               <span>Join The Team</span>
             </a>
+                                                </a>
+                                    <a href="/blog" class="flex items-center gap-2 text-sm font-inter text-gray-300 hover:text-gold transition-colors">
+              <FooterArrow class="w-3 h-3 text-gold" />
+              <span>Blog</span>
+            </a>
           </div>
         </div>
         
@@ -361,6 +366,27 @@ console.log('Footer Images URLs:', {
 
     if (!form) return;
 
+    // Form validation - disable submit until all required fields are filled
+    function validateNewsletterForm() {
+      if (!submitButton) return;
+      
+      const name = nameInput?.value?.trim() || '';
+      const email = emailInput?.value?.trim() || '';
+      const consentChecked = form.querySelector('input[type="checkbox"]')?.checked || false;
+      
+      // All fields must be filled
+      const allValid = name && email && consentChecked;
+      submitButton.disabled = !allValid;
+    }
+    
+    // Run validation on page load
+    validateNewsletterForm();
+    
+    // Add event listeners for validation
+    nameInput?.addEventListener('input', validateNewsletterForm);
+    emailInput?.addEventListener('input', validateNewsletterForm);
+    form.querySelector('input[type="checkbox"]')?.addEventListener('change', validateNewsletterForm);
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -434,11 +460,14 @@ console.log('Footer Images URLs:', {
             console.warn('Could not reset Turnstile:', err);
           }
           
+          // Re-validate after reset to disable submit button
+          validateNewsletterForm();
+          
           // Reset button after 3 seconds
           setTimeout(() => {
             buttonText.textContent = 'Submit';
-            submitButton.disabled = false;
             message.classList.add('hidden');
+            // Button state will be managed by validation
           }, 3000);
         } else {
           // Error
@@ -461,9 +490,9 @@ console.log('Footer Images URLs:', {
           console.warn('Could not reset Turnstile:', err);
         }
         
-        // Re-enable button
+        // Reset button text and re-validate
         buttonText.textContent = 'Submit';
-        submitButton.disabled = false;
+        validateNewsletterForm();
       }
     });
   });
