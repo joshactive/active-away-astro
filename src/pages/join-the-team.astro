@@ -36,11 +36,12 @@ try {
 const pageTitle = seoData?.metaTitle || joinTeamData?.seo?.metaTitle || 'Join The Team | Active Away';
 const pageDescription = seoData?.metaDescription || joinTeamData?.seo?.metaDescription || 'Become part of the Active Away team and help deliver unforgettable racket sport experiences.';
 
+// Extract meta image URL properly
 let metaImage = null;
 if (seoData?.metaImage) {
-  metaImage = typeof seoData.metaImage === 'string' ? seoData.metaImage : seoData.metaImage?.url;
+  metaImage = typeof seoData.metaImage === 'string' ? seoData.metaImage : seoData.metaImage.url;
 } else if (joinTeamData?.seo?.metaImage) {
-  metaImage = typeof joinTeamData.seo.metaImage === 'string' ? joinTeamData.seo.metaImage : joinTeamData.seo.metaImage?.url;
+  metaImage = typeof joinTeamData.seo.metaImage === 'string' ? joinTeamData.seo.metaImage : joinTeamData.seo.metaImage.url;
 }
 
 const metaImageAlt = seoData?.metaImageAlt || joinTeamData?.seo?.metaImageAlt || null;

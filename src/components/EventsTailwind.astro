@@ -151,7 +151,7 @@ if (!events || events.length === 0) {
 
             return (
             <a 
-              href="/events"
+              href={event.bookingLink && event.bookingLink !== '#' ? event.bookingLink : '/events'}
               class="event-card flex-shrink-0 w-[calc(100vw-5rem)] sm:w-[calc(100vw-8rem)] lg:w-[calc((100%-3rem)/3)] snap-start group bg-white border-2 border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 hover:-translate-y-1" 
               data-index={index}
             >
@@ -172,6 +172,11 @@ if (!events || events.length === 0) {
               
               {/* Card Content */}
               <div class="p-6">
+                {/* Status Badge */}
+                <div class={`inline-block px-3 py-1 rounded-full text-xs font-inter font-semibold mb-3 ${event.statusClass}`}>
+                  {event.statusBadge}
+                </div>
+
                 <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3 group-hover:text-[#ad986c] transition-colors leading-tight">
                   {event.title}
                 </h3>
@@ -208,13 +213,29 @@ if (!events || events.length === 0) {
                   </div>
                 )}
                 
-                {/* View Details Arrow */}
-                <div class="mt-4 flex items-center gap-2 text-[#ad986c] font-inter font-semibold text-sm group-hover:gap-3 transition-all">
-                  <span>View Details</span>
-                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </div>
+                {/* Single Occupancy */}
+                {event.singleOccupancyPrice && (
+                  <div class="flex items-center gap-2 text-sm text-gray-600 font-inter mt-2 mb-4">
+                    <svg class="w-4 h-4 flex-shrink-0 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    Single Occupancy from £{event.singleOccupancyPrice}
+                  </div>
+                )}
+
+                {/* Button */}
+                {event.isSoldOut ? (
+                  <button disabled class="block w-full text-center bg-gray-300 text-gray-600 font-inter font-semibold py-3 px-4 rounded-full cursor-not-allowed">
+                    Sold Out
+                  </button>
+                ) : (
+                  <span 
+                    class="block w-full text-center text-white font-inter font-semibold py-3 px-4 rounded-full transition-colors hover:opacity-90"
+                    style={`background-color: ${event.buttonColour || '#ad986c'}`}
+                  >
+                    {event.buttonText}
+                  </span>
+                )}
               </div>
             </a>
             );

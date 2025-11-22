@@ -453,6 +453,24 @@ export async function getFutureEvents() {
       const priceText = event.price ? `from £${event.price}` : null;
       const priceAmount = event.price ? `£${event.price}` : null;
       
+      // Determine status
+      const isSoldOut = event.isSoldOut || event.status?.toLowerCase() === 'sold out';
+      const spotsLeft = event.spotsLeft || 0;
+      
+      let statusBadge = 'Available';
+      let statusClass = 'bg-green-100 text-green-800';
+      
+      if (isSoldOut) {
+        statusBadge = 'Sold Out';
+        statusClass = 'bg-red-100 text-red-800';
+      } else if (spotsLeft > 0 && spotsLeft <= 5) {
+        statusBadge = `${spotsLeft} spots left`;
+        statusClass = 'bg-orange-100 text-orange-800';
+      } else if (spotsLeft > 5) {
+        statusBadge = 'Available';
+        statusClass = 'bg-green-100 text-green-800';
+      }
+
       return {
         id: item.id || index + 1,
         title: event.title || 'Untitled Event',
@@ -463,7 +481,15 @@ export async function getFutureEvents() {
         amount: priceAmount,
         image: featuredImage?.url || EVENT_PLACEHOLDER_URL, // Fallback image with responsive transform
         imageAlt: featuredImage?.alt || event.title || 'Event image',
-        imageSrcSet: featuredImage?.url ? `${featuredImage.url}?width=320 320w, ${featuredImage.url}?width=640 640w, ${featuredImage.url}?width=1024 1024w` : null
+        imageSrcSet: featuredImage?.url ? `${featuredImage.url}?width=320 320w, ${featuredImage.url}?width=640 640w, ${featuredImage.url}?width=1024 1024w` : null,
+        bookingLink: event.bookingLink || '#',
+        venueLink: event.venueLink || '#',
+        buttonText: event.buttonText || 'Book Now',
+        buttonColour: event.buttonColour || '#ad986c',
+        isSoldOut,
+        statusBadge,
+        statusClass,
+        singleOccupancyPrice: event.singleOccupancyPriceEvent || null
       };
     }); // Show all events, even without images (using fallback)
     

@@ -89,7 +89,9 @@ const hasItems = itemIds !== '';
 >
   <!-- Page Hero -->
   {pageData?.pageHero && (
-    <PageHeroTailwind pageData={pageData} />
+    <div class="search-results-hero">
+      <PageHeroTailwind pageData={pageData} />
+    </div>
   )}
   
   <!-- Breadcrumbs -->
@@ -104,7 +106,7 @@ const hasItems = itemIds !== '';
 
   <!-- Main Content Section -->
   <section class="w-full bg-white py-8 sm:py-12">
-    <div class="container mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8">
+    <div class="container mx-auto max-w-[1200px] px-2 sm:px-6 lg:px-8">
       
       {!hasItems ? (
         <!-- Error State: No Items -->
@@ -127,10 +129,10 @@ const hasItems = itemIds !== '';
         </div>
       ) : (
         <!-- Checkfront Booking Widget -->
-        <div class="location-booking">
+        <div class="location-booking" style="text-align: center;">
           
           <!-- Checkfront Widget Container -->
-          <div id="CHECKFRONT_WIDGET_01">
+          <div id="CHECKFRONT_WIDGET_01" style="margin: 0 auto; text-align: center;">
             <p 
               id="CHECKFRONT_LOADER" 
               style="background: url('//activeaway.checkfront.co.uk/images/loader.gif') left center no-repeat; padding: 5px 5px 5px 20px;"
@@ -171,6 +173,23 @@ const hasItems = itemIds !== '';
     font-family: 'Playfair Display', serif;
   }
 
+  /* Adjust hero height to match blog page */
+  .search-results-hero :global(section) {
+    height: 300px !important;
+  }
+
+  @media (min-width: 640px) {
+    .search-results-hero :global(section) {
+      height: 400px !important;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .search-results-hero :global(section) {
+      height: 450px !important;
+    }
+  }
+
   /* Checkfront widget container */
   .location-booking {
     width: 100%;
@@ -179,9 +198,10 @@ const hasItems = itemIds !== '';
     display: flex;
     justify-content: center;
     align-items: flex-start;
+    overflow: visible;
   }
 
-  /* Make Checkfront widget fully responsive */
+  /* Make Checkfront widget fully responsive and centered */
   :global(#CHECKFRONT_WIDGET_01) {
     font-family: 'Montserrat', 'Inter', sans-serif !important;
     color: #222222;
@@ -190,9 +210,16 @@ const hasItems = itemIds !== '';
     margin: 0 auto !important;
     text-align: center !important;
   }
-
+  
   :global(#CHECKFRONT_WIDGET_01 *) {
     font-family: 'Montserrat', 'Inter', sans-serif !important;
+  }
+  
+  /* Force main content wrapper to center */
+  :global(#CHECKFRONT_WIDGET_01 > div:first-child) {
+    display: block !important;
+    text-align: center !important;
+    margin: 0 auto !important;
   }
 
   /* Force iframe and container to be responsive */
@@ -214,6 +241,35 @@ const hasItems = itemIds !== '';
     margin-left: auto !important;
     margin-right: auto !important;
     text-align: center !important;
+    display: flex !important;
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+  }
+
+  /* Center all items/cards inside the widget */
+  :global(#CHECKFRONT_WIDGET_01 .item),
+  :global(#CHECKFRONT_WIDGET_01 .booking-item),
+  :global(#CHECKFRONT_WIDGET_01 .availability-item),
+  :global(#CHECKFRONT_WIDGET_01 article),
+  :global(#CHECKFRONT_WIDGET_01 > div),
+  :global(#CHECKFRONT_WIDGET_01 > div > div) {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    float: none !important;
+    display: inline-block !important;
+    vertical-align: top !important;
+  }
+
+  /* Force grid/list containers to center */
+  :global(#CHECKFRONT_WIDGET_01 .items-grid),
+  :global(#CHECKFRONT_WIDGET_01 .items-list),
+  :global(#CHECKFRONT_WIDGET_01 .availability-grid),
+  :global(#CHECKFRONT_WIDGET_01 ul),
+  :global(#CHECKFRONT_WIDGET_01 .item-list) {
+    display: flex !important;
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+    margin: 0 auto !important;
   }
 
   /* Make modals/popups responsive */
@@ -226,12 +282,16 @@ const hasItems = itemIds !== '';
     max-width: 100% !important;
   }
 
-  /* Make item cards responsive */
+  /* Make item cards responsive and centered */
   :global(#CHECKFRONT_WIDGET_01 .item),
   :global(#CHECKFRONT_WIDGET_01 .item-card),
   :global(#CHECKFRONT_WIDGET_01 .availability-item) {
-    width: 100% !important;
+    width: auto !important;
     max-width: 100% !important;
+    float: none !important;
+    display: inline-block !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
   }
 
   /* Responsive table handling */
@@ -249,6 +309,17 @@ const hasItems = itemIds !== '';
 
   /* Handle mobile breakpoint */
   @media (max-width: 768px) {
+    /* Reduce container padding on mobile */
+    .location-booking {
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    :global(#CHECKFRONT_WIDGET_01) {
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
     :global(#CHECKFRONT_WIDGET_01 iframe) {
       min-height: 600px !important;
     }
@@ -257,6 +328,14 @@ const hasItems = itemIds !== '';
     :global(#CHECKFRONT_WIDGET_01 .modal),
     :global(#CHECKFRONT_WIDGET_01 .modal-dialog) {
       margin: 10px !important;
+    }
+
+    /* Ensure items use full width on mobile */
+    :global(#CHECKFRONT_WIDGET_01 .item),
+    :global(#CHECKFRONT_WIDGET_01 .item-card),
+    :global(#CHECKFRONT_WIDGET_01 .availability-item) {
+      width: 100% !important;
+      max-width: 100% !important;
     }
   }
 </style>
@@ -314,21 +393,43 @@ const hasItems = itemIds !== '';
           
           console.log('✅ Checkfront widget initialized with config:', widgetConfig);
           
-          // Wait for widget to load, then make it responsive
+          // Wait for widget to load, then make it responsive and centered
           setTimeout(() => {
             const container = document.getElementById('CHECKFRONT_WIDGET_01');
             if (container) {
+              // Force container to center content
+              container.style.textAlign = 'center';
+              container.style.display = 'block';
+              container.style.margin = '0 auto';
+              
               // Find all iframes and make them responsive
               const iframes = container.querySelectorAll('iframe');
               iframes.forEach(iframe => {
                 iframe.style.width = '100%';
                 iframe.style.maxWidth = '100%';
+                iframe.style.margin = '0 auto';
+                iframe.style.display = 'block';
+              });
+              
+              // Center all child divs and remove floats
+              const allElements = container.querySelectorAll('*');
+              allElements.forEach(el => {
+                const computed = window.getComputedStyle(el);
+                if (computed.float !== 'none') {
+                  el.style.float = 'none';
+                  el.style.display = 'inline-block';
+                  el.style.verticalAlign = 'top';
+                }
+                if (el.className && el.className.includes('item')) {
+                  el.style.marginLeft = 'auto';
+                  el.style.marginRight = 'auto';
+                }
               });
               
               // Add responsive class to container
               container.classList.add('checkfront-responsive');
               
-              console.log('✅ Applied responsive styles to Checkfront widget');
+              console.log('✅ Applied responsive and centered styles to Checkfront widget');
             }
           }, 2000);
         } catch (error) {
