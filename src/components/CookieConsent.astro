@@ -1,0 +1,287 @@
+---
+// CookieConsent.astro
+// A comprehensive cookie consent manager for GDPR compliance
+// Handles GA4 and Meta Pixel injection based on user preferences
+
+export interface Props {
+  gaMeasurementId?: string;
+  metaPixelId?: string;
+}
+
+const { 
+  gaMeasurementId = "G-V7EBKMBBJW", 
+  metaPixelId = "1239031756107828" 
+} = Astro.props;
+---
+
+<!-- Full Screen Overlay for Forced Consent -->
+<div id="cookie-consent-overlay" class="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 hidden transition-opacity duration-300">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-gray-200 transform transition-transform duration-300 scale-100">
+        <div class="p-6 sm:p-10">
+            <div class="flex flex-col items-center text-center mb-8">
+                <!-- Icon removed as per request -->
+                <h2 class="text-2xl sm:text-3xl font-playfair font-bold text-gray-900 mb-4">We Value Your Privacy</h2>
+                <p class="text-gray-700 leading-relaxed font-inter">
+                    We use cookies to enhance your browsing experience, serve personalized ads or content, and analyze our traffic. 
+                    You must select your preferences to continue using our website. 
+                    <a href="/privacy-policy" class="text-gold hover:underline font-medium">Read our Privacy Policy</a>.
+                </p>
+            </div>
+
+            <div class="flex flex-col gap-4 w-full max-w-md mx-auto">
+                 <!-- Primary Action: Accept All -->
+                 <button id="cookie-overlay-accept-all" class="w-full px-6 py-3 text-base font-semibold text-white bg-gold hover:bg-gold-600 border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold transition-all shadow-lg shadow-gold/20">
+                    Accept All Cookies
+                </button>
+
+                <!-- Secondary Actions: Single Column -->
+                <!-- Reject button removed, only Customize available -->
+                <button id="cookie-overlay-customize" class="w-full px-4 py-3 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">
+                    Customise Settings
+                </button>
+            </div>
+        </div>
+        <div class="bg-gray-50 px-6 py-4 text-center border-t border-gray-100">
+             <p class="text-xs text-gray-500 font-inter">
+                By clicking "Accept All Cookies", you agree to the storing of cookies on your device to enhance site navigation, analyze site usage, and assist in our marketing efforts.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Preferences Modal (Reused/Updated for Overlay Context) -->
+<div id="cookie-preferences-modal" class="fixed inset-0 z-[10000] bg-gray-900/50 backdrop-blur-sm hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+  <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+    <div class="fixed inset-0 transition-opacity" aria-hidden="true"></div>
+    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+    
+    <div class="relative inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100">
+      <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+        <div class="sm:flex sm:items-start">
+          <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+            <!-- Increased font weight to extra-bold (font-extrabold) -->
+            <h3 class="text-xl leading-6 font-playfair font-extrabold text-gray-900 border-b border-gray-100 pb-4 mb-4" id="modal-title">Cookie Preferences</h3>
+            
+            <div class="space-y-5">
+              <!-- Essential -->
+              <div class="flex items-start">
+                <div class="flex items-center h-5">
+                  <input id="consent-essential" name="consent-essential" type="checkbox" disabled checked class="focus:ring-gold h-5 w-5 text-gold border-gray-300 rounded disabled:opacity-50">
+                </div>
+                <div class="ml-3 text-sm">
+                  <label for="consent-essential" class="font-medium text-gray-900 font-playfair text-base">Essential Cookies</label>
+                  <p class="text-gray-500 font-inter mt-1">Required for the website to function properly. You cannot disable these.</p>
+                </div>
+              </div>
+              
+              <!-- Analytics -->
+              <div class="flex items-start">
+                <div class="flex items-center h-5">
+                  <input id="consent-analytics" name="consent-analytics" type="checkbox" class="focus:ring-gold h-5 w-5 text-gold border-gray-300 rounded">
+                </div>
+                <div class="ml-3 text-sm">
+                  <label for="consent-analytics" class="font-medium text-gray-900 font-playfair text-base">Analytics Cookies</label>
+                  <p class="text-gray-500 font-inter mt-1">Helps us understand how visitors interact with our website via Google Analytics.</p>
+                </div>
+              </div>
+              
+              <!-- Marketing -->
+              <div class="flex items-start">
+                <div class="flex items-center h-5">
+                  <input id="consent-marketing" name="consent-marketing" type="checkbox" class="focus:ring-gold h-5 w-5 text-gold border-gray-300 rounded">
+                </div>
+                <div class="ml-3 text-sm">
+                  <label for="consent-marketing" class="font-medium text-gray-900 font-playfair text-base">Marketing Cookies</label>
+                  <p class="text-gray-500 font-inter mt-1">Used to deliver relevant advertisements and track ad performance via Meta Pixel.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-gray-50 px-4 py-4 sm:px-6 flex flex-col sm:flex-row-reverse gap-3 border-t border-gray-100">
+        <button id="cookie-save-preferences" type="button" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2.5 bg-gold text-base font-semibold text-white hover:bg-gold-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold sm:w-auto sm:text-sm transition-colors">
+          Save Preferences
+        </button>
+        <button id="cookie-close-modal" type="button" class="w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-4 py-2.5 bg-white text-base font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:w-auto sm:text-sm transition-colors">
+          Back
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Button to reopen settings (usually in footer, but hidden by default here, can be triggered via ID) -->
+<button id="open-cookie-settings" class="hidden">Cookie Settings</button>
+
+<script is:inline define:vars={{ gaMeasurementId, metaPixelId }}>
+  // State management
+  const COOKIE_CONSENT_KEY = 'active_away_cookie_consent';
+  const DEFAULT_CONSENT = {
+    essential: true,
+    analytics: false,
+    marketing: false,
+    timestamp: null
+  };
+
+  // DOM Elements
+  const overlay = document.getElementById('cookie-consent-overlay');
+  const modal = document.getElementById('cookie-preferences-modal');
+  
+  // Overlay Buttons
+  const overlayCustomizeBtn = document.getElementById('cookie-overlay-customize');
+  const overlayAcceptAllBtn = document.getElementById('cookie-overlay-accept-all');
+
+  // Modal Buttons
+  const savePrefsBtn = document.getElementById('cookie-save-preferences');
+  const closeModalBtn = document.getElementById('cookie-close-modal');
+  const openSettingsBtn = document.getElementById('open-cookie-settings');
+  
+  // Checkbox Elements
+  const analyticsCheckbox = document.getElementById('consent-analytics');
+  const marketingCheckbox = document.getElementById('consent-marketing');
+
+  // Load stored consent
+  function getStoredConsent() {
+    const stored = localStorage.getItem(COOKIE_CONSENT_KEY);
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  // Save consent
+  function saveConsent(consent) {
+    const consentData = {
+      ...consent,
+      timestamp: new Date().toISOString()
+    };
+    localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(consentData));
+    return consentData;
+  }
+
+  // Initialize Scripts
+  function initScripts(consent) {
+    // Google Analytics 4
+    if (consent.analytics) {
+      if (!window.dataLayer) {
+        // Inject GA4 Script
+        const script = document.createElement('script');
+        script.async = true;
+        script.src = `https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`;
+        document.head.appendChild(script);
+
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        window.gtag = gtag; // Make available globally
+        gtag('js', new Date());
+        gtag('config', gaMeasurementId);
+        console.log('GA4 Initialized');
+      }
+    }
+
+    // Meta Pixel
+    if (consent.marketing) {
+      if (!window.fbq) {
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        
+        window.fbq('init', metaPixelId);
+        window.fbq('track', 'PageView');
+        console.log('Meta Pixel Initialized');
+      }
+    }
+  }
+
+  // Bot Detection
+  function isBot() {
+    const botPattern = /bot|googlebot|crawler|spider|robot|crawling/i;
+    return botPattern.test(navigator.userAgent);
+  }
+
+  // UI Logic
+  function showOverlay() {
+    if (overlay && !isBot()) {
+      overlay.classList.remove('hidden');
+      // Prevent scrolling while overlay is active
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function hideOverlay() {
+    if (overlay) {
+      overlay.classList.add('hidden');
+      // Restore scrolling
+      document.body.style.overflow = '';
+    }
+  }
+
+  function showModal() {
+    const currentConsent = getStoredConsent() || DEFAULT_CONSENT;
+    if (analyticsCheckbox) analyticsCheckbox.checked = currentConsent.analytics;
+    if (marketingCheckbox) marketingCheckbox.checked = currentConsent.marketing;
+    
+    if (modal) modal.classList.remove('hidden');
+  }
+
+  function hideModal() {
+    if (modal) modal.classList.add('hidden');
+  }
+
+  // Event Listeners
+  
+  // Customise Button - Shows Modal
+  if (overlayCustomizeBtn) overlayCustomizeBtn.addEventListener('click', () => {
+      showModal();
+  });
+  
+  if (closeModalBtn) closeModalBtn.addEventListener('click', hideModal);
+
+  if (overlayAcceptAllBtn) overlayAcceptAllBtn.addEventListener('click', () => {
+    const consent = {
+      essential: true,
+      analytics: true,
+      marketing: true
+    };
+    saveConsent(consent);
+    initScripts(consent);
+    hideOverlay();
+    hideModal();
+  });
+
+  if (savePrefsBtn) savePrefsBtn.addEventListener('click', () => {
+    const consent = {
+      essential: true,
+      analytics: analyticsCheckbox.checked,
+      marketing: marketingCheckbox.checked
+    };
+    saveConsent(consent);
+    initScripts(consent);
+    hideModal();
+    hideOverlay(); // Also hide overlay if it was open
+  });
+
+  if (openSettingsBtn) openSettingsBtn.addEventListener('click', showModal);
+
+  // Expose open settings globally for footer link
+  window.openCookieSettings = showModal;
+
+  // Initialize on load
+  const storedConsent = getStoredConsent();
+  if (!storedConsent) {
+    showOverlay();
+  } else {
+    initScripts(storedConsent);
+  }
+</script>

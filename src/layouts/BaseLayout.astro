@@ -17,6 +17,8 @@ import '@fontsource/playfair-display/900.css';
 import AnnouncementBarTailwind from '../components/AnnouncementBarTailwind.astro';
 import NavigationHeader from '../components/NavigationHeader.astro';
 import FooterTailwind from '../components/FooterTailwind.astro';
+import CookieConsent from '../components/CookieConsent.astro';
+import FormAnalytics from '../components/FormAnalytics.astro';
 
 export interface Props {
   title: string;
@@ -179,6 +181,8 @@ const ogImageHeight = metaImageHeight || 630;
       <slot />
     </div>
     <FooterTailwind />
+    <CookieConsent />
+    <FormAnalytics />
   </body>
 </html>
 

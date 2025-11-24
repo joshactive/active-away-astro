@@ -262,6 +262,10 @@ console.log('Footer Images URLs:', {
             <FooterArrow class="w-3 h-3 text-gold" />
             <span>Privacy Centre</span>
           </a>
+          <button onclick="window.openCookieSettings?.()" class="flex items-center gap-2 text-sm font-inter text-gray-300 hover:text-gold transition-colors text-left w-full">
+            <FooterArrow class="w-3 h-3 text-gold" />
+            <span>Cookie Settings</span>
+          </button>
         </div>
       </div>
       
@@ -445,6 +449,19 @@ console.log('Footer Images URLs:', {
           message.textContent = data.message || 'Thank you for subscribing!';
           message.classList.remove('hidden', 'text-red-400');
           message.classList.add('text-green-400');
+
+          // Dispatch analytics event
+          try {
+            const analyticsEvent = new CustomEvent('active-away-form-success', { 
+              detail: { 
+                formSlug: 'newsletter-footer', 
+                data: { name, email } 
+              } 
+            });
+            document.dispatchEvent(analyticsEvent);
+          } catch (e) {
+            console.error('Error dispatching analytics event:', e);
+          }
           
           // Clear form
           form.reset();

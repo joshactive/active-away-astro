@@ -786,6 +786,21 @@ const sanitizeRichText = (input = '') => {
         
         if (response.ok && result.success) {
           successMessage?.classList.remove('hidden');
+
+          // Dispatch event for analytics
+          try {
+            const analyticsEvent = new CustomEvent('active-away-form-success', { 
+              detail: { 
+                formSlug, 
+                data: { ...data } // Pass submitted data for matching
+              } 
+            });
+            document.dispatchEvent(analyticsEvent);
+            console.log('📊 Dispatched active-away-form-success event');
+          } catch (e) {
+            console.error('Error dispatching analytics event:', e);
+          }
+
           form.reset();
           
           try {

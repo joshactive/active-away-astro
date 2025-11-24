@@ -1,0 +1,106 @@
+<script>
+  import { trackEvent } from '../utils/analytics.js';
+
+  // --- eCommerce Tracking Helper ---
+  // This runs on every page load to attach listeners or fire page-specific events
+  
+  document.addEventListener('DOMContentLoaded', () => {
+    
+    // 1. ViewContent (Product/Event Pages)
+    // Detect if we are on a specific event or search result page
+    const searchResultsWidget = document.getElementById('CHECKFRONT_WIDGET_01');
+    if (searchResultsWidget) {
+      // We are on the search results page (Checkfront widget present)
+      // The widget is an iframe or dynamic script, so direct interaction is tricky.
+      // However, just viewing this page with parameters is a "ViewContent" or "Search"
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      const itemIds = urlParams.get('item_ids');
+      const startDate = urlParams.get('start_date');
+      
+      if (itemIds) {
+        trackEvent('ViewContent', {
+          content_ids: itemIds.split(','),
+          content_type: 'product',
+          checkin_date: startDate
+        });
+      } else {
+        // Generic Search
+        trackEvent('Search', {
+            search_string: window.location.search
+        });
+      }
+    }
+
+    // 2. AddToCart / InitiateCheckout
+    // Since Checkfront is an iframe, we can't easily detect "Add to Cart" clicks inside it.
+    // But navigating TO the booking page (search-results) with specific IDs is effectively "Initiating Checkout" flow.
+    // Alternatively, we can track the "Book Now" buttons on the /events page that LEAD to this page.
+    
+    // Attach listeners to all "Book Now" type buttons
+    const bookButtons = document.querySelectorAll('a[href*="search-results"], a[href*="checkfront"]');
+    bookButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        // Try to parse item_id from href
+        const target = e.currentTarget;
+        const href = target.getAttribute('href');
+        let contentId = null;
+        
+        if (href) {
+           const match = href.match(/item_ids=([^&]*)/);
+           if (match) contentId = match[1];
+        }
+
+        trackEvent('InitiateCheckout', {
+            content_ids: contentId ? [contentId] : [],
+            content_type: 'product'
+        });
+      });
+    });
+
+  });
+
+  // --- Form Success Listener (Existing Logic) ---
+  document.addEventListener('active-away-form-success', (e) => {
+    const { formSlug, data } = e.detail;
+    console.log('📊 Analytics Listener received form success:', formSlug);
+
+    // Extract User Data for Advanced Matching
+    const userData = {
+      email: data.email || data.email_address,
+      phone: data.phone || data.mobile || data.telephone,
+      firstName: data.first_name || data.fname || data.firstname,
+      lastName: data.last_name || data.lname || data.surname || data.lastname,
+      city: data.city,
+      state: data.state,
+      zip: data.zip || data.postcode,
+      country: data.country
+    };
+
+    // If name is a single field, try to split it
+    if (!userData.firstName && data.name) {
+      const parts = data.name.trim().split(' ');
+      userData.firstName = parts[0];
+      if (parts.length > 1) {
+        userData.lastName = parts.slice(1).join(' ');
+      }
+    }
+
+    // Determine Event Name
+    let eventName = 'Lead'; // Default
+    
+    if (formSlug.includes('contact')) {
+      eventName = 'Contact';
+    } else if (formSlug.includes('newsletter')) {
+      eventName = 'Lead'; // or 'Subscribe'
+    } else if (formSlug.includes('booking') || formSlug.includes('payment')) {
+      eventName = 'Purchase'; // Assuming this form is the final step
+    }
+
+    // Track the event
+    trackEvent(eventName, {
+      content_name: formSlug,
+      content_type: 'form'
+    }, userData);
+  });
+</script>
