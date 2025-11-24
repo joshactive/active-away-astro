@@ -52,6 +52,17 @@ function getStrapiToken() {
   return getEnvValue('STRAPI_API_TOKEN', DEFAULT_STRAPI_TOKEN);
 }
 
+/**
+ * Normalize booking link by converting absolute URLs to relative URLs
+ * @param {string} url - The booking link URL
+ * @returns {string} Normalized relative URL or fallback
+ */
+export function normalizeBookingLink(url) {
+  if (!url || url === '#') return '#';
+  // Remove https://activeaway.com prefix to make it a relative URL
+  return url.replace(/^https?:\/\/activeaway\.com/, '');
+}
+
 const EVENT_PLACEHOLDER_URL = getCloudflareImageUrl('45b69090-1c22-46cd-7f98-086ba71efc00', {
   width: 402,
   height: 268,
@@ -477,12 +488,14 @@ export async function getFutureEvents() {
         location: event.countryEvents || 'TBC',
         type: event.product || 'Event',
         date: formattedDate,
+        dateFrom: event.dateFrom || '',
+        dateUntil: event.dateUntil || '',
         price: priceText,
         amount: priceAmount,
         image: featuredImage?.url || EVENT_PLACEHOLDER_URL, // Fallback image with responsive transform
         imageAlt: featuredImage?.alt || event.title || 'Event image',
         imageSrcSet: featuredImage?.url ? `${featuredImage.url}?width=320 320w, ${featuredImage.url}?width=640 640w, ${featuredImage.url}?width=1024 1024w` : null,
-        bookingLink: event.bookingLink || '#',
+        bookingLink: normalizeBookingLink(event.bookingLink),
         venueLink: event.venueLink || '#',
         buttonText: event.buttonText || 'Book Now',
         buttonColour: event.buttonColour || '#ad986c',
@@ -581,9 +594,10 @@ export async function getEventsByUniqueValue(uniqueValue) {
         dateText: event.dateText || formattedDate,
         dateFrom: event.dateFrom,
         dateUntil: event.dateUntil,
+        location: event.countryEvents || event.country || 'TBC',
         price: event.price || null,
         singleOccupancyPrice: event.singleOccupancyPriceEvent || null,
-        bookingLink: event.bookingLink || '#',
+        bookingLink: normalizeBookingLink(event.bookingLink),
         buttonText: event.buttonText || 'Book Now',
         buttonColour: event.buttonColour || '#ad986c',
         isSoldOut: event.isSoldOut || false,
@@ -690,9 +704,10 @@ export async function getEventsByDocumentIds(documentIds) {
           dateText: event.dateText || formattedDate,
           dateFrom: event.dateFrom,
           dateUntil: event.dateUntil,
+          location: event.countryEvents || event.country || 'TBC',
           price: event.price || null,
           singleOccupancyPrice: event.singleOccupancyPriceEvent || null,
-          bookingLink: event.bookingLink || '#',
+          bookingLink: normalizeBookingLink(event.bookingLink),
           buttonText: event.buttonText || 'Book Now',
           buttonColour: event.buttonColour || '#ad986c',
           isSoldOut: event.isSoldOut || false,
@@ -707,6 +722,7 @@ export async function getEventsByDocumentIds(documentIds) {
     });
     
     console.log(`✅ Found ${events.length} future event(s) by document IDs (${ids.length} total queried)`);
+
     
     // Sort by dateFrom
     events.sort((a, b) => {

@@ -5,6 +5,7 @@ import { getImageByName, getResponsiveImageByName, getStrapiImageAttrs } from '.
 import MapPinIcon from './ui/icons/MapPinIcon.astro';
 import TagIcon from './ui/icons/TagIcon.astro';
 import CalendarIcon from './ui/icons/CalendarIcon.astro';
+import WaitingListModal from './WaitingListModal.astro';
 
 // Fetch future events from Strapi
 let events = await getFutureEvents();
@@ -90,7 +91,7 @@ if (!events || events.length === 0) {
             Our upcoming events
           </h2>
         </div>
-        <a href="#all-events" class="text-base sm:text-lg font-inter text-gray-900 underline hover:text-gray-700 transition-colors">
+        <a href="/events" class="text-base sm:text-lg font-inter text-gray-900 underline hover:text-gray-700 transition-colors">
           View All Events
         </a>
       </div>
@@ -149,10 +150,15 @@ if (!events || events.length === 0) {
               }
             }
 
+            const CardWrapper = event.isSoldOut ? 'button' : 'a';
+            const cardProps = event.isSoldOut
+              ? { type: 'button', onclick: `openWaitingListModal('${event.dateFrom}', '${event.dateUntil}', '${event.title}', '${event.location || ''}')` }
+              : { href: event.bookingLink && event.bookingLink !== '#' ? event.bookingLink : '/events' };
+
             return (
-            <a 
-              href={event.bookingLink && event.bookingLink !== '#' ? event.bookingLink : '/events'}
-              class="event-card flex-shrink-0 w-[calc(100vw-5rem)] sm:w-[calc(100vw-8rem)] lg:w-[calc((100%-3rem)/3)] snap-start group bg-white border-2 border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 hover:-translate-y-1" 
+            <CardWrapper 
+              {...cardProps}
+              class="event-card flex-shrink-0 w-[calc(100vw-5rem)] sm:w-[calc(100vw-8rem)] lg:w-[calc((100%-3rem)/3)] snap-start group bg-white border-2 border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 hover:-translate-y-1 text-left cursor-pointer" 
               data-index={index}
             >
               {/* Card Image */}
@@ -224,20 +230,14 @@ if (!events || events.length === 0) {
                 )}
 
                 {/* Button */}
-                {event.isSoldOut ? (
-                  <button disabled class="block w-full text-center bg-gray-300 text-gray-600 font-inter font-semibold py-3 px-4 rounded-full cursor-not-allowed">
-                    Sold Out
-                  </button>
-                ) : (
-                  <span 
-                    class="block w-full text-center text-white font-inter font-semibold py-3 px-4 rounded-full transition-colors hover:opacity-90"
-                    style={`background-color: ${event.buttonColour || '#ad986c'}`}
-                  >
-                    {event.buttonText}
-                  </span>
-                )}
+                <div 
+                  class="block w-full text-center text-white font-inter font-semibold py-3 px-4 rounded-full transition-colors"
+                  style={`background-color: ${event.isSoldOut ? '#9CA3AF' : (event.buttonColour || '#ad986c')}`}
+                >
+                  {event.isSoldOut ? 'Join Waiting List' : event.buttonText}
+                </div>
               </div>
-            </a>
+            </CardWrapper>
             );
           })}
           
@@ -553,3 +553,6 @@ let eventResizeObserver;
     }, 100);
   });
 </script>
+
+<!-- Waiting List Modal -->
+<WaitingListModal />

@@ -5,6 +5,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getStrapiImageAttrs } from '../utils/cloudflareImages.js';
 import { marked } from 'marked';
+import WaitingListModal from './WaitingListModal.astro';
 
 // Configure marked for safe markdown parsing
 marked.setOptions({
@@ -1937,8 +1938,17 @@ const carouselSlideCount = holidayType === 'ski-holiday' ? 1 : (holidayType === 
       ) : matchingEvents.length > 0 ? (
         <>
           <div id="eventsGrid" class={`grid grid-cols-1 gap-6 ${matchingEvents.length === 1 ? 'max-w-md mx-auto' : matchingEvents.length === 2 ? 'md:grid-cols-2 max-w-4xl mx-auto' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
-            {matchingEvents.map((event, index) => (
-              <div class={`bg-white border-2 border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 ${index >= 3 ? 'event-card hidden' : ''}`}>
+            {matchingEvents.map((event, index) => {
+              const CardWrapper = event.isSoldOut ? 'button' : 'a';
+              const cardProps = event.isSoldOut
+                ? { type: 'button', onclick: `openWaitingListModal('${event.dateFrom}', '${event.dateUntil}', '${event.title}', '${event.location || ''}')` }
+                : { href: event.bookingLink };
+
+              return (
+              <CardWrapper 
+                {...cardProps}
+                class={`bg-white border-2 border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 text-left cursor-pointer block ${index >= 3 ? 'event-card hidden' : ''}`}
+              >
                 <div class="mb-4">
                   <div class={`inline-block px-3 py-1 rounded-full text-xs font-inter font-semibold mb-3 ${event.statusClass}`}>
                     {event.statusBadge}
@@ -1956,21 +1966,15 @@ const carouselSlideCount = holidayType === 'ski-holiday' ? 1 : (holidayType === 
                     <p class="text-xs text-gray-500 font-inter mt-1">Based on 2 sharing</p>
                   )}
                 </div>
-                {event.isSoldOut ? (
-                  <button disabled class="block w-full text-center bg-gray-300 text-gray-600 font-inter font-semibold py-3 px-4 rounded-full cursor-not-allowed">
-                    Sold Out
-                  </button>
-                ) : (
-                  <a 
-                    href={event.bookingLink} 
-                    class="block w-full text-center text-white font-inter font-semibold py-3 px-4 rounded-full transition-colors hover:opacity-90"
-                    style={`background-color: ${event.buttonColour || '#ad986c'}`}
-                  >
-                    {event.buttonText}
-                  </a>
-                )}
-              </div>
-            ))}
+                <div 
+                  class="block w-full text-center text-white font-inter font-semibold py-3 px-4 rounded-full transition-colors"
+                  style={`background-color: ${event.isSoldOut ? '#9CA3AF' : (event.buttonColour || '#ad986c')}`}
+                >
+                  {event.isSoldOut ? 'Join Waiting List' : event.buttonText}
+                </div>
+              </CardWrapper>
+              );
+            })}
           </div>
 
           {matchingEvents.length > 3 && (
@@ -3063,3 +3067,6 @@ const carouselSlideCount = holidayType === 'ski-holiday' ? 1 : (holidayType === 
     }
   };
 </script>
+
+<!-- Waiting List Modal -->
+<WaitingListModal />

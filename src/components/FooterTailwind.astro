@@ -372,10 +372,9 @@ console.log('Footer Images URLs:', {
       
       const name = nameInput?.value?.trim() || '';
       const email = emailInput?.value?.trim() || '';
-      const consentChecked = form.querySelector('input[type="checkbox"]')?.checked || false;
       
       // All fields must be filled
-      const allValid = name && email && consentChecked;
+      const allValid = name && email;
       submitButton.disabled = !allValid;
     }
     
@@ -385,7 +384,6 @@ console.log('Footer Images URLs:', {
     // Add event listeners for validation
     nameInput?.addEventListener('input', validateNewsletterForm);
     emailInput?.addEventListener('input', validateNewsletterForm);
-    form.querySelector('input[type="checkbox"]')?.addEventListener('change', validateNewsletterForm);
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();

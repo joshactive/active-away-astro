@@ -4,6 +4,7 @@ export const prerender = true;
 
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getStrapiImageAttrs } from '../utils/cloudflareImages.js';
+import WaitingListModal from '../components/WaitingListModal.astro';
 
 // Fetch page content from Strapi
 let pageContent = null;
@@ -35,7 +36,7 @@ try {
   today.setHours(0, 0, 0, 0);
   const todayISO = today.toISOString().split('T')[0];
   
-  const { fetchAPI, getStrapiImageData } = await import('../utils/strapi.js');
+  const { fetchAPI, getStrapiImageData, normalizeBookingLink } = await import('../utils/strapi.js');
   
   // Fetch all events (paginated to handle >100 events)
   let allEventsRaw = [];
@@ -83,6 +84,12 @@ try {
         statusClass = 'bg-green-100 text-green-800';
       }
       
+      // Parse price to ensure it's a number
+      let price = event.price || event.singleOccupancyFrom || 0;
+      if (typeof price === 'string') {
+        price = parseFloat(price.replace(/[^0-9.]/g, '')) || 0;
+      }
+      
       return {
         id: item.id,
         title: event.title || '',
@@ -91,11 +98,12 @@ try {
         dateUntil: event.dateUntil || '',
         location: event.location || event.country || '',
         country: event.country || '',
-        countryEvents: event.countryEvents || '',
-        price: event.price || event.singleOccupancyFrom || 0,
+        countryEvents: event.countryEvents || event.country || '',
+        venue_plain_text: event.venue_plain_text || '',
+        price: price,
         singleOccupancyPriceEvent: event.singleOccupancyPriceEvent || null,
         product: event.product || '',
-        bookingLink: event.bookingLink || '#',
+        bookingLink: normalizeBookingLink(event.bookingLink),
         venueLink: event.venueLink || '#',
         buttonText: event.buttonText || 'Book Now',
         buttonColour: event.buttonColour || '#ad986c',
@@ -113,6 +121,9 @@ try {
     // Extract unique countryEvents
     const countryEvents = [...new Set(events.map(e => e.countryEvents).filter(Boolean))].sort();
     
+    // Extract unique venues (plain text)
+    const venueList = [...new Set(events.map(e => e.venue_plain_text).filter(Boolean))].sort();
+    
     // Extract unique product types
     const productTypes = [...new Set(events.map(e => e.product).filter(Boolean))].sort();
     
@@ -129,6 +140,7 @@ try {
         total: events.length,
         countries,
         countryEvents,
+        venueList,
         productTypes,
         priceRange
       }
@@ -182,16 +194,28 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
       loading="eager"
     />
     
-    <div class="relative z-20 container mx-auto max-w-[1400px] px-4 sm:px-10 h-full flex flex-col justify-center items-center text-center">
+    <div class="relative z-20 container mx-auto max-w-[1400px] px-4 sm:px-10 h-full flex flex-col justify-center items-center text-center pt-16 sm:pt-20">
       <div class="hidden sm:block text-xs sm:text-sm font-inter font-semibold text-gold tracking-[0.2em] uppercase mb-4 sm:mb-6 border-t border-b border-gold/50 py-2 px-6">
         {heroKicker}
       </div>
       <h1 class="text-4xl sm:text-5xl lg:text-7xl font-playfair font-bold text-white mb-6 sm:mb-8 leading-tight max-w-4xl">
         {heroTitle}
       </h1>
-      <p class="text-lg sm:text-xl lg:text-2xl font-inter text-gray-100 max-w-3xl leading-relaxed">
+      <p class="text-lg sm:text-xl lg:text-2xl font-inter text-gray-100 max-w-3xl leading-relaxed mb-8">
         {heroSubtitle}
       </p>
+      
+      <a 
+        href="https://files.activeaway.com/2026-Calendar" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-2 bg-[#ad986c] hover:bg-[#8d7a56] text-white px-5 py-2.5 text-sm sm:px-8 sm:py-3.5 sm:text-base rounded-full font-inter font-semibold transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+      >
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        Download Calendar
+      </a>
     </div>
   </section>
 
@@ -225,6 +249,16 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
 
             <!-- Filters Container -->
             <div id="filtersContainer" class="space-y-6">
+              <!-- Clear Filters Button (Top) -->
+              <div class="mb-4">
+                <button 
+                  id="clearFiltersTop"
+                  class="w-full px-4 py-2.5 text-sm font-inter font-medium text-gold hover:text-gold-700 border border-gold hover:bg-gold hover:text-white rounded-lg transition-all"
+                >
+                  Clear All Filters
+                </button>
+              </div>
+
               <!-- Search Filter -->
               <div class="filter-group">
                 <h4 class="text-base font-inter font-medium text-gray-900 mb-3">Search</h4>
@@ -300,6 +334,29 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
                 </div>
               </div>
 
+              <!-- Venue Filter -->
+              <div class="filter-group">
+                <button class="filter-header w-full flex items-center justify-between py-3 text-left" data-filter="venueList">
+                  <span class="text-base font-inter font-medium text-gray-900">Venue</span>
+                  <svg class="w-5 h-5 text-gray-600 transition-transform" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div class="filter-content space-y-2 mt-3">
+                  {metadata.venueList.map(venue => (
+                    <label class="flex items-center cursor-pointer group">
+                      <input 
+                        type="checkbox" 
+                        name="venue" 
+                        value={venue}
+                        class="w-4 h-4 text-gold border-gray-300 rounded focus:ring-gold focus:ring-2"
+                      />
+                      <span class="ml-3 text-sm font-inter text-gray-700 group-hover:text-gray-900">{venue}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
               <!-- Price Range Filter -->
               <div class="filter-group">
                 <button class="filter-header w-full flex items-center justify-between py-3 text-left" data-filter="price">
@@ -363,7 +420,7 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
                 </div>
               </div>
 
-              <!-- Clear Filters Button -->
+              <!-- Clear Filters Button (Bottom) -->
               <div class="pt-6">
                 <button 
                   id="clearFilters"
@@ -447,35 +504,43 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
             sizes: '(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw'
           };
 
+          const CardWrapper = 'div';
+          const cardProps = {};
+          
+          // For sold out events, the whole card (via overlay) opens the modal
+          const openModalClick = event.isSoldOut 
+            ? `openWaitingListModal('${event.dateFrom}', '${event.dateUntil}', '${event.title}', '${event.location || event.country || ''}')`
+            : '';
+
           return (
             <div 
-              class="event-card bg-white border-2 border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 hover:-translate-y-1" 
+              {...cardProps}
+              class="event-card relative group bg-white border-2 border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 hover:-translate-y-1 block text-left" 
               data-event-id={event.id} 
               data-country={event.country}
               data-country-event={event.countryEvents} 
               data-product={event.product}
+              data-venue={event.venue_plain_text}
               data-price={event.price || 0}
               data-is-sold-out={event.isSoldOut ? 'true' : 'false'}
               data-date-from={event.dateFrom}
             >
-              <a href={event.bookingLink}>
-                {/* Card Image */}
-                <div class="aspect-video overflow-hidden bg-gray-100 relative">
-                  {imgAttrs.src && (
-                    <img 
-                      src={imgAttrs.src}
-                      {...(imgAttrs.srcset && { srcset: imgAttrs.srcset })}
-                      sizes={imgAttrs.sizes}
-                      width={imgAttrs.width || 402}
-                      height={imgAttrs.height || 268}
-                      alt={imgAttrs.alt || imageAlt}
-                      loading={imgAttrs.loading || 'lazy'}
-                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                    />
-                  )}
-                  <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                </div>
-              </a>
+              {/* Card Image */}
+              <div class="aspect-video overflow-hidden bg-gray-100 relative">
+                {imgAttrs.src && (
+                  <img 
+                    src={imgAttrs.src}
+                    {...(imgAttrs.srcset && { srcset: imgAttrs.srcset })}
+                    sizes={imgAttrs.sizes}
+                    width={imgAttrs.width || 402}
+                    height={imgAttrs.height || 268}
+                    alt={imgAttrs.alt || imageAlt}
+                    loading={imgAttrs.loading || 'lazy'}
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                  />
+                )}
+                <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </div>
               
               {/* Card Content */}
               <div class="p-6">
@@ -484,7 +549,7 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
                   {event.statusBadge}
                 </div>
                 
-                <a href={event.venueLink}>
+                <a href={event.venueLink} class="block relative z-10">
                   <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3 leading-tight hover:text-[#ad986c] transition-colors">
                     {event.title}
                   </h3>
@@ -549,20 +614,33 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
                 </div>
                 
                 {/* Button */}
-                {event.isSoldOut ? (
-                  <button disabled class="block w-full text-center bg-gray-300 text-gray-600 font-inter font-semibold py-3 px-4 rounded-full cursor-not-allowed">
-                    Sold Out
-                  </button>
-                ) : (
-                  <a 
-                    href={event.bookingLink} 
-                    class="block w-full text-center text-white font-inter font-semibold py-3 px-4 rounded-full transition-colors hover:opacity-90"
-                    style={`background-color: ${event.buttonColour || '#ad986c'}`}
-                  >
-                    {event.buttonText}
-                  </a>
-                )}
+                <div 
+                  class="block w-full text-center text-white font-inter font-semibold py-3 px-4 rounded-full transition-colors"
+                  style={`background-color: ${event.isSoldOut ? '#9CA3AF' : (event.buttonColour || '#ad986c')}`}
+                >
+                  {event.isSoldOut ? 'Join Waiting List' : event.buttonText}
+                </div>
               </div>
+
+              {/* Main Card Link/Action - Absolute Overlay */}
+              {event.isSoldOut ? (
+                <button 
+                  type="button"
+                  onclick={openModalClick}
+                  class="absolute inset-0 z-0 w-full h-full cursor-pointer text-left indent-[-9999px] focus:outline-none"
+                  aria-label={`Join waiting list for ${event.title}`}
+                >
+                  Join Waiting List
+                </button>
+              ) : (
+                <a 
+                  href={event.bookingLink} 
+                  class="absolute inset-0 z-0 w-full h-full cursor-pointer text-left indent-[-9999px] focus:outline-none"
+                  aria-label={`Book ${event.title}`}
+                >
+                  Book Now
+                </a>
+              )}
             </div>
           );
         })}
@@ -702,6 +780,8 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
     productTypes: new Set(), // Sidebar checkboxes
     productTypePill: 'all',  // Quick filter pills
     countryEvents: new Set(),
+    venues: new Set(), // From homepage search
+    month: null, // From homepage search
     hideSoldOut: false,
     priceMin: null,
     priceMax: null,
@@ -859,6 +939,18 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
       });
     });
 
+    // Venues filter (checkboxes + from homepage search)
+    document.querySelectorAll('input[name="venue"]').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          filters.venues.add(e.target.value);
+        } else {
+          filters.venues.delete(e.target.value);
+        }
+        applyFilters();
+      });
+    });
+
     // Price range inputs
     document.getElementById('priceMin')?.addEventListener('input', debounce((e) => {
       filters.priceMin = e.target.value ? parseInt(e.target.value) : null;
@@ -906,6 +998,7 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
 
     // Clear filters button
     document.getElementById('clearFilters')?.addEventListener('click', clearAllFilters);
+    document.getElementById('clearFiltersTop')?.addEventListener('click', clearAllFilters);
     document.getElementById('emptyStateClearBtn')?.addEventListener('click', clearAllFilters);
   }
 
@@ -913,10 +1006,18 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
   function applySorting(sortValue) {
     switch (sortValue) {
       case 'date-asc':
-        filteredEvents.sort((a, b) => new Date(a.dateFrom) - new Date(b.dateFrom));
+        filteredEvents.sort((a, b) => {
+          const dateA = a.dateFrom ? new Date(a.dateFrom) : new Date('9999-12-31');
+          const dateB = b.dateFrom ? new Date(b.dateFrom) : new Date('9999-12-31');
+          return dateA - dateB;
+        });
         break;
       case 'date-desc':
-        filteredEvents.sort((a, b) => new Date(b.dateFrom) - new Date(a.dateFrom));
+        filteredEvents.sort((a, b) => {
+          const dateA = a.dateFrom ? new Date(a.dateFrom) : new Date(0);
+          const dateB = b.dateFrom ? new Date(b.dateFrom) : new Date(0);
+          return dateB - dateA;
+        });
         break;
       case 'price-low':
         filteredEvents.sort((a, b) => (a.price || 0) - (b.price || 0));
@@ -942,7 +1043,33 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
 
   // Apply filters
   function applyFilters() {
+    console.log('🔍 [events] Applying filters:', {
+      productTypes: [...filters.productTypes],
+      venues: [...filters.venues],
+      month: filters.month,
+      searchQuery: filters.searchQuery,
+      totalEvents: allEvents.length
+    });
+    
+    let debugCount = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
     filteredEvents = allEvents.filter(event => {
+      const passedFilters = debugCount < 3; // Only log first 3 events for debugging
+      if (passedFilters && filters.month) {
+        console.log(`Event ${event.id}: "${event.title}", dateFrom: ${event.dateFrom}, venue: "${event.venue_plain_text}"`);
+      }
+      debugCount++;
+      
+      // ALWAYS filter out past events (safety check)
+      if (event.dateFrom) {
+        const eventDate = new Date(event.dateFrom);
+        if (eventDate < today) {
+          return false; // Skip past events
+        }
+      }
+      
       // Search filter
       if (filters.searchQuery && !event.title.toLowerCase().includes(filters.searchQuery)) {
         return false;
@@ -968,6 +1095,27 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
         return false;
       }
 
+      // Venues filter (from homepage search)
+      if (filters.venues.size > 0) {
+        const eventVenue = event.venue_plain_text || '';
+        if (!filters.venues.has(eventVenue)) {
+          return false;
+        }
+      }
+
+      // Month filter (from homepage search)
+      if (filters.month) {
+        if (event.dateFrom) {
+          const eventDate = new Date(event.dateFrom);
+          const eventMonth = eventDate.toLocaleDateString('en-US', { month: 'long' });
+          if (eventMonth !== filters.month) {
+            return false;
+          }
+        } else {
+          return false;
+        }
+      }
+
       // Price range filter
       if (filters.priceMin !== null && event.price < filters.priceMin) {
         return false;
@@ -990,6 +1138,8 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
       return true;
     });
 
+    console.log(`✅ [events] Filtered ${filteredEvents.length} events from ${allEvents.length} total`);
+
     // Apply current sorting
     const currentSort = sortBySelect?.value || 'date-asc';
     if (currentSort !== 'date-asc') {
@@ -1010,9 +1160,13 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
   function renderEvents() {
     const cards = eventsGrid.querySelectorAll('.event-card');
     
+    console.log(`🎨 [events] Rendering ${displayedEvents.length} events out of ${filteredEvents.length} filtered`);
+    console.log(`🎨 [events] Total cards in DOM: ${cards.length}`);
+    
     // Hide all cards first
     cards.forEach(card => {
       card.classList.add('hidden');
+      card.style.display = 'none'; // Force hide with inline style
     });
 
     // Show filtered cards
@@ -1021,9 +1175,14 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
       const card = eventsGrid.querySelector(`[data-event-id="${event.id}"]`);
       if (card) {
         card.classList.remove('hidden');
+        card.style.display = ''; // Remove inline style to let CSS take over
         foundCount++;
+      } else {
+        console.warn(`⚠️ [events] Card not found for event ID: ${event.id}, Title: ${event.title}`);
       }
     });
+
+    console.log(`🎨 [events] Rendered ${foundCount} cards successfully`);
 
     // Update counts
     filteredCountEl.textContent = filteredEvents.length;
@@ -1093,6 +1252,8 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
     if (filters.productTypePill !== 'all') count++;
     if (filters.hideSoldOut) count++;
     if (filters.countryEvents.size > 0) count++;
+    if (filters.venues.size > 0) count++;
+    if (filters.month) count++;
     if (filters.priceMin !== null || filters.priceMax !== null) count++;
     if (filters.dateFrom !== null || filters.dateTo !== null) count++;
 
@@ -1112,6 +1273,8 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
     filters.productTypes.clear();
     filters.productTypePill = 'all';
     filters.countryEvents.clear();
+    filters.venues.clear();
+    filters.month = null;
     filters.hideSoldOut = false;
     filters.priceMin = null;
     filters.priceMax = null;
@@ -1137,6 +1300,7 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
     // Clear checkboxes
     document.querySelectorAll('input[name="product"]').forEach(cb => cb.checked = false);
     document.querySelectorAll('input[name="countryEvent"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('input[name="venue"]').forEach(cb => cb.checked = false);
     
     // Clear inputs
     document.getElementById('priceMin').value = '';
@@ -1169,6 +1333,12 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
     if (filters.countryEvents.size > 0) {
       params.set('countries', [...filters.countryEvents].join(','));
     }
+    if (filters.venues.size > 0) {
+      params.set('venues', [...filters.venues].join(','));
+    }
+    if (filters.month) {
+      params.set('month', filters.month);
+    }
     if (filters.priceMin !== null) {
       params.set('minPrice', filters.priceMin);
     }
@@ -1189,6 +1359,9 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
   // Restore filters from URL
   function restoreFiltersFromURL() {
     const params = new URLSearchParams(window.location.search);
+    
+    console.log('🔗 [events] URL parameters:', window.location.search);
+    console.log('🔗 [events] All params:', Object.fromEntries(params.entries()));
     
     // Restore search
     const search = params.get('search');
@@ -1262,8 +1435,28 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
       document.getElementById('dateTo').value = dateTo;
     }
 
+    // Restore venues (from homepage search and checkbox filters)
+    const venues = params.get('venues');
+    if (venues) {
+      venues.split(',').forEach(venue => {
+        filters.venues.add(venue);
+        // Check the checkbox if it exists (for sidebar filters)
+        const checkbox = document.querySelector(`input[name="venue"][value="${venue}"]`);
+        if (checkbox) checkbox.checked = true;
+      });
+      console.log('🏨 [events] Restored venue filter from URL:', venues);
+      console.log('🏨 [events] Venue filter set contains:', [...filters.venues]);
+    }
+
+    // Restore month (from homepage search)
+    const month = params.get('month');
+    if (month) {
+      filters.month = month;
+      console.log('📅 [events] Restored month filter from URL:', month);
+    }
+
     // Apply filters if any were restored
-    if (search || products || hideSoldOut || type || countries || minPrice || maxPrice || dateFrom || dateTo) {
+    if (search || products || hideSoldOut || type || countries || minPrice || maxPrice || dateFrom || dateTo || venues || month) {
       applyFilters();
     }
   }
@@ -1288,5 +1481,8 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
     init();
   }
 </script>
+
+  <!-- Waiting List Modal -->
+  <WaitingListModal />
 </BaseLayout>
 
