@@ -22,7 +22,7 @@ const {
                 <!-- Icon removed as per request -->
                 <h2 class="text-2xl sm:text-3xl font-playfair font-bold text-gray-900 mb-4">We Value Your Privacy</h2>
                 <p class="text-gray-700 leading-relaxed font-inter">
-                    We use cookies to enhance your browsing experience, serve personalized ads or content, and analyze our traffic. 
+                    We use cookies to enhance your browsing experience, serve personalised ads or content, and analyse our traffic. 
                     You must select your preferences to continue using our website. 
                     <a href="/privacy-policy" class="text-gold hover:underline font-medium">Read our Privacy Policy</a>.
                 </p>
@@ -43,7 +43,7 @@ const {
         </div>
         <div class="bg-gray-50 px-6 py-4 text-center border-t border-gray-100">
              <p class="text-xs text-gray-500 font-inter">
-                By clicking "Accept All Cookies", you agree to the storing of cookies on your device to enhance site navigation, analyze site usage, and assist in our marketing efforts.
+                By clicking "Accept All Cookies", you agree to the storing of cookies on your device to enhance site navigation, analyse site usage, and assist in our marketing efforts.
             </p>
         </div>
     </div>
@@ -212,6 +212,11 @@ const {
 
   // UI Logic
   function showOverlay() {
+    // Allow viewing privacy policy without overlay
+    if (window.location.pathname === '/privacy-policy' || window.location.pathname === '/privacy-policy/') {
+      return;
+    }
+
     if (overlay && !isBot()) {
       overlay.classList.remove('hidden');
       // Prevent scrolling while overlay is active
@@ -284,4 +289,17 @@ const {
   } else {
     initScripts(storedConsent);
   }
+
+  // Handle navigation (SPA support if needed, or re-check on load)
+  // For static site, page reload handles it. 
+  // But if user went to privacy policy and navigated back, we need to show it.
+  // Astro view transitions might require this event listener:
+  document.addEventListener('astro:page-load', () => {
+    const stored = getStoredConsent();
+    if (!stored) {
+      showOverlay();
+    } else {
+      initScripts(stored);
+    }
+  });
 </script>
