@@ -73,6 +73,17 @@ const {
                   <p class="text-gray-500 font-inter mt-1">Required for the website to function properly. You cannot disable these.</p>
                 </div>
               </div>
+
+              <!-- Functional -->
+              <div class="flex items-start">
+                <div class="flex items-center h-5">
+                  <input id="consent-functional" name="consent-functional" type="checkbox" class="focus:ring-gold h-5 w-5 text-gold border-gray-300 rounded">
+                </div>
+                <div class="ml-3 text-sm">
+                  <label for="consent-functional" class="font-medium text-gray-900 font-playfair text-base">Functional Cookies</label>
+                  <p class="text-gray-500 font-inter mt-1">Enables enhanced functionality, such as remembering your last search.</p>
+                </div>
+              </div>
               
               <!-- Analytics -->
               <div class="flex items-start">
@@ -120,6 +131,7 @@ const {
   const COOKIE_CONSENT_KEY = 'active_away_cookie_consent';
   const DEFAULT_CONSENT = {
     essential: true,
+    functional: false,
     analytics: false,
     marketing: false,
     timestamp: null
@@ -139,6 +151,7 @@ const {
   const openSettingsBtn = document.getElementById('open-cookie-settings');
   
   // Checkbox Elements
+  const functionalCheckbox = document.getElementById('consent-functional');
   const analyticsCheckbox = document.getElementById('consent-analytics');
   const marketingCheckbox = document.getElementById('consent-marketing');
 
@@ -234,6 +247,7 @@ const {
 
   function showModal() {
     const currentConsent = getStoredConsent() || DEFAULT_CONSENT;
+    if (functionalCheckbox) functionalCheckbox.checked = currentConsent.functional;
     if (analyticsCheckbox) analyticsCheckbox.checked = currentConsent.analytics;
     if (marketingCheckbox) marketingCheckbox.checked = currentConsent.marketing;
     
@@ -256,6 +270,7 @@ const {
   if (overlayAcceptAllBtn) overlayAcceptAllBtn.addEventListener('click', () => {
     const consent = {
       essential: true,
+      functional: true,
       analytics: true,
       marketing: true
     };
@@ -268,6 +283,7 @@ const {
   if (savePrefsBtn) savePrefsBtn.addEventListener('click', () => {
     const consent = {
       essential: true,
+      functional: functionalCheckbox.checked,
       analytics: analyticsCheckbox.checked,
       marketing: marketingCheckbox.checked
     };

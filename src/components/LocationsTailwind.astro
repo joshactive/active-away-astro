@@ -1,6 +1,6 @@
 ---
 // Locations section component for Active Away - Tailwind CSS Version
-import { getFeaturedLocations } from '../utils/strapi.js';
+import { getFeaturedLocations, getAllVenues } from '../utils/strapi.js';
 import { getImageByName, getResponsiveImageByName, getStrapiImageAttrs } from '../utils/cloudflareImages.js';
 import MapPinIcon from './ui/icons/MapPinIcon.astro';
 import TagIcon from './ui/icons/TagIcon.astro';
@@ -16,6 +16,20 @@ const { customHeading, customEyebrow, featuredSlugs } = Astro.props;
 
 // Fetch featured locations from Strapi
 let allLocations = await getFeaturedLocations();
+
+// Fetch total venue count for the heading
+let totalVenuesCount = 0;
+try {
+  // Fetch all venues to get the total count
+  // Using a large pageSize to ensure we get an accurate count of all visible venues
+  const venuesData = await getAllVenues({ pageSize: 100 });
+  if (venuesData && venuesData.metadata) {
+    totalVenuesCount = venuesData.metadata.total;
+    console.log(`📍 [LocationsTailwind] Total venues count: ${totalVenuesCount}`);
+  }
+} catch (error) {
+  console.error('❌ [LocationsTailwind] Error fetching total venue count:', error);
+}
 
 // Filter by featured slugs if provided
 let locations = allLocations;
@@ -120,7 +134,7 @@ if (!locations || locations.length === 0) {
             {customEyebrow || 'DESTINATIONS'}
           </div>
           <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900">
-            {customHeading || 'Explore our Locations'}
+            {customHeading || `Explore Our ${totalVenuesCount > 0 ? totalVenuesCount : ''} Locations`}
           </h2>
         </div>
         <a href="/venues" class="text-base sm:text-lg font-inter text-gray-900 underline hover:text-gray-700 transition-colors">

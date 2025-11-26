@@ -97,20 +97,39 @@ try {
 }
 
 // ==========================================
-// Hero Background Image - Dynamic from Strapi
+// Hero Background Images - Dynamic from Strapi
 // ==========================================
 // Design dimensions: 16:9 aspect ratio for hero background
 const HERO_DESIGN_WIDTH = 1920;
 const HERO_DESIGN_HEIGHT = 1080;
 
-let heroBgAttrs;
+let slides = [];
 
-// Check if Strapi has a headerImage
-if (homeData?.hero?.headerImage) {
+// 1. Check for multiple images (new field)
+if (homeData?.hero?.headerImageMultiple && Array.isArray(homeData.hero.headerImageMultiple) && homeData.hero.headerImageMultiple.length > 0) {
+  slides = homeData.hero.headerImageMultiple.map(img => {
+    if (!img || !img.url) return null;
+    return getStrapiImageAttrs(img, {
+      displayWidth: HERO_DESIGN_WIDTH,
+      displayHeight: HERO_DESIGN_HEIGHT,
+      fit: 'cover',
+      alt: img.alt || 'Hero background',
+      sizes: '100vw',
+      quality: 60
+    });
+  }).filter(Boolean);
+  
+  if (slides.length > 0) {
+    console.log(`✅ Using ${slides.length} images from headerImageMultiple`);
+  }
+}
+
+// 2. Fallback to single image if no slides yet
+if (slides.length === 0 && homeData?.hero?.headerImage) {
   const strapiHeroBg = homeData.hero.headerImage;
   
   if (strapiHeroBg.url) {
-    heroBgAttrs = getStrapiImageAttrs(strapiHeroBg, {
+    const heroBgAttrs = getStrapiImageAttrs(strapiHeroBg, {
       displayWidth: HERO_DESIGN_WIDTH,
       displayHeight: HERO_DESIGN_HEIGHT,
       fit: 'cover',
@@ -118,17 +137,18 @@ if (homeData?.hero?.headerImage) {
       sizes: '100vw',
       quality: 60
     });
-    console.log('✅ Using Strapi image with responsive transforms');
+    slides.push(heroBgAttrs);
+    console.log('✅ Using single headerImage (fallback)');
   } else {
     console.log('⚠️  headerImage exists but no URL');
   }
-} else {
+} else if (slides.length === 0) {
   console.log('ℹ️  No headerImage field found in Strapi');
 }
 
-// Fallback to hardcoded image
-if (!heroBgAttrs) {
-  heroBgAttrs = {
+// 3. Fallback to hardcoded image
+if (slides.length === 0) {
+  const heroBgAttrs = {
     ...getResponsiveImageAttrs('03bade93-3cf6-49b0-047f-a9eb556aa200', {
       displayWidth: HERO_DESIGN_WIDTH,
       displayHeight: HERO_DESIGN_HEIGHT,
@@ -138,15 +158,21 @@ if (!heroBgAttrs) {
       quality: 60
     }),
   };
-  console.log('ℹ️  Using fallback hero background');
+  slides.push(heroBgAttrs);
+  console.log('ℹ️  Using hardcoded fallback hero background');
 }
 
-heroBgAttrs = {
-  ...heroBgAttrs,
+// Apply loading attributes
+slides = slides.map((slide, index) => ({
+  ...slide,
   sizes: '100vw',
-  loading: 'eager',
-  fetchpriority: 'high'
-};
+  loading: index === 0 ? 'eager' : 'lazy',
+  fetchpriority: index === 0 ? 'high' : 'auto'
+}));
+
+// If we only have one slide (e.g. from single image or fallback), duplicate it if you want a "slider" effect
+// OR we can just let the slider logic handle 1 slide gracefully (it won't cycle if length <= 1)
+// For now, if there's only 1 slide, let's just show it static. The JS handles > 1 check.
 
 // ==========================================
 // Other Images
@@ -186,25 +212,36 @@ const man3 = buildTestimonialImage(testimonial3, 'man-3');
 const man4 = buildTestimonialImage(testimonial4, 'man-4');
 
 // Debug: Confirm setup
-console.log('🎯 Hero Background:', heroBgAttrs?.src ? 'Ready' : 'Missing');
+console.log('🎯 Hero Slides:', slides.length > 0 ? 'Ready' : 'Missing');
 console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGHT}`);
 ---
 
 <section class="relative w-full h-screen flex flex-col items-start p-0 overflow-x-hidden py-6 sm:py-10">
-  <!-- Background Image -->
-  <div class="absolute inset-0 w-full h-full">
-    <img 
-      src={heroBgAttrs.src}
-      srcset={heroBgAttrs.srcset}
-      sizes={heroBgAttrs.sizes}
-      alt={heroBgAttrs.alt}
-      width={heroBgAttrs.width || HERO_DESIGN_WIDTH}
-      height={heroBgAttrs.height || HERO_DESIGN_HEIGHT}
-      class="w-full h-full object-cover object-[30%_center] sm:object-center"
-      loading={heroBgAttrs.loading}
-      fetchpriority={heroBgAttrs.fetchpriority}
-    />
-    <div class="absolute inset-0 bg-gradient-to-b from-black/35 to-black/35"></div>
+  <!-- Background Image Slider -->
+  <div id="hero-slider" class="absolute inset-0 w-full h-full">
+    {slides.map((slide, index) => (
+      <div 
+        class:list={[
+          "absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out",
+          index === 0 ? "opacity-100 z-10" : "opacity-0 z-0"
+        ]} 
+        data-slide
+        data-index={index}
+      >
+        <img 
+          src={slide.src}
+          srcset={slide.srcset}
+          sizes={slide.sizes}
+          alt={slide.alt}
+          width={slide.width || HERO_DESIGN_WIDTH}
+          height={slide.height || HERO_DESIGN_HEIGHT}
+          class="w-full h-full object-cover object-[30%_center] sm:object-center"
+          loading={index === 0 ? "eager" : "lazy"}
+          fetchpriority={index === 0 ? "high" : "auto"}
+        />
+        <div class="absolute inset-0 bg-gradient-to-b from-black/35 to-black/35"></div>
+      </div>
+    ))}
   </div>
 
   <!-- Main Hero Content -->
@@ -552,6 +589,9 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
       params.set('month', month);
     }
     
+    // Save preferences if consent given
+    saveSearchPreferences({ product, location, month });
+
     // Redirect to events page with parameters
     const url = params.toString() ? `/events?${params}` : '/events';
     console.log('🔗 Redirecting to:', url);
@@ -561,5 +601,90 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
   searchMobile?.addEventListener('click', handleSearch);
   searchDesktop?.addEventListener('click', handleSearch);
   
+  // Save search preferences
+  function saveSearchPreferences(params) {
+    try {
+      const consentString = localStorage.getItem('active_away_cookie_consent');
+      if (!consentString) return;
+      
+      const consent = JSON.parse(consentString);
+      if (consent.functional) {
+        localStorage.setItem('hero_search_preferences', JSON.stringify(params));
+        console.log('💾 Search preferences saved');
+      }
+    } catch (e) {
+      console.error('Error saving search preferences:', e);
+    }
+  }
+
+  // Load search preferences
+  function loadSearchPreferences() {
+    try {
+      const consentString = localStorage.getItem('active_away_cookie_consent');
+      if (!consentString) return;
+      
+      const consent = JSON.parse(consentString);
+      if (!consent.functional) return;
+      
+      const prefsString = localStorage.getItem('hero_search_preferences');
+      if (!prefsString) return;
+      
+      const prefs = JSON.parse(prefsString);
+      console.log('📂 Loading search preferences:', prefs);
+      
+      // 1. Set Product
+      if (prefs.product) {
+        if (productMobile) productMobile.value = prefs.product;
+        if (productDesktop) productDesktop.value = prefs.product;
+        
+        // Trigger cascading update
+        handleProductChange(prefs.product);
+        
+        // 2. Set Location (after product change populated it)
+        if (prefs.location) {
+          if (locationMobile) locationMobile.value = prefs.location;
+          if (locationDesktop) locationDesktop.value = prefs.location;
+          
+          // Trigger cascading update
+          handleLocationChange(prefs.product, prefs.location);
+          
+          // 3. Set Month (after location change populated it)
+          if (prefs.month) {
+            if (monthMobile) monthMobile.value = prefs.month;
+            if (monthDesktop) monthDesktop.value = prefs.month;
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error loading search preferences:', e);
+    }
+  }
+
+  // Load preferences on init
+  loadSearchPreferences();
+
   console.log('✅ Hero search initialized');
+
+  // Hero Background Slider
+  const slides = document.querySelectorAll('[data-slide]');
+  let currentSlide = 0;
+  const SLIDE_INTERVAL = 4000; // 3 seconds
+
+  if (slides.length > 1) {
+    setInterval(() => {
+      const nextSlide = (currentSlide + 1) % slides.length;
+      
+      // Current slide: fade out
+      slides[currentSlide].classList.remove('opacity-100', 'z-10');
+      slides[currentSlide].classList.add('opacity-0', 'z-0');
+      
+      // Next slide: fade in
+      slides[nextSlide].classList.remove('opacity-0', 'z-0');
+      slides[nextSlide].classList.add('opacity-100', 'z-10');
+      
+      currentSlide = nextSlide;
+    }, SLIDE_INTERVAL);
+    
+    console.log('✅ Hero slider initialized with', slides.length, 'slides');
+  }
 </script>

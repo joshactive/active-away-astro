@@ -1074,6 +1074,9 @@ export async function getHomeData() {
         heading: data.main_heading,
         subHeading: data.main_sub_heading,
         headerImage: data.headerImage ? getStrapiImageData(data.headerImage) : null,
+        headerImageMultiple: Array.isArray(data.headerImageMultiple) 
+          ? data.headerImageMultiple.map(getStrapiImageData) 
+          : (data.headerImageMultiple ? [getStrapiImageData(data.headerImageMultiple)] : null),
         testimonialImages: [
           data.testimonialImage1 ? getStrapiImageData(data.testimonialImage1) : null,
           data.testimonialImage2 ? getStrapiImageData(data.testimonialImage2) : null,
