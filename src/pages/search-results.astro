@@ -275,7 +275,7 @@ const hasItems = itemIds !== '';
             target: 'CHECKFRONT_WIDGET_01',
             provider: 'droplet',
             options: 'hidesearch',
-            style: 'color: #222222;'
+            style: 'color: #222222; font-family: Inter, sans-serif;'
           };
 
           // Add item_id if provided
@@ -298,55 +298,80 @@ const hasItems = itemIds !== '';
             widgetConfig.tid = trackingId;
           }
 
+          // Log style parameter before initialization
+          console.log('📋 Style parameter being sent:', widgetConfig.style);
+          console.log('🔧 Full widget config:', JSON.stringify(widgetConfig, null, 2));
+          
           // Initialize the widget
           new DROPLET.Widget(widgetConfig).render();
           
-          console.log('✅ Checkfront widget initialized with config:', widgetConfig);
+          console.log('✅ Checkfront widget initialized');
           
-          // Fix currency selector alignment after widget loads
-          setTimeout(() => {
-            const container = document.getElementById('CHECKFRONT_WIDGET_01');
-            if (container) {
-              // Find and fix currency selector alignment
-              const currencySelectors = container.querySelectorAll(
-                '.currency-selector, .DROPLET_currency, select[name="currency"], .filter, .toolbar, .DROPLET_filter'
-              );
-              
-              currencySelectors.forEach(element => {
-                element.style.maxWidth = '610px';
-                element.style.marginLeft = 'auto';
-                element.style.marginRight = 'auto';
-                element.style.boxSizing = 'border-box';
-              });
-              
-              // Also fix parent containers
-              const parentContainers = container.querySelectorAll(
-                '.DROPLET_widget, .DROPLET_container'
-              );
-              
-              parentContainers.forEach(element => {
-                element.style.maxWidth = '610px';
-                element.style.marginLeft = 'auto';
-                element.style.marginRight = 'auto';
-              });
-              
-              console.log('✅ Currency selector alignment fixed');
-            }
-          }, 1500);
+          // ========================================
+          // 🎨 ADVANCED STYLE INJECTION SYSTEM
+          // ========================================
           
-          // Double check after iframe loads
-          setTimeout(() => {
+          // Function to check and try to access iframe content
+          function tryAccessIframe() {
             const container = document.getElementById('CHECKFRONT_WIDGET_01');
-            if (container) {
-              const allDivs = container.querySelectorAll('div');
-              allDivs.forEach(div => {
-                if (div.style.width && div.style.width !== '100%') {
-                  div.style.marginLeft = 'auto';
-                  div.style.marginRight = 'auto';
-                }
-              });
+            if (!container) {
+              console.warn('⚠️ Container not found');
+              return false;
             }
-          }, 3000);
+            
+            const iframe = container.querySelector('iframe');
+            if (!iframe) {
+              console.warn('⚠️ iframe not loaded yet');
+              return false;
+            }
+            
+            console.log('📍 iframe found:', iframe.src);
+            
+            // Try to access iframe content
+            try {
+              const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+              
+              if (iframeDoc) {
+                console.log('✅ iframe content accessible!');
+                
+                // Inject custom styles into iframe
+                const style = iframeDoc.createElement('style');
+                style.textContent = `
+                  * {
+                    font-family: Inter, sans-serif !important;
+                  }
+                  body, main, div {
+                    max-width: 610px !important;
+                    margin-left: auto !important;
+                    margin-right: auto !important;
+                  }
+                  .currency-selector, .filter, .toolbar {
+                    max-width: 610px !important;
+                    margin: 0 auto !important;
+                  }
+                `;
+                iframeDoc.head.appendChild(style);
+                console.log('🎨 Custom styles injected into iframe!');
+                return true;
+              }
+            } catch (error) {
+              console.error('❌ CORS Error - Cannot access iframe content:', error.message);
+              console.log('💡 Reason: iframe loads from different domain (activeaway.checkfront.co.uk)');
+              console.log('📌 Solution: Must configure styles through Checkfront Dashboard');
+              return false;
+            }
+            
+            return false;
+          }
+          
+          // Test iframe access after load
+          setTimeout(() => {
+            tryAccessIframe();
+          }, 2000);
+          
+          setTimeout(() => {
+            tryAccessIframe();
+          }, 4000);
         } catch (error) {
           console.error('❌ Error initializing Checkfront widget:', error);
           
