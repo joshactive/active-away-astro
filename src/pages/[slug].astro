@@ -267,7 +267,7 @@ const homeData = {
   <!-- Destinations/Locations Section -->
   {productData?.destinations?.showDestinations !== false && (
     <LocationsTailwind 
-      customHeading={productData?.destinations?.heading}
+      customHeading={productData?.destinations?.heading || `${productData.title} Locations`}
       customEyebrow={productData?.destinations?.eyebrow}
       featuredSlugs={productData?.destinations?.featuredLocationSlugs}
     />

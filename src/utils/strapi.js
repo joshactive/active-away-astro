@@ -515,6 +515,112 @@ export async function getFutureEvents() {
 }
 
 /**
+ * Fetch a single event by slug
+ * @param {string} slug - The event slug
+ * @returns {Promise<Object>} Formatted event data
+ */
+export async function getEventBySlug(slug) {
+  try {
+    if (!slug) {
+      console.warn('⚠️ No slug provided to getEventBySlug');
+      return null;
+    }
+
+    console.log(`🔍 Fetching event by slug: "${slug}"`);
+    
+    // Fetch event by slug
+    // Try finding by slug first
+    let data = await fetchAPI(`/events?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=*`);
+    
+    // If not found by slug, and slug looks like an ID, try finding by ID
+    if ((!data || !data.data || data.data.length === 0) && /^\d+$/.test(slug)) {
+        console.log(`ℹ️ Trying to fetch by ID: "${slug}"`);
+        const dataById = await fetchAPI(`/events/${slug}?populate=*`);
+        if (dataById && dataById.data) {
+           return processEventData(dataById.data);
+        }
+    }
+
+    // If still not found, try by documentId if it looks like one (alphanumeric)
+    if (!data || !data.data || data.data.length === 0) {
+         console.log(`ℹ️ Trying to fetch by documentId: "${slug}"`);
+         const dataByDocId = await fetchAPI(`/events?filters[documentId][$eq]=${encodeURIComponent(slug)}&populate=*`);
+         if (dataByDocId && dataByDocId.data && dataByDocId.data.length > 0) {
+             return processEventData(dataByDocId.data[0]);
+         }
+    }
+    
+    if (!data || !data.data || data.data.length === 0) {
+      console.log(`ℹ️ No event found for slug: "${slug}"`);
+      return null;
+    }
+    
+    return processEventData(data.data[0]);
+    
+  } catch (error) {
+    console.error(`❌ Error fetching event by slug "${slug}":`, error);
+    return null;
+  }
+}
+
+function processEventData(item) {
+    const event = item.attributes || item;
+    
+    console.log(`✅ Found event: "${event.title}"`);
+    
+    // Format dates
+    let formattedDate = '';
+    let formattedDateFrom = '';
+    let formattedDateUntil = '';
+    
+    if (event.dateFrom && event.dateUntil) {
+      const fromDate = new Date(event.dateFrom);
+      const untilDate = new Date(event.dateUntil);
+      
+      const dayFrom = fromDate.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit' });
+      const monthFrom = fromDate.toLocaleDateString('en-GB', { month: 'short' });
+      const dayUntil = untilDate.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit' });
+      const monthUntil = untilDate.toLocaleDateString('en-GB', { month: 'short' });
+      const year = untilDate.toLocaleDateString('en-GB', { year: 'numeric' });
+      
+      formattedDateFrom = `${dayFrom} ${monthFrom} ${year}`;
+      formattedDateUntil = `${dayUntil} ${monthUntil} ${year}`;
+      
+      if (monthFrom === monthUntil) {
+        formattedDate = `${dayFrom} - ${dayUntil} ${monthUntil} ${year}`;
+      } else {
+        formattedDate = `${dayFrom} ${monthFrom} - ${dayUntil} ${monthUntil} ${year}`;
+      }
+    }
+    
+    // Get featured image
+    const featuredImage = event.featuredImage ? getStrapiImageData(event.featuredImage) : null;
+    
+    return {
+      id: item.id,
+      documentId: item.documentId,
+      title: event.title || 'Untitled Event',
+      slug: event.slug,
+      dateText: event.dateText || formattedDate,
+      dateFrom: event.dateFrom,
+      dateUntil: event.dateUntil,
+      formattedDateFrom,
+      formattedDateUntil,
+      location: event.countryEvents || event.country || 'TBC',
+      venue: event.venue_plain_text || '',
+      price: event.price || null,
+      image: featuredImage?.url || null,
+      imageAlt: featuredImage?.alt || event.title || 'Event image',
+      bookingLink: normalizeBookingLink(event.bookingLink),
+      venueLink: event.venueLink || '#',
+      whatsappUrl: event.whatsapp_url || '',
+      itineraryUrl: event.itinerary_url || '', // Added itinerary URL
+      description: event.description || '',
+      product: event.product || '', // Make sure product is returned
+    };
+}
+
+/**
  * Fetch upcoming events (legacy - kept for backwards compatibility)
  * @returns {Promise<Array>} Array of upcoming event data
  */

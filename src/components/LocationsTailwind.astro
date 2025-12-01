@@ -122,6 +122,12 @@ if (!locations || locations.length === 0) {
     }
   ];
 }
+
+// Determine layout alignment based on number of cards
+// If we have fewer than 2 locations (so < 3 total cards including "View All"), center them
+const justifyClass = locations.length < 2 ? 'lg:justify-center' : 'lg:justify-between';
+// Only show arrows if we have more than 2 locations (so > 3 cards total), as 3 cards fit on desktop without scrolling
+const arrowClass = locations.length > 2 ? 'hidden lg:flex' : 'hidden';
 ---
 
 <section id="destinations" class="w-full bg-white py-8 sm:py-16 lg:py-24">
@@ -146,13 +152,13 @@ if (!locations || locations.length === 0) {
     <!-- Cards Carousel -->
     <div class="relative">
       <!-- Navigation Arrows -->
-      <button class="hidden lg:flex absolute left-4 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-gold rounded-full shadow-lg items-center justify-center hover:bg-gold-700 transition-all duration-300" onclick="previousCard()">
+      <button class={`${arrowClass} absolute left-4 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-gold rounded-full shadow-lg items-center justify-center hover:bg-gold-700 transition-all duration-300`} onclick="previousCard()">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
           <path d="M15 18L9 12L15 6" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
       
-      <button class="hidden lg:flex absolute right-4 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-gold rounded-full shadow-lg items-center justify-center hover:bg-gold-700 transition-all duration-300" onclick="nextCard()">
+      <button class={`${arrowClass} absolute right-4 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-gold rounded-full shadow-lg items-center justify-center hover:bg-gold-700 transition-all duration-300`} onclick="nextCard()">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
           <path d="M9 18L15 12L9 6" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -161,7 +167,7 @@ if (!locations || locations.length === 0) {
       <!-- Cards Container Wrapper -->
       <div class="relative">
         <!-- Cards Container -->
-        <div id="cardsContainer" class="flex flex-row overflow-x-auto lg:overflow-visible snap-x snap-mandatory lg:snap-none justify-start lg:justify-between items-stretch gap-4 sm:gap-6 lg:gap-6 pb-4 lg:pb-0 pl-4 sm:pl-10 lg:pl-0 transition-transform duration-500 ease-out">
+        <div id="cardsContainer" class={`flex flex-row overflow-x-auto lg:overflow-visible snap-x snap-mandatory lg:snap-none justify-start items-stretch gap-4 sm:gap-6 lg:gap-6 pb-4 lg:pb-0 pl-4 sm:pl-10 lg:pl-0 transition-transform duration-500 ease-out ${justifyClass}`}>
           {locations.map((location, index) => {
             const imageAlt = location.image?.alt || location.imageAlt || location.title;
             let imgAttrs;

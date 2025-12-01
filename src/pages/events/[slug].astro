@@ -1,0 +1,309 @@
+---
+// Event Single Page - Password protected
+// SSR enabled by removing prerender = true
+export const prerender = false;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getEventBySlug, getEvents } from '../../utils/strapi.js';
+import { getStrapiImageAttrs } from '../../utils/cloudflareImages.js';
+import MapPinIcon from '../../components/ui/icons/MapPinIcon.astro';
+import SuitcaseIcon from '../../components/ui/icons/SuitcaseIcon.astro';
+import PlaneIcon from '../../components/ui/icons/PlaneIcon.astro';
+import HelpCircleIcon from '../../components/ui/icons/HelpCircleIcon.astro';
+import DocumentIcon from '../../components/ui/icons/DocumentIcon.astro';
+
+// No getStaticPaths needed for SSR
+
+
+const { slug } = Astro.params;
+let eventData = null;
+
+try {
+  eventData = await getEventBySlug(slug);
+} catch (error) {
+  console.error(`Error fetching event data for slug ${slug}:`, error);
+}
+
+if (!eventData) {
+  return Astro.redirect('/404');
+}
+
+const pageTitle = `${eventData.title} - Active Away Events`;
+const pageDescription = `Join us for ${eventData.title} at ${eventData.venue || eventData.location}.`;
+// Use event image or fallback
+const heroImage = eventData.image || 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/45b69090-1c22-46cd-7f98-086ba71efc00/public';
+
+// Optimize hero image
+let heroImageAttrs;
+if (heroImage) {
+   heroImageAttrs = getStrapiImageAttrs({ url: heroImage, alt: eventData.title }, {
+    displayWidth: 1920,
+    displayHeight: 1080,
+    fit: 'cover',
+    quality: 80
+  });
+}
+
+const heroImageUrl = heroImageAttrs?.src || heroImage;
+
+const isClinic = eventData.product?.toLowerCase().includes('clinic') || eventData.title?.toLowerCase().includes('clinic') || false;
+
+---
+
+<BaseLayout 
+  title={pageTitle}
+  description={pageDescription}
+  noIndex={true} 
+>
+  <!-- Password Modal (Shown on page load) -->
+  <div id="passwordModal" class="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 mx-auto bg-[#ad986c]/10 rounded-full flex items-center justify-center mb-4">
+          <svg class="w-8 h-8 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </div>
+        <h2 class="text-2xl font-playfair font-bold text-gray-900 mb-2">Event Access</h2>
+        <p class="text-sm font-inter text-gray-600">Please enter the password <strong>Tennis2022</strong> to view the details for <strong>{eventData.title}</strong>. This is to stop web scrapers.</p>
+      </div>
+      
+      <form id="passwordForm" class="space-y-4">
+        <div>
+          <input 
+            type="password" 
+            id="passwordInput"
+            placeholder="Enter password..."
+            class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-sm font-inter text-gray-900 focus:ring-2 focus:ring-[#ad986c] focus:border-[#ad986c] transition-all outline-none"
+            autofocus
+          />
+          <p id="passwordError" class="hidden text-sm text-red-600 mt-2 font-inter">Incorrect password. Please try again.</p>
+        </div>
+        
+        <button 
+          type="submit"
+          class="w-full bg-[#ad986c] hover:bg-[#8d7a56] text-white font-inter font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+        >
+          Unlock Event Details
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Protected Content (Hidden until password verified) -->
+  <div id="protectedContent" class="hidden opacity-0 transition-opacity duration-500">
+    
+    <!-- Hero Section -->
+    <section class="relative w-full h-[50vh] min-h-[400px] lg:h-[60vh] overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-b from-[#0D1C4E]/60 via-[#0D1C4E]/40 to-[#0D1C4E]/80 z-10"></div>
+      <img 
+        src={heroImageUrl}
+        alt={eventData.title}
+        class="absolute inset-0 w-full h-full object-cover"
+        loading="eager"
+      />
+      
+      <div class="relative z-20 container mx-auto max-w-[1400px] px-4 sm:px-10 h-full flex flex-col justify-center items-center text-center">
+        {eventData.product && (
+        <div class="inline-block px-4 py-1 rounded-full bg-[#ad986c] text-white text-xs sm:text-sm font-inter font-semibold tracking-wide uppercase mb-6 shadow-lg">
+          {eventData.product}
+        </div>
+        )}
+        <h1 class="text-3xl sm:text-5xl lg:text-6xl font-playfair font-bold text-white mb-4 sm:mb-6 leading-tight max-w-5xl drop-shadow-md">
+          {eventData.title}
+        </h1>
+        <div class="flex flex-wrap justify-center items-center gap-4 sm:gap-8 text-gray-100 font-inter text-base sm:text-lg">
+            <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                <span>{eventData.dateText}</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>{eventData.venue || eventData.location}</span>
+            </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- "Everything you need" Section -->
+    <section class="w-full bg-white py-16 sm:py-20 lg:py-24">
+        <div class="container mx-auto max-w-[1200px] px-4 sm:px-10">
+            <div class="flex flex-col-reverse lg:grid lg:grid-cols-12 gap-10 lg:gap-16 items-center">
+                
+                <!-- Left Column: Links List -->
+                <div class="w-full lg:col-span-5">
+                    <div class="bg-gray-50 rounded-2xl p-8 border border-gray-100 shadow-sm">
+                        <h3 class="text-sm font-inter font-bold text-[#ad986c] tracking-widest uppercase mb-6">Quick Links</h3>
+                        <ul class="space-y-6">
+                            <li>
+                                <a href={eventData.venueLink} target="_blank" rel="noopener noreferrer" class="group flex items-start gap-4 p-4 rounded-xl bg-white border border-gray-200 hover:border-[#ad986c] hover:shadow-md transition-all duration-300">
+                                    <div class="w-10 h-10 rounded-full bg-[#ad986c]/10 flex items-center justify-center flex-shrink-0 group-hover:bg-[#ad986c] transition-colors duration-300">
+                                        <div class="text-[#ad986c] group-hover:text-white transition-colors duration-300">
+                                            <MapPinIcon class="w-5 h-5" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span class="block text-lg font-playfair font-semibold text-gray-900 group-hover:text-[#ad986c] transition-colors">Your Location</span>
+                                        <span class="text-sm font-inter text-gray-500">View venue details & map</span>
+                                    </div>
+                                </a>
+                            </li>
+                             {!isClinic && (
+                             <li>
+                                <a href="/active-away-what-to-bring" class="group flex items-start gap-4 p-4 rounded-xl bg-white border border-gray-200 hover:border-[#ad986c] hover:shadow-md transition-all duration-300">
+                                    <div class="w-10 h-10 rounded-full bg-[#ad986c]/10 flex items-center justify-center flex-shrink-0 group-hover:bg-[#ad986c] transition-colors duration-300">
+                                        <div class="text-[#ad986c] group-hover:text-white transition-colors duration-300">
+                                            <SuitcaseIcon class="w-5 h-5" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span class="block text-lg font-playfair font-semibold text-gray-900 group-hover:text-[#ad986c] transition-colors">What to Bring Guide</span>
+                                        <span class="text-sm font-inter text-gray-500">Essential packing list</span>
+                                    </div>
+                                </a>
+                            </li>
+                            )}
+                             {!isClinic && (
+                             <li>
+                                <a href="/active-away-travel-guides/" class="group flex items-start gap-4 p-4 rounded-xl bg-white border border-gray-200 hover:border-[#ad986c] hover:shadow-md transition-all duration-300">
+                                    <div class="w-10 h-10 rounded-full bg-[#ad986c]/10 flex items-center justify-center flex-shrink-0 group-hover:bg-[#ad986c] transition-colors duration-300">
+                                        <div class="text-[#ad986c] group-hover:text-white transition-colors duration-300">
+                                            <PlaneIcon class="w-5 h-5" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span class="block text-lg font-playfair font-semibold text-gray-900 group-hover:text-[#ad986c] transition-colors">Travel Guide</span>
+                                        <span class="text-sm font-inter text-gray-500">Getting there & logistics</span>
+                                    </div>
+                                </a>
+                            </li>
+                            )}
+                             <li>
+                                <a href="/faqs" class="group flex items-start gap-4 p-4 rounded-xl bg-white border border-gray-200 hover:border-[#ad986c] hover:shadow-md transition-all duration-300">
+                                    <div class="w-10 h-10 rounded-full bg-[#ad986c]/10 flex items-center justify-center flex-shrink-0 group-hover:bg-[#ad986c] transition-colors duration-300">
+                                        <div class="text-[#ad986c] group-hover:text-white transition-colors duration-300">
+                                            <HelpCircleIcon class="w-5 h-5" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span class="block text-lg font-playfair font-semibold text-gray-900 group-hover:text-[#ad986c] transition-colors">FAQs</span>
+                                        <span class="text-sm font-inter text-gray-500">Common questions answered</span>
+                                    </div>
+                                </a>
+                            </li>
+                             {eventData.itineraryUrl && (
+                             <li>
+                                <a href={eventData.itineraryUrl} target="_blank" rel="noopener noreferrer" class="group flex items-start gap-4 p-4 rounded-xl bg-white border border-gray-200 hover:border-[#ad986c] hover:shadow-md transition-all duration-300">
+                                    <div class="w-10 h-10 rounded-full bg-[#ad986c]/10 flex items-center justify-center flex-shrink-0 group-hover:bg-[#ad986c] transition-colors duration-300">
+                                        <div class="text-[#ad986c] group-hover:text-white transition-colors duration-300">
+                                            <DocumentIcon class="w-5 h-5" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span class="block text-lg font-playfair font-semibold text-gray-900 group-hover:text-[#ad986c] transition-colors">Itinerary</span>
+                                        <span class="text-sm font-inter text-gray-500">Download event schedule</span>
+                                    </div>
+                                </a>
+                            </li>
+                            )}
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Right Column: Text Content -->
+                <div class="w-full lg:col-span-7 text-center lg:text-left">
+                    <div class="text-sm font-inter font-semibold text-[#ad986c] tracking-[0.2em] uppercase mb-4">
+                        YOUR EVENT
+                    </div>
+                    <h2 class="text-4xl sm:text-5xl font-playfair font-bold text-gray-900 mb-6 leading-tight">
+                        Everything you need.
+                    </h2>
+                    <div class="prose prose-lg text-gray-600 font-inter leading-relaxed mx-auto lg:mx-0">
+                        <p class="mb-6">
+                            We can't wait to welcome you to {eventData.venue || eventData.location}! We've included everything you will need for an exceptional experience with us. Check out the links to the left to make sure you are well prepared.
+                        </p>
+                        <p>
+                            If you have any specific questions not covered in our guides, please don't hesitate to reach out to our team or your event host.
+                        </p>
+                    </div>
+                    
+                     {eventData.whatsappUrl && (
+                        <div class="mt-8">
+                             <a 
+                                href={eventData.whatsappUrl}
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                class="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#1da851] text-white px-8 py-3 rounded-full font-inter font-semibold transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                            >
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                                </svg>
+                                Join WhatsApp Group
+                            </a>
+                        </div>
+                    )}
+
+                </div>
+            </div>
+        </div>
+    </section>
+  </div>
+
+  <script define:vars={{ eventId: eventData.id }}>
+    // Password protection logic
+    const passwordModal = document.getElementById('passwordModal');
+    const passwordForm = document.getElementById('passwordForm');
+    const passwordInput = document.getElementById('passwordInput');
+    const passwordError = document.getElementById('passwordError');
+    const protectedContent = document.getElementById('protectedContent');
+    const CORRECT_PASSWORD = 'Tennis2022';
+    const SESSION_KEY = `event_auth_${eventId}`; // Unique session key per event
+
+    // Check if already authenticated for this specific event
+    if (sessionStorage.getItem(SESSION_KEY) === 'true') {
+      passwordModal.style.display = 'none';
+      protectedContent.classList.remove('hidden');
+      // Small delay to allow display:block to apply before opacity transition
+      requestAnimationFrame(() => {
+          protectedContent.classList.remove('opacity-0');
+      });
+    }
+
+    passwordForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const enteredPassword = passwordInput.value;
+      
+      if (enteredPassword === CORRECT_PASSWORD) {
+        // Success
+        sessionStorage.setItem(SESSION_KEY, 'true');
+        
+        // Hide modal
+        passwordModal.style.opacity = '0';
+        setTimeout(() => {
+            passwordModal.style.display = 'none';
+            
+            // Show content
+            protectedContent.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                 protectedContent.classList.remove('opacity-0');
+            });
+        }, 300);
+        
+      } else {
+        // Error
+        passwordError.classList.remove('hidden');
+        passwordInput.classList.add('border-red-500');
+        passwordInput.value = '';
+        setTimeout(() => {
+          passwordInput.classList.remove('border-red-500');
+        }, 2000);
+      }
+    });
+  </script>
+</BaseLayout>
+
