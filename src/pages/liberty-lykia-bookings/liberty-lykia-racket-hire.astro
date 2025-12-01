@@ -1,0 +1,191 @@
+---
+// Liberty Lykia Racket Hire Page
+// Hardcoded page with Planyo integration
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeroTailwind from '../../components/PageHeroTailwind.astro';
+import BreadcrumbsTailwind from '../../components/BreadcrumbsTailwind.astro';
+
+// Hardcoded SEO data
+const pageTitle = "Liberty Lykia Racket Hire | Active Away";
+const pageDescription = "Rent tennis and padel rackets at Liberty Lykia. High-quality equipment available for hourly rental.";
+const metaImage = 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/347a58af-ebc7-433a-a4f2-6063d9a2d800/public';
+const metaImageAlt = "Liberty Lykia Racket Hire";
+const metaImageWidth = 1920;
+const metaImageHeight = 1080;
+const canonicalURL = "https://activeaway.com/liberty-lykia-bookings/liberty-lykia-racket-hire";
+const keywords = "Liberty Lykia racket hire, tennis racket rental Turkey, padel racket rental";
+
+const heroData = {
+  pageHero: {
+    heading: "Liberty Lykia Racket Hire",
+    // Using the same background image as other booking pages
+    backgroundImage: {
+      url: 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/347a58af-ebc7-433a-a4f2-6063d9a2d800/public',
+      alt: 'Liberty Lykia Racket Hire'
+    },
+    showBreadcrumbs: true
+  }
+};
+
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Liberty Lykia Bookings', href: '/liberty-lykia-bookings' },
+  { label: 'Racket Hire' }
+];
+---
+
+<BaseLayout 
+  title={pageTitle} 
+  description={pageDescription}
+  metaImage={metaImage}
+  metaImageAlt={metaImageAlt}
+  metaImageWidth={metaImageWidth}
+  metaImageHeight={metaImageHeight}
+  canonicalURL={canonicalURL}
+  keywords={keywords}
+>
+  <!-- Hero Section with reduced height using custom CSS override -->
+  <div class="custom-hero-height">
+    <PageHeroTailwind pageData={heroData} breadcrumbs={breadcrumbs} />
+  </div>
+  
+  <!-- Breadcrumbs -->
+  <BreadcrumbsTailwind breadcrumbs={breadcrumbs} />
+
+  <!-- Navigation Buttons -->
+  <div class="w-full bg-white py-8 sm:py-12">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      <div class="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6">
+        <!-- Main Page Button -->
+        <a 
+          href="/liberty-lykia-bookings" 
+          class="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-[#0D1C4E] hover:bg-[#0D1C4E]/90 text-white px-8 py-4 rounded-full font-inter font-semibold text-base transition-all duration-300 hover:-translate-y-0.5"
+        >
+          Main Page
+        </a>
+
+        <!-- View by Product Button -->
+        <a 
+          href="/liberty-lykia-bookings/liberty-lykia-racket-hire/" 
+          class="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-gold hover:bg-gold-700 text-white px-8 py-4 rounded-full font-inter font-semibold text-base transition-all duration-300 hover:-translate-y-0.5"
+        >
+          View by Product
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info Cards Section (Pricing & Key Info) -->
+  <section class="w-full bg-white py-12 sm:py-16">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-10">
+        
+        <!-- Card 1: Pricing -->
+        <div class="flex flex-col items-center text-center group bg-white border-2 border-gray-200 rounded-2xl p-6 sm:p-8 hover:shadow-lg hover:border-gray-300 transition-all duration-300">
+          <!-- Icon (Star/Tag) -->
+          <div class="w-16 h-16 sm:w-18 sm:h-18 lg:w-20 lg:h-20 bg-[#ad986c] rounded-2xl flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+            <svg class="w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+            </svg>
+          </div>
+          
+          <h3 class="text-lg sm:text-xl font-playfair font-semibold text-[#ad986c] mb-4">
+            Pricing
+          </h3>
+          
+          <div class="text-base sm:text-lg font-inter text-gray-700 leading-relaxed space-y-2">
+            <p><strong>Racket Hire</strong> – Tennis or Padel Racket hire is €5/hr per racket.</p>
+            <p><strong>Penalty Charge</strong> – If the racket is not returned a charge of €150 will be processed to your card.</p>
+          </div>
+        </div>
+
+        <!-- Card 2: Key Information -->
+        <div class="flex flex-col items-center text-center group bg-white border-2 border-gray-200 rounded-2xl p-6 sm:p-8 hover:shadow-lg hover:border-gray-300 transition-all duration-300">
+          <!-- Icon (Shield/Info) -->
+          <div class="w-16 h-16 sm:w-18 sm:h-18 lg:w-20 lg:h-20 bg-[#ad986c] rounded-2xl flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+            <svg class="w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          
+          <h3 class="text-lg sm:text-xl font-playfair font-semibold text-[#ad986c] mb-4">
+            Key Information
+          </h3>
+          
+          <div class="text-base sm:text-lg font-inter text-gray-700 leading-relaxed text-left inline-block">
+            <ul class="list-disc pl-5 space-y-2">
+              <li>You will be given access to the lock box where the rackets are stored.</li>
+              <li>We have CCTV at the lock box and reserve the right to charge your card €150 for any racket not returned.</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Booking Section -->
+  <div class="w-full bg-gray-50 py-12 sm:py-16 lg:py-24">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      
+      <h2 class="text-3xl sm:text-4xl font-playfair font-semibold text-center text-gray-900 mb-8 sm:mb-12">
+        Book Equipment
+      </h2>
+
+      <!-- Planyo Container -->
+      <div class="bg-white p-4 rounded-2xl shadow-sm">
+        <script type='text/javascript' src='https://www.planyo.com/as.js' is:inline></script>
+        <iframe id='calp_1589571717' 
+            class='calprev_iframe caltype_4 w-full min-h-[600px]' 
+            scrolling='no' 
+            frameborder='0' 
+            src='https://www.planyo.com/embed-calendar.php?resource_id=244509&calendar=70114&style=week-grid&days=21&feedback_url=https%3A%2F%2Factiveaway.com%2Fliberty-lykia-bookings%2F&custom-language=EN&ifr=calp_1589571717&find_first_av=1&desktop=1'>
+        </iframe>
+      </div>
+      
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  /* Style overrides for buttons */
+  .bg-gold {
+    background-color: #ad986c;
+  }
+  .hover\:bg-gold-700:hover {
+    background-color: #8a7454;
+  }
+  
+  /* Force smaller hero height */
+  .custom-hero-height :global(section) {
+    height: 300px !important;
+    min-height: 300px !important;
+  }
+  
+  /* Fix vertical centering by removing bottom margin from heading when no subtitle exists */
+  .custom-hero-height :global(h1) {
+    margin-bottom: 0 !important;
+  }
+  
+  @media (min-width: 640px) {
+    .custom-hero-height :global(section) {
+      height: 350px !important;
+      min-height: 350px !important;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .custom-hero-height :global(section) {
+      height: 400px !important;
+      min-height: 400px !important;
+    }
+  }
+
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+</style>
