@@ -8,6 +8,9 @@ interface Props {
 
 const { productData } = Astro.props;
 
+// Check if we are on a clinic page
+const isClinicPage = Astro.url.pathname.includes('clinic');
+
 // Extract schedule data with fallbacks
 const scheduleData = {
   heading: productData?.schedule?.heading || '',
@@ -57,14 +60,14 @@ const hasSchedule = scheduleData.scheduleRows && scheduleData.scheduleRows.lengt
               <div class="divide-y divide-gray-200">
                 {row.morning && (
                   <div class="p-4">
-                    <h4 class="text-sm font-inter font-semibold text-gray-900 mb-2 uppercase tracking-wide">Morning</h4>
+                    <h4 class="text-sm font-inter font-semibold text-gray-900 mb-2 uppercase tracking-wide">{isClinicPage ? 'Content' : 'Morning'}</h4>
                     <div class="text-base sm:text-lg font-inter text-gray-700 leading-relaxed prose max-w-none">
                       <Fragment set:html={row.morning} />
                     </div>
                   </div>
                 )}
                 
-                {row.afternoon && (
+                {!isClinicPage && row.afternoon && (
                   <div class="p-4">
                     <h4 class="text-sm font-inter font-semibold text-gray-900 mb-2 uppercase tracking-wide">Afternoon</h4>
                     <div class="text-base sm:text-lg font-inter text-gray-700 leading-relaxed prose max-w-none">
@@ -73,7 +76,7 @@ const hasSchedule = scheduleData.scheduleRows && scheduleData.scheduleRows.lengt
                   </div>
                 )}
                 
-                {row.evening && (
+                {!isClinicPage && row.evening && (
                   <div class="p-4">
                     <h4 class="text-sm font-inter font-semibold text-gray-900 mb-2 uppercase tracking-wide">Evening</h4>
                     <div class="text-base sm:text-lg font-inter text-gray-700 leading-relaxed prose max-w-none">
@@ -93,17 +96,21 @@ const hasSchedule = scheduleData.scheduleRows && scheduleData.scheduleRows.lengt
           <thead>
             <tr class="bg-[#0D1C4E]">
               <th class="text-left px-6 py-4 text-white font-inter font-semibold text-base sm:text-lg border-r border-white/20">
-                Days
+                {isClinicPage ? 'Timings' : 'Days'}
               </th>
-              <th class="text-left px-6 py-4 text-white font-inter font-semibold text-base sm:text-lg border-r border-white/20">
-                Morning
+              <th class={`text-left px-6 py-4 text-white font-inter font-semibold text-base sm:text-lg ${!isClinicPage ? 'border-r border-white/20' : ''}`}>
+                {isClinicPage ? 'Content' : 'Morning'}
               </th>
+              {!isClinicPage && (
               <th class="text-left px-6 py-4 text-white font-inter font-semibold text-base sm:text-lg border-r border-white/20">
                 Afternoon
               </th>
+              )}
+              {!isClinicPage && (
               <th class="text-left px-6 py-4 text-white font-inter font-semibold text-base sm:text-lg">
                 Evening
               </th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -112,7 +119,7 @@ const hasSchedule = scheduleData.scheduleRows && scheduleData.scheduleRows.lengt
                 <td class="px-6 py-5 text-gray-900 font-inter font-semibold text-base sm:text-lg border-r border-gray-200 align-top">
                   {row.day}
                 </td>
-                <td class="px-6 py-5 text-gray-700 font-inter text-base sm:text-lg leading-relaxed border-r border-gray-200 align-top">
+                <td class={`px-6 py-5 text-gray-700 font-inter text-base sm:text-lg leading-relaxed ${!isClinicPage ? 'border-r border-gray-200' : ''} align-top`}>
                   {row.morning ? (
                     <div class="prose max-w-none">
                       <Fragment set:html={row.morning} />
@@ -121,6 +128,7 @@ const hasSchedule = scheduleData.scheduleRows && scheduleData.scheduleRows.lengt
                     <span class="text-gray-400">—</span>
                   )}
                 </td>
+                {!isClinicPage && (
                 <td class="px-6 py-5 text-gray-700 font-inter text-base sm:text-lg leading-relaxed border-r border-gray-200 align-top">
                   {row.afternoon ? (
                     <div class="prose max-w-none">
@@ -130,6 +138,8 @@ const hasSchedule = scheduleData.scheduleRows && scheduleData.scheduleRows.lengt
                     <span class="text-gray-400">—</span>
                   )}
                 </td>
+                )}
+                {!isClinicPage && (
                 <td class="px-6 py-5 text-gray-700 font-inter text-base sm:text-lg leading-relaxed align-top">
                   {row.evening ? (
                     <div class="prose max-w-none">
@@ -139,6 +149,7 @@ const hasSchedule = scheduleData.scheduleRows && scheduleData.scheduleRows.lengt
                     <span class="text-gray-400">—</span>
                   )}
                 </td>
+                )}
               </tr>
             ))}
           </tbody>

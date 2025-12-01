@@ -6311,6 +6311,7 @@ export async function getProductPageBySlug(slug) {
         title: page.jamieMurray.title,
         description: page.jamieMurray.description,
         buttonText: page.jamieMurray.buttonText,
+        buttonURL: page.jamieMurray.buttonURL,
         videoUrl: page.jamieMurray.videoUrl,
         image: getStrapiImageData(page.jamieMurray.image),
         achievements: page.jamieMurray.achievements || []
