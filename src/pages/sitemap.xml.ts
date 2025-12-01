@@ -1,49 +1,60 @@
 import type { APIRoute } from 'astro';
-import { fetchAPI } from '../utils/strapi';
+import { getSitemapGroups, getSitemapEntries } from '../utils/sitemap';
 
 export const GET: APIRoute = async ({ request }) => {
-  try {
-    const url = new URL(request.url);
-    // Forward the request to Strapi's sitemap plugin endpoint
-    // The plugin usually exposes /sitemap/index.xml or just /sitemap.xml
-    // We'll try to proxy the request path (e.g. /sitemap.xml or /sitemap/xsl/sitemap.xsl)
-    
-    // Determine the Strapi endpoint path
-    // If the request is for /sitemap.xml, usually Strapi plugin serves it at /sitemap/index.xml or similar
-    // But commonly, standard plugins serve at /sitemap/index.xml
-    
-    // Let's assume standard behavior:
-    // - /sitemap.xml -> proxies to Strapi's /sitemap/index.xml
-    // - /sitemap/xsl/* -> proxies to Strapi's /sitemap/xsl/* (for styling)
-    
-    let strapiPath = '/sitemap/index.xml';
-    
-    // You might need to adjust this based on exactly how the plugin is configured
-    // Standard strapi-plugin-sitemap output:
-    const response = await fetch(`${import.meta.env.STRAPI_URL || 'http://localhost:1337'}${strapiPath}`);
+  const siteUrl = import.meta.env.SITE || 'https://activeaway.com';
+  const baseUrl = siteUrl.endsWith('/') ? siteUrl.slice(0, -1) : siteUrl;
+  
+  // Get available groups dynamically from the config
+  const groups = getSitemapGroups();
+  const now = new Date().toISOString();
 
-    if (!response.ok) {
-      return new Response('Sitemap not found', { status: 404 });
-    }
-
-    const xml = await response.text();
-
-    // Replace Strapi URL with Site URL in the XML content if necessary
-    // (The plugin might generate absolute URLs with Strapi domain if not configured with frontend URL)
-    // const siteUrl = import.meta.env.SITE_URL || 'https://activeaway.com';
-    // const strapiUrl = import.meta.env.STRAPI_URL || 'http://localhost:1337';
-    // const cleanXml = xml.replaceAll(strapiUrl, siteUrl);
-
-    return new Response(xml, {
-      headers: {
-        'Content-Type': 'application/xml',
-        'Cache-Control': 'public, max-age=3600'
+  // Fetch counts for each group (Parallel)
+  // We need to know how many URLs are in each group to display it
+  const groupData = await Promise.all(groups.map(async (group) => {
+    try {
+      const entries = await getSitemapEntries(group);
+      
+      // Find the most recent lastmod if available, otherwise use current time
+      let lastmod = now;
+      if (entries.length > 0) {
+        // Sort by date descending to get latest
+        const sorted = [...entries].sort((a, b) => {
+          const dateA = new Date(a.lastmod || 0).getTime();
+          const dateB = new Date(b.lastmod || 0).getTime();
+          return dateB - dateA;
+        });
+        if (sorted[0].lastmod) {
+          lastmod = sorted[0].lastmod;
+        }
       }
-    });
-  } catch (error) {
-    console.error('Error proxying sitemap:', error);
-    return new Response('Internal Server Error', { status: 500 });
-  }
+
+      return {
+        group,
+        count: entries.length,
+        lastmod
+      };
+    } catch (e) {
+      console.error(`Error fetching group ${group} for index:`, e);
+      return { group, count: 0, lastmod: now };
+    }
+  }));
+
+  const sitemapIndex = `<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/default-sitemap.xsl"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:aa="http://activeaway.com/schemas/sitemap">
+  ${groupData.map(data => `
+  <sitemap aa:count="${data.count}">
+    <loc>${baseUrl}/${data.group}-sitemap.xml</loc>
+    <lastmod>${data.lastmod}</lastmod>
+  </sitemap>
+  `).join('')}
+</sitemapindex>`;
+
+  return new Response(sitemapIndex, {
+    headers: {
+      'Content-Type': 'application/xml',
+      'Cache-Control': 'public, max-age=3600'
+    }
+  });
 };
-
-
