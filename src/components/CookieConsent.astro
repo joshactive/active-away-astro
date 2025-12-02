@@ -183,6 +183,8 @@ const {
       } catch (e) {
         // If parsing fails, clear invalid data
         localStorage.removeItem(COOKIE_CONSENT_KEY);
+        // Also delete cookie to ensure fresh start
+        setCookie(COOKIE_CONSENT_KEY, "", -1); 
         return null;
       }
     }
@@ -204,6 +206,9 @@ const {
     // Only set domain attribute if we are on the production domain
     if (hostname.endsWith("activeaway.com")) {
       domainAttribute = "; domain=.activeaway.com";
+      // CRITICAL FIX: Attempt to delete potential host-only duplicate cookie
+      // This prevents conflicts where a host-only cookie shadows the domain cookie
+      document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax";
     }
     
     document.cookie = name + "=" + (encodeURIComponent(value) || "") + expires + "; path=/" + domainAttribute + "; SameSite=Lax";
@@ -368,12 +373,21 @@ const {
   // For static site, page reload handles it. 
   // But if user went to privacy policy and navigated back, we need to show it.
   // Astro view transitions might require this event listener:
-  document.addEventListener('astro:page-load', () => {
+  
+  const handlePageLoad = () => {
     const stored = getStoredConsent();
     if (!stored) {
       showOverlay();
     } else {
       initScripts(stored);
     }
-  });
+  };
+
+  // Remove previous listener if exists (for View Transitions) to prevent stacking
+  if (window.activeAwayCookieListener) {
+    document.removeEventListener('astro:page-load', window.activeAwayCookieListener);
+  }
+
+  document.addEventListener('astro:page-load', handlePageLoad);
+  window.activeAwayCookieListener = handlePageLoad;
 </script>
