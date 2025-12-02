@@ -26,17 +26,18 @@ DATABASE_URL=postgresql://user:password@host:port/database?sslmode=require
 - Without this, Instagram posts won't display
 - The token is stored in the database and updated via Make.com automation
 
-### **3. Newsletter (Optional but Recommended)**
+### **3. Newsletter & Logging (Optional but Recommended)**
 ```
 NEWSLETTER_WEBHOOK_URL=your_webhook_url_here
+LOGGING_WEBHOOK_URL=https://hook.eu1.make.com/eda84uk3f57l499so98ao76feec0j7dz
 TURNSTILE_SECRET_KEY=your_turnstile_secret_here
 PUBLIC_TURNSTILE_SITE_KEY=your_turnstile_site_key_here
 ```
 
-**Required for:** Newsletter signup form in footer
-- `NEWSLETTER_WEBHOOK_URL`: Where form submissions are sent
-- `TURNSTILE_SECRET_KEY`: Server-side Cloudflare Turnstile verification
-- `PUBLIC_TURNSTILE_SITE_KEY`: Client-side Turnstile widget (public-facing)
+**Required for:** 
+- Newsletter signup form in footer (`NEWSLETTER_WEBHOOK_URL`)
+- 404 Error Logging (`LOGGING_WEBHOOK_URL`) - **NEW**
+- Cloudflare Turnstile verification (`TURNSTILE_SECRET_KEY`, `PUBLIC_TURNSTILE_SITE_KEY`)
 
 ### **4. Strapi CMS**
 ```

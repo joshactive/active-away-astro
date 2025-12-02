@@ -8219,15 +8219,37 @@ export async function getSalesLandingPageBySlug(slug) {
  */
 export async function getRedirects() {
   try {
-    const params = [
-      'filters[enabled][$eq]=true',
-      'pagination[pageSize]=500',
-      'sort[0]=sourcePath:desc'
-    ].join('&');
+    let allData = [];
+    let page = 1;
+    let pageCount = 1;
+    const pageSize = 100;
 
-    const data = await fetchAPI(`/redirects?${params}`);
+    while (page <= pageCount) {
+      const params = [
+        'filters[enabled][$eq]=true',
+        `pagination[pageSize]=${pageSize}`,
+        `pagination[page]=${page}`,
+        'sort[0]=sourcePath:desc'
+      ].join('&');
 
-    if (!data || !data.data) {
+      const response = await fetchAPI(`/redirects?${params}`);
+
+      if (!response || !response.data || response.data.length === 0) {
+        break;
+      }
+
+      allData = [...allData, ...response.data];
+
+      if (response.meta && response.meta.pagination) {
+        pageCount = response.meta.pagination.pageCount;
+      }
+      
+      page++;
+    }
+
+    console.log(`✅ [getRedirects] Loaded ${allData.length} redirects from Strapi`);
+
+    if (allData.length === 0) {
       return [];
     }
 
@@ -8255,7 +8277,7 @@ export async function getRedirects() {
       return path;
     };
 
-    return data.data
+    return allData
       .map((item) => item.attributes || item)
       .map((redirect) => {
         const sourcePath = normalizePath(redirect.sourcePath, false);

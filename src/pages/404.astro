@@ -127,6 +127,18 @@ const referrer = Astro.request.headers.get('referer') || 'Direct';
       referrer: referrer,
       timestamp: new Date().toISOString()
     });
+
+    // Send to server-side logging endpoint (which forwards to webhook)
+    fetch('/api/log-404.json', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        path: requestedPath,
+        referrer: referrer,
+        userAgent: navigator.userAgent,
+        timestamp: new Date().toISOString()
+      })
+    }).catch(err => console.error('Failed to log 404:', err));
   </script>
 </BaseLayout>
 
