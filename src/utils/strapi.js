@@ -8231,10 +8231,22 @@ export async function getRedirects() {
       return [];
     }
 
-    const normalizePath = (value) => {
+    const normalizePath = (value, preserveCase = false) => {
       if (!value) return null;
-      let path = value.trim().toLowerCase();
+      let path = value.trim();
+      
+      if (!preserveCase) {
+        path = path.toLowerCase();
+      }
+      
       if (!path) return null;
+
+      // If it's an absolute URL, return it as is
+      const lowerPath = path.toLowerCase();
+      if (lowerPath.startsWith('http://') || lowerPath.startsWith('https://')) {
+        return path;
+      }
+
       if (!path.startsWith('/')) {
         path = `/${path}`;
       }
@@ -8246,8 +8258,8 @@ export async function getRedirects() {
     return data.data
       .map((item) => item.attributes || item)
       .map((redirect) => {
-        const sourcePath = normalizePath(redirect.sourcePath);
-        const destinationPath = normalizePath(redirect.destinationPath);
+        const sourcePath = normalizePath(redirect.sourcePath, false);
+        const destinationPath = normalizePath(redirect.destinationPath, true);
         if (!sourcePath || !destinationPath) {
           return null;
         }
