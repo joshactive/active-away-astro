@@ -1,9 +1,13 @@
 import type { APIRoute } from 'astro';
 
-export const POST: APIRoute = async ({ request }) => {
-  const WEBHOOK_URL = import.meta.env.LOGGING_WEBHOOK_URL;
+export const POST: APIRoute = async (context) => {
+  const request = context.request;
+  const runtime = context.locals?.runtime;
+  // @ts-ignore
+  const WEBHOOK_URL = runtime?.env?.LOGGING_WEBHOOK_URL || import.meta.env.LOGGING_WEBHOOK_URL;
 
   if (!WEBHOOK_URL) {
+    console.error('Logging webhook not configured. Available env vars:', Object.keys(import.meta.env));
     return new Response(JSON.stringify({ error: 'Logging webhook not configured' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
