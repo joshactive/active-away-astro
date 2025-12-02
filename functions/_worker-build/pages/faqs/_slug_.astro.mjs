@@ -1,9 +1,9 @@
 globalThis.process ??= {}; globalThis.process.env ??= {};
 /* empty css                                     */
-import { e as createAstro, f as createComponent, r as renderTemplate, k as renderComponent, m as maybeRenderHead, h as addAttribute, l as Fragment, u as unescapeHTML } from '../../chunks/astro/server_BeIGjyuI.mjs';
-import { $ as $$BaseLayout } from '../../chunks/BaseLayout_e9z-o-Yt.mjs';
-import { $ as $$PageHeroTailwind, a as $$BreadcrumbsTailwind } from '../../chunks/BreadcrumbsTailwind_De0EKU-M.mjs';
-import { s as getFAQCategoryBySlug, t as getFAQCategorySEO } from '../../chunks/strapi_o4DRQMSu.mjs';
+import { e as createAstro, f as createComponent, r as renderTemplate, k as renderComponent, m as maybeRenderHead, h as addAttribute, n as Fragment, u as unescapeHTML } from '../../chunks/astro/server_BoSsXtn0.mjs';
+import { $ as $$BaseLayout } from '../../chunks/BaseLayout_DiRkp85h.mjs';
+import { $ as $$PageHeroTailwind, a as $$BreadcrumbsTailwind } from '../../chunks/BreadcrumbsTailwind_DmTLHMJT.mjs';
+import { D as getFAQCategoryBySlug, E as getFAQCategorySEO } from '../../chunks/strapi_CoI6gAxC.mjs';
 import { p as parseMarkdown } from '../../chunks/markdown_C9eAVA1x.mjs';
 /* empty css                                     */
 export { renderers } from '../../renderers.mjs';
@@ -12,7 +12,7 @@ var __freeze = Object.freeze;
 var __defProp = Object.defineProperty;
 var __template = (cooked, raw) => __freeze(__defProp(cooked, "raw", { value: __freeze(cooked.slice()) }));
 var _a;
-const $$Astro = createAstro("https://active-away-astro.pages.dev");
+const $$Astro = createAstro("https://activeaway.com");
 const $$slug = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro, $$props, $$slots);
   Astro2.self = $$slug;

@@ -387,7 +387,7 @@ function getStrapiImageAttrs(strapiImage, config = {}) {
   };
 }
 
-const __vite_import_meta_env__ = {"ASSETS_PREFIX": undefined, "BASE_URL": "/", "DEV": false, "MODE": "production", "PROD": true, "PUBLIC_TURNSTILE_SITE_KEY": "0x4AAAAAAB9Kq5NzSwkzyLBP", "SITE": "https://active-away-astro.pages.dev", "SSR": true};
+const __vite_import_meta_env__ = {"ASSETS_PREFIX": undefined, "BASE_URL": "/", "DEV": false, "MODE": "production", "PROD": true, "PUBLIC_TURNSTILE_SITE_KEY": "0x4AAAAAAB9Kq5NzSwkzyLBP", "SITE": "https://activeaway.com", "SSR": true};
 const DEFAULT_STRAPI_URL = "http://localhost:1337";
 const DEFAULT_STRAPI_TOKEN = "";
 function getRuntimeEnv() {
@@ -415,6 +415,10 @@ function getStrapiUrl() {
 }
 function getStrapiToken() {
   return getEnvValue("STRAPI_API_TOKEN", DEFAULT_STRAPI_TOKEN);
+}
+function normalizeBookingLink(url) {
+  if (!url || url === "#") return "#";
+  return url.replace(/^https?:\/\/activeaway\.com/, "");
 }
 const EVENT_PLACEHOLDER_URL = getCloudflareImageUrl("45b69090-1c22-46cd-7f98-086ba71efc00", {
   width: 402,
@@ -622,18 +626,42 @@ async function getFutureEvents() {
       const featuredImage = event.featuredImage ? getStrapiImageData(event.featuredImage) : null;
       const priceText = event.price ? `from £${event.price}` : null;
       const priceAmount = event.price ? `£${event.price}` : null;
+      const isSoldOut = event.isSoldOut || event.status?.toLowerCase() === "sold out";
+      const spotsLeft = event.spotsLeft || 0;
+      let statusBadge = "Available";
+      let statusClass = "bg-green-100 text-green-800";
+      if (isSoldOut) {
+        statusBadge = "Sold Out";
+        statusClass = "bg-red-100 text-red-800";
+      } else if (spotsLeft > 0 && spotsLeft <= 5) {
+        statusBadge = `${spotsLeft} spots left`;
+        statusClass = "bg-orange-100 text-orange-800";
+      } else if (spotsLeft > 5) {
+        statusBadge = "Available";
+        statusClass = "bg-green-100 text-green-800";
+      }
       return {
         id: item.id || index + 1,
         title: event.title || "Untitled Event",
         location: event.countryEvents || "TBC",
         type: event.product || "Event",
         date: formattedDate,
+        dateFrom: event.dateFrom || "",
+        dateUntil: event.dateUntil || "",
         price: priceText,
         amount: priceAmount,
         image: featuredImage?.url || EVENT_PLACEHOLDER_URL,
         // Fallback image with responsive transform
         imageAlt: featuredImage?.alt || event.title || "Event image",
-        imageSrcSet: featuredImage?.url ? `${featuredImage.url}?width=320 320w, ${featuredImage.url}?width=640 640w, ${featuredImage.url}?width=1024 1024w` : null
+        imageSrcSet: featuredImage?.url ? `${featuredImage.url}?width=320 320w, ${featuredImage.url}?width=640 640w, ${featuredImage.url}?width=1024 1024w` : null,
+        bookingLink: normalizeBookingLink(event.bookingLink),
+        venueLink: event.venueLink || "#",
+        buttonText: event.buttonText || "Book Now",
+        buttonColour: event.buttonColour || "#ad986c",
+        isSoldOut,
+        statusBadge,
+        statusClass,
+        singleOccupancyPrice: event.singleOccupancyPriceEvent || null
       };
     });
     return events;
@@ -641,6 +669,86 @@ async function getFutureEvents() {
     console.error("❌ Error fetching future events:", error);
     return [];
   }
+}
+async function getEventBySlug(slug) {
+  try {
+    if (!slug) {
+      console.warn("⚠️ No slug provided to getEventBySlug");
+      return null;
+    }
+    console.log(`🔍 Fetching event by slug: "${slug}"`);
+    let data = await fetchAPI(`/events?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=*`);
+    if ((!data || !data.data || data.data.length === 0) && /^\d+$/.test(slug)) {
+      console.log(`ℹ️ Trying to fetch by ID: "${slug}"`);
+      const dataById = await fetchAPI(`/events/${slug}?populate=*`);
+      if (dataById && dataById.data) {
+        return processEventData(dataById.data);
+      }
+    }
+    if (!data || !data.data || data.data.length === 0) {
+      console.log(`ℹ️ Trying to fetch by documentId: "${slug}"`);
+      const dataByDocId = await fetchAPI(`/events?filters[documentId][$eq]=${encodeURIComponent(slug)}&populate=*`);
+      if (dataByDocId && dataByDocId.data && dataByDocId.data.length > 0) {
+        return processEventData(dataByDocId.data[0]);
+      }
+    }
+    if (!data || !data.data || data.data.length === 0) {
+      console.log(`ℹ️ No event found for slug: "${slug}"`);
+      return null;
+    }
+    return processEventData(data.data[0]);
+  } catch (error) {
+    console.error(`❌ Error fetching event by slug "${slug}":`, error);
+    return null;
+  }
+}
+function processEventData(item) {
+  const event = item.attributes || item;
+  console.log(`✅ Found event: "${event.title}"`);
+  let formattedDate = "";
+  let formattedDateFrom = "";
+  let formattedDateUntil = "";
+  if (event.dateFrom && event.dateUntil) {
+    const fromDate = new Date(event.dateFrom);
+    const untilDate = new Date(event.dateUntil);
+    const dayFrom = fromDate.toLocaleDateString("en-GB", { weekday: "short", day: "2-digit" });
+    const monthFrom = fromDate.toLocaleDateString("en-GB", { month: "short" });
+    const dayUntil = untilDate.toLocaleDateString("en-GB", { weekday: "short", day: "2-digit" });
+    const monthUntil = untilDate.toLocaleDateString("en-GB", { month: "short" });
+    const year = untilDate.toLocaleDateString("en-GB", { year: "numeric" });
+    formattedDateFrom = `${dayFrom} ${monthFrom} ${year}`;
+    formattedDateUntil = `${dayUntil} ${monthUntil} ${year}`;
+    if (monthFrom === monthUntil) {
+      formattedDate = `${dayFrom} - ${dayUntil} ${monthUntil} ${year}`;
+    } else {
+      formattedDate = `${dayFrom} ${monthFrom} - ${dayUntil} ${monthUntil} ${year}`;
+    }
+  }
+  const featuredImage = event.featuredImage ? getStrapiImageData(event.featuredImage) : null;
+  return {
+    id: item.id,
+    documentId: item.documentId,
+    title: event.title || "Untitled Event",
+    slug: event.slug,
+    dateText: event.dateText || formattedDate,
+    dateFrom: event.dateFrom,
+    dateUntil: event.dateUntil,
+    formattedDateFrom,
+    formattedDateUntil,
+    location: event.countryEvents || event.country || "TBC",
+    venue: event.venue_plain_text || "",
+    price: event.price || null,
+    image: featuredImage?.url || null,
+    imageAlt: featuredImage?.alt || event.title || "Event image",
+    bookingLink: normalizeBookingLink(event.bookingLink),
+    venueLink: event.venueLink || "#",
+    whatsappUrl: event.whatsapp_url || "",
+    itineraryUrl: event.itinerary_url || "",
+    // Added itinerary URL
+    description: event.description || "",
+    product: event.product || ""
+    // Make sure product is returned
+  };
 }
 async function getEventsByUniqueValue(uniqueValue) {
   try {
@@ -692,9 +800,10 @@ async function getEventsByUniqueValue(uniqueValue) {
         dateText: event.dateText || formattedDate,
         dateFrom: event.dateFrom,
         dateUntil: event.dateUntil,
+        location: event.countryEvents || event.country || "TBC",
         price: event.price || null,
         singleOccupancyPrice: event.singleOccupancyPriceEvent || null,
-        bookingLink: event.bookingLink || "#",
+        bookingLink: normalizeBookingLink(event.bookingLink),
         buttonText: event.buttonText || "Book Now",
         buttonColour: event.buttonColour || "#ad986c",
         isSoldOut: event.isSoldOut || false,
@@ -772,9 +881,10 @@ async function getEventsByDocumentIds(documentIds) {
           dateText: event.dateText || formattedDate,
           dateFrom: event.dateFrom,
           dateUntil: event.dateUntil,
+          location: event.countryEvents || event.country || "TBC",
           price: event.price || null,
           singleOccupancyPrice: event.singleOccupancyPriceEvent || null,
-          bookingLink: event.bookingLink || "#",
+          bookingLink: normalizeBookingLink(event.bookingLink),
           buttonText: event.buttonText || "Book Now",
           buttonColour: event.buttonColour || "#ad986c",
           isSoldOut: event.isSoldOut || false,
@@ -824,6 +934,17 @@ async function getProducts() {
     return [];
   }
 }
+async function getReviews() {
+  try {
+    const response = await fetchAPI(
+      "/reviews?sort=reviewDate:desc&pagination[pageSize]=100"
+    );
+    return response?.data || [];
+  } catch (error) {
+    console.error("Error fetching reviews:", error);
+    return [];
+  }
+}
 async function getHomePage() {
   try {
     const data = await fetchAPI("/home?populate=*");
@@ -842,6 +963,34 @@ async function getHomePage() {
   } catch (error) {
     console.error("Error fetching home page:", error);
     return null;
+  }
+}
+async function getProductReviews(uniqueValue) {
+  if (!uniqueValue) return [];
+  try {
+    const response = await fetchAPI(
+      `/reviews?filters[reviewApplyTo][$eq]=${encodeURIComponent(uniqueValue)}&sort=reviewDate:desc&pagination[pageSize]=100`
+    );
+    const reviewsData = response?.data || [];
+    return reviewsData.filter((review) => {
+      const attrs = review.attributes || review;
+      return attrs.content && attrs.content.trim().length > 0;
+    }).map((review) => {
+      const attrs = review.attributes || review;
+      return {
+        id: review.id,
+        reviewName: attrs.reviewName,
+        reviewDate: attrs.reviewDate,
+        reviewRating: attrs.reviewRating,
+        content: attrs.content,
+        reviewSource: attrs.reviewSource,
+        reviewUrl: attrs.reviewUrl,
+        reviewApplyTo: attrs.reviewApplyTo
+      };
+    });
+  } catch (error) {
+    console.error(`Error fetching reviews for product ${uniqueValue}:`, error);
+    return [];
   }
 }
 async function getFeaturedLocations() {
@@ -955,6 +1104,7 @@ async function getHomeData() {
         heading: data.main_heading,
         subHeading: data.main_sub_heading,
         headerImage: data.headerImage ? getStrapiImageData(data.headerImage) : null,
+        headerImageMultiple: Array.isArray(data.headerImageMultiple) ? data.headerImageMultiple.map(getStrapiImageData) : data.headerImageMultiple ? [getStrapiImageData(data.headerImageMultiple)] : null,
         testimonialImages: [
           data.testimonialImage1 ? getStrapiImageData(data.testimonialImage1) : null,
           data.testimonialImage2 ? getStrapiImageData(data.testimonialImage2) : null,
@@ -1154,13 +1304,357 @@ async function getBlogs(limit = 8) {
         // Keep raw date for sorting
         image: headerImage.url,
         imageAlt: headerImage.alt || blog.title || "Blog post image",
-        slug: blog.slug || `post-${item.id}`
+        slug: blog.slug || `post-${item.id}`,
+        categorySlug: blog.categorySlug || "uncategorized"
+        // Add categorySlug for new URL structure
       };
     }).filter((blog) => blog !== null).slice(0, limit);
     return blogs;
   } catch (error) {
     console.error("❌ Error fetching blogs:", error);
     return [];
+  }
+}
+async function getBlogsByCategory(categorySlug, limit = 0) {
+  if (!categorySlug) {
+    console.warn("⚠️ [getBlogsByCategory] No categorySlug provided");
+    return [];
+  }
+  try {
+    console.log(`📝 [getBlogsByCategory] Fetching blogs for category: ${categorySlug}`);
+    let query = "/blogs?populate=headerImage&sort=CreationDate:desc&filters[publishedAt][$notNull]=true";
+    if (categorySlug === "uncategorized") {
+      query += `&filters[categorySlug][$eq]=${categorySlug}`;
+    } else {
+      query += `&filters[categorySlug][$eq]=${categorySlug}`;
+    }
+    if (limit > 0) {
+      query += `&pagination[limit]=${limit * 2}`;
+    } else {
+      query += `&pagination[limit]=1000`;
+    }
+    const data = await fetchAPI(query);
+    if (!data || !data.data || data.data.length === 0) {
+      console.log(`📝 [getBlogsByCategory] No blogs found for category: ${categorySlug}`);
+      return [];
+    }
+    const blogs = data.data.map((item, index) => {
+      const blog = item.attributes || item;
+      const headerImage = blog.headerImage ? getStrapiImageData(blog.headerImage) : null;
+      if (!headerImage || !headerImage.url) {
+        return null;
+      }
+      const creationDate = blog.CreationDate || blog.creation_date;
+      let formattedDate = "";
+      if (creationDate) {
+        const date = new Date(creationDate);
+        formattedDate = date.toLocaleDateString("en-GB", {
+          year: "numeric",
+          month: "long",
+          day: "numeric"
+        });
+      }
+      return {
+        id: item.id || index + 1,
+        title: blog.title || "Untitled Post",
+        description: blog.blogExcerpt || blog.blog_excerpt || "",
+        author: blog.authorFullName || blog.author_full_name || "Active Away",
+        date: formattedDate,
+        creationDate,
+        image: headerImage.url,
+        imageAlt: headerImage.alt || blog.title || "Blog post image",
+        slug: blog.slug || `post-${item.id}`,
+        categorySlug: blog.categorySlug || categorySlug
+      };
+    }).filter((blog) => blog !== null);
+    const finalBlogs = limit > 0 ? blogs.slice(0, limit) : blogs;
+    console.log(`✅ [getBlogsByCategory] Fetched ${finalBlogs.length} blogs for ${categorySlug}`);
+    return finalBlogs;
+  } catch (error) {
+    console.error(`❌ [getBlogsByCategory] Error fetching blogs for ${categorySlug}:`, error);
+    return [];
+  }
+}
+function formatCategorySlug(slug) {
+  if (!slug) return "";
+  return slug.split("-").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+}
+async function getAllBlogPosts() {
+  try {
+    console.log("📝 [getAllBlogPosts] Fetching all blog posts...");
+    const data = await fetchAPI("/blogs?filters[publishedAt][$notNull]=true&pagination[limit]=1000");
+    if (!data || !data.data || data.data.length === 0) {
+      console.warn("⚠️ [getAllBlogPosts] No blog posts found");
+      return [];
+    }
+    const posts = data.data.map((item) => {
+      const blog = item.attributes || item;
+      if (!blog.slug) {
+        console.warn(`⚠️ [getAllBlogPosts] Skipping blog post ${item.id} - missing slug`);
+        return null;
+      }
+      const categorySlug = blog.categorySlug || "uncategorized";
+      if (!blog.categorySlug) {
+        console.warn(`⚠️ [getAllBlogPosts] Blog post "${blog.title}" (${item.id}) has no categorySlug, using 'uncategorized'`);
+      }
+      return {
+        id: item.id,
+        documentId: item.documentId || item.id,
+        slug: blog.slug,
+        categorySlug
+      };
+    }).filter((post) => post !== null);
+    console.log(`✅ [getAllBlogPosts] Fetched ${posts.length} blog posts`);
+    return posts;
+  } catch (error) {
+    console.error("❌ [getAllBlogPosts] Error:", error);
+    return [];
+  }
+}
+async function getBlogBySlug(categorySlug, slug, fallbackIdentifiers = {}) {
+  if (!categorySlug || !slug) {
+    console.warn("⚠️ [getBlogBySlug] Missing categorySlug or slug");
+    return null;
+  }
+  try {
+    console.log(`📝 [getBlogBySlug] Fetching blog: ${categorySlug}/${slug}`);
+    let data = await fetchAPI(
+      `/blogs?filters[categorySlug][$eq]=${categorySlug}&filters[slug][$eq]=${slug}&populate=headerImage`
+    );
+    if ((!data || !data.data || data.data.length === 0) && categorySlug === "uncategorized") {
+      console.log(`📝 [getBlogBySlug] Trying to find post with null categorySlug...`);
+      data = await fetchAPI(
+        `/blogs?filters[slug][$eq]=${slug}&populate=headerImage`
+      );
+    }
+    if (!data || !data.data || data.data.length === 0) {
+      console.warn(`⚠️ [getBlogBySlug] Blog post not found: ${categorySlug}/${slug}`);
+      return null;
+    }
+    const item = data.data[0];
+    const blog = item.attributes || item;
+    const headerImage = blog.headerImage ? getStrapiImageData(blog.headerImage) : null;
+    const creationDate = blog.CreationDate || blog.creation_date;
+    let formattedDate = "";
+    if (creationDate) {
+      const date = new Date(creationDate);
+      formattedDate = date.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+      });
+    }
+    const actualCategorySlug = blog.categorySlug || categorySlug || "uncategorized";
+    const categoryName = formatCategorySlug(actualCategorySlug);
+    const blogPost = {
+      id: item.id,
+      documentId: item.documentId || item.id,
+      title: blog.title || "Untitled Post",
+      slug: blog.slug,
+      categorySlug: actualCategorySlug,
+      categoryName,
+      content: blog.content || "",
+      blogExcerpt: blog.blogExcerpt || "",
+      authorFullName: blog.authorFullName || "Active Away",
+      creationDate,
+      formattedDate,
+      headerImage,
+      seo: blog.seo || null,
+      publishedAt: blog.publishedAt || item.publishedAt
+    };
+    console.log(`✅ [getBlogBySlug] Blog post fetched: ${blogPost.title}`);
+    return blogPost;
+  } catch (error) {
+    console.error(`❌ [getBlogBySlug] Error fetching ${categorySlug}/${slug}:`, error);
+    return null;
+  }
+}
+async function getBlogSEO(categorySlug, slug) {
+  if (!categorySlug || !slug) {
+    console.warn("⚠️ [getBlogSEO] Missing categorySlug or slug");
+    return null;
+  }
+  try {
+    console.log(`📝 [getBlogSEO] Fetching SEO data for: ${categorySlug}/${slug}`);
+    let data = await fetchAPI(
+      `/blogs?filters[categorySlug][$eq]=${categorySlug}&filters[slug][$eq]=${slug}&populate[seo][populate]=metaImage`
+    );
+    if ((!data || !data.data || data.data.length === 0) && categorySlug === "uncategorized") {
+      console.log(`📝 [getBlogSEO] Trying to find post with null categorySlug...`);
+      data = await fetchAPI(
+        `/blogs?filters[slug][$eq]=${slug}&populate[seo][populate]=metaImage`
+      );
+    }
+    if (!data || !data.data || data.data.length === 0) {
+      console.warn(`⚠️ [getBlogSEO] Blog post not found: ${categorySlug}/${slug}`);
+      return null;
+    }
+    const item = data.data[0];
+    const blog = item.attributes || item;
+    const seoData = blog.seo;
+    if (!seoData) {
+      console.log(`📝 [getBlogSEO] No SEO component found for ${categorySlug}/${slug}`);
+      return null;
+    }
+    const metaImageData = getOptimizedSEOImage(seoData.metaImage);
+    console.log(`✅ [getBlogSEO] SEO data fetched for ${categorySlug}/${slug}`);
+    return {
+      metaTitle: seoData.metaTitle || null,
+      metaDescription: seoData.metaDescription || null,
+      keywords: seoData.keywords || null,
+      canonicalURL: seoData.canonicalURL || null,
+      metaImage: metaImageData.url || null,
+      metaImageAlt: metaImageData.alt || null,
+      metaImageWidth: metaImageData.width || null,
+      metaImageHeight: metaImageData.height || null
+    };
+  } catch (error) {
+    console.error(`❌ [getBlogSEO] Error fetching SEO for ${categorySlug}/${slug}:`, error);
+    return null;
+  }
+}
+async function getBlogPage() {
+  try {
+    console.log("📝 [getBlogPage] Fetching blog page data...");
+    const data = await fetchAPI("/blog-page?populate[categories][populate]=image&populate=heroBackgroundImage");
+    if (!data || !data.data) {
+      console.warn("⚠️ [getBlogPage] No blog page data found");
+      return null;
+    }
+    const pageData = data.data.attributes || data.data;
+    const categories = (pageData.categories || []).map((cat) => {
+      const image = cat.image ? getStrapiImageData(cat.image) : null;
+      const categoryName = formatCategorySlug(cat.categorySlug);
+      return {
+        categorySlug: cat.categorySlug,
+        categoryName,
+        title: cat.title,
+        description: cat.description,
+        image,
+        order: cat.order || 0
+      };
+    }).sort((a, b) => a.order - b.order);
+    const heroBackgroundImage = pageData.heroBackgroundImage ? getStrapiImageData(pageData.heroBackgroundImage) : null;
+    const blogPageData = {
+      pageTitle: pageData.pageTitle || "Blog",
+      pageSubtitle: pageData.pageSubtitle || "",
+      heroBackgroundImage,
+      categories,
+      seo: pageData.seo || null
+    };
+    console.log(`✅ [getBlogPage] Blog page data fetched with ${categories.length} categories`);
+    return blogPageData;
+  } catch (error) {
+    console.error("❌ [getBlogPage] Error fetching blog page:", error);
+    return null;
+  }
+}
+async function getBlogCategoryData(categorySlug) {
+  if (!categorySlug) {
+    console.warn("⚠️ [getBlogCategoryData] No categorySlug provided");
+    return null;
+  }
+  try {
+    console.log(`📝 [getBlogCategoryData] Fetching category data for: ${categorySlug}`);
+    const data = await fetchAPI("/blog-page?populate[categories][populate]=image");
+    if (!data || !data.data) {
+      console.warn("⚠️ [getBlogCategoryData] No blog page data found");
+      return null;
+    }
+    const pageData = data.data.attributes || data.data;
+    const categories = pageData.categories || [];
+    console.log(`📝 [getBlogCategoryData] Found ${categories.length} categories in blog-page`);
+    const category = categories.find((cat) => cat.categorySlug === categorySlug);
+    if (!category) {
+      console.log(`📝 [getBlogCategoryData] No category data found for: ${categorySlug}`);
+      return null;
+    }
+    console.log(`📝 [getBlogCategoryData] Found category:`, category.title);
+    console.log(`📝 [getBlogCategoryData] Category image object:`, category.image);
+    const image = category.image ? getStrapiImageData(category.image) : null;
+    const categoryName = formatCategorySlug(category.categorySlug);
+    console.log(`📝 [getBlogCategoryData] Processed image:`, image);
+    const categoryData = {
+      categorySlug: category.categorySlug,
+      categoryName,
+      title: category.title,
+      description: category.description,
+      image,
+      order: category.order || 0
+    };
+    console.log(`✅ [getBlogCategoryData] Category data fetched for: ${categorySlug}`);
+    return categoryData;
+  } catch (error) {
+    console.error(`❌ [getBlogCategoryData] Error fetching category data for ${categorySlug}:`, error);
+    return null;
+  }
+}
+async function getBlogCategorySEO(categorySlug) {
+  if (!categorySlug) {
+    console.warn("⚠️ [getBlogCategorySEO] No categorySlug provided");
+    return null;
+  }
+  try {
+    console.log(`📝 [getBlogCategorySEO] Fetching SEO data for: ${categorySlug}`);
+    const data = await fetchAPI("/blog-page?populate[categories][populate][seo][populate]=metaImage");
+    if (!data || !data.data) {
+      console.warn("⚠️ [getBlogCategorySEO] No blog page data found");
+      return null;
+    }
+    const pageData = data.data.attributes || data.data;
+    const categories = pageData.categories || [];
+    const category = categories.find((cat) => cat.categorySlug === categorySlug);
+    if (!category || !category.seo) {
+      console.log(`📝 [getBlogCategorySEO] No SEO data found for: ${categorySlug}`);
+      return null;
+    }
+    const seoData = category.seo;
+    const metaImageData = getOptimizedSEOImage(seoData.metaImage);
+    console.log(`✅ [getBlogCategorySEO] SEO data fetched for: ${categorySlug}`);
+    return {
+      metaTitle: seoData.metaTitle || null,
+      metaDescription: seoData.metaDescription || null,
+      keywords: seoData.keywords || null,
+      canonicalURL: seoData.canonicalURL || null,
+      metaImage: metaImageData.url || null,
+      metaImageAlt: metaImageData.alt || null,
+      metaImageWidth: metaImageData.width || null,
+      metaImageHeight: metaImageData.height || null
+    };
+  } catch (error) {
+    console.error(`❌ [getBlogCategorySEO] Error fetching SEO for ${categorySlug}:`, error);
+    return null;
+  }
+}
+async function getBlogPageSEO() {
+  try {
+    console.log("📝 [getBlogPageSEO] Fetching SEO data for blog page...");
+    const data = await fetchAPI("/blog-page?populate[seo][populate]=metaImage");
+    if (!data || !data.data) {
+      console.warn("⚠️ [getBlogPageSEO] No blog page data found");
+      return null;
+    }
+    const pageData = data.data.attributes || data.data;
+    const seoData = pageData.seo;
+    if (!seoData) {
+      console.log("📝 [getBlogPageSEO] No SEO component found for blog page");
+      return null;
+    }
+    const metaImageData = getOptimizedSEOImage(seoData.metaImage);
+    console.log("✅ [getBlogPageSEO] SEO data fetched for blog page");
+    return {
+      metaTitle: seoData.metaTitle || null,
+      metaDescription: seoData.metaDescription || null,
+      keywords: seoData.keywords || null,
+      canonicalURL: seoData.canonicalURL || null,
+      metaImage: metaImageData.url || null,
+      metaImageAlt: metaImageData.alt || null,
+      metaImageWidth: metaImageData.width || null,
+      metaImageHeight: metaImageData.height || null
+    };
+  } catch (error) {
+    console.error("❌ [getBlogPageSEO] Error fetching SEO for blog page:", error);
+    return null;
   }
 }
 async function getPageSEO(endpoint) {
@@ -1594,6 +2088,42 @@ async function getFormBySlug(slug, fallbackIdentifiers) {
     return null;
   }
 }
+async function getFormSEO(slug) {
+  if (!slug) {
+    console.warn("No slug provided to getFormSEO");
+    return null;
+  }
+  try {
+    const data = await fetchAPI(
+      `/forms?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=seo.metaImage`
+    );
+    if (data && data.data && data.data.length > 0) {
+      const item = data.data[0];
+      const form = item.attributes || item;
+      if (form.seo) {
+        const seo = form.seo;
+        const metaImageData = seo.metaImage ? getStrapiImageData(seo.metaImage) : null;
+        const seoData = {
+          metaTitle: seo.metaTitle || null,
+          metaDescription: seo.metaDescription || null,
+          metaImage: metaImageData?.url || null,
+          metaImageAlt: metaImageData?.alt || null,
+          keywords: seo.keywords || null,
+          canonicalURL: seo.canonicalURL || null
+        };
+        console.log(`📄 SEO data fetched for form ${slug}:`, {
+          hasMetaImage: !!seoData.metaImage,
+          metaTitle: seoData.metaTitle
+        });
+        return seoData;
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching SEO data for form (${slug}):`, error);
+    return null;
+  }
+}
 async function getVenuesPage() {
   try {
     const data = await fetchAPI("/venues-page?populate=*");
@@ -1880,6 +2410,49 @@ async function getTermsPage() {
     };
   } catch (error) {
     console.error("Error fetching terms page data:", error);
+    return null;
+  }
+}
+async function getPrivacyPolicyPage() {
+  try {
+    const data = await fetchAPI("/privacy-policy-page?populate[sections][populate]=*&populate[heroBackgroundImage][populate]=*&populate[seo][populate]=*");
+    if (!data?.data) {
+      console.log("📄 No privacy policy page data found");
+      return null;
+    }
+    const page = data.data.attributes || data.data;
+    console.log("📄 Privacy policy page data fetched successfully");
+    let seoData = null;
+    if (page.seo) {
+      const seo = page.seo;
+      const metaImageData = seo.metaImage ? getStrapiImageData(seo.metaImage) : null;
+      seoData = {
+        metaTitle: seo.metaTitle || null,
+        metaDescription: seo.metaDescription || null,
+        metaImage: metaImageData?.url || null,
+        metaImageAlt: metaImageData?.alt || null,
+        keywords: seo.keywords || null,
+        canonicalURL: seo.canonicalURL || null
+      };
+    }
+    return {
+      pageTitle: page.pageTitle || "Privacy Policy",
+      introText: page.introText || "",
+      lastUpdated: page.lastUpdated || null,
+      heroBackgroundImage: page.heroBackgroundImage ? getStrapiImageData(page.heroBackgroundImage) : null,
+      sections: (page.sections || []).map((section) => ({
+        sectionTitle: section.sectionTitle || "",
+        sectionSlug: section.sectionSlug || "",
+        content: section.content || "",
+        showForm: section.showForm || false,
+        formFields: section.formFields || null,
+        formWebhookUrl: section.formWebhookUrl || null,
+        formSuccessMessage: section.formSuccessMessage || null
+      })),
+      seo: seoData
+    };
+  } catch (error) {
+    console.error("Error fetching privacy policy page:", error);
     return null;
   }
 }
@@ -4323,6 +4896,7 @@ async function getProductPageBySlug(slug) {
         title: page.jamieMurray.title,
         description: page.jamieMurray.description,
         buttonText: page.jamieMurray.buttonText,
+        buttonURL: page.jamieMurray.buttonURL,
         videoUrl: page.jamieMurray.videoUrl,
         image: getStrapiImageData(page.jamieMurray.image),
         achievements: page.jamieMurray.achievements || []
@@ -5764,26 +6338,67 @@ async function getWhatsappGroupsPageSEO() {
     return null;
   }
 }
+async function getSearchResultsPage() {
+  try {
+    console.log("🔍 [getSearchResultsPage] Fetching search results page data...");
+    const data = await fetchAPI(
+      "/search-results-page?populate[pageHero][populate]=*&populate[seo][populate]=*"
+    );
+    if (!data || !data.data) {
+      console.warn("⚠️  [getSearchResultsPage] No data found");
+      return null;
+    }
+    const pageData = data.data.attributes || data.data;
+    const result = {
+      pageHero: pageData.pageHero ? {
+        kicker: pageData.pageHero.kicker || "",
+        heading: pageData.pageHero.heading || "Your Event Search",
+        subtitle: pageData.pageHero.subtitle || "Please complete your booking below",
+        backgroundImage: getStrapiImageData(pageData.pageHero.backgroundImage),
+        showBreadcrumbs: pageData.pageHero.showBreadcrumbs !== false
+      } : null,
+      seo: pageData.seo || null
+    };
+    console.log("✅ [getSearchResultsPage] Data fetched successfully");
+    return result;
+  } catch (error) {
+    console.error("❌ [getSearchResultsPage] Error:", error);
+    return null;
+  }
+}
+async function getSearchResultsPageSEO() {
+  return getPageSEO("search-results-page");
+}
 
 const strapi = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
   extractCloudflareImageId,
   fetchAPI,
+  formatCategorySlug,
   getAboutPage,
   getAboutPageSEO,
   getAirportTransfersPage,
   getAirportTransfersPageSEO,
+  getAllBlogPosts,
   getAllVenues,
   getAllVideos,
   getAnnouncementBar,
   getBasicStaticPageBySlug,
   getBasicStaticPages,
+  getBlogBySlug,
+  getBlogCategoryData,
+  getBlogCategorySEO,
+  getBlogPage,
+  getBlogPageSEO,
+  getBlogSEO,
   getBlogs,
+  getBlogsByCategory,
   getBookingProcessPage,
   getBookingProcessPageSEO,
   getCloudflareImageVariant,
   getDragonsDenPage,
   getDragonsDenPageSEO,
+  getEventBySlug,
   getEventsByDocumentIds,
   getEventsByUniqueValue,
   getEventsPage,
@@ -5796,6 +6411,7 @@ const strapi = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   getFlightsPage,
   getFlightsPageSEO,
   getFormBySlug,
+  getFormSEO,
   getForms,
   getFormsPage,
   getFormsPageSEO,
@@ -5852,11 +6468,14 @@ const strapi = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   getPreOrderBySlug,
   getPreOrders,
   getPreOrdersPage,
+  getPrivacyPolicyPage,
   getProductPageBySlug,
   getProductPageSEO,
   getProductPages,
+  getProductReviews,
   getProducts,
   getRedirects,
+  getReviews,
   getSalesLandingPageBySlug,
   getSalesLandingPages,
   getSchoolTennisTourByDocumentId,
@@ -5866,6 +6485,8 @@ const strapi = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   getSchoolTennisTourSEO,
   getSchoolTennisTours,
   getSchoolTourPage,
+  getSearchResultsPage,
+  getSearchResultsPageSEO,
   getSelfRatingGuidePage,
   getSelfRatingGuidePageSEO,
   getSkiHolidayByDocumentId,
@@ -5907,7 +6528,8 @@ const strapi = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   getVideoArchivePage,
   getWelcomepacksPage,
   getWelcomepacksPageSEO,
-  getWhatsappGroupsPageSEO
+  getWhatsappGroupsPageSEO,
+  normalizeBookingLink
 }, Symbol.toStringTag, { value: 'Module' }));
 
-export { getPadelHolidayNestedData as $, getForms as A, getFormsPage as B, getFormsPageSEO as C, getGroupOrganiserBySlug as D, getMasterPageData as E, getGroupOrganiserNestedData as F, getGroupOrganiserSEO as G, getGroupOrganisers as H, getEventsByDocumentIds as I, getGroupOrganiserPage as J, getJamieMurrayPage as K, getJamieMurrayPageSEO as L, getJoinTheTeamPage as M, getJoinTheTeamPageSEO as N, getJuniorTennisCampBySlug as O, getJuniorTennisCampNestedData as P, getJuniorTennisCampSEO as Q, getJuniorTennisCamps as R, getEventsByUniqueValue as S, getAnnouncementBar as T, getNavigationMenu as U, getImageByName as V, getResponsiveImageByName as W, getProducts as X, getFeaturedLocations as Y, getJuniorCampPage as Z, getPadelHolidayBySlug as _, getResponsiveImageAttrs as a, getPadelHolidaySEO as a0, getPadelTennisHolidays as a1, getPadelHolidayPage as a2, getPickleballHolidayBySlug as a3, getPickleballHolidayNestedData as a4, getPickleballHolidaySEO as a5, getPickleballHolidays as a6, getPickleballHolidayPage as a7, getPlayAndWatchBySlug as a8, getPlayAndWatchNestedData as a9, getTennisClinicSEO as aA, getTennisClinics as aB, getTennisClinicPage as aC, getTennisHolidayBySlug as aD, getTennisHolidayNestedData as aE, getTennisHolidaySEO as aF, getTennisHolidayPage as aG, getVenuesPage as aH, getAllVenues as aI, getWelcomepacksPageSEO as aJ, getWhatsappGroupsPageSEO as aK, getStrapiImageData as aL, getCloudflareImageVariant as aM, getProductPageBySlug as aN, getBasicStaticPageBySlug as aO, getSalesLandingPageBySlug as aP, getProductPageSEO as aQ, getProductPages as aR, getBasicStaticPages as aS, getSalesLandingPages as aT, getFutureEvents as aU, getBlogs as aV, getHomePage as aW, getHomeSEO as aX, strapi as aY, getPlayAndWatchSEO as aa, getPlayAndWatchHolidays as ab, getTennisHolidays as ac, getPlayAndWatchPage as ad, getPreOrders as ae, getPreOrdersPage as af, getSchoolTennisTourBySlug as ag, getSchoolTennisTourNestedData as ah, getSchoolTennisTourSEO as ai, getSchoolTennisTours as aj, getSchoolTourPage as ak, getSelfRatingGuidePage as al, getSelfRatingGuidePageSEO as am, getSkiHolidayBySlug as an, getSkiHolidayNestedData as ao, getSkiHolidaySEO as ap, getSkiHolidays as aq, getSkiHolidayPage as ar, getTennisAcademyBySlug as as, getTennisAcademyNestedData as at, getTennisAcademySEO as au, getTennisAcademiesForCards as av, getTennisAcademies as aw, getTennisAcademyPage as ax, getTennisClinicBySlug as ay, getTennisClinicNestedData as az, getStrapiImageAttrs as b, getPeople as c, getAboutPage as d, getAboutPageSEO as e, getHomeData as f, getRedirects as g, getTravelGuidesPage as h, getTravelGuidesPageSEO as i, getAirportTransfersPage as j, getAirportTransfersPageSEO as k, getPreOrderBySlug as l, getBookingProcessPage as m, getBookingProcessPageSEO as n, getTermsPage as o, getPageSEO as p, getDragonsDenPage as q, getDragonsDenPageSEO as r, getFAQCategoryBySlug as s, getFAQCategorySEO as t, getFAQCategories as u, getFAQsIndexPage as v, getFAQsIndexPageSEO as w, getFlightsPage as x, getFlightsPageSEO as y, getFormBySlug as z };
+export { getJamieMurrayPage as $, getDragonsDenPage as A, getDragonsDenPageSEO as B, getEventBySlug as C, getFAQCategoryBySlug as D, getFAQCategorySEO as E, getFAQCategories as F, getFAQsIndexPage as G, getFAQsIndexPageSEO as H, getFlightsPage as I, getFlightsPageSEO as J, getFormBySlug as K, getFormSEO as L, getForms as M, getFormsPage as N, getFormsPageSEO as O, getGroupOrganiserBySlug as P, getMasterPageData as Q, getGroupOrganiserNestedData as R, getGroupOrganiserSEO as S, getGroupOrganisers as T, getEventsByDocumentIds as U, getAnnouncementBar as V, getNavigationMenu as W, getImageByName as X, getResponsiveImageByName as Y, getProducts as Z, getGroupOrganiserPage as _, getResponsiveImageAttrs as a, getWhatsappGroupsPageSEO as a$, getJamieMurrayPageSEO as a0, getFeaturedLocations as a1, getAllVenues as a2, getJoinTheTeamPage as a3, getJoinTheTeamPageSEO as a4, getJuniorTennisCampBySlug as a5, getJuniorTennisCampNestedData as a6, getJuniorTennisCampSEO as a7, getJuniorTennisCamps as a8, getEventsByUniqueValue as a9, getSearchResultsPage as aA, getSearchResultsPageSEO as aB, getSelfRatingGuidePage as aC, getSelfRatingGuidePageSEO as aD, fetchAPI as aE, getSkiHolidayBySlug as aF, getSkiHolidayNestedData as aG, getSkiHolidaySEO as aH, getSkiHolidays as aI, getSkiHolidayPage as aJ, getTennisAcademyBySlug as aK, getTennisAcademyNestedData as aL, getTennisAcademySEO as aM, getTennisAcademiesForCards as aN, getTennisAcademies as aO, getTennisAcademyPage as aP, getTennisClinicBySlug as aQ, getTennisClinicNestedData as aR, getTennisClinicSEO as aS, getTennisClinics as aT, getTennisClinicPage as aU, getTennisHolidayBySlug as aV, getTennisHolidayNestedData as aW, getTennisHolidaySEO as aX, getTennisHolidayPage as aY, getVenuesPage as aZ, getWelcomepacksPageSEO as a_, getProductReviews as aa, getJuniorCampPage as ab, getPadelHolidayBySlug as ac, getPadelHolidayNestedData as ad, getPadelHolidaySEO as ae, getPadelTennisHolidays as af, getPadelHolidayPage as ag, getPickleballHolidayBySlug as ah, getPickleballHolidayNestedData as ai, getPickleballHolidaySEO as aj, getPickleballHolidays as ak, getPickleballHolidayPage as al, getPlayAndWatchBySlug as am, getPlayAndWatchNestedData as an, getPlayAndWatchSEO as ao, getPlayAndWatchHolidays as ap, getTennisHolidays as aq, getPlayAndWatchPage as ar, getPreOrders as as, getPreOrdersPage as at, getPrivacyPolicyPage as au, getSchoolTennisTourBySlug as av, getSchoolTennisTourNestedData as aw, getSchoolTennisTourSEO as ax, getSchoolTennisTours as ay, getSchoolTourPage as az, getStrapiImageAttrs as b, getStrapiImageData as b0, getCloudflareImageVariant as b1, getProductPageBySlug as b2, getBasicStaticPageBySlug as b3, getSalesLandingPageBySlug as b4, getProductPageSEO as b5, getProductPages as b6, getBasicStaticPages as b7, getSalesLandingPages as b8, getFutureEvents as b9, getBlogs as ba, getHomePage as bb, getHomeSEO as bc, strapi as bd, getPeople as c, getAboutPage as d, getAboutPageSEO as e, getHomeData as f, getRedirects as g, getTravelGuidesPage as h, getTravelGuidesPageSEO as i, getAirportTransfersPage as j, getAirportTransfersPageSEO as k, getReviews as l, getPreOrderBySlug as m, getBlogBySlug as n, getBlogSEO as o, getAllBlogPosts as p, getBlogCategoryData as q, getBlogCategorySEO as r, getBlogsByCategory as s, formatCategorySlug as t, getBlogPage as u, getBlogPageSEO as v, getBookingProcessPage as w, getBookingProcessPageSEO as x, getTermsPage as y, getPageSEO as z };

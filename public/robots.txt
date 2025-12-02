@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://activeaway.com/sitemap.xml
+Sitemap: https://activeaway.com/blog-sitemap.xml
+Sitemap: https://activeaway.com/faq-category-sitemap.xml
+Sitemap: https://activeaway.com/form-sitemap.xml
+Sitemap: https://activeaway.com/group-organiser-sitemap.xml
+Sitemap: https://activeaway.com/junior-tennis-camp-sitemap.xml
+Sitemap: https://activeaway.com/padel-tennis-holiday-sitemap.xml
+Sitemap: https://activeaway.com/pages-sitemap.xml
+Sitemap: https://activeaway.com/pickleball-holiday-sitemap.xml
+Sitemap: https://activeaway.com/play-watch-sitemap.xml
+Sitemap: https://activeaway.com/pre-order-sitemap.xml
+Sitemap: https://activeaway.com/school-tennis-tour-sitemap.xml
+Sitemap: https://activeaway.com/ski-holiday-sitemap.xml
+Sitemap: https://activeaway.com/tennis-academy-sitemap.xml
+Sitemap: https://activeaway.com/tennis-clinic-sitemap.xml
+Sitemap: https://activeaway.com/tennis-holiday-sitemap.xml
+

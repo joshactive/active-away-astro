@@ -1,0 +1,19 @@
+name = "active-away-wp-content-serve"
+main = "src/index.js"
+compatibility_date = "2025-12-02"
+
+# IMPORTANT: Routes are commented out for initial testing
+# Uncomment the appropriate route when ready to deploy to production
+
+# For testing on a subdomain (SAFE - use this first):
+# routes = [
+#   { pattern = "test.activeaway.com/wp-content/uploads/*", zone_name = "activeaway.com" }
+# ]
+
+# For production deployment (ACTIVE):
+routes = [
+  { pattern = "activeaway.com/wp-content/uploads/*", zone_name = "activeaway.com" }
+]
+
+# No R2 bucket binding needed - this worker just proxies to files.activeaway.com
+

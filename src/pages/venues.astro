@@ -32,7 +32,7 @@ try {
 // Fetch initial venues data
 let venuesData = { venues: [], metadata: { total: 0, countries: [], priceRange: { min: 0, max: 5000 }, holidayTypes: [] } };
 try {
-  venuesData = await getAllVenues({ pageSize: 18 });
+  venuesData = await getAllVenues({ pageSize: 100 });
   console.log('🏨 [venues.astro] Venues data fetched successfully:', venuesData.metadata.total, 'venues');
 } catch (error) {
   console.error('[venues.astro] Error fetching venues:', error.message);

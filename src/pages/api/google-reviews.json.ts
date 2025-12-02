@@ -1,101 +1,94 @@
 import type { APIRoute } from 'astro';
+import { getReviews } from '../../utils/strapi';
 
-export const GET: APIRoute = async ({ locals }) => {
-  const runtimeEnv = locals.runtime?.env || {};
 
-  const GOOGLE_API_KEY = runtimeEnv.GOOGLE_PLACES_API_KEY || import.meta.env.GOOGLE_PLACES_API_KEY || '';
-  const PLACE_ID = runtimeEnv.GOOGLE_PLACE_ID || import.meta.env.GOOGLE_PLACE_ID || 'ChIJ6aLvHHgPdkgR1oHhIDyNQtU';
+// Helper function to format relative time
+function getRelativeTime(dateString: string): string {
+  if (!dateString) return '';
+  
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  const intervals = {
+    year: 31536000,
+    month: 2592000,
+    week: 604800,
+    day: 86400,
+    hour: 3600,
+    minute: 60
+  };
 
-  console.log('[reviews] locals keys:', Object.keys(locals || {}));
-  console.log('[reviews] runtime env keys:', Object.keys(runtimeEnv));
-  // In case the adapter exposes bindings on globalThis (Cloudflare Workers style)
-  const globalEnv = (globalThis as any)?.__env ?? (globalThis as any)?.ENV ?? {};
-  console.log('[reviews] global env keys:', Object.keys(globalEnv).filter((key) => key.includes('GOOGLE')));
-
-  console.log('[reviews] env key prefix:', GOOGLE_API_KEY ? GOOGLE_API_KEY.slice(0, 6) : 'undefined');
-  console.log('[reviews] env place id:', PLACE_ID || 'undefined');
-
-  // Debug logging
-  console.log('🔍 Environment check:', {
-    hasApiKey: !!GOOGLE_API_KEY,
-    apiKeyLength: GOOGLE_API_KEY?.length || 0,
-    apiKeyPrefix: GOOGLE_API_KEY?.substring(0, 10) || 'none',
-    placeId: PLACE_ID,
-    allEnvKeys: Object.keys(import.meta.env).filter(k => k.includes('GOOGLE'))
-  });
-
-  if (!GOOGLE_API_KEY) {
-    console.error('❌ Google Places API key not found');
-    console.error('Available env vars:', Object.keys(import.meta.env));
-    return new Response(JSON.stringify({ 
-      error: 'API key not configured',
-      debug: {
-        availableVars: Object.keys(import.meta.env).filter(k => !k.includes('SECRET'))
-      }
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
-
-  try {
-    // Use the new Google Places API
-    const response = await fetch(
-      `https://places.googleapis.com/v1/places/${PLACE_ID}`,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Goog-Api-Key': GOOGLE_API_KEY,
-          'X-Goog-FieldMask': 'displayName,rating,reviews,userRatingCount'
-        }
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Google API error:', response.status, errorText);
-      throw new Error(`Google API error: ${response.status}`);
+  for (const [unit, seconds] of Object.entries(intervals)) {
+    const interval = Math.floor(diffInSeconds / seconds);
+    if (interval >= 1) {
+      return interval === 1 ? `1 ${unit} ago` : `${interval} ${unit}s ago`;
     }
+  }
+  
+  return 'Just now';
+}
 
-    const data = await response.json();
+export const GET: APIRoute = async ({ locals, request }) => {
+  try {
+    // 1. Call getReviews from strapi.js
+    const reviewsData = await getReviews();
 
-    // Format reviews for frontend
-    const allReviews = data.reviews?.map((review: any, index: number) => ({
-      id: review.relativePublishTimeDescription || index,
-      name: review.authorAttribution?.displayName || 'Anonymous',
-      date: review.relativePublishTimeDescription || '',
-      rating: review.rating || 5,
-      text: review.text?.text || review.originalText?.text || '',
-      avatar: review.authorAttribution?.photoUri || 'https://via.placeholder.com/48',
-      publishTime: review.publishTime
-    })) || [];
-
-    // Filter for 5-star reviews only and sort by most recent
-    const reviews = allReviews
-      .filter(review => review.rating === 5)
-      .sort((a, b) => {
-        // Sort by publishTime (most recent first)
-        return new Date(b.publishTime).getTime() - new Date(a.publishTime).getTime();
+    // 2. Filter out reviews with no content, then map fields
+    const reviews = reviewsData
+      .filter((review: any) => {
+        const attrs = review.attributes || review;
+        return attrs.content && attrs.content.trim().length > 0;
       })
-      .slice(0, 20); // Limit to 20 most recent 5-star reviews
+      .map((review: any) => {
+        const attrs = review.attributes || review; // Handle Strapi v4/v5 potentially
+        
+        // Logos
+        let logoUrl = '';
+        const source = attrs.reviewSource || '';
+        if (source && source.toLowerCase().includes('google')) {
+            logoUrl = 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/415213dc-060c-4c99-56c2-e86d4c988100/public?width=64&height=32&fit=contain&format=auto&quality=85';
+        } else if (source && source.toLowerCase().includes('trustpilot')) {
+            logoUrl = 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/1cb7840e-0b3d-4b60-72f8-4b5152b3c900/public?width=64&height=32&fit=contain&format=auto&quality=85';
+        }
+
+        return {
+          id: review.id,
+          name: attrs.reviewName || 'Anonymous',
+          date: getRelativeTime(attrs.reviewDate),
+          rating: attrs.reviewRating || 5,
+          text: attrs.content || '',
+          avatar: null,
+          publishTime: attrs.reviewDate,
+          source: source,
+          sourceUrl: attrs.reviewUrl,
+          logoUrl: logoUrl
+        };
+      });
+
+    // Calculate aggregate
+    const totalReviews = reviews.length;
+    const avgRating = totalReviews > 0 
+      ? reviews.reduce((acc: number, r: any) => acc + (r.rating || 0), 0) / totalReviews 
+      : 5;
 
     return new Response(JSON.stringify({
       reviews,
       placeInfo: {
-        name: data.displayName?.text || 'Active Away',
-        rating: data.rating || 5,
-        totalReviews: data.userRatingCount || 0
+        name: 'Active Away',
+        rating: avgRating,
+        totalReviews: totalReviews
       }
     }), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=3600' // Cache for 1 hour
+        'Cache-Control': 'public, max-age=3600'
       }
     });
 
   } catch (error) {
-    console.error('Error fetching Google reviews:', error);
+    console.error('Error fetching reviews:', error);
     return new Response(JSON.stringify({ 
       error: 'Failed to fetch reviews',
       message: error instanceof Error ? error.message : 'Unknown error'

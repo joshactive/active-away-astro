@@ -18,15 +18,15 @@ try {
   if (response.ok) {
     const data = await response.json();
     googleReviews = data.reviews || [];
-    console.log('✅ Fetched', googleReviews.length, 'Google reviews');
+    console.log('✅ Fetched', googleReviews.length, 'reviews');
   } else {
-    console.warn('⚠️  Failed to fetch Google reviews, using fallback');
+    console.warn('⚠️  Failed to fetch reviews, using fallback');
   }
 } catch (error) {
-  console.error('❌ Error fetching Google reviews:', error);
+  console.error('❌ Error fetching reviews:', error);
 }
 
-// Limit reviews: 4 for all devices
+// Limit reviews: up to 16 reviews
 const buildAvatarAttrs = (imageName, alt = 'Happy customer review') => {
   const attrs = getResponsiveImageByName(imageName, {
     displayWidth: 80,
@@ -52,9 +52,9 @@ const buildAvatarAttrs = (imageName, alt = 'Happy customer review') => {
 };
 
 const allReviews = googleReviews.length > 0 
-  ? googleReviews.slice(0, 4)
+  ? googleReviews.slice(0, 16)
   : homeData?.stories?.testimonials?.length > 0 
-  ? homeData.stories.testimonials.slice(0, 4)
+  ? homeData.stories.testimonials.slice(0, 16)
   : [
         {
           id: 1,
@@ -156,7 +156,7 @@ const normalizedReviews = allReviews.map((review, index) => {
 });
 
 const storiesData = {
-  title: customTitle || homeData?.stories?.title || "Stories of Hope",
+  title: customTitle || homeData?.stories?.title || "Our Online Reviews",
   subtitle: customSubtitle || homeData?.stories?.subtitle || "Real people, real transformation",
   reviews: normalizedReviews,
   googleIcon: googleIconImage
@@ -178,22 +178,33 @@ console.log('Stories Reviews:', storiesData.reviews.length);
       </p>
     </div>
 
-    <!-- Testimonials Grid - All Devices (4 reviews) -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+    <!-- Testimonials Grid -->
+    <div class="stories-reviews-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
       {storiesData.reviews.map((testimonial, index) => (
-        <div class="bg-white border border-gray-200 rounded-2xl p-5 sm:p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 relative">
-          <!-- Google Logo -->
+        <div class={`stories-review-card bg-white border border-gray-200 rounded-2xl p-5 sm:p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 relative ${index >= 4 ? 'hidden' : ''}`} data-stories-review-index={index}>
+          <!-- Source Logo -->
           <div class="absolute top-4 right-4">
-            <img 
-              src={storiesData.googleIcon?.src || storiesData.googleIcon?.url} 
-              {...(storiesData.googleIcon?.srcset && { srcset: storiesData.googleIcon.srcset })}
-              {...(storiesData.googleIcon?.sizes && { sizes: storiesData.googleIcon.sizes })}
-              alt={storiesData.googleIcon?.alt || 'Google'} 
-              width={storiesData.googleIcon?.width || 32} 
-              height={storiesData.googleIcon?.height || 32} 
-              class="w-6 h-6 sm:w-8 sm:h-8" 
-              loading={storiesData.googleIcon?.loading || 'lazy'} 
-            />
+            {testimonial.logoUrl ? (
+              <img 
+                src={testimonial.logoUrl} 
+                alt={testimonial.source || 'Review'} 
+                width="64" 
+                height="32" 
+                class="w-16 h-8 object-contain" 
+                loading="lazy" 
+              />
+            ) : (
+              <img 
+                src={storiesData.googleIcon?.src || storiesData.googleIcon?.url} 
+                {...(storiesData.googleIcon?.srcset && { srcset: storiesData.googleIcon.srcset })}
+                {...(storiesData.googleIcon?.sizes && { sizes: storiesData.googleIcon.sizes })}
+                alt={storiesData.googleIcon?.alt || 'Google'} 
+                width={storiesData.googleIcon?.width || 32} 
+                height={storiesData.googleIcon?.height || 32} 
+                class="w-6 h-6 sm:w-8 sm:h-8" 
+                loading={storiesData.googleIcon?.loading || 'lazy'} 
+              />
+            )}
           </div>
           
           <!-- User Info (No Avatar) -->
@@ -229,6 +240,22 @@ console.log('Stories Reviews:', storiesData.reviews.length);
         </div>
       ))}
     </div>
+
+    {/* Show More/Less Button - Only if more than 4 reviews */}
+    {storiesData.reviews.length > 4 && (
+      <div class="text-center mt-8">
+        <button 
+          id="loadMoreStoriesReviews"
+          class="inline-flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-inter font-semibold py-3 px-8 rounded-full transition-all duration-300 shadow-md hover:shadow-lg"
+          type="button"
+        >
+          <span id="loadMoreStoriesReviewsText">Load More Reviews</span>
+          <svg id="loadMoreStoriesReviewsIcon" class="w-5 h-5 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div>
+    )}
   </div>
 </section>
 
@@ -282,6 +309,50 @@ console.log('Stories Reviews:', storiesData.reviews.length);
         }
       });
     });
+
+    // Stories Reviews - Load More functionality (4 at a time, max 16)
+    const loadMoreStoriesReviewsBtn = document.getElementById('loadMoreStoriesReviews');
+    const loadMoreStoriesReviewsText = document.getElementById('loadMoreStoriesReviewsText');
+    const loadMoreStoriesReviewsIcon = document.getElementById('loadMoreStoriesReviewsIcon');
+    const allStoriesReviewCards = document.querySelectorAll('.stories-review-card');
+    let currentlyShownStoriesReviews = 4; // Start with 4 visible
+    let allStoriesReviewsShown = false;
+
+    if (loadMoreStoriesReviewsBtn && allStoriesReviewCards.length > 4) {
+      loadMoreStoriesReviewsBtn.addEventListener('click', () => {
+        if (!allStoriesReviewsShown) {
+          // Show next 4 reviews
+          const reviewsToShow = Array.from(allStoriesReviewCards).slice(currentlyShownStoriesReviews, currentlyShownStoriesReviews + 4);
+          reviewsToShow.forEach(card => card.classList.remove('hidden'));
+          currentlyShownStoriesReviews += reviewsToShow.length;
+
+          // Check if all reviews are now shown (or we've hit the 16 limit)
+          if (currentlyShownStoriesReviews >= allStoriesReviewCards.length || currentlyShownStoriesReviews >= 16) {
+            allStoriesReviewsShown = true;
+            loadMoreStoriesReviewsText.textContent = 'Show Less';
+            loadMoreStoriesReviewsIcon.style.transform = 'rotate(180deg)';
+          }
+
+          // Re-check truncation for newly shown reviews
+          setTimeout(checkTruncation, 100);
+        } else {
+          // Hide all reviews after the first 4
+          Array.from(allStoriesReviewCards).slice(4).forEach(card => card.classList.add('hidden'));
+          currentlyShownStoriesReviews = 4;
+          allStoriesReviewsShown = false;
+          loadMoreStoriesReviewsText.textContent = 'Load More Reviews';
+          loadMoreStoriesReviewsIcon.style.transform = 'rotate(0deg)';
+          
+          // Scroll back to the reviews grid
+          const reviewsGrid = document.querySelector('.stories-reviews-grid');
+          if (reviewsGrid) {
+            reviewsGrid.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        }
+      });
+    } else if (loadMoreStoriesReviewsBtn && allStoriesReviewCards.length <= 4) {
+      loadMoreStoriesReviewsBtn.style.display = 'none';
+    }
   });
 </script>
 

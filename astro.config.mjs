@@ -12,7 +12,7 @@ export default defineConfig({
   ],
   output: 'server', // Use server mode to enable API routes
   adapter: cloudflare(),
-  site: 'https://active-away-astro.pages.dev',
+  site: 'https://activeaway.com',
 
   build: {
     assets: 'assets'

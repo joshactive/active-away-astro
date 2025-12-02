@@ -1541,6 +1541,14 @@ const carouselSlideCount = holidayType === 'ski-holiday' ? 1 : (holidayType === 
                   Top Tips
                 </button>
               )}
+              {holidayData.productReviews && holidayData.productReviews.length > 0 && (
+                <button class="facility-tab px-6 py-3 text-sm font-medium font-inter whitespace-nowrap transition-all relative inline-flex items-center gap-2" data-tab="reviews">
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                  </svg>
+                  Reviews
+                </button>
+              )}
             </>
           )}
         </div>
@@ -1635,6 +1643,75 @@ const carouselSlideCount = holidayType === 'ski-holiday' ? 1 : (holidayType === 
         {holidayData.topTips && (
           <div class="facility-tab-content hidden" data-tab-content="tips">
             <div class="prose max-w-none font-inter" set:html={marked.parse(holidayData.topTips || '')}></div>
+          </div>
+        )}
+
+        {/* Product Reviews Content */}
+        {holidayData.productReviews && holidayData.productReviews.length > 0 && (
+          <div class="facility-tab-content hidden" data-tab-content="reviews">
+            <div class="product-reviews-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {holidayData.productReviews.map((review, index) => (
+                <div class={`product-review-card bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow ${index >= 3 ? 'hidden' : ''}`} data-review-index={index}>
+                  <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                      <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-[#ad986c] font-bold text-lg font-playfair">
+                        {review.reviewName?.charAt(0) || 'A'}
+                      </div>
+                      <div>
+                        <h4 class="text-sm font-bold font-inter text-gray-900">{review.reviewName || 'Anonymous'}</h4>
+                        <p class="text-xs font-inter text-gray-500">{new Date(review.reviewDate).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    <div class="flex">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <svg class={`w-4 h-4 ${i < (review.reviewRating || 5) ? 'text-yellow-400' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p class="product-review-text text-sm font-inter text-gray-700 leading-relaxed line-clamp-4" data-review-id={`product-${index}`}>
+                      {review.content}
+                    </p>
+                    <button 
+                      class="product-read-more-btn mt-2 text-sm font-inter font-semibold text-[#ad986c] hover:text-[#8a7454] transition-colors hidden"
+                      data-review-id={`product-${index}`}
+                      type="button"
+                    >
+                      Read more
+                    </button>
+                  </div>
+                  {review.reviewSource && (
+                     <div class="mt-4 flex items-center gap-2 text-xs text-gray-500 border-t border-gray-100 pt-3">
+                        {review.reviewSource.toLowerCase().includes('google') ? (
+                          <img src="https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/415213dc-060c-4c99-56c2-e86d4c988100/public?width=64&height=32&fit=contain&format=auto&quality=85" alt="Google" class="h-4 object-contain" />
+                        ) : review.reviewSource.toLowerCase().includes('trustpilot') ? (
+                          <img src="https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/1cb7840e-0b3d-4b60-72f8-4b5152b3c900/public?width=64&height=32&fit=contain&format=auto&quality=85" alt="Trustpilot" class="h-4 object-contain" />
+                        ) : (
+                          <span>{review.reviewSource}</span>
+                        )}
+                     </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            
+            {/* Show More/Less Button - Only if more than 3 reviews */}
+            {holidayData.productReviews.length > 3 && (
+              <div class="text-center mt-8">
+                <button 
+                  id="loadMoreReviews"
+                  class="inline-flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-inter font-semibold py-3 px-8 rounded-full transition-all duration-300 shadow-md hover:shadow-lg"
+                  type="button"
+                >
+                  <span id="loadMoreReviewsText">Load More Reviews</span>
+                  <svg id="loadMoreReviewsIcon" class="w-5 h-5 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -2589,6 +2666,15 @@ const carouselSlideCount = holidayType === 'ski-holiday' ? 1 : (holidayType === 
         if (content) {
           content.classList.remove('hidden');
           content.classList.add('active');
+          
+          // If reviews tab is opened, check truncation after a short delay
+          if (tabName === 'reviews') {
+            setTimeout(() => {
+              if (typeof checkProductReviewTruncation === 'function') {
+                checkProductReviewTruncation();
+              }
+            }, 100);
+          }
         }
       });
     });
@@ -3051,6 +3137,108 @@ const carouselSlideCount = holidayType === 'ski-holiday' ? 1 : (holidayType === 
       
       // Ensure initial state is set
       evaluateButtonState();
+    }
+
+    // Product Reviews - Read More functionality
+    const productReadMoreButtons = document.querySelectorAll('.product-read-more-btn');
+    
+    const checkProductReviewTruncation = () => {
+      productReadMoreButtons.forEach(button => {
+        const reviewId = button.getAttribute('data-review-id');
+        const reviewText = document.querySelector(`.product-review-text[data-review-id="${reviewId}"]`);
+        
+        if (reviewText) {
+          // Add a small buffer to account for rounding
+          const isTruncated = reviewText.scrollHeight > (reviewText.clientHeight + 2);
+          
+          if (isTruncated) {
+            button.classList.remove('hidden');
+          } else {
+            button.classList.add('hidden');
+          }
+        }
+      });
+    };
+    
+    // Check on load with multiple delays to ensure styles are loaded
+    setTimeout(checkProductReviewTruncation, 100);
+    setTimeout(checkProductReviewTruncation, 300);
+    setTimeout(checkProductReviewTruncation, 500);
+    
+    // Also run after fonts are loaded
+    if (document.fonts) {
+      document.fonts.ready.then(() => {
+        setTimeout(checkProductReviewTruncation, 100);
+      });
+    }
+    
+    // Check on resize (debounced)
+    let productReviewResizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(productReviewResizeTimer);
+      productReviewResizeTimer = setTimeout(checkProductReviewTruncation, 250);
+    });
+    
+    // Handle click to expand/collapse individual reviews
+    productReadMoreButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const reviewId = button.getAttribute('data-review-id');
+        const reviewText = document.querySelector(`.product-review-text[data-review-id="${reviewId}"]`);
+        
+        if (reviewText.classList.contains('line-clamp-4')) {
+          reviewText.classList.remove('line-clamp-4');
+          button.textContent = 'Read less';
+        } else {
+          reviewText.classList.add('line-clamp-4');
+          button.textContent = 'Read more';
+        }
+      });
+    });
+
+    // Product Reviews - Load More functionality (9 at a time)
+    const loadMoreReviewsBtn = document.getElementById('loadMoreReviews');
+    const loadMoreReviewsText = document.getElementById('loadMoreReviewsText');
+    const loadMoreReviewsIcon = document.getElementById('loadMoreReviewsIcon');
+    const allReviewCards = document.querySelectorAll('.product-review-card');
+    let currentlyShownReviews = 3; // Start with 3 visible
+    let allReviewsShown = false;
+
+    if (loadMoreReviewsBtn && allReviewCards.length > 3) {
+      loadMoreReviewsBtn.addEventListener('click', () => {
+        if (!allReviewsShown) {
+          // Show next 9 reviews
+          const reviewsToShow = Array.from(allReviewCards).slice(currentlyShownReviews, currentlyShownReviews + 9);
+          reviewsToShow.forEach(card => card.classList.remove('hidden'));
+          currentlyShownReviews += reviewsToShow.length;
+
+          // Check if all reviews are now shown
+          if (currentlyShownReviews >= allReviewCards.length) {
+            allReviewsShown = true;
+            loadMoreReviewsText.textContent = 'Show Less';
+            loadMoreReviewsIcon.style.transform = 'rotate(180deg)';
+          }
+
+          // Re-check truncation for newly shown reviews with multiple attempts
+          setTimeout(checkProductReviewTruncation, 100);
+          setTimeout(checkProductReviewTruncation, 300);
+          setTimeout(checkProductReviewTruncation, 500);
+        } else {
+          // Hide all reviews after the first 3
+          Array.from(allReviewCards).slice(3).forEach(card => card.classList.add('hidden'));
+          currentlyShownReviews = 3;
+          allReviewsShown = false;
+          loadMoreReviewsText.textContent = 'Load More Reviews';
+          loadMoreReviewsIcon.style.transform = 'rotate(0deg)';
+          
+          // Scroll back to the reviews grid
+          const reviewsGrid = document.querySelector('.product-reviews-grid');
+          if (reviewsGrid) {
+            reviewsGrid.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        }
+      });
+    } else if (loadMoreReviewsBtn && allReviewCards.length <= 3) {
+      loadMoreReviewsBtn.style.display = 'none';
     }
   });
 

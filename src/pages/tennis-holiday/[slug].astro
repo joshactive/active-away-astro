@@ -3,7 +3,7 @@
 export const prerender = true;
 
 import HolidayDetail from '../../components/HolidayDetail.astro';
-import { getTennisHolidays, getTennisHolidayBySlug, getTennisHolidayNestedData, getTennisHolidaySEO, getEventsByUniqueValue } from '../../utils/strapi.js';
+import { getTennisHolidays, getTennisHolidayBySlug, getTennisHolidayNestedData, getTennisHolidaySEO, getEventsByUniqueValue, getProductReviews } from '../../utils/strapi.js';
 
 // Generate static paths for all tennis holidays
 export async function getStaticPaths() {
@@ -100,6 +100,9 @@ try {
 // Fetch events matching this tennis holiday's uniqueValue
 let matchingEvents = [];
 try {
+  console.log(`🎾 Debug - Holiday Title: ${holidayData.title}`);
+  console.log(`🎾 Debug - Holiday uniqueValue: "${holidayData.uniqueValue}"`);
+  
   if (holidayData.uniqueValue) {
     console.log(`🎾 Fetching events for tennis holiday uniqueValue: "${holidayData.uniqueValue}"`);
     matchingEvents = await getEventsByUniqueValue(holidayData.uniqueValue);
@@ -110,6 +113,57 @@ try {
 } catch (error) {
   console.error('Error fetching events for tennis holiday:', error);
 }
+
+// Fetch product reviews if uniqueValue exists
+let productReviews = [];
+try {
+  if (holidayData.uniqueValue) {
+    console.log(`⭐ Debug - Attempting to fetch reviews for uniqueValue: "${holidayData.uniqueValue}"`);
+    productReviews = await getProductReviews(holidayData.uniqueValue);
+    console.log(`⭐ Debug - Fetched reviews count: ${productReviews.length}`);
+    
+    if (productReviews.length > 0) {
+      holidayData.productReviews = productReviews;
+      console.log(`⭐ [${slug}] Found ${productReviews.length} reviews matching uniqueValue "${holidayData.uniqueValue}"`);
+    } else {
+      console.log(`⭐ [${slug}] No reviews found for uniqueValue "${holidayData.uniqueValue}"`);
+    }
+  } else {
+    console.log(`⭐ Debug - Skipping review fetch because uniqueValue is missing`);
+  }
+} catch (error) {
+  console.error('Error fetching reviews:', error);
+}
+
+// Helper to calculate product schema
+const productSchema = {
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": holidayData.title,
+  "description": holidayData.introText || `Tennis Holiday at ${holidayData.title}`,
+  "image": holidayData.headerImage?.url || `https://activeaway.com/images/tennis-holiday-placeholder.jpg`,
+  "offers": {
+    "@type": "Offer",
+    "priceCurrency": "GBP",
+    "price": holidayData.priceFrom || "0",
+    "url": Astro.url.href,
+    "availability": "https://schema.org/InStock"
+  }
+};
+
+// Add AggregateRating if reviews exist
+if (holidayData.productReviews && holidayData.productReviews.length > 0) {
+  const reviewCount = holidayData.productReviews.length;
+  const avgRating = holidayData.productReviews.reduce((acc, r) => acc + (r.reviewRating || 5), 0) / reviewCount;
+  
+  productSchema.aggregateRating = {
+    "@type": "AggregateRating",
+    "ratingValue": avgRating.toFixed(1),
+    "reviewCount": reviewCount,
+    "bestRating": "5",
+    "worstRating": "1"
+  };
+}
 ---
 
 <HolidayDetail 
@@ -118,4 +172,6 @@ try {
   matchingEvents={matchingEvents}
   similarHolidays={similarHolidays}
   slug={slug}
-/>
+>
+  <script type="application/ld+json" slot="head" set:html={JSON.stringify(productSchema)} />
+</HolidayDetail>

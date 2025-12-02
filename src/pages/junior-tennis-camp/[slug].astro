@@ -3,7 +3,7 @@
 export const prerender = true;
 
 import HolidayDetail from '../../components/HolidayDetail.astro';
-import { getJuniorTennisCamps, getJuniorTennisCampBySlug, getJuniorTennisCampNestedData, getJuniorTennisCampSEO, getEventsByUniqueValue } from '../../utils/strapi.js';
+import { getJuniorTennisCamps, getJuniorTennisCampBySlug, getJuniorTennisCampNestedData, getJuniorTennisCampSEO, getEventsByUniqueValue, getProductReviews } from '../../utils/strapi.js';
 
 // Generate static paths for all junior tennis camps
 export async function getStaticPaths() {
@@ -40,6 +40,36 @@ try {
 // If no data found, show 404
 if (!holidayData) {
   return Astro.redirect('/404');
+}
+
+// Helper to calculate product schema
+const productSchema = {
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": holidayData.title,
+  "description": holidayData.introText || `Junior Tennis Camp at ${holidayData.title}`,
+  "image": holidayData.headerImage?.url || `https://activeaway.com/images/junior-tennis-camp-placeholder.jpg`,
+  "offers": {
+    "@type": "Offer",
+    "priceCurrency": "GBP",
+    "price": holidayData.priceFrom || "0",
+    "url": Astro.url.href,
+    "availability": "https://schema.org/InStock"
+  }
+};
+
+// Add AggregateRating if reviews exist
+if (holidayData.productReviews && holidayData.productReviews.length > 0) {
+  const reviewCount = holidayData.productReviews.length;
+  const avgRating = holidayData.productReviews.reduce((acc, r) => acc + (r.reviewRating || 5), 0) / reviewCount;
+  
+  productSchema.aggregateRating = {
+    "@type": "AggregateRating",
+    "ratingValue": avgRating.toFixed(1),
+    "reviewCount": reviewCount,
+    "bestRating": "5",
+    "worstRating": "1"
+  };
 }
 
 // SEPARATE API CALL: Fetch nested data (tripImages)
@@ -103,6 +133,20 @@ try {
 } catch (error) {
   console.error('Error fetching events for junior camp:', error);
 }
+
+// Fetch product reviews if uniqueValue exists
+let productReviews = [];
+try {
+  if (holidayData.uniqueValue) {
+    productReviews = await getProductReviews(holidayData.uniqueValue);
+    if (productReviews.length > 0) {
+      holidayData.productReviews = productReviews;
+      console.log(`⭐ [${slug}] Found ${productReviews.length} reviews matching uniqueValue "${holidayData.uniqueValue}"`);
+    }
+  }
+} catch (error) {
+  console.error('Error fetching reviews:', error);
+}
 ---
 
 <HolidayDetail 
@@ -111,5 +155,7 @@ try {
   matchingEvents={matchingEvents}
   similarHolidays={similarHolidays}
   slug={slug}
-/>
+>
+  <script type="application/ld+json" slot="head" set:html={JSON.stringify(productSchema)} />
+</HolidayDetail>
 

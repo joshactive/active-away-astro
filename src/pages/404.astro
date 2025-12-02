@@ -22,6 +22,10 @@ const backgroundAttrs = getResponsiveImageAttrs('03bade93-3cf6-49b0-047f-a9eb556
 // SEO Meta
 const pageTitle = '404 - Page Not Found | Active Away';
 const pageDescription = "Oops! The page you're looking for doesn't exist. Explore our tennis, padel, and pickleball holidays instead.";
+
+// Capture the requested URL for analytics
+const requestedPath = Astro.url.pathname;
+const referrer = Astro.request.headers.get('referer') || 'Direct';
 ---
 
 <BaseLayout 
@@ -89,6 +93,41 @@ const pageDescription = "Oops! The page you're looking for doesn't exist. Explor
       </div>
     </div>
   </section>
+
+  <!-- 404 Error Tracking -->
+  <script define:vars={{ requestedPath, referrer }}>
+    // Track 404 errors in Google Analytics (if available)
+    if (typeof gtag !== 'undefined') {
+      gtag('event', 'exception', {
+        description: `404 Error: ${requestedPath}`,
+        fatal: false,
+        page_path: requestedPath,
+        page_referrer: referrer
+      });
+      
+      gtag('event', 'page_not_found', {
+        page_path: requestedPath,
+        referrer: referrer
+      });
+    }
+
+    // Also send to Google Tag Manager dataLayer (if available)
+    if (typeof window !== 'undefined' && window.dataLayer) {
+      window.dataLayer.push({
+        event: '404_error',
+        page_path: requestedPath,
+        referrer: referrer,
+        error_type: 'page_not_found'
+      });
+    }
+
+    // Console log for debugging (can be removed in production)
+    console.log('🚫 404 Error:', {
+      path: requestedPath,
+      referrer: referrer,
+      timestamp: new Date().toISOString()
+    });
+  </script>
 </BaseLayout>
 
 <style>

@@ -19,10 +19,12 @@ let allLocations = await getFeaturedLocations();
 
 // Fetch total venue count for the heading
 let totalVenuesCount = 0;
+let venuesData = { venues: [], metadata: { total: 0 } };
+
 try {
   // Fetch all venues to get the total count
   // Using a large pageSize to ensure we get an accurate count of all visible venues
-  const venuesData = await getAllVenues({ pageSize: 100 });
+  venuesData = await getAllVenues({ pageSize: 100 });
   if (venuesData && venuesData.metadata) {
     totalVenuesCount = venuesData.metadata.total;
     console.log(`📍 [LocationsTailwind] Total venues count: ${totalVenuesCount}`);
@@ -34,8 +36,43 @@ try {
 // Filter by featured slugs if provided
 let locations = allLocations;
 if (featuredSlugs && featuredSlugs.length > 0) {
-  locations = allLocations.filter(loc => featuredSlugs.includes(loc.slug));
-  console.log(`📍 Filtered to ${locations.length} locations from ${allLocations.length} total`);
+  // 1. First try to find matches in the Featured Locations collection
+  let featuredMatches = allLocations.filter(loc => featuredSlugs.includes(loc.slug));
+  
+  // 2. Identify which slugs were not found
+  const foundSlugs = featuredMatches.map(loc => loc.slug);
+  const missingSlugs = featuredSlugs.filter(slug => !foundSlugs.includes(slug));
+  
+  // 3. If we have missing slugs, look for them in the general venues data
+  if (missingSlugs.length > 0 && venuesData.venues.length > 0) {
+    console.log(`🔍 [LocationsTailwind] Looking for ${missingSlugs.length} missing slugs in general venues data`);
+    
+    const venueMatches = venuesData.venues.filter(venue => missingSlugs.includes(venue.slug));
+    
+    // Map venue matches to the format expected by this component
+    const mappedMatches = venueMatches.map(venue => ({
+      id: venue.id,
+      title: venue.title,
+      location: venue.location || venue.country,
+      type: venue.productType,
+      amount: venue.priceText, // maps 'from £420pp'
+      price: venue.priceText,
+      image: venue.image,
+      imageAlt: venue.imageAlt,
+      slug: venue.slug,
+      holidayType: venue.holidayType,
+      active: false
+    }));
+    
+    featuredMatches = [...featuredMatches, ...mappedMatches];
+  }
+  
+  // 4. Sort the final list to match the order of featuredSlugs
+  locations = featuredMatches.sort((a, b) => {
+    return featuredSlugs.indexOf(a.slug) - featuredSlugs.indexOf(b.slug);
+  });
+
+  console.log(`📍 Filtered to ${locations.length} locations from ${allLocations.length} featured + ${venuesData.venues.length} general venues`);
 }
 
 const LOCATION_IMAGE_SIZES = '(max-width: 640px) calc(100vw - 5rem), (max-width: 1024px) calc(100vw - 8rem), 455px';

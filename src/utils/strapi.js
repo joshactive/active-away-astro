@@ -941,6 +941,25 @@ export async function getTestimonials() {
 }
 
 /**
+ * Fetch reviews from Strapi
+ * @returns {Promise<Array>} Array of review objects
+ */
+export async function getReviews() {
+  try {
+    const response = await fetchAPI(
+      '/reviews?' +
+      'sort=reviewDate:desc&' +
+      'pagination[pageSize]=100'
+    );
+
+    return response?.data || [];
+  } catch (error) {
+    console.error('Error fetching reviews:', error);
+    return [];
+  }
+}
+
+/**
  * Fetch global site settings
  * @returns {Promise<Object>} Site settings data
  */
@@ -1008,6 +1027,49 @@ export async function getHomePage() {
   } catch (error) {
     console.error('Error fetching home page:', error);
     return null;
+  }
+}
+
+/**
+ * Fetch reviews filtered by reviewApplyTo matching the provided uniqueValue
+ * @param {string} uniqueValue - The unique identifier for the product
+ * @returns {Promise<Array>} Array of matching reviews with normalized data
+ */
+export async function getProductReviews(uniqueValue) {
+  if (!uniqueValue) return [];
+
+  try {
+    const response = await fetchAPI(
+      `/reviews?` +
+      `filters[reviewApplyTo][$eq]=${encodeURIComponent(uniqueValue)}&` +
+      `sort=reviewDate:desc&` +
+      `pagination[pageSize]=100`
+    );
+
+    const reviewsData = response?.data || [];
+    
+    // Filter out reviews with no content, then normalize the data structure
+    return reviewsData
+      .filter((review) => {
+        const attrs = review.attributes || review;
+        return attrs.content && attrs.content.trim().length > 0;
+      })
+      .map((review) => {
+        const attrs = review.attributes || review;
+        return {
+          id: review.id,
+          reviewName: attrs.reviewName,
+          reviewDate: attrs.reviewDate,
+          reviewRating: attrs.reviewRating,
+          content: attrs.content,
+          reviewSource: attrs.reviewSource,
+          reviewUrl: attrs.reviewUrl,
+          reviewApplyTo: attrs.reviewApplyTo
+        };
+      });
+  } catch (error) {
+    console.error(`Error fetching reviews for product ${uniqueValue}:`, error);
+    return [];
   }
 }
 
