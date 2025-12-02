@@ -157,13 +157,66 @@ const {
 
   // Load stored consent
   function getStoredConsent() {
-    const stored = localStorage.getItem(COOKIE_CONSENT_KEY);
+    let stored = localStorage.getItem(COOKIE_CONSENT_KEY);
+    let source = 'localStorage';
+
+    // If not in localStorage, try cookie
+    if (!stored) {
+      stored = getCookie(COOKIE_CONSENT_KEY);
+      source = 'cookie';
+    }
+
     if (stored) {
       try {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        
+        // Sync across storage methods
+        if (source === 'cookie') {
+          // Restore to localStorage if found in cookie
+          localStorage.setItem(COOKIE_CONSENT_KEY, stored);
+        } else {
+          // Ensure cookie exists (for subdomain support) if found in localStorage
+          setCookie(COOKIE_CONSENT_KEY, stored, 365);
+        }
+        
+        return parsed;
       } catch (e) {
+        // If parsing fails, clear invalid data
+        localStorage.removeItem(COOKIE_CONSENT_KEY);
         return null;
       }
+    }
+    return null;
+  }
+
+  // Helper: Set Cookie
+  function setCookie(name, value, days) {
+    let expires = "";
+    if (days) {
+      const date = new Date();
+      date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+      expires = "; expires=" + date.toUTCString();
+    }
+    
+    // Determine domain to allow sharing across subdomains (e.g., www.activeaway.com and activeaway.com)
+    const hostname = window.location.hostname;
+    let domainAttribute = "";
+    // Only set domain attribute if we are on the production domain
+    if (hostname.endsWith("activeaway.com")) {
+      domainAttribute = "; domain=.activeaway.com";
+    }
+    
+    document.cookie = name + "=" + (encodeURIComponent(value) || "") + expires + "; path=/" + domainAttribute + "; SameSite=Lax";
+  }
+
+  // Helper: Get Cookie
+  function getCookie(name) {
+    const nameEQ = name + "=";
+    const ca = document.cookie.split(';');
+    for(let i=0;i < ca.length;i++) {
+      let c = ca[i];
+      while (c.charAt(0)==' ') c = c.substring(1,c.length);
+      if (c.indexOf(nameEQ) == 0) return decodeURIComponent(c.substring(nameEQ.length,c.length));
     }
     return null;
   }
@@ -174,7 +227,12 @@ const {
       ...consent,
       timestamp: new Date().toISOString()
     };
-    localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(consentData));
+    const json = JSON.stringify(consentData);
+    
+    // Save to both localStorage and Cookie
+    localStorage.setItem(COOKIE_CONSENT_KEY, json);
+    setCookie(COOKIE_CONSENT_KEY, json, 365); // 1 year expiry
+    
     return consentData;
   }
 

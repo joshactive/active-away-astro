@@ -1,4 +1,4 @@
-import { fetchAPI } from './strapi';
+import { fetchAPI } from './strapi.js';
 
 // Configuration mapping Strapi collections to Frontend URL patterns
 // Ordered by priority/importance

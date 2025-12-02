@@ -1,0 +1,39 @@
+#!/usr/bin/expect -f
+
+set timeout 60
+
+spawn sftp -o StrictHostKeyChecking=no -P 22 josh@activeaway.com@192.248.159.53
+
+expect {
+    "password:" {
+        send "Luke2501\r"
+        exp_continue
+    }
+    "sftp>" {
+        send "cd public_html\r"
+        expect "sftp>"
+        send "ls -la\r"
+        expect "sftp>"
+        send "cd wp-content\r"
+        expect "sftp>"
+        send "ls -la\r"
+        expect "sftp>"
+        send "cd uploads\r"
+        expect "sftp>"
+        send "pwd\r"
+        expect "sftp>"
+        send "ls -la | head -30\r"
+        expect "sftp>"
+        send "quit\r"
+    }
+    timeout {
+        puts "Connection timed out"
+        exit 1
+    }
+    eof {
+        exit 0
+    }
+}
+
+expect eof
+
