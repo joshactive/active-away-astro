@@ -1,0 +1,4 @@
+# Redirect WordPress PDF uploads to Cloudflare R2
+# This preserves old WordPress PDF URLs while serving from R2
+/wp-content/uploads/*.pdf  https://files.activeaway.com/wp-content/uploads/:splat  301
+
