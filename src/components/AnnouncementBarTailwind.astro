@@ -10,8 +10,12 @@ try {
   console.warn('⚠️  Could not fetch announcement bar:', error.message);
 }
 
-// Only render if active
-const shouldShow = announcementData && announcementData.isActive;
+// Check for dismissal cookie
+const cookieName = announcementData?.cookieName || 'announcement-dismissed';
+const isDismissed = Astro.cookies.has(cookieName);
+
+// Only render if active and not dismissed
+const shouldShow = announcementData && announcementData.isActive && !isDismissed;
 
 // Extract data with defaults
 const barData = shouldShow ? {
@@ -24,7 +28,7 @@ const barData = shouldShow ? {
   ctaTextColor: announcementData.ctaTextColor || '#FFFFFF',
   ctaHoverColor: announcementData.ctaHoverColor || '#ad986c',
   isDismissible: announcementData.isDismissible !== false,
-  cookieName: announcementData.cookieName || 'announcement-dismissed'
+  cookieName: cookieName
 } : null;
 
 const gradientStyle = barData ? `background: linear-gradient(to right, ${barData.backgroundColorStart}, ${barData.backgroundColorEnd});` : '';
