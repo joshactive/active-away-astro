@@ -6028,6 +6028,76 @@ export async function getGroupOrganiserById(id) {
 }
 
 /**
+ * Normalize custom events for frontend display
+ * @param {Array} customEvents - Raw custom events from Strapi
+ * @returns {Array} Normalized events
+ */
+function normalizeCustomEvents(customEvents) {
+  if (!customEvents || !Array.isArray(customEvents) || customEvents.length === 0) {
+    return [];
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return customEvents.map((event, index) => {
+    // Skip if no dateFrom
+    if (!event.dateFrom) return null;
+
+    // Check if event is in the past
+    const eventDate = new Date(event.dateFrom);
+    eventDate.setHours(0, 0, 0, 0);
+    if (eventDate < today) return null;
+
+    // Format dates
+    let formattedDate = '';
+    if (event.dateFrom && event.dateUntil) {
+      const fromDate = new Date(event.dateFrom);
+      const untilDate = new Date(event.dateUntil);
+      
+      const dayFrom = fromDate.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit' });
+      const monthFrom = fromDate.toLocaleDateString('en-GB', { month: 'short' });
+      const dayUntil = untilDate.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit' });
+      const monthUntil = untilDate.toLocaleDateString('en-GB', { month: 'short' });
+      const year = untilDate.toLocaleDateString('en-GB', { year: 'numeric' });
+      
+      if (monthFrom === monthUntil) {
+        formattedDate = `${dayFrom} ${monthFrom} - ${dayUntil} ${monthUntil} ${year}`;
+      } else {
+        formattedDate = `${dayFrom} ${monthFrom} - ${dayUntil} ${monthUntil} ${year}`;
+      }
+    }
+
+    // Status badge
+    let statusBadge = 'AVAILABLE';
+    let statusClass = 'bg-[#ad986c]/10 text-[#ad986c]';
+    
+    if (event.isSoldOut) {
+      statusBadge = 'SOLD OUT';
+      statusClass = 'bg-red-50 text-red-700';
+    }
+
+    return {
+      id: event.id || `custom-${index}`,
+      title: event.title || formattedDate,
+      dateText: formattedDate,
+      dateFrom: event.dateFrom,
+      dateUntil: event.dateUntil,
+      location: event.location || 'TBC',
+      price: event.price || null,
+      singleOccupancyPrice: event.singleOccupancyPrice || null,
+      bookingLink: normalizeBookingLink(event.bookingLink),
+      buttonText: event.buttonText || 'Book Now',
+      buttonColour: event.buttonColour || '#ad986c',
+      isSoldOut: event.isSoldOut || false,
+      statusBadge: statusBadge,
+      statusClass: statusClass,
+      isCustom: true
+    };
+  }).filter(Boolean);
+}
+
+/**
  * Transform raw Strapi group organiser data to frontend format
  * @param {Object} item - Raw Strapi API response item
  * @returns {Object} Transformed group organiser data
@@ -6055,6 +6125,7 @@ function transformGroupOrganiserDetail(item) {
     masterPageType: holiday.masterPageType,
     masterPageSlug: holiday.masterPageSlug,
     eventsQueryCommaSeparated: holiday.eventsquerycommaseperated,
+    customEvents: normalizeCustomEvents(holiday.customEvents),
     
     // Hero Section
     mainHeader: holiday.mainHeader,
