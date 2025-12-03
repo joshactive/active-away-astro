@@ -4558,6 +4558,57 @@ async function getGroupOrganiserById(id) {
     return null;
   }
 }
+function normalizeCustomEvents(customEvents) {
+  if (!customEvents || !Array.isArray(customEvents) || customEvents.length === 0) {
+    return [];
+  }
+  const today = /* @__PURE__ */ new Date();
+  today.setHours(0, 0, 0, 0);
+  return customEvents.map((event, index) => {
+    if (!event.dateFrom) return null;
+    const eventDate = new Date(event.dateFrom);
+    eventDate.setHours(0, 0, 0, 0);
+    if (eventDate < today) return null;
+    let formattedDate = "";
+    if (event.dateFrom && event.dateUntil) {
+      const fromDate = new Date(event.dateFrom);
+      const untilDate = new Date(event.dateUntil);
+      const dayFrom = fromDate.toLocaleDateString("en-GB", { weekday: "short", day: "2-digit" });
+      const monthFrom = fromDate.toLocaleDateString("en-GB", { month: "short" });
+      const dayUntil = untilDate.toLocaleDateString("en-GB", { weekday: "short", day: "2-digit" });
+      const monthUntil = untilDate.toLocaleDateString("en-GB", { month: "short" });
+      const year = untilDate.toLocaleDateString("en-GB", { year: "numeric" });
+      if (monthFrom === monthUntil) {
+        formattedDate = `${dayFrom} ${monthFrom} - ${dayUntil} ${monthUntil} ${year}`;
+      } else {
+        formattedDate = `${dayFrom} ${monthFrom} - ${dayUntil} ${monthUntil} ${year}`;
+      }
+    }
+    let statusBadge = "AVAILABLE";
+    let statusClass = "bg-[#ad986c]/10 text-[#ad986c]";
+    if (event.isSoldOut) {
+      statusBadge = "SOLD OUT";
+      statusClass = "bg-red-50 text-red-700";
+    }
+    return {
+      id: event.id || `custom-${index}`,
+      title: event.title || formattedDate,
+      dateText: formattedDate,
+      dateFrom: event.dateFrom,
+      dateUntil: event.dateUntil,
+      location: event.location || "TBC",
+      price: event.price || null,
+      singleOccupancyPrice: event.singleOccupancyPrice || null,
+      bookingLink: normalizeBookingLink(event.bookingLink),
+      buttonText: event.buttonText || "Book Now",
+      buttonColour: event.buttonColour || "#ad986c",
+      isSoldOut: event.isSoldOut || false,
+      statusBadge,
+      statusClass,
+      isCustom: true
+    };
+  }).filter(Boolean);
+}
 function transformGroupOrganiserDetail(item) {
   const holiday = item.attributes || item;
   const seoData = holiday.seo || {};
@@ -4579,6 +4630,7 @@ function transformGroupOrganiserDetail(item) {
     masterPageType: holiday.masterPageType,
     masterPageSlug: holiday.masterPageSlug,
     eventsQueryCommaSeparated: holiday.eventsquerycommaseperated,
+    customEvents: normalizeCustomEvents(holiday.customEvents),
     // Hero Section
     mainHeader: holiday.mainHeader,
     headerImage: holiday.headerImage ? getStrapiImageData(holiday.headerImage) : null,
@@ -6120,35 +6172,61 @@ async function getSalesLandingPageBySlug(slug) {
 }
 async function getRedirects() {
   try {
-    const params = [
-      "filters[enabled][$eq]=true",
-      "pagination[pageSize]=500",
-      "sort[0]=sourcePath:desc"
-    ].join("&");
-    const data = await fetchAPI(`/redirects?${params}`);
-    if (!data || !data.data) {
+    let allData = [];
+    let page = 1;
+    let pageCount = 1;
+    const pageSize = 100;
+    while (page <= pageCount) {
+      const params = [
+        "filters[enabled][$eq]=true",
+        `pagination[pageSize]=${pageSize}`,
+        `pagination[page]=${page}`,
+        "sort[0]=sourcePath:desc"
+      ].join("&");
+      const response = await fetchAPI(`/redirects?${params}`);
+      if (!response || !response.data || response.data.length === 0) {
+        break;
+      }
+      allData = [...allData, ...response.data];
+      if (response.meta && response.meta.pagination) {
+        pageCount = response.meta.pagination.pageCount;
+      }
+      page++;
+    }
+    console.log(`✅ [getRedirects] Loaded ${allData.length} redirects from Strapi`);
+    if (allData.length === 0) {
       return [];
     }
-    const normalizePath = (value) => {
+    const normalizePath = (value, preserveCase = false) => {
       if (!value) return null;
-      let path = value.trim().toLowerCase();
+      let path = value.trim();
+      if (!preserveCase) {
+        path = path.toLowerCase();
+      }
       if (!path) return null;
+      const lowerPath = path.toLowerCase();
+      if (lowerPath.startsWith("http://") || lowerPath.startsWith("https://")) {
+        return path;
+      }
       if (!path.startsWith("/")) {
         path = `/${path}`;
       }
       path = path.replace(/\/{2,}/g, "/");
       return path;
     };
-    return data.data.map((item) => item.attributes || item).map((redirect) => {
-      const sourcePath = normalizePath(redirect.sourcePath);
-      const destinationPath = normalizePath(redirect.destinationPath);
-      if (!sourcePath || !destinationPath) {
+    return allData.map((item) => item.attributes || item).map((redirect) => {
+      const sourcePath = normalizePath(redirect.sourcePath, false);
+      const destinationPath = normalizePath(redirect.destinationPath, true);
+      const code = parseInt(redirect.statusCode, 10);
+      const statusCode = [301, 302, 307, 308, 410].includes(code) ? code : 302;
+      if (!sourcePath || statusCode !== 410 && !destinationPath) {
         return null;
       }
       return {
         sourcePath,
-        destinationPath,
-        statusCode: parseInt(redirect.statusCode, 10) === 301 ? 301 : 302,
+        destinationPath: destinationPath || "/",
+        // Fallback for 410
+        statusCode,
         notes: redirect.notes || null
       };
     }).filter(Boolean).sort((a, b) => b.sourcePath.length - a.sourcePath.length);
@@ -6369,6 +6447,50 @@ async function getSearchResultsPage() {
 async function getSearchResultsPageSEO() {
   return getPageSEO("search-results-page");
 }
+async function getKeyTakeawaysPage() {
+  try {
+    console.log("🔍 [getKeyTakeawaysPage] Fetching key takeaways page data...");
+    const data = await fetchAPI(
+      "/key-takeaways-page?populate[pageHero][populate]=*&populate[sections][populate][items][populate]=*&populate[seo][populate]=*"
+    );
+    if (!data || !data.data) {
+      console.warn("⚠️  [getKeyTakeawaysPage] No data found");
+      return null;
+    }
+    const pageData = data.data.attributes || data.data;
+    const result = {
+      pageHero: pageData.pageHero ? {
+        kicker: pageData.pageHero.kicker || "",
+        heading: pageData.pageHero.heading || "Key Takeaways",
+        subtitle: pageData.pageHero.subtitle || "",
+        backgroundImage: getStrapiImageData(pageData.pageHero.backgroundImage),
+        showBreadcrumbs: pageData.pageHero.showBreadcrumbs !== false
+      } : null,
+      sections: pageData.sections ? pageData.sections.map((section) => ({
+        categoryLabel: section.categoryLabel || "",
+        sectionTitle: section.sectionTitle || "",
+        description: section.description || "",
+        items: section.items ? section.items.map((item) => ({
+          type: item.type || "video",
+          title: item.title || "",
+          description: item.description || "",
+          youtubeUrl: item.youtubeUrl || "",
+          pdfFile: item.pdfFile ? getStrapiImageData(item.pdfFile) : null,
+          pdfLabel: item.pdfLabel || item.title || "Download PDF"
+        })) : []
+      })) : [],
+      seo: pageData.seo || null
+    };
+    console.log("✅ [getKeyTakeawaysPage] Data fetched successfully");
+    return result;
+  } catch (error) {
+    console.error("❌ [getKeyTakeawaysPage] Error:", error);
+    return null;
+  }
+}
+async function getKeyTakeawaysPageSEO() {
+  return getPageSEO("key-takeaways-page");
+}
 
 const strapi = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
@@ -6437,6 +6559,8 @@ const strapi = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   getJuniorTennisCampNestedData,
   getJuniorTennisCampSEO,
   getJuniorTennisCamps,
+  getKeyTakeawaysPage,
+  getKeyTakeawaysPageSEO,
   getMasterPageData,
   getNavigationMenu,
   getOptimizedSEOImage,
@@ -6532,4 +6656,4 @@ const strapi = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   normalizeBookingLink
 }, Symbol.toStringTag, { value: 'Module' }));
 
-export { getJamieMurrayPage as $, getDragonsDenPage as A, getDragonsDenPageSEO as B, getEventBySlug as C, getFAQCategoryBySlug as D, getFAQCategorySEO as E, getFAQCategories as F, getFAQsIndexPage as G, getFAQsIndexPageSEO as H, getFlightsPage as I, getFlightsPageSEO as J, getFormBySlug as K, getFormSEO as L, getForms as M, getFormsPage as N, getFormsPageSEO as O, getGroupOrganiserBySlug as P, getMasterPageData as Q, getGroupOrganiserNestedData as R, getGroupOrganiserSEO as S, getGroupOrganisers as T, getEventsByDocumentIds as U, getAnnouncementBar as V, getNavigationMenu as W, getImageByName as X, getResponsiveImageByName as Y, getProducts as Z, getGroupOrganiserPage as _, getResponsiveImageAttrs as a, getWhatsappGroupsPageSEO as a$, getJamieMurrayPageSEO as a0, getFeaturedLocations as a1, getAllVenues as a2, getJoinTheTeamPage as a3, getJoinTheTeamPageSEO as a4, getJuniorTennisCampBySlug as a5, getJuniorTennisCampNestedData as a6, getJuniorTennisCampSEO as a7, getJuniorTennisCamps as a8, getEventsByUniqueValue as a9, getSearchResultsPage as aA, getSearchResultsPageSEO as aB, getSelfRatingGuidePage as aC, getSelfRatingGuidePageSEO as aD, fetchAPI as aE, getSkiHolidayBySlug as aF, getSkiHolidayNestedData as aG, getSkiHolidaySEO as aH, getSkiHolidays as aI, getSkiHolidayPage as aJ, getTennisAcademyBySlug as aK, getTennisAcademyNestedData as aL, getTennisAcademySEO as aM, getTennisAcademiesForCards as aN, getTennisAcademies as aO, getTennisAcademyPage as aP, getTennisClinicBySlug as aQ, getTennisClinicNestedData as aR, getTennisClinicSEO as aS, getTennisClinics as aT, getTennisClinicPage as aU, getTennisHolidayBySlug as aV, getTennisHolidayNestedData as aW, getTennisHolidaySEO as aX, getTennisHolidayPage as aY, getVenuesPage as aZ, getWelcomepacksPageSEO as a_, getProductReviews as aa, getJuniorCampPage as ab, getPadelHolidayBySlug as ac, getPadelHolidayNestedData as ad, getPadelHolidaySEO as ae, getPadelTennisHolidays as af, getPadelHolidayPage as ag, getPickleballHolidayBySlug as ah, getPickleballHolidayNestedData as ai, getPickleballHolidaySEO as aj, getPickleballHolidays as ak, getPickleballHolidayPage as al, getPlayAndWatchBySlug as am, getPlayAndWatchNestedData as an, getPlayAndWatchSEO as ao, getPlayAndWatchHolidays as ap, getTennisHolidays as aq, getPlayAndWatchPage as ar, getPreOrders as as, getPreOrdersPage as at, getPrivacyPolicyPage as au, getSchoolTennisTourBySlug as av, getSchoolTennisTourNestedData as aw, getSchoolTennisTourSEO as ax, getSchoolTennisTours as ay, getSchoolTourPage as az, getStrapiImageAttrs as b, getStrapiImageData as b0, getCloudflareImageVariant as b1, getProductPageBySlug as b2, getBasicStaticPageBySlug as b3, getSalesLandingPageBySlug as b4, getProductPageSEO as b5, getProductPages as b6, getBasicStaticPages as b7, getSalesLandingPages as b8, getFutureEvents as b9, getBlogs as ba, getHomePage as bb, getHomeSEO as bc, strapi as bd, getPeople as c, getAboutPage as d, getAboutPageSEO as e, getHomeData as f, getRedirects as g, getTravelGuidesPage as h, getTravelGuidesPageSEO as i, getAirportTransfersPage as j, getAirportTransfersPageSEO as k, getReviews as l, getPreOrderBySlug as m, getBlogBySlug as n, getBlogSEO as o, getAllBlogPosts as p, getBlogCategoryData as q, getBlogCategorySEO as r, getBlogsByCategory as s, formatCategorySlug as t, getBlogPage as u, getBlogPageSEO as v, getBookingProcessPage as w, getBookingProcessPageSEO as x, getTermsPage as y, getPageSEO as z };
+export { getJamieMurrayPage as $, getDragonsDenPage as A, getDragonsDenPageSEO as B, getEventBySlug as C, getFAQCategoryBySlug as D, getFAQCategorySEO as E, getFAQCategories as F, getFAQsIndexPage as G, getFAQsIndexPageSEO as H, getFlightsPage as I, getFlightsPageSEO as J, getFormBySlug as K, getFormSEO as L, getForms as M, getFormsPage as N, getFormsPageSEO as O, getAnnouncementBar as P, getNavigationMenu as Q, getImageByName as R, getResponsiveImageByName as S, getProducts as T, getGroupOrganiserBySlug as U, getMasterPageData as V, getGroupOrganiserNestedData as W, getGroupOrganiserSEO as X, getGroupOrganisers as Y, getEventsByDocumentIds as Z, getGroupOrganiserPage as _, getResponsiveImageAttrs as a, getVenuesPage as a$, getJamieMurrayPageSEO as a0, getFeaturedLocations as a1, getAllVenues as a2, getJoinTheTeamPage as a3, getJoinTheTeamPageSEO as a4, getJuniorTennisCampBySlug as a5, getJuniorTennisCampNestedData as a6, getJuniorTennisCampSEO as a7, getJuniorTennisCamps as a8, getEventsByUniqueValue as a9, getSchoolTennisTours as aA, getSchoolTourPage as aB, getSearchResultsPage as aC, getSearchResultsPageSEO as aD, getSelfRatingGuidePage as aE, getSelfRatingGuidePageSEO as aF, fetchAPI as aG, getSkiHolidayBySlug as aH, getSkiHolidayNestedData as aI, getSkiHolidaySEO as aJ, getSkiHolidays as aK, getSkiHolidayPage as aL, getTennisAcademyBySlug as aM, getTennisAcademyNestedData as aN, getTennisAcademySEO as aO, getTennisAcademiesForCards as aP, getTennisAcademies as aQ, getTennisAcademyPage as aR, getTennisClinicBySlug as aS, getTennisClinicNestedData as aT, getTennisClinicSEO as aU, getTennisClinics as aV, getTennisClinicPage as aW, getTennisHolidayBySlug as aX, getTennisHolidayNestedData as aY, getTennisHolidaySEO as aZ, getTennisHolidayPage as a_, getProductReviews as aa, getJuniorCampPage as ab, getKeyTakeawaysPage as ac, getKeyTakeawaysPageSEO as ad, getPadelHolidayBySlug as ae, getPadelHolidayNestedData as af, getPadelHolidaySEO as ag, getPadelTennisHolidays as ah, getPadelHolidayPage as ai, getPickleballHolidayBySlug as aj, getPickleballHolidayNestedData as ak, getPickleballHolidaySEO as al, getPickleballHolidays as am, getPickleballHolidayPage as an, getPlayAndWatchBySlug as ao, getPlayAndWatchNestedData as ap, getPlayAndWatchSEO as aq, getPlayAndWatchHolidays as ar, getTennisHolidays as as, getPlayAndWatchPage as at, getPreOrders as au, getPreOrdersPage as av, getPrivacyPolicyPage as aw, getSchoolTennisTourBySlug as ax, getSchoolTennisTourNestedData as ay, getSchoolTennisTourSEO as az, getStrapiImageAttrs as b, getWelcomepacksPageSEO as b0, getWhatsappGroupsPageSEO as b1, getStrapiImageData as b2, getCloudflareImageVariant as b3, getProductPageBySlug as b4, getBasicStaticPageBySlug as b5, getSalesLandingPageBySlug as b6, getProductPageSEO as b7, getProductPages as b8, getBasicStaticPages as b9, getSalesLandingPages as ba, getFutureEvents as bb, getBlogs as bc, getHomePage as bd, getHomeSEO as be, strapi as bf, getPeople as c, getAboutPage as d, getAboutPageSEO as e, getHomeData as f, getRedirects as g, getTravelGuidesPage as h, getTravelGuidesPageSEO as i, getAirportTransfersPage as j, getAirportTransfersPageSEO as k, getReviews as l, getPreOrderBySlug as m, getBlogBySlug as n, getBlogSEO as o, getAllBlogPosts as p, getBlogCategoryData as q, getBlogCategorySEO as r, getBlogsByCategory as s, formatCategorySlug as t, getBlogPage as u, getBlogPageSEO as v, getBookingProcessPage as w, getBookingProcessPageSEO as x, getTermsPage as y, getPageSEO as z };

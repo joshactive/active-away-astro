@@ -175,6 +175,9 @@ const POST = async ({ request, locals }) => {
             transformedData[field.label] = formData[field.name];
           }
         }
+        if (formData.shortLocationName) {
+          transformedData["shortLocationName"] = formData.shortLocationName;
+        }
         transformedData["form_id"] = formSlug;
         transformedData["form_name"] = formTitle;
         webhookPayload = {

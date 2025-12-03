@@ -1,5 +1,5 @@
 globalThis.process ??= {}; globalThis.process.env ??= {};
-import { g as getSitemapGroups, a as getSitemapEntries } from '../chunks/sitemap_JLDYok-o.mjs';
+import { g as getSitemapGroups, a as getSitemapEntries } from '../chunks/sitemap_BiFDOgqD.mjs';
 export { renderers } from '../renderers.mjs';
 
 const GET = async ({ request }) => {

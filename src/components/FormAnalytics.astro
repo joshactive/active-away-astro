@@ -93,9 +93,10 @@
       eventName = 'Contact';
     } else if (formSlug.includes('newsletter')) {
       eventName = 'Lead'; // or 'Subscribe'
-    } else if (formSlug.includes('booking') || formSlug.includes('payment')) {
-      eventName = 'Purchase'; // Assuming this form is the final step
     }
+    
+    // Note: 'Purchase' events are handled server-side via Make.com CAPI integration
+    // to ensure accuracy with actual booking data from Checkfront.
 
     // Track the event
     trackEvent(eventName, {

@@ -264,6 +264,7 @@ const {
     // Meta Pixel
     if (consent.marketing) {
       if (!window.fbq) {
+        // Initialize fbq queue first
         !function(f,b,e,v,n,t,s)
         {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
         n.callMethod.apply(n,arguments):n.queue.push(arguments)};
@@ -273,9 +274,24 @@ const {
         s.parentNode.insertBefore(t,s)}(window, document,'script',
         'https://connect.facebook.net/en_US/fbevents.js');
         
+        // Initialize pixel - queue will handle if script not loaded yet
         window.fbq('init', metaPixelId);
         window.fbq('track', 'PageView');
-        console.log('Meta Pixel Initialized');
+        console.log('Meta Pixel Initialized and PageView tracked');
+        
+        // Add noscript fallback
+        const noscript = document.createElement('noscript');
+        const img = document.createElement('img');
+        img.height = 1;
+        img.width = 1;
+        img.style.display = 'none';
+        img.src = `https://www.facebook.com/tr?id=${metaPixelId}&ev=PageView&noscript=1`;
+        noscript.appendChild(img);
+        document.body.appendChild(noscript);
+      } else {
+        // fbq already exists, just track PageView
+        window.fbq('track', 'PageView');
+        console.log('Meta Pixel PageView tracked (already initialized)');
       }
     }
   }
@@ -380,6 +396,12 @@ const {
       showOverlay();
     } else {
       initScripts(stored);
+      
+      // Track PageView on navigation if Meta Pixel is already loaded
+      if (stored.marketing && typeof window.fbq === 'function') {
+        window.fbq('track', 'PageView');
+        console.log('Meta Pixel PageView tracked on navigation');
+      }
     }
   };
 

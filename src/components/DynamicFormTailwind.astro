@@ -764,6 +764,16 @@ const sanitizeRichText = (input = '') => {
           }
         });
         
+        // Add shortLocationName if available from selected resort
+        const resortSelect = form.querySelector('select[data-dynamic-options="resorts"]');
+        if (resortSelect && resortSelect.value) {
+             const selectedOption = resortSelect.options[resortSelect.selectedIndex];
+             const shortLocation = selectedOption.getAttribute('data-short-location');
+             if (shortLocation) {
+               data['shortLocationName'] = shortLocation;
+             }
+        }
+        
         // Merge file uploads into data
         if (Object.keys(fileUploads).length > 0) {
           Object.assign(data, fileUploads);
@@ -942,8 +952,16 @@ const sanitizeRichText = (input = '') => {
             const values = result.items || result.resorts || result.venues || result.clinics;
             values.forEach(item => {
               const option = document.createElement('option');
-              option.value = item;
-              option.textContent = item;
+              if (typeof item === 'object' && item !== null) {
+                option.value = item.title || item.label || item.value;
+                option.textContent = item.title || item.label || item.text;
+                if (item.shortLocationName) {
+                  option.setAttribute('data-short-location', item.shortLocationName);
+                }
+              } else {
+                option.value = item;
+                option.textContent = item;
+              }
               select.appendChild(option);
             });
           }

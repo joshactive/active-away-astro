@@ -1,5 +1,5 @@
 globalThis.process ??= {}; globalThis.process.env ??= {};
-import { l as getReviews } from '../../chunks/strapi_CoI6gAxC.mjs';
+import { l as getReviews } from '../../chunks/strapi_UhkUqLlA.mjs';
 export { renderers } from '../../renderers.mjs';
 
 function getRelativeTime(dateString) {

@@ -233,6 +233,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
           }
         }
         
+        // Add shortLocationName if present (injected by frontend for resort selection)
+        if (formData.shortLocationName) {
+          transformedData['shortLocationName'] = formData.shortLocationName;
+        }
+        
         // Add form metadata
         transformedData['form_id'] = formSlug;
         transformedData['form_name'] = formTitle;
