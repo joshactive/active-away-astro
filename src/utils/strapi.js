@@ -8281,14 +8281,19 @@ export async function getRedirects() {
       .map((item) => item.attributes || item)
       .map((redirect) => {
         const sourcePath = normalizePath(redirect.sourcePath, false);
+        // For 410 Gone, destination path is optional/ignored
         const destinationPath = normalizePath(redirect.destinationPath, true);
-        if (!sourcePath || !destinationPath) {
+        const code = parseInt(redirect.statusCode, 10);
+        // Support standard redirects and 410 Gone
+        const statusCode = [301, 302, 307, 308, 410].includes(code) ? code : 302;
+
+        if (!sourcePath || (statusCode !== 410 && !destinationPath)) {
           return null;
         }
         return {
           sourcePath,
-          destinationPath,
-          statusCode: parseInt(redirect.statusCode, 10) === 301 ? 301 : 302,
+          destinationPath: destinationPath || '/', // Fallback for 410
+          statusCode,
           notes: redirect.notes || null
         };
       })
