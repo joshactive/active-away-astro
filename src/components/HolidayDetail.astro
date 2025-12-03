@@ -52,7 +52,9 @@ const keywords = holidayData.seo?.keywords || null;
 const canonicalURL = holidayData.seo?.canonicalURL || `https://activeaway.com/${slug.includes('group-organiser') || holidayType === 'group-organiser' ? 'group-organiser' : holidayType}/${slug}`;
 
 // Sport-specific labels based on holiday type
-const sportLabel = (holidayType === 'padel-tennis-holiday' || holidayType === 'padel-holiday') ? 'Padel' : 
+const isPadelClinic = holidayType === 'tennis-clinic' && (holidayData.title?.toLowerCase().includes('padel') || holidayData.mainHeader?.toLowerCase().includes('padel'));
+
+const sportLabel = (holidayType === 'padel-tennis-holiday' || holidayType === 'padel-holiday' || isPadelClinic) ? 'Padel' : 
                    holidayType === 'pickleball-holiday' ? 'Pickleball' : 
                    holidayType === 'ski-holiday' ? 'Ski' :
                    holidayType === 'group-organiser' ? 'Tennis' :
