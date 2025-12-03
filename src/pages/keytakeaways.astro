@@ -1,0 +1,378 @@
+---
+// Key Takeaways Page - Shows videos and PDF downloads organized by category
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeroTailwind from '../components/PageHeroTailwind.astro';
+import BreadcrumbsTailwind from '../components/BreadcrumbsTailwind.astro';
+import { getKeyTakeawaysPage, getKeyTakeawaysPageSEO } from '../utils/strapi.js';
+
+// Fetch page content from Strapi
+let pageData = null;
+try {
+  pageData = await getKeyTakeawaysPage();
+  console.log('🔍 [keytakeaways] Page data fetched');
+} catch (error) {
+  console.error('❌ [keytakeaways] Error fetching page:', error.message);
+}
+
+// Fetch SEO data separately
+let seoData = null;
+try {
+  seoData = await getKeyTakeawaysPageSEO();
+  if (seoData) {
+    console.log('📄 [keytakeaways] SEO data fetched');
+  }
+} catch (error) {
+  console.warn('⚠️  [keytakeaways] Could not fetch SEO data:', error.message);
+}
+
+// Extract SEO fields with fallbacks
+const pageTitle = seoData?.metaTitle 
+  || pageData?.seo?.metaTitle 
+  || 'Key Takeaways - Active Away';
+
+const pageDescription = seoData?.metaDescription 
+  || pageData?.seo?.metaDescription 
+  || 'Download your key takeaways from recent clinics and holidays with Active Away';
+
+const metaImage = seoData?.metaImage || pageData?.seo?.metaImage || null;
+const metaImageAlt = seoData?.metaImageAlt || pageData?.seo?.metaImageAlt || null;
+const metaImageWidth = seoData?.metaImageWidth || null;
+const metaImageHeight = seoData?.metaImageHeight || null;
+const keywords = seoData?.keywords || pageData?.seo?.keywords || null;
+const canonicalURL = seoData?.canonicalURL || pageData?.seo?.canonicalURL || 'https://activeaway.com/keytakeaways';
+
+// Extract YouTube ID function
+function extractYouTubeId(url: string) {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.includes('youtu.be')) return parsed.pathname.replace('/', '');
+    if (parsed.searchParams.has('v')) return parsed.searchParams.get('v');
+    const pathSegments = parsed.pathname.split('/').filter(Boolean);
+    if (pathSegments[0] === 'embed' && pathSegments[1]) return pathSegments[1];
+  } catch (error) {
+    console.warn('Unable to parse YouTube URL', url, error);
+  }
+  return null;
+}
+---
+
+<BaseLayout 
+  title={pageTitle}
+  description={pageDescription}
+  metaImage={metaImage}
+  metaImageAlt={metaImageAlt}
+  metaImageWidth={metaImageWidth}
+  metaImageHeight={metaImageHeight}
+  keywords={keywords}
+  canonicalURL={canonicalURL}
+>
+  <!-- Page Hero -->
+  {pageData?.pageHero && (
+    <div class="key-takeaways-hero">
+      <PageHeroTailwind pageData={pageData} />
+    </div>
+  )}
+  
+  <!-- Breadcrumbs -->
+  {pageData?.pageHero?.showBreadcrumbs !== false && (
+    <BreadcrumbsTailwind 
+      breadcrumbs={[
+        { label: 'Home', href: '/' },
+        { label: 'Key Takeaways' }
+      ]}
+    />
+  )}
+
+  <!-- Main Content Section -->
+  <section class="w-full bg-white py-8 sm:py-12 lg:py-16">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      
+      {pageData?.sections && pageData.sections.length > 0 ? (
+        <div class="space-y-16 sm:space-y-20 lg:space-y-24">
+          {pageData.sections.map((section: any) => (
+            <div class="section-wrapper">
+              {/* Category Label */}
+              {section.categoryLabel && (
+                <div class="text-xs sm:text-sm font-inter font-semibold text-gold tracking-[0.2em] uppercase mb-3 sm:mb-4">
+                  {section.categoryLabel}
+                </div>
+              )}
+              
+              {/* Section Title */}
+              <h2 class="text-3xl sm:text-4xl lg:text-5xl font-playfair font-bold text-gray-900 mb-4 sm:mb-6">
+                {section.sectionTitle}
+              </h2>
+              
+              {/* Section Description */}
+              {section.description && (
+                <div class="prose prose-lg max-w-none mb-8 sm:mb-10">
+                  <div class="text-base sm:text-lg font-inter text-gray-700 leading-relaxed" set:html={section.description}></div>
+                </div>
+              )}
+              
+              {/* Items */}
+              {section.items && section.items.length > 0 && (
+                <div class="space-y-6">
+                  {/* Video Items */}
+                  {section.items.filter((item: any) => item.type === 'video').length > 0 && (
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+                      {section.items
+                        .filter((item: any) => item.type === 'video')
+                        .map((item: any, index: number) => {
+                          const youtubeId = extractYouTubeId(item.youtubeUrl);
+                          const youtubeThumbnail = youtubeId ? `https://i.ytimg.com/vi/${youtubeId}/maxresdefault.jpg` : null;
+                          
+                          return (
+                            <div class="video-item bg-white border-2 border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-gold transition-all duration-300">
+                              {/* Video Player */}
+                              {youtubeId && (
+                                <div class="relative w-full aspect-video bg-black">
+                                  <button 
+                                    type="button"
+                                    class="lite-youtube-video group w-full h-full"
+                                    data-video-id={youtubeId}
+                                    aria-label={`Play ${item.title}`}
+                                  >
+                                    {youtubeThumbnail && (
+                                      <img 
+                                        src={youtubeThumbnail}
+                                        alt={`${item.title} thumbnail`}
+                                        loading={index < 4 ? 'eager' : 'lazy'}
+                                        decoding="async"
+                                        class="absolute inset-0 w-full h-full object-cover"
+                                      />
+                                    )}
+                                    <span class="lite-youtube__play"></span>
+                                  </button>
+                                </div>
+                              )}
+                              
+                              {/* Video Info */}
+                              <div class="p-6">
+                                <h3 class="text-xl sm:text-2xl font-playfair font-semibold text-gray-900 mb-2 leading-tight">
+                                  {item.title}
+                                </h3>
+                                {item.description && (
+                                  <p class="text-sm sm:text-base font-inter text-gray-600 leading-relaxed">
+                                    {item.description}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
+                      }
+                    </div>
+                  )}
+                  
+                  {/* PDF Download Items */}
+                  {section.items.filter((item: any) => item.type === 'pdf-download').length > 0 && (
+                    <div class="space-y-3">
+                      {section.items
+                        .filter((item: any) => item.type === 'pdf-download')
+                        .map((item: any) => (
+                          <a 
+                            href={item.pdfFile?.url}
+                            download
+                            class="group flex items-center gap-4 p-4 sm:p-5 bg-gray-50 hover:bg-gold/5 border-2 border-gray-200 hover:border-gold rounded-xl transition-all duration-300"
+                          >
+                            {/* PDF Icon */}
+                            <div class="flex-shrink-0 w-12 h-12 bg-gold/10 group-hover:bg-gold/20 rounded-lg flex items-center justify-center transition-colors">
+                              <svg class="w-6 h-6 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                              </svg>
+                            </div>
+                            
+                            {/* PDF Info */}
+                            <div class="flex-1 min-w-0">
+                              <div class="text-base sm:text-lg font-playfair font-semibold text-gray-900 group-hover:text-gold transition-colors">
+                                {item.title}
+                              </div>
+                              {item.description && (
+                                <p class="text-sm font-inter text-gray-600 mt-1">
+                                  {item.description}
+                                </p>
+                              )}
+                            </div>
+                            
+                            {/* Download Icon */}
+                            <div class="flex-shrink-0">
+                              <svg class="w-5 h-5 text-gray-400 group-hover:text-gold transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                              </svg>
+                            </div>
+                          </a>
+                        ))
+                      }
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div class="text-center py-16">
+          <p class="text-xl font-inter text-gray-600">No key takeaways available at this time.</p>
+        </div>
+      )}
+
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+
+  /* Adjust hero height to match other pages */
+  .key-takeaways-hero :global(section) {
+    height: 300px !important;
+  }
+
+  @media (min-width: 640px) {
+    .key-takeaways-hero :global(section) {
+      height: 400px !important;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .key-takeaways-hero :global(section) {
+      height: 450px !important;
+    }
+  }
+
+  /* YouTube Video Player Styles */
+  .lite-youtube-video {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+  }
+
+  .lite-youtube-video img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .lite-youtube__play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 68px;
+    height: 48px;
+    transform: translate(-50%, -50%);
+    background: rgba(33, 33, 33, 0.8);
+    border-radius: 14px;
+    transition: background 0.3s ease;
+    z-index: 10;
+  }
+
+  .lite-youtube__play::before {
+    content: '';
+    position: absolute;
+    left: 22px;
+    top: 14px;
+    border-style: solid;
+    border-width: 10px 0 10px 16px;
+    border-color: transparent transparent transparent #fff;
+  }
+
+  .lite-youtube-video:hover .lite-youtube__play {
+    background: rgba(214, 0, 0, 0.9);
+  }
+
+  /* Prose styles for description */
+  .prose {
+    color: #374151;
+  }
+
+  .prose p {
+    margin-bottom: 1rem;
+  }
+
+  .prose p:last-child {
+    margin-bottom: 0;
+  }
+
+  .prose a {
+    color: #ad986c;
+    text-decoration: underline;
+  }
+
+  .prose a:hover {
+    color: #8d7a56;
+  }
+
+  .prose strong {
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .prose em {
+    font-style: italic;
+  }
+
+  .prose ul,
+  .prose ol {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .prose li {
+    margin-bottom: 0.5rem;
+  }
+</style>
+
+<script is:inline>
+  // YouTube video embed on click
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.lite-youtube-video').forEach((trigger) => {
+      trigger.addEventListener('click', () => {
+        const videoId = trigger.getAttribute('data-video-id');
+        if (!videoId) return;
+        
+        const iframe = document.createElement('iframe');
+        iframe.setAttribute('allowfullscreen', '');
+        iframe.setAttribute('loading', 'lazy');
+        iframe.setAttribute('title', 'Video');
+        iframe.setAttribute(
+          'src',
+          `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`
+        );
+        iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+        iframe.style.position = 'absolute';
+        iframe.style.inset = '0';
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.border = 'none';
+
+        const wrapper = document.createElement('div');
+        wrapper.style.position = 'absolute';
+        wrapper.style.inset = '0';
+        wrapper.style.width = '100%';
+        wrapper.style.height = '100%';
+        wrapper.appendChild(iframe);
+
+        trigger.replaceWith(wrapper);
+      }, { once: true });
+    });
+  });
+</script>
+

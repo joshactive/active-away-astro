@@ -8601,3 +8601,62 @@ export async function getSearchResultsPage() {
 export async function getSearchResultsPageSEO() {
   return getPageSEO('search-results-page');
 }
+
+/**
+ * Fetch key takeaways page data from Strapi
+ * @returns {Promise<Object|null>} Page data with hero and sections
+ */
+export async function getKeyTakeawaysPage() {
+  try {
+    console.log('🔍 [getKeyTakeawaysPage] Fetching key takeaways page data...');
+    
+    const data = await fetchAPI(
+      '/key-takeaways-page?populate[pageHero][populate]=*&populate[sections][populate][items][populate]=*&populate[seo][populate]=*'
+    );
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getKeyTakeawaysPage] No data found');
+      return null;
+    }
+    
+    const pageData = data.data.attributes || data.data;
+    
+    const result = {
+      pageHero: pageData.pageHero ? {
+        kicker: pageData.pageHero.kicker || '',
+        heading: pageData.pageHero.heading || 'Key Takeaways',
+        subtitle: pageData.pageHero.subtitle || '',
+        backgroundImage: getStrapiImageData(pageData.pageHero.backgroundImage),
+        showBreadcrumbs: pageData.pageHero.showBreadcrumbs !== false
+      } : null,
+      sections: pageData.sections ? pageData.sections.map(section => ({
+        categoryLabel: section.categoryLabel || '',
+        sectionTitle: section.sectionTitle || '',
+        description: section.description || '',
+        items: section.items ? section.items.map(item => ({
+          type: item.type || 'video',
+          title: item.title || '',
+          description: item.description || '',
+          youtubeUrl: item.youtubeUrl || '',
+          pdfFile: item.pdfFile ? getStrapiImageData(item.pdfFile) : null,
+          pdfLabel: item.pdfLabel || item.title || 'Download PDF'
+        })) : []
+      })) : [],
+      seo: pageData.seo || null
+    };
+    
+    console.log('✅ [getKeyTakeawaysPage] Data fetched successfully');
+    return result;
+  } catch (error) {
+    console.error('❌ [getKeyTakeawaysPage] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch key takeaways page SEO data from Strapi
+ * @returns {Promise<Object|null>} SEO data
+ */
+export async function getKeyTakeawaysPageSEO() {
+  return getPageSEO('key-takeaways-page');
+}
