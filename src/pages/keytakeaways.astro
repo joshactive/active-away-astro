@@ -36,10 +36,17 @@ const pageDescription = seoData?.metaDescription
   || pageData?.seo?.metaDescription 
   || 'Download your key takeaways from recent clinics and holidays with Active Away';
 
-const metaImage = seoData?.metaImage || pageData?.seo?.metaImage || null;
+// Extract meta image URL properly
+let metaImage = null;
+if (seoData?.metaImage) {
+  metaImage = typeof seoData.metaImage === 'string' ? seoData.metaImage : seoData.metaImage.url;
+} else if (pageData?.seo?.metaImage) {
+  metaImage = typeof pageData.seo.metaImage === 'string' ? pageData.seo.metaImage : pageData.seo.metaImage.url;
+}
+
 const metaImageAlt = seoData?.metaImageAlt || pageData?.seo?.metaImageAlt || null;
-const metaImageWidth = seoData?.metaImageWidth || null;
-const metaImageHeight = seoData?.metaImageHeight || null;
+const metaImageWidth = seoData?.metaImageWidth || pageData?.seo?.metaImageWidth || null;
+const metaImageHeight = seoData?.metaImageHeight || pageData?.seo?.metaImageHeight || null;
 const keywords = seoData?.keywords || pageData?.seo?.keywords || null;
 const canonicalURL = seoData?.canonicalURL || pageData?.seo?.canonicalURL || 'https://activeaway.com/keytakeaways';
 
