@@ -1,0 +1,96 @@
+[
+  {
+    "type": "section",
+    "label": "Your Information",
+    "description": "Optional - Leave blank if you'd prefer to remain anonymous"
+  },
+  {
+    "name": "name",
+    "label": "Name",
+    "type": "text",
+    "required": false,
+    "placeholder": "e.g. John Smith"
+  },
+  {
+    "name": "email",
+    "label": "Email",
+    "type": "email",
+    "required": false,
+    "placeholder": "e.g. john.smith@example.com"
+  },
+  {
+    "type": "section",
+    "label": "Website Experience"
+  },
+  {
+    "name": "usability_rating",
+    "label": "How usable do you find our website?",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "description": "1 = Very Difficult / 10 = Very Easy",
+    "options": [
+      "10",
+      "9",
+      "8",
+      "7",
+      "6",
+      "5",
+      "4",
+      "3",
+      "2",
+      "1"
+    ]
+  },
+  {
+    "name": "find_info_rating",
+    "label": "How easy was it to find the information you were looking for?",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "description": "1 = Very Difficult / 10 = Very Easy",
+    "options": [
+      "10",
+      "9",
+      "8",
+      "7",
+      "6",
+      "5",
+      "4",
+      "3",
+      "2",
+      "1"
+    ]
+  },
+  {
+    "type": "section",
+    "label": "Improvements & Suggestions"
+  },
+  {
+    "name": "improvements",
+    "label": "Do you have any suggestions for improvements?",
+    "type": "textarea",
+    "required": false,
+    "placeholder": "e.g. I would like to see more photos of the resorts..."
+  },
+  {
+    "name": "general_comments",
+    "label": "Any other comments?",
+    "type": "textarea",
+    "required": false,
+    "placeholder": "Please share any other thoughts..."
+  },
+  {
+    "type": "section",
+    "label": "Consent"
+  },
+  {
+    "name": "consent",
+    "label": "",
+    "type": "checkbox",
+    "required": true,
+    "options": [
+      "I consent to my feedback being processed to improve the website."
+    ]
+  }
+]

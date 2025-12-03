@@ -19,6 +19,7 @@ import NavigationHeader from '../components/NavigationHeader.astro';
 import FooterTailwind from '../components/FooterTailwind.astro';
 import CookieConsent from '../components/CookieConsent.astro';
 import FormAnalytics from '../components/FormAnalytics.astro';
+import WebsiteFeedbackPopup from '../components/WebsiteFeedbackPopup.astro';
 
 export interface Props {
   title: string;
@@ -183,6 +184,7 @@ const ogImageHeight = metaImageHeight || 630;
     <FooterTailwind />
     <CookieConsent />
     <FormAnalytics />
+    <WebsiteFeedbackPopup />
   </body>
 </html>
 
