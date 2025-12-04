@@ -2905,6 +2905,16 @@ export async function getEventsPage() {
   );
 }
 
+// Availability Page
+export async function getAvailabilityPage() {
+  return await getArchivePage(
+    'availability-page',
+    'Check Availability',
+    'View our live availability for upcoming clinics, holidays, and events.',
+    'AVAILABILITY'
+  );
+}
+
 // Video Archive Page
 export async function getVideoArchivePage() {
   return await getArchivePage(

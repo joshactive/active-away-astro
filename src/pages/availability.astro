@@ -1,0 +1,481 @@
+---
+// Availability Page - Shows live availability from Google Script
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getStrapiImageAttrs } from '../utils/cloudflareImages.js';
+
+// Fetch page content from Strapi
+let pageContent = null;
+try {
+  const { getAvailabilityPage } = await import('../utils/strapi.js');
+  // Check if function exists (it was just added)
+  if (typeof getAvailabilityPage === 'function') {
+    pageContent = await getAvailabilityPage();
+    console.log('📅 [availability] Page content fetched successfully');
+  } else {
+    console.warn('[availability] getAvailabilityPage function not found in utils/strapi.js');
+  }
+} catch (error) {
+  console.warn('[availability] Could not fetch page content, using defaults:', error.message);
+}
+
+// Fetch availability data from Google Script
+let availabilityData = [];
+let metadata = { venues: [], eventTypes: [], months: [] };
+
+try {
+  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwkk4UUVHdpuf_kJ9zBbpscqtSiF7xVvjoBQj9m8q8enE070tj5sIwq-W6-wF6Zx-9vRw/exec';
+  const response = await fetch(GOOGLE_SCRIPT_URL);
+  
+  if (!response.ok) {
+    throw new Error(`Google Script returned ${response.status} ${response.statusText}`);
+  }
+  
+  const rawData = await response.json();
+  
+  if (Array.isArray(rawData)) {
+    // Process data
+    availabilityData = rawData.map((item, index) => {
+      // Parse dates
+      // Date format in JSON appears to be DD/MM/YYYY e.g. "06/12/2025"
+      const parseDate = (dateStr) => {
+        if (!dateStr) return null;
+        const parts = dateStr.split('/');
+        if (parts.length !== 3) return null;
+        // format: YYYY-MM-DD
+        return `${parts[2]}-${parts[1]}-${parts[0]}`; 
+      };
+
+      const dateFromISO = parseDate(item["Date From"]);
+      const dateUntilISO = parseDate(item["Date Until"]);
+      
+      // Create Date objects for sorting/filtering
+      const dateObj = dateFromISO ? new Date(dateFromISO) : null;
+      
+      // Calculate status
+      const space = parseInt(item["Space"] || 0);
+      const capacity = parseInt(item["Capacity"] || 0);
+      let status = 'Available';
+      let statusClass = 'bg-green-100 text-green-800';
+      
+      if (space <= 0) {
+        status = 'Sold Out';
+        statusClass = 'bg-red-100 text-red-800';
+      } else if (space <= 2) {
+        status = 'Last Spaces';
+        statusClass = 'bg-orange-100 text-orange-800';
+      }
+
+      return {
+        id: index,
+        venue: item["Venue"] || '',
+        eventType: item["Event Type"] || '',
+        dateFrom: item["Date From"] || '',
+        dateUntil: item["Date Until"] || '',
+        dateFromISO,
+        dateUntilISO,
+        dateObj,
+        capacity: capacity,
+        pax: parseInt(item["PAX"] || 0),
+        space: space,
+        status,
+        statusClass
+      };
+    });
+
+    // Filter out past events (optional, but good practice)
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    availabilityData = availabilityData.filter(item => item.dateObj && item.dateObj >= today);
+
+    // Sort by date
+    availabilityData.sort((a, b) => (a.dateObj || 0) - (b.dateObj || 0));
+
+    // Extract metadata for filters
+    metadata.venues = [...new Set(availabilityData.map(item => item.venue).filter(Boolean))].sort();
+    metadata.eventTypes = [...new Set(availabilityData.map(item => item.eventType).filter(Boolean))].sort();
+    
+    // Extract months for filter (e.g. "December 2025")
+    const monthSet = new Set();
+    availabilityData.forEach(item => {
+      if (item.dateObj) {
+        const monthYear = item.dateObj.toLocaleString('en-GB', { month: 'long', year: 'numeric' });
+        monthSet.add(monthYear);
+      }
+    });
+    metadata.months = [...monthSet]; // Already sorted roughly by date because we iterated sorted data? No, set insertion order is preserved usually but better to be explicit if needed.
+    // Let's just keep it simple for now.
+  }
+  
+  console.log(`📅 [availability] Fetched ${availabilityData.length} availability records`);
+} catch (error) {
+  console.error('[availability] Error fetching Google Script data:', error.message);
+}
+
+// Extract page content with fallbacks
+const heroTitle = pageContent?.hero?.title || 'Check Availability';
+const heroSubtitle = pageContent?.hero?.subtitle || 'View our live availability for upcoming clinics, holidays, and events.';
+const heroKicker = pageContent?.hero?.kicker || 'AVAILABILITY';
+const heroBackgroundImage = pageContent?.hero?.backgroundImage?.url || 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/45b69090-1c22-46cd-7f98-086ba71efc00/public'; // Fallback image
+const heroBackgroundImageAlt = pageContent?.hero?.backgroundImage?.alt || 'Tennis court availability';
+
+// SEO
+const pageTitle = 'Check Availability - Active Away';
+const pageDescription = 'Live availability for Active Away tennis clinics, holidays, and events.';
+
+---
+
+<BaseLayout 
+  title={pageTitle}
+  description={pageDescription}
+>
+  <!-- Hero Header Section -->
+  <section class="relative w-full h-[300px] sm:h-[400px] lg:h-[500px] overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-b from-[#0D1C4E]/75 via-[#0D1C4E]/60 to-[#0D1C4E]/60 z-10"></div>
+    <img 
+      src={heroBackgroundImage}
+      alt={heroBackgroundImageAlt}
+      class="absolute inset-0 w-full h-full object-cover"
+      loading="eager"
+    />
+    
+    <div class="relative z-20 container mx-auto max-w-[1400px] px-4 sm:px-10 h-full flex flex-col justify-center items-center text-center pt-16 sm:pt-20">
+      <div class="hidden sm:block text-xs sm:text-sm font-inter font-semibold text-gold tracking-[0.2em] uppercase mb-4 sm:mb-6 border-t border-b border-gold/50 py-2 px-6">
+        {heroKicker}
+      </div>
+      <h1 class="text-3xl sm:text-4xl lg:text-6xl font-playfair font-bold text-white mb-4 sm:mb-6 leading-tight">
+        {heroTitle}
+      </h1>
+      <p class="text-base sm:text-lg text-gray-200 max-w-2xl font-inter font-light leading-relaxed px-4">
+        {heroSubtitle}
+      </p>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="w-full bg-white py-12 sm:py-16 lg:py-24">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      <div class="flex flex-col lg:flex-row gap-8 lg:gap-12">
+        
+        <!-- Left Sidebar - Filters -->
+        <aside class="w-full lg:w-[300px] flex-shrink-0">
+          <div id="filterBar" class="bg-white border border-gray-200 rounded-2xl p-6 shadow-lg lg:sticky lg:top-4">
+            <!-- Filter Header -->
+            <div class="mb-6 pb-4 border-b border-gray-200">
+              <div class="flex items-center justify-between">
+                <h3 class="text-base font-playfair font-semibold text-gray-900">Filters</h3>
+                <span id="activeFilterCount" class="hidden bg-gold text-white text-xs font-bold px-2.5 py-1 rounded-full">0</span>
+              </div>
+              <button id="clearFilters" class="text-xs text-gold hover:text-[#8c7b56] mt-2 hidden font-medium transition-colors">Clear all filters</button>
+            </div>
+
+            <!-- Mobile Filter Toggle -->
+            <button 
+              id="mobileFilterToggle"
+              class="lg:hidden w-full flex items-center justify-between bg-gray-50 hover:bg-gray-100 px-4 py-3 rounded-lg transition-colors mb-4"
+            >
+              <span class="font-inter font-medium text-gray-900">Show/Hide Filters</span>
+              <svg class="w-5 h-5 text-gray-600 transition-transform" id="filterChevron" viewBox="0 0 24 24" fill="none">
+                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+
+            <!-- Filters Container -->
+            <div id="filtersContainer" class="space-y-6 hidden lg:block">
+              
+              <!-- Search Filter -->
+              <div class="filter-group">
+                <label for="searchFilter" class="text-sm font-inter font-medium text-gray-900 mb-2 block">Search</label>
+                <input 
+                  type="text" 
+                  id="searchFilter" 
+                  placeholder="Search venues..." 
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-gold focus:border-gold text-sm font-inter"
+                />
+              </div>
+
+              <!-- Event Type Filter -->
+              <div class="filter-group">
+                <button class="filter-header w-full flex items-center justify-between py-3 text-left" data-filter="eventType">
+                  <span class="text-base font-inter font-medium text-gray-900">Event Type</span>
+                  <svg class="w-5 h-5 text-gray-600 transition-transform" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div class="filter-content space-y-2 mt-3">
+                  {metadata.eventTypes.map(type => (
+                    <label class="flex items-center cursor-pointer group">
+                      <input 
+                        type="checkbox" 
+                        name="eventType" 
+                        value={type}
+                        class="w-4 h-4 text-gold border-gray-300 rounded focus:ring-gold focus:ring-2"
+                      />
+                      <span class="ml-3 text-sm font-inter text-gray-700 group-hover:text-gray-900">{type}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <!-- Venue Filter -->
+              <div class="filter-group">
+                <button class="filter-header w-full flex items-center justify-between py-3 text-left" data-filter="venue">
+                  <span class="text-base font-inter font-medium text-gray-900">Venue</span>
+                  <svg class="w-5 h-5 text-gray-600 transition-transform" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div class="filter-content space-y-2 mt-3 max-h-60 overflow-y-auto">
+                  {metadata.venues.map(venue => (
+                    <label class="flex items-center cursor-pointer group">
+                      <input 
+                        type="checkbox" 
+                        name="venue" 
+                        value={venue}
+                        class="w-4 h-4 text-gold border-gray-300 rounded focus:ring-gold focus:ring-2"
+                      />
+                      <span class="ml-3 text-sm font-inter text-gray-700 group-hover:text-gray-900">{venue}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+               <!-- Status Filter -->
+               <div class="filter-group">
+                <button class="filter-header w-full flex items-center justify-between py-3 text-left" data-filter="status">
+                  <span class="text-base font-inter font-medium text-gray-900">Status</span>
+                  <svg class="w-5 h-5 text-gray-600 transition-transform" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div class="filter-content space-y-2 mt-3">
+                    <label class="flex items-center cursor-pointer group">
+                      <input type="checkbox" name="status" value="Available" class="w-4 h-4 text-gold border-gray-300 rounded focus:ring-gold focus:ring-2" />
+                      <span class="ml-3 text-sm font-inter text-gray-700 group-hover:text-gray-900">Available</span>
+                    </label>
+                    <label class="flex items-center cursor-pointer group">
+                      <input type="checkbox" name="status" value="Last Spaces" class="w-4 h-4 text-gold border-gray-300 rounded focus:ring-gold focus:ring-2" />
+                      <span class="ml-3 text-sm font-inter text-gray-700 group-hover:text-gray-900">Last Spaces</span>
+                    </label>
+                    <label class="flex items-center cursor-pointer group">
+                      <input type="checkbox" name="status" value="Sold Out" class="w-4 h-4 text-gold border-gray-300 rounded focus:ring-gold focus:ring-2" />
+                      <span class="ml-3 text-sm font-inter text-gray-700 group-hover:text-gray-900">Sold Out</span>
+                    </label>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </aside>
+
+        <!-- Right Content - Results -->
+        <main class="flex-1 min-w-0">
+          
+          <!-- Results Count -->
+          <div class="flex items-center justify-between mb-6">
+            <p class="text-gray-600 font-inter">
+              Showing <span id="filteredCount" class="font-semibold text-gray-900">{availabilityData.length}</span> results
+            </p>
+          </div>
+
+          <!-- Table View (Desktop) / Card View (Mobile) -->
+          <div id="resultsContainer" class="w-full">
+            <!-- Header for Desktop -->
+            <div class="hidden md:grid grid-cols-12 gap-4 bg-gray-50 p-4 rounded-t-xl border border-gray-200 text-sm font-semibold text-gray-900 font-inter">
+              <div class="col-span-3">Venue</div>
+              <div class="col-span-3">Event Type</div>
+              <div class="col-span-2">Date</div>
+              <div class="col-span-2 text-center">Booked</div>
+              <div class="col-span-2 text-right">Availability</div>
+            </div>
+
+            <!-- List Items -->
+            <div id="availabilityList" class="space-y-4 md:space-y-0">
+              {availabilityData.map(item => (
+                <div 
+                  class="availability-item group bg-white border border-gray-200 rounded-xl md:rounded-none md:border-t-0 md:first:rounded-t-xl md:last:rounded-b-xl p-5 md:p-4 hover:bg-gray-50 transition-colors"
+                  data-venue={item.venue}
+                  data-event-type={item.eventType}
+                  data-date={item.dateFromISO}
+                  data-status={item.status}
+                  data-search={`${item.venue} ${item.eventType}`.toLowerCase()}
+                >
+                  <div class="md:grid md:grid-cols-12 md:gap-4 md:items-center">
+                    <!-- Mobile Label -->
+                    <div class="md:hidden text-xs text-gray-500 mb-1 uppercase tracking-wider">Venue</div>
+                    <div class="col-span-3 font-medium text-gray-900 text-lg md:text-base mb-2 md:mb-0">{item.venue}</div>
+                    
+                    <!-- Mobile Label -->
+                    <div class="md:hidden text-xs text-gray-500 mb-1 uppercase tracking-wider mt-2">Event Type</div>
+                    <div class="col-span-3 text-gray-600 mb-2 md:mb-0">{item.eventType}</div>
+                    
+                    <!-- Mobile Label -->
+                    <div class="md:hidden text-xs text-gray-500 mb-1 uppercase tracking-wider mt-2">Date</div>
+                    <div class="col-span-2 text-gray-600 mb-2 md:mb-0">
+                      {item.dateFrom} {item.dateFrom !== item.dateUntil && `- ${item.dateUntil}`}
+                    </div>
+
+                    <!-- Mobile Label -->
+                    <div class="md:hidden text-xs text-gray-500 mb-1 uppercase tracking-wider mt-2">Booked</div>
+                    <div class="col-span-2 text-gray-600 mb-2 md:mb-0 text-left md:text-center">
+                      {item.pax} / {item.capacity}
+                    </div>
+                    
+                    <!-- Mobile Label -->
+                    <div class="md:hidden text-xs text-gray-500 mb-1 uppercase tracking-wider mt-2">Availability</div>
+                    <div class="col-span-2 flex items-center md:justify-end">
+                      <span class={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${item.statusClass}`}>
+                        {item.status === 'Available' && item.space > 0 ? `${item.space} Spaces` : item.status}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden py-12 text-center bg-gray-50 rounded-xl border border-gray-200 border-dashed">
+              <p class="text-gray-500 font-inter">No availability found matching your filters.</p>
+              <button id="resetFiltersBtn" class="mt-4 text-gold font-medium hover:underline">Reset Filters</button>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* Custom scrollbar for venue list */
+  .filter-content::-webkit-scrollbar {
+    width: 6px;
+  }
+  .filter-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+  .filter-content::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+  }
+  .filter-content::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
+</style>
+
+<script>
+  // Client-side filtering logic
+  document.addEventListener('DOMContentLoaded', () => {
+    const items = document.querySelectorAll('.availability-item');
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    const searchInput = document.getElementById('searchFilter');
+    const clearBtn = document.getElementById('clearFilters');
+    const resetBtn = document.getElementById('resetFiltersBtn');
+    const countEl = document.getElementById('filteredCount');
+    const emptyState = document.getElementById('emptyState');
+    const listContainer = document.getElementById('availabilityList');
+    const activeFilterCountEl = document.getElementById('activeFilterCount');
+    
+    // Mobile toggle
+    const mobileToggle = document.getElementById('mobileFilterToggle');
+    const filtersContainer = document.getElementById('filtersContainer');
+    
+    if (mobileToggle && filtersContainer) {
+      mobileToggle.addEventListener('click', () => {
+        filtersContainer.classList.toggle('hidden');
+      });
+    }
+
+    // Filter function
+    function filterItems() {
+      const search = searchInput.value.toLowerCase();
+      const checkedVenues = Array.from(document.querySelectorAll('input[name="venue"]:checked')).map(cb => cb.value);
+      const checkedTypes = Array.from(document.querySelectorAll('input[name="eventType"]:checked')).map(cb => cb.value);
+      const checkedStatuses = Array.from(document.querySelectorAll('input[name="status"]:checked')).map(cb => cb.value);
+
+      let visibleCount = 0;
+      let activeFilters = 0;
+
+      if (checkedVenues.length) activeFilters++;
+      if (checkedTypes.length) activeFilters++;
+      if (checkedStatuses.length) activeFilters++;
+      if (search) activeFilters++;
+
+      items.forEach(item => {
+        const venue = item.dataset.venue;
+        const type = item.dataset.eventType;
+        const status = item.dataset.status; // Available, Last Spaces, Sold Out
+        const searchText = item.dataset.search;
+
+        const matchesSearch = !search || searchText.includes(search);
+        const matchesVenue = checkedVenues.length === 0 || checkedVenues.includes(venue);
+        const matchesType = checkedTypes.length === 0 || checkedTypes.includes(type);
+        
+        // Status matching logic needs to be a bit smarter or exact?
+        // item.dataset.status is mapped in the backend logic (Available, Last Spaces, Sold Out)
+        const matchesStatus = checkedStatuses.length === 0 || checkedStatuses.includes(status);
+
+        if (matchesSearch && matchesVenue && matchesType && matchesStatus) {
+          item.style.display = '';
+          visibleCount++;
+        } else {
+          item.style.display = 'none';
+        }
+      });
+
+      // Update UI
+      countEl.textContent = visibleCount;
+      if (visibleCount === 0) {
+        emptyState.classList.remove('hidden');
+        listContainer.classList.add('hidden');
+      } else {
+        emptyState.classList.add('hidden');
+        listContainer.classList.remove('hidden');
+      }
+
+      // Update active filter count
+      if (activeFilters > 0) {
+        activeFilterCountEl.textContent = activeFilters; // Simple count, not exact number of chips
+        activeFilterCountEl.classList.remove('hidden');
+        clearBtn.classList.remove('hidden');
+      } else {
+        activeFilterCountEl.classList.add('hidden');
+        clearBtn.classList.add('hidden');
+      }
+    }
+
+    // Event listeners
+    checkboxes.forEach(cb => cb.addEventListener('change', filterItems));
+    searchInput.addEventListener('input', filterItems);
+    
+    clearBtn.addEventListener('click', () => {
+      checkboxes.forEach(cb => cb.checked = false);
+      searchInput.value = '';
+      filterItems();
+    });
+
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        checkboxes.forEach(cb => cb.checked = false);
+        searchInput.value = '';
+        filterItems();
+      });
+    }
+
+    // Accordion logic for filter groups (optional, similar to events page)
+    const filterHeaders = document.querySelectorAll('.filter-header');
+    filterHeaders.forEach(header => {
+      header.addEventListener('click', () => {
+        const content = header.nextElementSibling;
+        const icon = header.querySelector('svg');
+        content.classList.toggle('hidden');
+        if (content.classList.contains('hidden')) {
+            icon.style.transform = 'rotate(-90deg)';
+        } else {
+            icon.style.transform = 'rotate(0deg)';
+        }
+      });
+    });
+  });
+</script>

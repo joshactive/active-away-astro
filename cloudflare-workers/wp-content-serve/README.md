@@ -145,3 +145,4 @@ For issues:
 3. Test direct R2 URL: `https://files.activeaway.com/wp-content/uploads/file.pdf`
 4. Check worker route is active in Cloudflare dashboard
 
+
