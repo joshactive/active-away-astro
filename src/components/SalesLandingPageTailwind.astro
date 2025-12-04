@@ -33,6 +33,7 @@ const formData = formSection?.form ? {
   formSubtitle: ' ',
   formFields: Array.isArray(formSection.form) ? formSection.form : [],
   webhookUrl: formSection.webhookUrl || 'https://hook.eu2.make.com/your-webhook-url',
+  redirectUrl: formSection.redirectUrl || null,
   formLayout: 'two-column',
   showOtherOptions: false
 } : null;

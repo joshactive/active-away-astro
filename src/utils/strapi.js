@@ -2558,6 +2558,7 @@ function transformFormDetail(item) {
     formLayout: form.formLayout || 'one-column',
     formFields: formFields,
     formWebhookUrl: form.formWebhookUrl || null,
+    redirectUrl: form.redirectUrl || null,
     showOtherOptions: form.showOtherOptions || false,
     submitButtonConditional: form.submitButtonConditional || false,
     submitButtonConditionalField: form.submitButtonConditionalField || '',
@@ -8342,7 +8343,8 @@ export async function getSalesLandingPageBySlug(slug) {
         description: page.formSection.description,
         privacyNote: page.formSection.privacyNote,
         form,
-        webhookUrl: page.formSection.webhookUrl || null
+        webhookUrl: page.formSection.webhookUrl || null,
+        redirectUrl: page.formSection.redirectUrl || null
       } : null,
       statsSection: page.statsSection ? {
         stats: page.statsSection.stats?.map((stat) => ({

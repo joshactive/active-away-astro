@@ -601,7 +601,8 @@ const sanitizeRichText = (input = '') => {
   errorMessageId,
   errorTextId,
   submitTextId,
-  webhookUrl: formData?.webhookUrl || null
+  webhookUrl: formData?.webhookUrl || null,
+  redirectUrl: formData?.redirectUrl || null
 }}>
   document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById(formId);
@@ -788,15 +789,14 @@ const sanitizeRichText = (input = '') => {
             formSlug: formSlug,
             data: data,
             turnstileToken: turnstileToken,
-            webhookUrl: webhookUrl
+            webhookUrl: webhookUrl,
+            redirectUrl: redirectUrl
           })
         });
         
         const result = await response.json();
         
         if (response.ok && result.success) {
-          successMessage?.classList.remove('hidden');
-
           // Dispatch event for analytics
           try {
             const analyticsEvent = new CustomEvent('active-away-form-success', { 
@@ -811,6 +811,15 @@ const sanitizeRichText = (input = '') => {
             console.error('Error dispatching analytics event:', e);
           }
 
+          // Handle redirect if redirectUrl is provided
+          if (result.redirectUrl) {
+            console.log('🔗 Redirecting to:', result.redirectUrl);
+            window.location.href = result.redirectUrl;
+            return; // Exit early since we're redirecting
+          }
+
+          // Show success message if no redirect
+          successMessage?.classList.remove('hidden');
           form.reset();
           
           try {

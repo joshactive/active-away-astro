@@ -66,7 +66,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
     
-    const { formSlug, data: formData, turnstileToken, webhookUrl: providedWebhookUrl } = body;
+    const { formSlug, data: formData, turnstileToken, webhookUrl: providedWebhookUrl, redirectUrl: providedRedirectUrl } = body;
 
     if (!formSlug || !formData) {
       return new Response(JSON.stringify({ 
@@ -83,6 +83,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     let formFields: any[] = [];
     let webhookFormat = 'labels';
     let formTitle = '';
+    let redirectUrl = providedRedirectUrl || null;
     
     if (providedWebhookUrl) {
       // Use provided webhook for inline/embedded forms (JSON-based)
@@ -125,6 +126,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       webhookUrl = form.formWebhookUrl;
       formTitle = form.title || formSlug;
       webhookFormat = form.webhookFormat || 'labels'; // 'labels' or 'names'
+      redirectUrl = form.redirectUrl || redirectUrl; // Use Strapi redirectUrl if available
       
       if (!webhookUrl) {
         console.error(`❌ No webhook URL configured for form: ${formSlug}`);
@@ -295,7 +297,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     return new Response(JSON.stringify({ 
       success: true,
-      message: 'Form submitted successfully!'
+      message: 'Form submitted successfully!',
+      redirectUrl: redirectUrl || null
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
