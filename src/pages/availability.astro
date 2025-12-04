@@ -401,7 +401,7 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
   }
 </style>
 
-<script>
+<script define:vars={{ availabilityData, metadata }}>
   // Client-side filtering logic
   document.addEventListener('DOMContentLoaded', () => {
     const items = document.querySelectorAll('.availability-item');
