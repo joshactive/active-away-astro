@@ -2907,12 +2907,110 @@ export async function getEventsPage() {
 
 // Availability Page
 export async function getAvailabilityPage() {
-  return await getArchivePage(
-    'availability-page',
-    'Check Availability',
-    'View our live availability for upcoming clinics, holidays, and events.',
-    'AVAILABILITY'
-  );
+  try {
+    console.log('📖 [getAvailabilityPage] Fetching availability page data...');
+    
+    const data = await fetchAPI('/availability-page');
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getAvailabilityPage] No availability page found');
+      return null;
+    }
+    
+    const page = data.data.attributes || data.data;
+    
+    const availabilityPage = {
+      heroTitle: page.heroTitle,
+      heroSubtitle: page.heroSubtitle,
+      heroKicker: page.heroKicker,
+      
+      seo: page.seo || null
+    };
+    
+    console.log('✅ [getAvailabilityPage] Availability page data fetched successfully');
+    return availabilityPage;
+  } catch (error) {
+    console.error('❌ [getAvailabilityPage] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * SEPARATE API CALL: Fetch hero background image for availability page
+ * @returns {Promise<Object|null>} Hero background image data or null
+ */
+export async function getAvailabilityPageHeroImage() {
+  try {
+    console.log('📸 [getAvailabilityPageHeroImage] Fetching hero image...');
+    
+    const data = await fetchAPI('/availability-page?populate=heroBackgroundImage');
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getAvailabilityPageHeroImage] No availability page found');
+      return null;
+    }
+    
+    const page = data.data.attributes || data.data;
+    const heroBackgroundImage = getStrapiImageData(page.heroBackgroundImage);
+    
+    if (heroBackgroundImage?.url) {
+      console.log(`📸 Availability page hero image URL:`, heroBackgroundImage.url);
+    }
+    
+    return heroBackgroundImage;
+  } catch (error) {
+    console.error('❌ [getAvailabilityPageHeroImage] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * SEPARATE API CALL: Fetch SEO data with metaImage for availability page
+ * @returns {Promise<Object|null>} SEO data object or null
+ */
+export async function getAvailabilityPageSEO() {
+  try {
+    console.log('📄 [getAvailabilityPageSEO] Fetching SEO for availability page...');
+    
+    const data = await fetchAPI('/availability-page?populate[seo][populate]=metaImage');
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getAvailabilityPageSEO] No availability page found');
+      return null;
+    }
+    
+    const page = data.data.attributes || data.data;
+    const seo = page.seo;
+    
+    if (!seo) {
+      console.warn('⚠️  [getAvailabilityPageSEO] No SEO data');
+      return null;
+    }
+
+    // Extract meta image data with Cloudflare Images optimization
+    const metaImageData = getOptimizedSEOImage(seo.metaImage);
+    
+    if (metaImageData.url) {
+      console.log(`📸 Availability page meta image URL (optimized):`, metaImageData.url);
+    }
+    
+    const seoData = {
+      metaTitle: seo.metaTitle,
+      metaDescription: seo.metaDescription,
+      keywords: seo.keywords,
+      canonicalURL: seo.canonicalURL,
+      metaImage: metaImageData.url,
+      metaImageAlt: metaImageData.alt,
+      metaImageWidth: metaImageData.width,
+      metaImageHeight: metaImageData.height
+    };
+    
+    console.log('✅ [getAvailabilityPageSEO] SEO data fetched');
+    return seoData;
+  } catch (error) {
+    console.error('❌ [getAvailabilityPageSEO] Error:', error);
+    return null;
+  }
 }
 
 // Video Archive Page
