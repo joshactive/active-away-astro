@@ -304,6 +304,49 @@ const sanitizeRichText = (input = '') => {
                           return <option value={optionValue}>{optionLabel}</option>;
                         })}
                       </select>
+                    ) : field.type === 'airport' ? (
+                      <div class="relative airport-autocomplete" data-field-name={field.name}>
+                        <input
+                          type="text"
+                          id={`${field.name}_search`}
+                          name={`${field.name}_search_display`}
+                          data-airport-search={field.name}
+                          placeholder={field.placeholder || 'Start typing airport name, city, or code...'}
+                          autocomplete="chrome-off"
+                          autocorrect="off"
+                          autocapitalize="off"
+                          spellcheck="false"
+                          readonly
+                          onfocus="this.removeAttribute('readonly');"
+                          class="w-full px-4 py-3 border border-gray-300 rounded-lg font-inter text-gray-900 focus:ring-2 focus:ring-gold focus:border-gold transition-all"
+                        />
+                        <input
+                          type="hidden"
+                          id={field.name}
+                          name={field.name}
+                          data-airport-code={field.name}
+                          required={field.required}
+                        />
+                        <div 
+                          id={`${field.name}_dropdown`}
+                          data-airport-dropdown={field.name}
+                          class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto hidden"
+                        >
+                          <div class="p-2 text-sm text-gray-500 text-center" data-airport-loading>
+                            Loading airports...
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          data-airport-clear={field.name}
+                          class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 hidden"
+                          aria-label="Clear selection"
+                        >
+                          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
                     ) : field.type === 'tel' ? (
                       <div class="flex flex-col sm:flex-row gap-3">
                         <div class="relative w-full sm:w-52">
@@ -1138,6 +1181,205 @@ const sanitizeRichText = (input = '') => {
       });
       
       updateItems();
+    });
+    
+    // Airport Autocomplete Functionality
+    const airportFields = form.querySelectorAll('[data-airport-search]');
+    let airportsData = [];
+    let airportsLoaded = false;
+    
+    async function loadAirports() {
+      if (airportsLoaded) return airportsData;
+      
+      try {
+        const response = await fetch('/data/airports.json');
+        if (!response.ok) throw new Error('Failed to load airports');
+        airportsData = await response.json();
+        airportsLoaded = true;
+        return airportsData;
+      } catch (error) {
+        console.error('Error loading airports:', error);
+        return [];
+      }
+    }
+    
+    function searchAirports(query, maxResults = 50) {
+      if (!query || query.length < 1) return [];
+      
+      const searchTerm = query.toLowerCase().trim();
+      const results = [];
+      
+      for (const airport of airportsData) {
+        const code = airport.code.toLowerCase();
+        const name = airport.name.toLowerCase();
+        const city = airport.city.toLowerCase();
+        const country = airport.country.toLowerCase();
+        
+        if (code.includes(searchTerm) || 
+            name.includes(searchTerm) || 
+            city.includes(searchTerm) || 
+            country.includes(searchTerm)) {
+          results.push(airport);
+          if (results.length >= maxResults) break;
+        }
+      }
+      
+      return results;
+    }
+    
+    function highlightMatch(text, query) {
+      if (!query) return text;
+      const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+      return text.replace(regex, '<mark class="bg-yellow-200">$1</mark>');
+    }
+    
+    airportFields.forEach((searchInput) => {
+      const fieldName = searchInput.getAttribute('data-airport-search');
+      const codeInput = form.querySelector(`[data-airport-code="${fieldName}"]`);
+      const dropdown = form.querySelector(`[data-airport-dropdown="${fieldName}"]`);
+      const clearButton = form.querySelector(`[data-airport-clear="${fieldName}"]`);
+      const loadingDiv = dropdown?.querySelector('[data-airport-loading]');
+      
+      if (!codeInput || !dropdown) return;
+      
+      let selectedAirport = null;
+      let activeIndex = -1;
+      
+      // Load airports on first focus
+      searchInput.addEventListener('focus', async () => {
+        if (!airportsLoaded) {
+          if (loadingDiv) {
+            loadingDiv.textContent = 'Loading airports...';
+          }
+          dropdown.classList.remove('hidden');
+          await loadAirports();
+          if (loadingDiv) {
+            loadingDiv.classList.add('hidden');
+          }
+        }
+        
+        // Show dropdown with current results or empty state
+        if (searchInput.value.length > 0) {
+          const results = searchAirports(searchInput.value);
+          displayResults(results, searchInput.value);
+        }
+      });
+      
+      // Search on input
+      searchInput.addEventListener('input', (e) => {
+        const query = e.target.value;
+        
+        if (query.length === 0) {
+          dropdown.classList.add('hidden');
+          codeInput.value = '';
+          selectedAirport = null;
+          clearButton?.classList.add('hidden');
+          validateForm();
+          return;
+        }
+        
+        const results = searchAirports(query);
+        displayResults(results, query);
+      });
+      
+      // Close dropdown on blur (with delay for click events)
+      searchInput.addEventListener('blur', () => {
+        setTimeout(() => {
+          dropdown.classList.add('hidden');
+          activeIndex = -1;
+        }, 200);
+      });
+      
+      // Keyboard navigation
+      searchInput.addEventListener('keydown', (e) => {
+        const items = dropdown.querySelectorAll('[data-airport-item]');
+        
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          activeIndex = Math.min(activeIndex + 1, items.length - 1);
+          updateActiveItem(items);
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          activeIndex = Math.max(activeIndex - 1, -1);
+          updateActiveItem(items);
+        } else if (e.key === 'Enter' && activeIndex >= 0) {
+          e.preventDefault();
+          items[activeIndex]?.click();
+        } else if (e.key === 'Escape') {
+          dropdown.classList.add('hidden');
+          activeIndex = -1;
+        }
+      });
+      
+      function updateActiveItem(items) {
+        items.forEach((item, index) => {
+          if (index === activeIndex) {
+            item.classList.add('bg-gray-100');
+            item.scrollIntoView({ block: 'nearest' });
+          } else {
+            item.classList.remove('bg-gray-100');
+          }
+        });
+      }
+      
+      function displayResults(results, query) {
+        activeIndex = -1;
+        
+        if (results.length === 0) {
+          dropdown.innerHTML = `
+            <div class="p-4 text-sm text-gray-500 text-center">
+              No airports found matching "${query}"
+            </div>
+          `;
+          dropdown.classList.remove('hidden');
+          return;
+        }
+        
+        dropdown.innerHTML = results.map((airport) => {
+          const displayText = `${airport.country} - ${airport.city} - ${airport.name} - ${airport.code}`;
+          const highlightedText = highlightMatch(displayText, query);
+          
+          return `
+            <div 
+              class="p-3 cursor-pointer hover:bg-gray-100 transition-colors border-b border-gray-100 last:border-b-0"
+              data-airport-item
+              data-airport-code="${airport.code}"
+              data-airport-display="${displayText}"
+            >
+              <div class="text-sm font-inter text-gray-900">${highlightedText}</div>
+            </div>
+          `;
+        }).join('');
+        
+        dropdown.classList.remove('hidden');
+        
+        // Add click handlers to results
+        dropdown.querySelectorAll('[data-airport-item]').forEach((item) => {
+          item.addEventListener('click', () => {
+            const code = item.getAttribute('data-airport-code');
+            const display = item.getAttribute('data-airport-display');
+            
+            searchInput.value = display;
+            codeInput.value = code;
+            selectedAirport = { code, display };
+            
+            dropdown.classList.add('hidden');
+            clearButton?.classList.remove('hidden');
+            validateForm();
+          });
+        });
+      }
+      
+      // Clear button functionality
+      clearButton?.addEventListener('click', () => {
+        searchInput.value = '';
+        codeInput.value = '';
+        selectedAirport = null;
+        dropdown.classList.add('hidden');
+        clearButton.classList.add('hidden');
+        searchInput.focus();
+        validateForm();
+      });
     });
   });
 </script>
