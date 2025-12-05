@@ -1,0 +1,256 @@
+---
+// FinalCall2026Popup.astro
+// Time-limited promotional popup for Final Call 2026 campaign
+// Active: December 10, 2024 - January 30, 2025
+---
+
+<!-- Backdrop Overlay -->
+<div 
+  id="final-call-popup-overlay" 
+  class="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 transition-opacity duration-300 opacity-0"
+  role="dialog"
+  aria-live="polite"
+  aria-labelledby="final-call-popup-title"
+>
+  <!-- Modal Container -->
+  <div 
+    id="final-call-popup-modal"
+    class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-gray-200 transform transition-all duration-500 scale-95 opacity-0"
+  >
+    <!-- Close Button -->
+    <button 
+      id="close-final-call-popup" 
+      class="absolute top-4 right-4 z-10 text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 transition-colors"
+      aria-label="Close final call popup"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+      </svg>
+    </button>
+
+    <!-- Content -->
+    <div class="p-8 sm:p-10 text-center">
+      <!-- Header Image -->
+      <div class="mb-6">
+        <img 
+          src="https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/76c107e6-013a-4427-3e90-74b0824ac200/public"
+          alt="Final Call 2026"
+          class="w-full h-auto rounded-lg"
+          loading="eager"
+        />
+      </div>
+
+      <!-- Headline -->
+      <h2 
+        id="final-call-popup-title"
+        class="text-2xl sm:text-3xl font-playfair font-bold text-gray-900 mb-4 leading-tight"
+      >
+        Final Call 2026
+      </h2>
+      
+      <!-- Message -->
+      <p class="text-gray-700 leading-relaxed font-inter mb-8">
+        Your last chance to get a discount on an Active Away event!
+      </p>
+
+      <!-- CTA Button -->
+      <a 
+        href="/final-call-2026/"
+        class="inline-block w-full sm:w-auto px-8 py-4 text-base font-semibold text-white bg-gold hover:bg-gold-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold transition-all shadow-lg shadow-gold/20 hover:shadow-xl hover:-translate-y-0.5"
+      >
+        View Final Call Deals
+      </a>
+    </div>
+
+    <!-- Bottom Accent -->
+    <div class="bg-gradient-to-r from-gold/5 via-gold/10 to-gold/5 px-6 py-3 text-center border-t border-gray-100">
+      <p class="text-xs text-gray-500 font-inter">
+        Limited time offer • Ends January 30, 2025
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const POPUP_ID = 'final-call-popup-overlay';
+  const MODAL_ID = 'final-call-popup-modal';
+  const CLOSE_BTN_ID = 'close-final-call-popup';
+  const STORAGE_KEY = 'active_away_final_call_2026_seen';
+  const COOKIE_CONSENT_KEY = 'active_away_cookie_consent';
+  
+  // Campaign dates (UTC)
+  const START_DATE = new Date('2025-12-12T00:00:00Z');
+  const END_DATE = new Date('2026-01-30T23:59:59Z');
+  
+  // Scroll threshold (50% of page)
+  const SCROLL_THRESHOLD = 50;
+  
+  let hasShown = false;
+  let scrollListenerActive = false;
+
+  function initFinalCallPopup() {
+    // Check if campaign is active
+    const now = new Date();
+    const isCampaignActive = now >= START_DATE && now <= END_DATE;
+    
+    if (!isCampaignActive) {
+      console.log('🎯 [FinalCall2026] Campaign not active. Current date:', now.toISOString());
+      return;
+    }
+
+    // Check if already seen
+    if (localStorage.getItem(STORAGE_KEY) === 'true') {
+      console.log('🎯 [FinalCall2026] Already seen by user');
+      return;
+    }
+
+    // Check if cookie consent has been handled
+    const cookieConsent = localStorage.getItem(COOKIE_CONSENT_KEY);
+    if (!cookieConsent) {
+      console.log('🎯 [FinalCall2026] Waiting for cookie consent...');
+      // Wait for cookie consent to be handled
+      waitForCookieConsent();
+      return;
+    }
+
+    // Cookie consent is handled, start scroll listener
+    console.log('🎯 [FinalCall2026] Campaign active, initializing scroll listener');
+    startScrollListener();
+  }
+
+  function waitForCookieConsent() {
+    // Check every second for cookie consent
+    const checkInterval = setInterval(() => {
+      const cookieConsent = localStorage.getItem(COOKIE_CONSENT_KEY);
+      if (cookieConsent) {
+        console.log('🎯 [FinalCall2026] Cookie consent handled, starting scroll listener');
+        clearInterval(checkInterval);
+        startScrollListener();
+      }
+    }, 1000);
+
+    // Stop checking after 2 minutes
+    setTimeout(() => {
+      clearInterval(checkInterval);
+      console.log('🎯 [FinalCall2026] Timeout waiting for cookie consent');
+    }, 120000);
+  }
+
+  function startScrollListener() {
+    if (scrollListenerActive || hasShown) return;
+    
+    scrollListenerActive = true;
+
+    const handleScroll = () => {
+      if (hasShown) {
+        window.removeEventListener('scroll', handleScroll);
+        return;
+      }
+
+      const scrollPercentage = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+      
+      if (scrollPercentage >= SCROLL_THRESHOLD) {
+        console.log(`🎯 [FinalCall2026] Scroll threshold reached: ${scrollPercentage.toFixed(1)}%`);
+        showPopup();
+        window.removeEventListener('scroll', handleScroll);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // Also check immediately in case user is already scrolled
+    handleScroll();
+  }
+
+  function showPopup() {
+    if (hasShown) return;
+    
+    const overlay = document.getElementById(POPUP_ID);
+    const modal = document.getElementById(MODAL_ID);
+    const closeBtn = document.getElementById(CLOSE_BTN_ID);
+
+    if (!overlay || !modal) {
+      console.error('🎯 [FinalCall2026] Popup elements not found');
+      return;
+    }
+
+    hasShown = true;
+
+    // Mark as seen immediately when shown
+    localStorage.setItem(STORAGE_KEY, 'true');
+    console.log('🎯 [FinalCall2026] Showing popup');
+
+    // Show overlay
+    overlay.classList.remove('hidden');
+    overlay.classList.add('flex');
+    
+    // Animate in with slight delay
+    requestAnimationFrame(() => {
+      overlay.classList.remove('opacity-0');
+      modal.classList.remove('scale-95', 'opacity-0');
+      modal.classList.add('scale-100', 'opacity-100');
+    });
+
+    // Close handler
+    const closePopup = () => {
+      overlay.classList.add('opacity-0');
+      modal.classList.remove('scale-100', 'opacity-100');
+      modal.classList.add('scale-95', 'opacity-0');
+      
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+        overlay.classList.remove('flex');
+      }, 300);
+    };
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', closePopup);
+    }
+
+    // Close on overlay click (but not on modal click)
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        closePopup();
+      }
+    });
+
+    // Close on Escape key
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        closePopup();
+        document.removeEventListener('keydown', handleEscape);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+  }
+
+  // Initialize on page load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initFinalCallPopup);
+  } else {
+    initFinalCallPopup();
+  }
+
+  // Support for Astro View Transitions
+  document.addEventListener('astro:page-load', initFinalCallPopup);
+</script>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+
+  /* Ensure smooth animations */
+  #final-call-popup-overlay {
+    transition: opacity 300ms ease-in-out;
+  }
+
+  #final-call-popup-modal {
+    transition: all 500ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+</style>
+
