@@ -262,7 +262,7 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-2xl sm:max-w-3xl lg:max-w-4xl px-4 sm:px-0">
           <div class="flex flex-col sm:flex-row items-center w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl sm:rounded-full px-3 sm:px-4 md:px-6 py-3 sm:py-3 md:py-4 gap-2 sm:gap-0">
             <!-- Mobile: 2x2 Grid for dropdowns -->
-            <div class="grid grid-cols-2 gap-2 w-full sm:hidden items-start">
+            <div class="grid grid-cols-2 gap-2 w-full sm:hidden">
               <!-- Product Section -->
               <div class="flex flex-row items-center relative">
                 <label class="sr-only" for="hero-product-mobile">Product</label>
@@ -278,35 +278,29 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
               </div>
               
               <!-- Location Section -->
-              <div class="flex flex-col">
-                <div class="flex flex-row items-center relative">
-                  <label class="sr-only" for="hero-location-mobile">Location</label>
-                  <select id="hero-location-mobile" disabled class="w-full h-11 font-inter font-normal text-sm leading-7 flex items-center text-white bg-white/10 border border-white/30 outline-none appearance-none pr-7 cursor-pointer px-3 rounded-lg backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed">
-                    <option value="" class="text-gray-800 bg-white px-4">Location</option>
-                  </select>
-                  <svg class="absolute right-2.5 w-4 h-4 text-white pointer-events-none" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-                  </svg>
-                </div>
-                <span class="text-white/60 text-[10px] pl-3 mt-0.5">(not required)</span>
+              <div class="flex flex-row items-center relative">
+                <label class="sr-only" for="hero-location-mobile">Location</label>
+                <select id="hero-location-mobile" disabled class="w-full h-11 font-inter font-normal text-sm leading-7 flex items-center text-white bg-white/10 border border-white/30 outline-none appearance-none pr-7 cursor-pointer px-3 rounded-lg backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                  <option value="" class="text-gray-800 bg-white px-4">Location</option>
+                </select>
+                <svg class="absolute right-2.5 w-4 h-4 text-white pointer-events-none" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                </svg>
               </div>
               
               <!-- Month Section -->
-              <div class="flex flex-col">
-                <div class="flex flex-row items-center relative">
-                  <label class="sr-only" for="hero-month-mobile">Month</label>
-                  <select id="hero-month-mobile" disabled class="w-full h-11 font-inter font-normal text-sm leading-7 flex items-center text-white bg-white/10 border border-white/30 outline-none appearance-none pr-7 cursor-pointer px-3 rounded-lg backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed">
-                    <option value="" class="text-gray-800 bg-white px-4">Month</option>
-                  </select>
-                  <svg class="absolute right-2.5 w-4 h-4 text-white pointer-events-none" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-                  </svg>
-                </div>
-                <span class="text-white/60 text-[10px] pl-3 mt-0.5">(not required)</span>
+              <div class="flex flex-row items-center relative">
+                <label class="sr-only" for="hero-month-mobile">Month</label>
+                <select id="hero-month-mobile" disabled class="w-full h-11 font-inter font-normal text-sm leading-7 flex items-center text-white bg-white/10 border border-white/30 outline-none appearance-none pr-7 cursor-pointer px-3 rounded-lg backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                  <option value="" class="text-gray-800 bg-white px-4">Month</option>
+                </select>
+                <svg class="absolute right-2.5 w-4 h-4 text-white pointer-events-none" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                </svg>
               </div>
               
               <!-- Search Button (mobile) -->
-              <button id="hero-search-mobile" class="inline-flex items-center justify-center bg-white/30 backdrop-blur-md border border-white/30 hover:bg-white/40 active:bg-white/50 rounded-lg px-4 py-2.5 h-11 text-white text-sm transition-all shadow-lg font-medium">
+              <button id="hero-search-mobile" disabled class="inline-flex items-center justify-center bg-white/30 backdrop-blur-md border border-white/30 hover:bg-white/40 active:bg-white/50 rounded-lg px-4 py-2.5 h-11 text-white text-sm transition-all shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/30">
                 <svg class="w-4 h-4 mr-1.5" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                   <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
                   <path d="m21 21-4.34-4.34" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
@@ -333,39 +327,33 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
             <div class="hidden sm:block w-px h-10 bg-white/30 mx-4"></div>
             
             <!-- Location Section -->
-            <div class="hidden sm:flex flex-col flex-1 min-w-0">
-              <div class="flex flex-row items-center relative">
-                <label class="sr-only" for="hero-location-desktop">Location</label>
-                <select id="hero-location-desktop" disabled class="w-full h-8 md:h-10 font-inter font-normal text-sm md:text-base lg:text-lg leading-7 flex items-center text-white bg-transparent outline-none appearance-none pr-8 cursor-pointer px-4 disabled:opacity-50 disabled:cursor-not-allowed">
-                  <option value="" class="text-gray-800 bg-white px-4">Select Location</option>
-                </select>
-                <svg class="absolute right-2 w-4 h-4 text-white pointer-events-none" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                  <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-                </svg>
-              </div>
-              <span class="text-white/60 text-[10px] px-4 mt-0.5">(not required)</span>
+            <div class="hidden sm:flex flex-row items-center flex-1 min-w-0 relative">
+              <label class="sr-only" for="hero-location-desktop">Location</label>
+              <select id="hero-location-desktop" disabled class="w-full h-8 md:h-10 font-inter font-normal text-sm md:text-base lg:text-lg leading-7 flex items-center text-white bg-transparent outline-none appearance-none pr-8 cursor-pointer px-4 disabled:opacity-50 disabled:cursor-not-allowed">
+                <option value="" class="text-gray-800 bg-white px-4">Select Location</option>
+              </select>
+              <svg class="absolute right-2 w-4 h-4 text-white pointer-events-none" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              </svg>
             </div>
             
             <div class="hidden sm:block w-px h-10 bg-white/30 mx-4"></div>
             
             <!-- Month Section -->
-            <div class="hidden sm:flex flex-col flex-1 min-w-0">
-              <div class="flex flex-row items-center relative">
-                <label class="sr-only" for="hero-month-desktop">Month</label>
-                <select id="hero-month-desktop" disabled class="w-full h-8 md:h-10 font-inter font-normal text-sm md:text-base lg:text-lg leading-7 flex items-center text-white bg-transparent outline-none appearance-none pr-8 cursor-pointer px-4 disabled:opacity-50 disabled:cursor-not-allowed">
-                  <option value="" class="text-gray-800 bg-white px-4">Select Month</option>
-                </select>
-                <svg class="absolute right-2 w-4 h-4 text-white pointer-events-none" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                  <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-                </svg>
-              </div>
-              <span class="text-white/60 text-[10px] px-4 mt-0.5">(not required)</span>
+            <div class="hidden sm:flex flex-row items-center flex-1 min-w-0 relative">
+              <label class="sr-only" for="hero-month-desktop">Month</label>
+              <select id="hero-month-desktop" disabled class="w-full h-8 md:h-10 font-inter font-normal text-sm md:text-base lg:text-lg leading-7 flex items-center text-white bg-transparent outline-none appearance-none pr-8 cursor-pointer px-4 disabled:opacity-50 disabled:cursor-not-allowed">
+                <option value="" class="text-gray-800 bg-white px-4">Select Month</option>
+              </select>
+              <svg class="absolute right-2 w-4 h-4 text-white pointer-events-none" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              </svg>
             </div>
             
             <div class="hidden sm:block w-px h-10 bg-white/30 mx-4"></div>
             
             <!-- Search Button (desktop) -->
-            <button id="hero-search-desktop" class="hidden sm:inline-flex items-center justify-center bg-white/30 backdrop-blur-md border border-white/30 hover:bg-white/40 rounded-full px-5 md:px-6 py-2.5 md:py-3 h-8 md:h-10 text-white text-sm md:text-base transition-all shadow-lg font-medium">
+            <button id="hero-search-desktop" disabled class="hidden sm:inline-flex items-center justify-center bg-white/30 backdrop-blur-md border border-white/30 hover:bg-white/40 rounded-full px-5 md:px-6 py-2.5 md:py-3 h-8 md:h-10 text-white text-sm md:text-base transition-all shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/30">
               <svg class="w-3 h-3 md:w-4 md:h-4 mr-2" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
                 <path d="m21 21-4.34-4.34" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
@@ -473,6 +461,9 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
       setSelectEnabled(locationDesktop, false);
       setSelectEnabled(monthMobile, false);
       setSelectEnabled(monthDesktop, false);
+      // Disable search buttons
+      if (searchMobile) searchMobile.setAttribute('disabled', 'disabled');
+      if (searchDesktop) searchDesktop.setAttribute('disabled', 'disabled');
       return;
     }
     
@@ -495,6 +486,10 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
     // Disable and reset month dropdowns (location not selected yet)
     setSelectEnabled(monthMobile, false);
     setSelectEnabled(monthDesktop, false);
+    
+    // Enable search buttons (product is selected)
+    if (searchMobile) searchMobile.removeAttribute('disabled');
+    if (searchDesktop) searchDesktop.removeAttribute('disabled');
   }
   
   // Handle location selection (both mobile and desktop)
