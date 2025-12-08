@@ -228,10 +228,20 @@ export const POST: APIRoute = async ({ request, locals }) => {
         for (const field of formFields) {
           if (field.type === 'section') {
             // Sections are added with empty string value
-            transformedData[field.label] = '';
+            if (field.label) {
+              transformedData[field.label] = '';
+            }
+          } else if (field.type === 'hidden') {
+             // Hidden fields don't usually have labels, so use name
+             if (field.name && formData[field.name] !== undefined) {
+               transformedData[field.name] = formData[field.name];
+             }
           } else if (field.name && formData[field.name] !== undefined) {
-            // Regular fields use label as key
-            transformedData[field.label] = formData[field.name];
+            // Regular fields use label as key, fallback to name
+            const key = field.label || field.name;
+            if (key) {
+              transformedData[key] = formData[field.name];
+            }
           }
         }
         
