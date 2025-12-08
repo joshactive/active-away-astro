@@ -670,12 +670,20 @@ const sanitizeRichText = (input = '') => {
       
       try {
         let turnstileToken = null;
-        try {
-          if (typeof window.turnstile !== 'undefined' && window.turnstile) {
-            turnstileToken = window.turnstile.getResponse();
+        
+        // Try to get Turnstile token from form data first (most reliable for multiple forms)
+        const turnstileFormData = new FormData(form);
+        turnstileToken = turnstileFormData.get('cf-turnstile-response');
+        
+        // Fallback to global API if not found in form data
+        if (!turnstileToken) {
+          try {
+            if (typeof window.turnstile !== 'undefined' && window.turnstile) {
+              turnstileToken = window.turnstile.getResponse();
+            }
+          } catch (err) {
+            console.warn('Turnstile not available:', err);
           }
-        } catch (err) {
-          console.warn('Turnstile not available:', err);
         }
         
         if (submitButton) {

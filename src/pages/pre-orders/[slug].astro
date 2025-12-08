@@ -441,12 +441,19 @@ const canonicalURL = preOrderData.seo?.canonicalURL || `https://activeaway.com/p
 
       // Get Turnstile token - but allow submission without it in development
       let turnstileToken = null;
-      try {
-        if (typeof window.turnstile !== 'undefined' && window.turnstile) {
-          turnstileToken = window.turnstile.getResponse();
+      
+      // Try to get from form data first
+      const formDataObj = new FormData(form);
+      turnstileToken = formDataObj.get('cf-turnstile-response');
+
+      if (!turnstileToken) {
+        try {
+          if (typeof window.turnstile !== 'undefined' && window.turnstile) {
+            turnstileToken = window.turnstile.getResponse();
+          }
+        } catch (err) {
+          console.warn('Turnstile not available:', err);
         }
-      } catch (err) {
-        console.warn('Turnstile not available:', err);
       }
 
       // Disable button and show loading
