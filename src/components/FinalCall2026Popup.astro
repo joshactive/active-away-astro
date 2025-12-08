@@ -79,7 +79,7 @@
   const COOKIE_CONSENT_KEY = 'active_away_cookie_consent';
   
   // Campaign dates (UTC)
-  const START_DATE = new Date('2025-12-12T00:00:00Z');
+  const START_DATE = new Date('2025-12-08:00:00Z');
   const END_DATE = new Date('2026-01-30T23:59:59Z');
   
   // Scroll threshold (50% of page)
@@ -89,6 +89,13 @@
   let scrollListenerActive = false;
 
   function initFinalCallPopup() {
+    // Check if on excluded pages
+    const path = window.location.pathname;
+    if (path === '/final-call-2026' || path === '/final-call-2026/' || path.startsWith('/final-call-2026/')) {
+      console.log('🎯 [FinalCall2026] Popup suppressed on final call pages');
+      return;
+    }
+
     // Check if campaign is active
     const now = new Date();
     const isCampaignActive = now >= START_DATE && now <= END_DATE;
