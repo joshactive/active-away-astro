@@ -44,16 +44,35 @@ const fallbackPartners = [
   { id: 2, name: "Iconic", logo: buildPartnerLogo(null, 'partner-2', 'Iconic logo') },
   { id: 3, name: "Vectra", logo: buildPartnerLogo(null, 'partner-3', 'Vectra logo') },
   { id: 4, name: "Visualy", logo: buildPartnerLogo(null, 'partner-4', 'Visualy logo') },
-  { id: 5, name: "Dexign Studio", logo: buildPartnerLogo(null, 'partner-5', 'Dexign Studio logo') }
+  { id: 5, name: "Dexign Studio", logo: buildPartnerLogo(null, 'partner-5', 'Dexign Studio logo') },
+  { 
+    id: 6, 
+    name: "Partner", 
+    logo: buildPartnerLogo({
+      url: 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/41c47858-e08c-4853-5aac-c4f666c8ba00/public',
+      alternativeText: 'Partner logo'
+    }, 'partner-6', 'Partner logo') 
+  }
 ];
 
 // Use Strapi data with fallback to Cloudflare images
 const partners = homeData?.partners?.length > 0 
-  ? homeData.partners.map((p, i) => ({
-      id: i + 1,
-      name: p.name,
-      logo: buildPartnerLogo(p.logo, `partner-${(i % fallbackPartners.length) + 1}`, p.name)
-    }))
+  ? [
+      ...homeData.partners.map((p, i) => ({
+        id: i + 1,
+        name: p.name,
+        logo: buildPartnerLogo(p.logo, `partner-${(i % fallbackPartners.length) + 1}`, p.name)
+      })),
+      // Append the new partner if using Strapi data (ensuring it shows up everywhere)
+      { 
+        id: 100, // Arbitrary ID to avoid collision
+        name: "Partner", 
+        logo: buildPartnerLogo({
+          url: 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/41c47858-e08c-4853-5aac-c4f666c8ba00/public',
+          alternativeText: 'Partner logo'
+        }, 'partner-6', 'Partner logo') 
+      }
+    ]
   : fallbackPartners;
 
 // Debug: Log the URLs being generated
@@ -68,9 +87,9 @@ console.log('Partner Logos URLs:', partners.map(p => ({ name: p.name, logo: p.lo
     </h2>
     
     <!-- Partners Grid -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6 lg:gap-12">
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6 lg:gap-12">
       {partners.map((partner, index) => (
-        <div class={`partner-card flex items-center justify-center p-4 sm:p-6 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all duration-300 hover:-translate-y-1 ${index === 1 ? 'hidden sm:flex' : ''}`}>
+        <div class="partner-card flex items-center justify-center p-4 sm:p-6 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all duration-300 hover:-translate-y-1">
           <div class="partner-logo w-full h-20 sm:h-24 lg:h-28 flex items-center justify-center">
             <img 
               src={partner.logo.src || partner.logo.url} 
