@@ -66,7 +66,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
     
-    const { formSlug, data: formData, turnstileToken, webhookUrl: providedWebhookUrl } = body;
+    const { formSlug, data: formData, turnstileToken, webhookUrl: providedWebhookUrl, redirectUrl: providedRedirectUrl } = body;
 
     if (!formSlug || !formData) {
       return new Response(JSON.stringify({ 
@@ -83,6 +83,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     let formFields: any[] = [];
     let webhookFormat = 'labels';
     let formTitle = '';
+    let redirectUrl = providedRedirectUrl || null;
     
     if (providedWebhookUrl) {
       // Use provided webhook for inline/embedded forms (JSON-based)
@@ -125,6 +126,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       webhookUrl = form.formWebhookUrl;
       formTitle = form.title || formSlug;
       webhookFormat = form.webhookFormat || 'labels'; // 'labels' or 'names'
+      redirectUrl = form.redirectUrl || redirectUrl; // Use Strapi redirectUrl if available
       
       if (!webhookUrl) {
         console.error(`❌ No webhook URL configured for form: ${formSlug}`);
@@ -226,11 +228,26 @@ export const POST: APIRoute = async ({ request, locals }) => {
         for (const field of formFields) {
           if (field.type === 'section') {
             // Sections are added with empty string value
-            transformedData[field.label] = '';
+            if (field.label) {
+              transformedData[field.label] = '';
+            }
+          } else if (field.type === 'hidden') {
+             // Hidden fields don't usually have labels, so use name
+             if (field.name && formData[field.name] !== undefined) {
+               transformedData[field.name] = formData[field.name];
+             }
           } else if (field.name && formData[field.name] !== undefined) {
-            // Regular fields use label as key
-            transformedData[field.label] = formData[field.name];
+            // Regular fields use label as key, fallback to name
+            const key = field.label || field.name;
+            if (key) {
+              transformedData[key] = formData[field.name];
+            }
           }
+        }
+        
+        // Add shortLocationName if present (injected by frontend for resort selection)
+        if (formData.shortLocationName) {
+          transformedData['shortLocationName'] = formData.shortLocationName;
         }
         
         // Add form metadata
@@ -290,7 +307,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     return new Response(JSON.stringify({ 
       success: true,
-      message: 'Form submitted successfully!'
+      message: 'Form submitted successfully!',
+      redirectUrl: redirectUrl || null
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }

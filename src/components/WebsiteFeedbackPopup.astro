@@ -1,0 +1,96 @@
+---
+---
+<div 
+  id="website-feedback-popup" 
+  class="fixed bottom-5 right-5 z-[100] hidden max-w-xs sm:max-w-sm bg-white rounded-lg shadow-2xl border border-gray-100 p-5 translate-y-4 opacity-0 transition-all duration-700 ease-out"
+  role="dialog"
+  aria-live="polite"
+>
+  <button 
+    id="close-feedback-popup" 
+    class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors"
+    aria-label="Close feedback popup"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+    </svg>
+  </button>
+  
+  <div class="flex flex-col gap-2">
+    <p class="text-gray-800 text-sm leading-relaxed">
+      Welcome to our new website, would you be ok to leave us some feedback?
+    </p>
+    <a 
+      href="/forms/website-feedback/" 
+      class="text-[#ad986c] hover:text-[#8c7a54] text-sm font-semibold transition-colors inline-flex items-center gap-1"
+    >
+      You can do so here
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+      </svg>
+    </a>
+  </div>
+</div>
+
+<script>
+  const POPUP_ID = 'website-feedback-popup';
+  const CLOSE_BTN_ID = 'close-feedback-popup';
+  const STORAGE_KEY = 'active_away_feedback_seen_v1'; // Versioned key to allow future resets if needed
+  const DELAY_MS = 45000; // 45 seconds
+
+  function initPopup() {
+    // Check if already seen
+    if (localStorage.getItem(STORAGE_KEY) === 'true') {
+      return;
+    }
+
+    const popup = document.getElementById(POPUP_ID);
+    const closeBtn = document.getElementById(CLOSE_BTN_ID);
+
+    if (!popup || !closeBtn) return;
+
+    // Show popup after delay
+    setTimeout(() => {
+      // Double check storage just in case it was set in another tab in the meantime
+      if (localStorage.getItem(STORAGE_KEY) === 'true') {
+        return;
+      }
+
+      // Remove hidden and animate in
+      popup.classList.remove('hidden');
+      // Small delay to allow removing 'hidden' to take effect before animating opacity/transform
+      requestAnimationFrame(() => {
+        popup.classList.remove('translate-y-4', 'opacity-0');
+      });
+      
+      // Mark as seen immediately when shown? Or only when dismissed?
+      // User request: "shows ONCE to the user"
+      // It's safer to mark it as seen immediately when shown so it doesn't pop up on every page load if they don't interact with it.
+      // However, usually "shows once" implies "until interact". But to be less annoying, let's mark it as seen once it appears.
+      localStorage.setItem(STORAGE_KEY, 'true');
+    }, DELAY_MS);
+
+    // Close handler
+    closeBtn.addEventListener('click', () => {
+      popup.classList.add('translate-y-4', 'opacity-0');
+      setTimeout(() => {
+        popup.classList.add('hidden');
+      }, 700); // Match transition duration
+    });
+  }
+
+  // Run on load
+  // Astro View Transitions might re-run scripts, but simple script tags run once per page load.
+  // If View Transitions are used, we might need to listen to 'astro:page-load'.
+  // Checking if 'astro:page-load' is available or just running immediately.
+  
+  if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initPopup);
+  } else {
+      initPopup();
+  }
+  
+  // Support for Astro View Transitions if enabled in the project
+  document.addEventListener('astro:page-load', initPopup);
+</script>
+

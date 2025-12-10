@@ -171,8 +171,8 @@
   const displayEventName = document.getElementById('displayEventName');
   const displayEventDates = document.getElementById('displayEventDates');
 
-  // Webhook URL (not visible in HTML)
-  const WEBHOOK_URL = 'https://hook.eu1.make.com/ug8yvdco9x7arpu5taa5ebdp13807okv';
+  // API Endpoint (Proxies to Make.com via server-side function)
+  const API_ENDPOINT = '/api/join-waiting-list.json';
 
   // Open modal function
   function openWaitingListModal(eventStart: string, eventEnd: string, eventName: string, venuePlainText: string) {
@@ -293,8 +293,8 @@
       };
       
       try {
-        // Submit to webhook
-        const response = await fetch(WEBHOOK_URL, {
+        // Submit to internal API (avoids CORS)
+        const response = await fetch(API_ENDPOINT, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

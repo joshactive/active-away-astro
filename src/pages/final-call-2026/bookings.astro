@@ -1,0 +1,1443 @@
+---
+// Final Call 2026 Bookings Page - Hardcoded page with FinalCall26 discount filters
+export const prerender = true;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getStrapiImageAttrs } from '../../utils/cloudflareImages.js';
+import WaitingListModal from '../../components/WaitingListModal.astro';
+
+// Fetch all future events
+let eventsData = { events: [], metadata: { total: 0, countries: [], countryEvents: [], priceRange: { min: 0, max: 5000 }, productTypes: [], discountCodes: [] } };
+
+try {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayISO = today.toISOString().split('T')[0];
+  
+  const { fetchAPI, getStrapiImageData, normalizeBookingLink } = await import('../../utils/strapi.js');
+  
+  // Fetch all events (paginated to handle >100 events)
+  let allEventsRaw = [];
+  let page = 1;
+  let hasMore = true;
+  
+  while (hasMore) {
+    const data = await fetchAPI(`/events?filters[dateFrom][$gte]=${todayISO}&populate=*&sort=dateFrom:asc&pagination[page]=${page}&pagination[pageSize]=100`);
+    
+    if (data && data.data && data.data.length > 0) {
+      allEventsRaw = [...allEventsRaw, ...data.data];
+      page++;
+      
+      // If we got less than 100, we've reached the end
+      if (data.data.length < 100) {
+        hasMore = false;
+      }
+    } else {
+      hasMore = false;
+    }
+  }
+  
+  console.log(`🎯 [final-call-2026] Fetched ${allEventsRaw.length} total future events`);
+  
+  if (allEventsRaw.length > 0) {
+    const events = allEventsRaw.map(item => {
+      const event = item.attributes || item;
+      const featuredImage = event.featuredImage ? getStrapiImageData(event.featuredImage) : null;
+      
+      // Determine status
+      const isSoldOut = event.isSoldOut || event.status?.toLowerCase() === 'sold out';
+      const spotsLeft = event.spotsLeft || 0;
+      
+      let statusBadge = 'Available';
+      let statusClass = 'bg-green-100 text-green-800';
+      
+      if (isSoldOut) {
+        statusBadge = 'Sold Out';
+        statusClass = 'bg-red-100 text-red-800';
+      } else if (spotsLeft > 0 && spotsLeft <= 5) {
+        statusBadge = `${spotsLeft} spots left`;
+        statusClass = 'bg-orange-100 text-orange-800';
+      } else if (spotsLeft > 5) {
+        statusBadge = 'Available';
+        statusClass = 'bg-green-100 text-green-800';
+      }
+      
+      // Parse price to ensure it's a number
+      let price = event.price || event.singleOccupancyFrom || 0;
+      if (typeof price === 'string') {
+        price = parseFloat(price.replace(/[^0-9.]/g, '')) || 0;
+      }
+      
+      return {
+        id: item.id,
+        title: event.title || '',
+        dateText: event.dateText || '',
+        dateFrom: event.dateFrom || '',
+        dateUntil: event.dateUntil || '',
+        location: event.location || event.country || '',
+        country: event.country || '',
+        countryEvents: event.countryEvents || event.country || '',
+        venue_plain_text: event.venue_plain_text || '',
+        price: price,
+        singleOccupancyPriceEvent: event.singleOccupancyPriceEvent || null,
+        product: event.product || '',
+        FinalCall26: event.FinalCall26 || '',
+        bookingLink: normalizeBookingLink(event.bookingLink),
+        venueLink: event.venueLink || '#',
+        buttonText: event.buttonText || 'Book Now',
+        buttonColour: event.buttonColour || '#ad986c',
+        isSoldOut,
+        statusBadge,
+        statusClass,
+        image: featuredImage?.url || null,
+        imageAlt: featuredImage?.alt || event.title || 'Event image'
+      };
+    });
+    
+    // Extract unique countries
+    const countries = [...new Set(events.map(e => e.country).filter(Boolean))].sort();
+    
+    // Extract unique countryEvents
+    const countryEvents = [...new Set(events.map(e => e.countryEvents).filter(Boolean))].sort();
+    
+    // Extract unique venues (plain text)
+    const venueList = [...new Set(events.map(e => e.venue_plain_text).filter(Boolean))].sort();
+    
+    // Extract unique product types
+    const productTypes = [...new Set(events.map(e => e.product).filter(Boolean))].sort();
+    
+    // Extract unique FinalCall26 discount codes
+    const discountCodes = [...new Set(events.map(e => e.FinalCall26).filter(Boolean))].sort();
+    
+    // Extract price range
+    const prices = events.map(e => e.price).filter(Boolean);
+    const priceRange = prices.length > 0 ? {
+      min: Math.min(...prices),
+      max: Math.max(...prices)
+    } : { min: 0, max: 5000 };
+    
+    eventsData = {
+      events,
+      metadata: {
+        total: events.length,
+        countries,
+        countryEvents,
+        venueList,
+        productTypes,
+        discountCodes,
+        priceRange
+      }
+    };
+    
+    console.log(`🎯 [final-call-2026] Fetched ${events.length} future events`);
+    console.log(`💰 Discount codes: ${discountCodes.join(', ')}`);
+  }
+} catch (error) {
+  console.error('[final-call-2026] Error fetching data:', error.message);
+}
+
+const { events, metadata } = eventsData;
+const EVENT_IMAGE_QUALITY = 60;
+
+// Hardcoded page content for Final Call 2026
+const heroTitle = 'Final Call 2026';
+const heroSubtitle = 'Exclusive final call discounts on our 2026 events. Filter by discount amount to find the best deals on your next event,';
+const heroKicker = 'Booking';
+const heroBackgroundImage = 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/76c107e6-013a-4427-3e90-74b0824ac200/public';
+const heroBackgroundImageAlt = 'Final Call 2026 Events';
+
+// Hardcoded SEO fields
+const pageTitle = 'Final Call 2026 - Exclusive Event Discounts | Active Away';
+const pageDescription = 'Get exclusive final call discounts on our 2026 tennis, padel, pickleball, and ski events. Limited availability - book now and save!';
+const metaImage = 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/1358282a-64e4-4505-ee11-7c21d05cf000/public';
+const metaImageAlt = 'Final Call 2026 - Exclusive Event Discounts';
+const metaImageWidth = 1200;
+const metaImageHeight = 630;
+const keywords = 'final call, event discounts, tennis holidays 2026, padel holidays, pickleball events, ski holidays, last minute deals';
+const canonicalURL = 'https://activeaway.com/final-call-2026/bookings';
+---
+
+<BaseLayout 
+  title={pageTitle}
+  description={pageDescription}
+  metaImage={metaImage}
+  metaImageAlt={metaImageAlt}
+  metaImageWidth={metaImageWidth}
+  metaImageHeight={metaImageHeight}
+  keywords={keywords}
+  canonicalURL={canonicalURL}
+>
+  <!-- Hero Header Section -->
+  <section class="relative w-full h-[400px] sm:h-[500px] lg:h-[600px] overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-b from-[#0D1C4E]/75 via-[#0D1C4E]/60 to-[#0D1C4E]/60 z-10"></div>
+    <img 
+      src={heroBackgroundImage}
+      alt={heroBackgroundImageAlt}
+      class="absolute inset-0 w-full h-full object-cover"
+      loading="eager"
+    />
+    
+    <div class="relative z-20 container mx-auto max-w-[1400px] px-4 sm:px-10 h-full flex flex-col justify-center items-center text-center pt-16 sm:pt-20">
+      <div class="hidden sm:block text-xs sm:text-sm font-inter font-semibold text-gold tracking-[0.2em] uppercase mb-4 sm:mb-6 border-t border-b border-gold/50 py-2 px-6">
+        {heroKicker}
+      </div>
+      <h1 class="text-4xl sm:text-5xl lg:text-7xl font-playfair font-bold text-white mb-6 sm:mb-8 leading-tight max-w-4xl">
+        {heroTitle}
+      </h1>
+      <p class="text-lg sm:text-xl lg:text-2xl font-inter text-gray-100 max-w-3xl leading-relaxed mb-8">
+        {heroSubtitle}
+      </p>
+      
+      <a 
+        href="https://files.activeaway.com/2026-Calendar" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-2 bg-[#ad986c] hover:bg-[#8d7a56] text-white px-5 py-2.5 text-sm sm:px-8 sm:py-3.5 sm:text-base rounded-full font-inter font-semibold transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+      >
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        Download Calendar
+      </a>
+    </div>
+  </section>
+
+  <!-- Main Content Section -->
+  <section class="w-full bg-white py-12 sm:py-16 lg:py-24">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      <div class="flex flex-col lg:flex-row gap-8 lg:gap-12">
+        
+        <!-- Left Sidebar - Filters -->
+        <aside class="w-full lg:w-[320px] flex-shrink-0">
+          <div id="filterBar" class="bg-white border border-gray-200 rounded-2xl p-6 shadow-lg lg:sticky lg:top-4">
+            <!-- Filter Header -->
+            <div class="mb-6 pb-4 border-b border-gray-200">
+              <div class="flex items-center justify-between">
+                <h3 class="text-base font-playfair font-semibold text-gray-900">Filters</h3>
+                <span id="activeFilterCount" class="hidden bg-gold text-white text-xs font-bold px-2.5 py-1 rounded-full">0</span>
+              </div>
+              <p id="filterStatus" class="text-sm font-inter text-gray-600 mt-1">0 filters selected</p>
+            </div>
+
+            <!-- Mobile Filter Toggle -->
+            <button 
+              id="mobileFilterToggle"
+              class="lg:hidden w-full flex items-center justify-between bg-gray-50 hover:bg-gray-100 px-4 py-3 rounded-lg transition-colors mb-4"
+            >
+              <span class="font-inter font-medium text-gray-900">Show/Hide Filters</span>
+              <svg class="w-5 h-5 text-gray-600 transition-transform" id="filterChevron" viewBox="0 0 24 24" fill="none">
+                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+
+            <!-- Filters Container -->
+            <div id="filtersContainer" class="space-y-6">
+              <!-- Clear Filters Button (Top) -->
+              <div class="mb-4">
+                <button 
+                  id="clearFiltersTop"
+                  class="w-full px-4 py-2.5 text-sm font-inter font-medium text-gold hover:text-gold-700 border border-gold hover:bg-gold hover:text-white rounded-lg transition-all"
+                >
+                  Clear All Filters
+                </button>
+              </div>
+
+              <!-- Search Filter -->
+              <div class="filter-group">
+                <h4 class="text-base font-inter font-medium text-gray-900 mb-3">Search</h4>
+                <div class="relative">
+                  <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input 
+                    type="text" 
+                    id="searchInput"
+                    placeholder="Search by title..."
+                    class="w-full bg-gray-50 border border-gray-300 rounded-lg pl-10 pr-4 py-2.5 text-sm font-inter text-gray-900 focus:ring-2 focus:ring-gold focus:border-gold transition-all"
+                  />
+                </div>
+              </div>
+
+              <!-- Product Filter -->
+              <div class="filter-group">
+                <button class="filter-header w-full flex items-center justify-between py-3 text-left" data-filter="product">
+                  <span class="text-base font-inter font-medium text-gray-900">Product</span>
+                  <svg class="w-5 h-5 text-gray-600 transition-transform" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div class="filter-content space-y-2 mt-3">
+                  {metadata.productTypes.map(type => (
+                    <label class="flex items-center cursor-pointer group">
+                      <input 
+                        type="checkbox" 
+                        name="product" 
+                        value={type}
+                        class="w-4 h-4 text-gold border-gray-300 rounded focus:ring-gold focus:ring-2"
+                      />
+                      <span class="ml-3 text-sm font-inter text-gray-700 group-hover:text-gray-900">{type}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <!-- Sold Out Filter -->
+              <div class="filter-group">
+                <h4 class="text-base font-inter font-medium text-gray-900 mb-3">Sold Out</h4>
+                <label class="flex items-center cursor-pointer group">
+                  <input 
+                    type="checkbox" 
+                    id="hideSoldOut"
+                    class="w-4 h-4 text-gold border-gray-300 rounded focus:ring-gold focus:ring-2"
+                  />
+                  <span class="ml-3 text-sm font-inter text-gray-700 group-hover:text-gray-900">Hide Sold Out Events</span>
+                </label>
+              </div>
+
+              <!-- Country Filter (using countryEvents) -->
+              <div class="filter-group">
+                <button class="filter-header w-full flex items-center justify-between py-3 text-left" data-filter="countryEvents">
+                  <span class="text-base font-inter font-medium text-gray-900">Country</span>
+                  <svg class="w-5 h-5 text-gray-600 transition-transform" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div class="filter-content space-y-2 mt-3">
+                  {metadata.countryEvents.map(countryEvent => (
+                    <label class="flex items-center cursor-pointer group">
+                      <input 
+                        type="checkbox" 
+                        name="countryEvent" 
+                        value={countryEvent}
+                        class="w-4 h-4 text-gold border-gray-300 rounded focus:ring-gold focus:ring-2"
+                      />
+                      <span class="ml-3 text-sm font-inter text-gray-700 group-hover:text-gray-900">{countryEvent}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <!-- Venue Filter -->
+              <div class="filter-group">
+                <button class="filter-header w-full flex items-center justify-between py-3 text-left" data-filter="venueList">
+                  <span class="text-base font-inter font-medium text-gray-900">Venue</span>
+                  <svg class="w-5 h-5 text-gray-600 transition-transform" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div class="filter-content space-y-2 mt-3">
+                  {metadata.venueList.map(venue => (
+                    <label class="flex items-center cursor-pointer group">
+                      <input 
+                        type="checkbox" 
+                        name="venue" 
+                        value={venue}
+                        class="w-4 h-4 text-gold border-gray-300 rounded focus:ring-gold focus:ring-2"
+                      />
+                      <span class="ml-3 text-sm font-inter text-gray-700 group-hover:text-gray-900">{venue}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <!-- Price Range Filter -->
+              <div class="filter-group">
+                <button class="filter-header w-full flex items-center justify-between py-3 text-left" data-filter="price">
+                  <span class="text-base font-inter font-medium text-gray-900">Price Range</span>
+                  <svg class="w-5 h-5 text-gray-600 transition-transform" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div class="filter-content mt-3">
+                  <div class="flex items-center gap-2">
+                    <div class="relative flex-1">
+                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-inter">£</span>
+                      <input 
+                        type="number" 
+                        id="priceMin" 
+                        placeholder="Min"
+                        min={metadata.priceRange.min}
+                        max={metadata.priceRange.max}
+                        class="w-full bg-gray-50 border border-gray-300 rounded-lg pl-7 pr-2 py-2.5 text-sm font-inter text-gray-900 focus:ring-2 focus:ring-gold focus:border-gold transition-all"
+                      />
+                    </div>
+                    <span class="text-gray-400 font-inter">—</span>
+                    <div class="relative flex-1">
+                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-inter">£</span>
+                      <input 
+                        type="number" 
+                        id="priceMax" 
+                        placeholder="Max"
+                        min={metadata.priceRange.min}
+                        max={metadata.priceRange.max}
+                        class="w-full bg-gray-50 border border-gray-300 rounded-lg pl-7 pr-2 py-2.5 text-sm font-inter text-gray-900 focus:ring-2 focus:ring-gold focus:border-gold transition-all"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Date Range Filter -->
+              <div class="filter-group">
+                <button class="filter-header w-full flex items-center justify-between py-3 text-left" data-filter="dates">
+                  <span class="text-base font-inter font-medium text-gray-900">Event Dates</span>
+                  <svg class="w-5 h-5 text-gray-600 transition-transform" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div class="filter-content mt-3">
+                  <div class="space-y-2">
+                    <input 
+                      type="date" 
+                      id="dateFrom"
+                      placeholder="From"
+                      class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2.5 text-sm font-inter text-gray-900 focus:ring-2 focus:ring-gold focus:border-gold transition-all"
+                    />
+                    <input 
+                      type="date" 
+                      id="dateTo"
+                      placeholder="To"
+                      class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2.5 text-sm font-inter text-gray-900 focus:ring-2 focus:ring-gold focus:border-gold transition-all"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Clear Filters Button (Bottom) -->
+              <div class="pt-6">
+                <button 
+                  id="clearFilters"
+                  class="w-full px-4 py-2.5 text-sm font-inter font-medium text-gold hover:text-gold-700 border border-gold hover:bg-gold hover:text-white rounded-lg transition-all"
+                >
+                  Clear All Filters
+                </button>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Right Content Area -->
+        <main class="flex-1 min-w-0">
+          <!-- Discount Code Quick Filters -->
+          <div class="flex flex-wrap gap-3 mb-6">
+            <button 
+              class="discount-filter-btn active px-4 py-2 text-sm font-inter font-medium rounded-full transition-all bg-[#ad986c] text-white"
+              data-discount="all"
+            >
+              All Discounts
+            </button>
+            {metadata.discountCodes.map(code => (
+              <button 
+                class="discount-filter-btn px-4 py-2 text-sm font-inter font-medium rounded-full transition-all bg-gray-100 text-gray-700 hover:bg-gray-200"
+                data-discount={code}
+              >
+                {code}
+              </button>
+            ))}
+          </div>
+
+          <!-- Results Header with Sort -->
+          <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+            <div class="text-base sm:text-lg font-inter text-gray-900">
+              Showing <span id="filteredCount" class="font-semibold">{events.length}</span> of <span class="font-semibold">{metadata.total}</span> events
+            </div>
+            
+            <!-- Sort By Dropdown -->
+            <div class="flex items-center gap-3">
+              <label class="text-sm font-inter text-gray-600 hidden sm:block">Sort by</label>
+              <div class="relative">
+                <select 
+                  id="sortBy"
+                  class="appearance-none bg-white border border-gray-300 rounded-lg pl-4 pr-10 py-2.5 text-sm font-inter text-gray-900 focus:ring-2 focus:ring-gold focus:border-gold transition-all cursor-pointer"
+                >
+                  <option value="date-asc">Date: Soonest First</option>
+                  <option value="date-desc">Date: Latest First</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
+                  <option value="name-asc">Name: A to Z</option>
+                  <option value="name-desc">Name: Z to A</option>
+                </select>
+                <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none" viewBox="0 0 24 24" fill="none">
+                  <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Events Grid (Homepage styling) -->
+          <div id="eventsGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {events.map((event, index) => {
+          const imageAlt = event.imageAlt || event.title;
+          const imageUrl = event.image;
+          const strapiAttrs = getStrapiImageAttrs({ url: imageUrl, alt: imageAlt }, {
+            displayWidth: 402,
+            displayHeight: 268,
+            fit: 'cover',
+            sizes: '(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw',
+            quality: EVENT_IMAGE_QUALITY
+          });
+
+          const imgAttrs = strapiAttrs ?? {
+            src: imageUrl,
+            url: imageUrl,
+            alt: imageAlt,
+            width: 402,
+            height: 268,
+            loading: index < 9 ? 'eager' : 'lazy',
+            sizes: '(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw'
+          };
+
+          const CardWrapper = 'div';
+          const cardProps = {};
+          
+          // For sold out events, the whole card (via overlay) opens the modal
+          const openModalClick = event.isSoldOut 
+            ? `openWaitingListModal('${event.dateFrom}', '${event.dateUntil}', '${event.title}', '${event.location || event.country || ''}')`
+            : '';
+
+          return (
+            <div 
+              {...cardProps}
+              class="event-card relative group bg-white border-2 border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-[#ad986c] transition-all duration-300 hover:-translate-y-1 block text-left" 
+              data-event-id={event.id} 
+              data-country={event.country}
+              data-country-event={event.countryEvents} 
+              data-product={event.product}
+              data-venue={event.venue_plain_text}
+              data-price={event.price || 0}
+              data-is-sold-out={event.isSoldOut ? 'true' : 'false'}
+              data-date-from={event.dateFrom}
+              data-discount-code={event.FinalCall26}
+            >
+              {/* Card Image */}
+              <div class="aspect-video overflow-hidden bg-gray-100 relative">
+                {imgAttrs.src && (
+                  <img 
+                    src={imgAttrs.src}
+                    {...(imgAttrs.srcset && { srcset: imgAttrs.srcset })}
+                    sizes={imgAttrs.sizes}
+                    width={imgAttrs.width || 402}
+                    height={imgAttrs.height || 268}
+                    alt={imgAttrs.alt || imageAlt}
+                    loading={imgAttrs.loading || 'lazy'}
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                  />
+                )}
+                <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </div>
+              
+              {/* Card Content */}
+              <div class="p-6">
+                {/* Status Badge */}
+                <div class={`inline-block px-3 py-1 rounded-full text-xs font-inter font-semibold mb-3 ${event.statusClass}`}>
+                  {event.statusBadge}
+                </div>
+                
+                <a href={event.venueLink} class="block relative z-10">
+                  <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3 leading-tight hover:text-[#ad986c] transition-colors">
+                    {event.title}
+                  </h3>
+                </a>
+                
+                <div class="space-y-2 mb-4">
+                  {/* Date */}
+                  {event.dateText && (
+                    <div class="flex items-center gap-2 text-sm text-gray-600 font-inter">
+                      <svg class="w-4 h-4 flex-shrink-0 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                      {event.dateText}
+                    </div>
+                  )}
+                  
+                  {/* Country Events */}
+                  {event.countryEvents && (
+                    <div class="flex items-center gap-2 text-sm text-gray-600 font-inter">
+                      <svg class="w-4 h-4 flex-shrink-0 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      {event.countryEvents}
+                    </div>
+                  )}
+                  
+                  {/* Product with icon */}
+                  {event.product && (
+                    <div class="flex items-center gap-2 text-sm text-gray-600 font-inter">
+                      <svg class="w-4 h-4 flex-shrink-0 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v16a2 2 0 002 2z" />
+                      </svg>
+                      {event.product}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Price */}
+                <div class="mb-4 pb-4 border-b border-gray-200">
+                  {event.price && (
+                    <div class="mb-2">
+                      <p class="text-sm text-gray-600 font-inter mb-1">From</p>
+                      <p class="text-3xl font-bold text-[#ad986c] font-playfair">
+                        £{event.price}<span class="text-lg">pp</span>
+                      </p>
+                      {!event.product?.toLowerCase().includes('clinic') && (
+                        <p class="text-xs text-gray-500 font-inter mt-1">Based on 2 sharing</p>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Single Occupancy */}
+                  {event.singleOccupancyPriceEvent && (
+                    <div class="flex items-center gap-2 text-sm text-gray-600 font-inter mt-2">
+                      <svg class="w-4 h-4 flex-shrink-0 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                      </svg>
+                      Single Occupancy from £{event.singleOccupancyPriceEvent}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Button */}
+                <div 
+                  class="block w-full text-center text-white font-inter font-semibold py-3 px-4 rounded-full transition-colors"
+                  style={`background-color: ${event.isSoldOut ? '#9CA3AF' : (event.buttonColour || '#ad986c')}`}
+                >
+                  {event.isSoldOut ? 'Join Waiting List' : event.buttonText}
+                </div>
+              </div>
+
+              {/* Main Card Link/Action - Absolute Overlay */}
+              {event.isSoldOut ? (
+                <button 
+                  type="button"
+                  onclick={openModalClick}
+                  class="absolute inset-0 z-0 w-full h-full cursor-pointer text-left indent-[-9999px] focus:outline-none"
+                  aria-label={`Join waiting list for ${event.title}`}
+                >
+                  Join Waiting List
+                </button>
+              ) : (
+                <a 
+                  href={event.bookingLink} 
+                  class="absolute inset-0 z-0 w-full h-full cursor-pointer text-left indent-[-9999px] focus:outline-none"
+                  aria-label={`Book ${event.title}`}
+                >
+                  Book Now
+                </a>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+          <!-- Loading Indicator -->
+          <div id="loadingIndicator" class="hidden text-center py-12">
+            <div class="inline-block w-12 h-12 border-4 border-gray-300 border-t-gold rounded-full animate-spin"></div>
+            <p class="mt-4 text-base font-inter text-gray-800">Loading more events...</p>
+          </div>
+
+          <!-- Empty State -->
+          <div id="emptyState" class="hidden text-center py-16">
+            <svg class="w-24 h-24 mx-auto text-gray-300 mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3">No events found</h3>
+            <p class="text-base font-inter text-gray-800 leading-relaxed mb-6">Try adjusting your filters to see more results</p>
+            <button id="emptyStateClearBtn" class="px-6 py-3 bg-gold hover:bg-gold-700 text-white font-inter font-medium rounded-full transition-all duration-300">
+              Clear All Filters
+            </button>
+          </div>
+
+          <!-- Infinite Scroll Sentinel -->
+          <div id="scrollSentinel" class="h-4"></div>
+
+          <!-- End of Results Message -->
+          <div id="endMessage" class="hidden text-center py-12">
+            <p class="text-gray-600 font-inter">You've reached the end of all events</p>
+          </div>
+        </main>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+
+  .event-card {
+    transition: all 0.3s ease;
+  }
+
+  .event-card.hidden {
+    display: none;
+  }
+
+  /* Discount filter buttons */
+  .discount-filter-btn.active {
+    background-color: #ad986c;
+    color: white;
+  }
+
+  /* Filter Group Styles */
+  .filter-group {
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .filter-group:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .filter-group + .filter-group {
+    padding-top: 1.5rem;
+  }
+
+  .filter-header {
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s ease;
+  }
+
+  .filter-header:hover {
+    background-color: #f9fafb;
+    border-radius: 0.5rem;
+  }
+
+  .filter-header svg {
+    transition: transform 0.3s ease;
+  }
+
+  .filter-group.collapsed .filter-header svg {
+    transform: rotate(-90deg);
+  }
+
+  .filter-group.collapsed .filter-content {
+    display: none;
+  }
+
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Mobile filter container */
+  @media (max-width: 1023px) {
+    #filtersContainer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    #filtersContainer.show {
+      max-height: 2000px;
+    }
+  }
+</style>
+
+<script define:vars={{ initialEvents: events, metadata }}>
+  // Global state
+  let allEvents = [...initialEvents];
+  let filteredEvents = [...initialEvents];
+  let displayedEvents = [...initialEvents].slice(0, 18);
+  let currentPage = 1;
+  const pageSize = 18;
+  let isLoading = false;
+  let hasMoreEvents = allEvents.length > displayedEvents.length;
+
+  // Filter state
+  const filters = {
+    searchQuery: '',
+    productTypes: new Set(), // Sidebar checkboxes
+    discountCode: 'all',  // Quick filter pills for discount codes
+    countryEvents: new Set(),
+    venues: new Set(), // From homepage search
+    month: null, // From homepage search
+    hideSoldOut: false,
+    priceMin: null,
+    priceMax: null,
+    dateFrom: null,
+    dateTo: null
+  };
+
+  // DOM elements
+  const eventsGrid = document.getElementById('eventsGrid');
+  const loadingIndicator = document.getElementById('loadingIndicator');
+  const emptyState = document.getElementById('emptyState');
+  const endMessage = document.getElementById('endMessage');
+  const scrollSentinel = document.getElementById('scrollSentinel');
+  const filteredCountEl = document.getElementById('filteredCount');
+  const activeFilterCountEl = document.getElementById('activeFilterCount');
+  const filterStatusEl = document.getElementById('filterStatus');
+  const sortBySelect = document.getElementById('sortBy');
+  
+  // Mobile filter toggle
+  const mobileFilterToggle = document.getElementById('mobileFilterToggle');
+  const filtersContainer = document.getElementById('filtersContainer');
+  const filterChevron = document.getElementById('filterChevron');
+
+  // Initialize
+  function init() {
+    setupEventListeners();
+    setupInfiniteScroll();
+    restoreFiltersFromURL();
+    
+    // Render initial state
+    renderEvents();
+    updateFilterCount();
+  }
+
+  // Setup event listeners
+  function setupEventListeners() {
+    // Mobile filter toggle
+    mobileFilterToggle?.addEventListener('click', () => {
+      filtersContainer.classList.toggle('show');
+      if (filtersContainer.classList.contains('show')) {
+        filterChevron.style.transform = 'rotate(180deg)';
+      } else {
+        filterChevron.style.transform = 'rotate(0deg)';
+      }
+    });
+
+    // Filter group collapse/expand
+    document.querySelectorAll('.filter-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const filterGroup = header.parentElement;
+        filterGroup.classList.toggle('collapsed');
+      });
+    });
+
+    // Discount code quick filter buttons (pills)
+    document.querySelectorAll('.discount-filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const selectedDiscount = btn.dataset.discount;
+        const isCurrentlyActive = btn.classList.contains('active');
+        
+        // If clicking the currently active pill (and it's not "All Discounts"), toggle it off
+        if (isCurrentlyActive && selectedDiscount !== 'all') {
+          // Deactivate this pill and activate "All Discounts"
+          btn.classList.remove('active', 'bg-[#ad986c]', 'text-white');
+          btn.classList.add('bg-gray-100', 'text-gray-700');
+          
+          const allBtn = document.querySelector('.discount-filter-btn[data-discount="all"]');
+          if (allBtn) {
+            allBtn.classList.add('active', 'bg-[#ad986c]', 'text-white');
+            allBtn.classList.remove('bg-gray-100', 'text-gray-700');
+          }
+          
+          filters.discountCode = 'all';
+        } else {
+          // Regular activation logic
+          // Update active state
+          document.querySelectorAll('.discount-filter-btn').forEach(b => {
+            b.classList.remove('active', 'bg-[#ad986c]', 'text-white');
+            b.classList.add('bg-gray-100', 'text-gray-700');
+          });
+          btn.classList.add('active', 'bg-[#ad986c]', 'text-white');
+          btn.classList.remove('bg-gray-100', 'text-gray-700');
+          
+          filters.discountCode = selectedDiscount;
+        }
+        
+        applyFilters();
+      });
+    });
+
+    // Product checkboxes (sidebar)
+    document.querySelectorAll('input[name="product"]').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          filters.productTypes.add(e.target.value);
+        } else {
+          filters.productTypes.delete(e.target.value);
+        }
+        
+        applyFilters();
+      });
+    });
+
+    // Search input
+    document.getElementById('searchInput')?.addEventListener('input', debounce((e) => {
+      filters.searchQuery = e.target.value.toLowerCase().trim();
+      applyFilters();
+    }, 300));
+
+    // Hide sold out checkbox
+    document.getElementById('hideSoldOut')?.addEventListener('change', (e) => {
+      filters.hideSoldOut = e.target.checked;
+      applyFilters();
+    });
+
+    // Country Events checkboxes
+    document.querySelectorAll('input[name="countryEvent"]').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          filters.countryEvents.add(e.target.value);
+        } else {
+          filters.countryEvents.delete(e.target.value);
+        }
+        applyFilters();
+      });
+    });
+
+    // Venues filter (checkboxes + from homepage search)
+    document.querySelectorAll('input[name="venue"]').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          filters.venues.add(e.target.value);
+        } else {
+          filters.venues.delete(e.target.value);
+        }
+        applyFilters();
+      });
+    });
+
+    // Price range inputs
+    document.getElementById('priceMin')?.addEventListener('input', debounce((e) => {
+      filters.priceMin = e.target.value ? parseInt(e.target.value) : null;
+      applyFilters();
+    }, 500));
+
+    document.getElementById('priceMax')?.addEventListener('input', debounce((e) => {
+      filters.priceMax = e.target.value ? parseInt(e.target.value) : null;
+      applyFilters();
+    }, 500));
+
+    // Date range inputs
+    const dateFromInput = document.getElementById('dateFrom');
+    const dateToInput = document.getElementById('dateTo');
+    
+    dateFromInput?.addEventListener('change', (e) => {
+      filters.dateFrom = e.target.value || null;
+      
+      // Auto-set end date to 60 days after start date
+      if (filters.dateFrom && dateToInput) {
+        const startDate = new Date(filters.dateFrom);
+        const endDate = filters.dateTo ? new Date(filters.dateTo) : null;
+        
+        if (!endDate || endDate <= startDate) {
+          const autoEndDate = new Date(startDate);
+          autoEndDate.setDate(autoEndDate.getDate() + 60);
+          const autoEndDateStr = autoEndDate.toISOString().split('T')[0];
+          dateToInput.value = autoEndDateStr;
+          filters.dateTo = autoEndDateStr;
+        }
+      }
+      
+      applyFilters();
+    });
+
+    dateToInput?.addEventListener('change', (e) => {
+      filters.dateTo = e.target.value || null;
+      applyFilters();
+    });
+
+    // Sort by dropdown
+    sortBySelect?.addEventListener('change', (e) => {
+      applySorting(e.target.value);
+    });
+
+    // Clear filters button
+    document.getElementById('clearFilters')?.addEventListener('click', clearAllFilters);
+    document.getElementById('clearFiltersTop')?.addEventListener('click', clearAllFilters);
+    document.getElementById('emptyStateClearBtn')?.addEventListener('click', clearAllFilters);
+  }
+
+  // Apply sorting
+  function applySorting(sortValue) {
+    switch (sortValue) {
+      case 'date-asc':
+        filteredEvents.sort((a, b) => {
+          const dateA = a.dateFrom ? new Date(a.dateFrom) : new Date('9999-12-31');
+          const dateB = b.dateFrom ? new Date(b.dateFrom) : new Date('9999-12-31');
+          return dateA - dateB;
+        });
+        break;
+      case 'date-desc':
+        filteredEvents.sort((a, b) => {
+          const dateA = a.dateFrom ? new Date(a.dateFrom) : new Date(0);
+          const dateB = b.dateFrom ? new Date(b.dateFrom) : new Date(0);
+          return dateB - dateA;
+        });
+        break;
+      case 'price-low':
+        filteredEvents.sort((a, b) => (a.price || 0) - (b.price || 0));
+        break;
+      case 'price-high':
+        filteredEvents.sort((a, b) => (b.price || 0) - (a.price || 0));
+        break;
+      case 'name-asc':
+        filteredEvents.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case 'name-desc':
+        filteredEvents.sort((a, b) => b.title.localeCompare(a.title));
+        break;
+    }
+
+    currentPage = 1;
+    displayedEvents = filteredEvents.slice(0, pageSize);
+    hasMoreEvents = filteredEvents.length > displayedEvents.length;
+    renderEvents();
+    updateFilterCount();
+    updateURL();
+  }
+
+  // Apply filters
+  function applyFilters() {
+    console.log('🔍 [final-call-2026] Applying filters:', {
+      productTypes: [...filters.productTypes],
+      discountCode: filters.discountCode,
+      venues: [...filters.venues],
+      month: filters.month,
+      searchQuery: filters.searchQuery,
+      totalEvents: allEvents.length
+    });
+    
+    let debugCount = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    filteredEvents = allEvents.filter(event => {
+      const passedFilters = debugCount < 3; // Only log first 3 events for debugging
+      if (passedFilters && filters.month) {
+        console.log(`Event ${event.id}: "${event.title}", dateFrom: ${event.dateFrom}, venue: "${event.venue_plain_text}"`);
+      }
+      debugCount++;
+      
+      // ALWAYS filter out past events (safety check)
+      if (event.dateFrom) {
+        const eventDate = new Date(event.dateFrom);
+        if (eventDate < today) {
+          return false; // Skip past events
+        }
+      }
+      
+      // Search filter
+      if (filters.searchQuery && !event.title.toLowerCase().includes(filters.searchQuery)) {
+        return false;
+      }
+
+      // Hide sold out filter
+      if (filters.hideSoldOut && event.isSoldOut) {
+        return false;
+      }
+
+      // Discount code filter (pills)
+      if (filters.discountCode !== 'all' && event.FinalCall26 !== filters.discountCode) {
+        return false;
+      }
+
+      // Product filter (sidebar checkboxes)
+      if (filters.productTypes.size > 0 && !filters.productTypes.has(event.product)) {
+        return false;
+      }
+
+      // Country Events filter (renamed to Country)
+      if (filters.countryEvents.size > 0 && !filters.countryEvents.has(event.countryEvents)) {
+        return false;
+      }
+
+      // Venues filter (from homepage search)
+      if (filters.venues.size > 0) {
+        const eventVenue = event.venue_plain_text || '';
+        if (!filters.venues.has(eventVenue)) {
+          return false;
+        }
+      }
+
+      // Month filter (from homepage search)
+      if (filters.month) {
+        if (event.dateFrom) {
+          const eventDate = new Date(event.dateFrom);
+          const eventMonth = eventDate.toLocaleDateString('en-US', { month: 'long' });
+          if (eventMonth !== filters.month) {
+            return false;
+          }
+        } else {
+          return false;
+        }
+      }
+
+      // Price range filter
+      if (filters.priceMin !== null && event.price < filters.priceMin) {
+        return false;
+      }
+      if (filters.priceMax !== null && event.price > filters.priceMax) {
+        return false;
+      }
+
+      // Date range filter
+      if (filters.dateFrom || filters.dateTo) {
+        const eventDate = new Date(event.dateFrom);
+        if (filters.dateFrom && eventDate < new Date(filters.dateFrom)) {
+          return false;
+        }
+        if (filters.dateTo && eventDate > new Date(filters.dateTo)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    console.log(`✅ [final-call-2026] Filtered ${filteredEvents.length} events from ${allEvents.length} total`);
+
+    // Apply current sorting
+    const currentSort = sortBySelect?.value || 'date-asc';
+    if (currentSort !== 'date-asc') {
+      applySorting(currentSort);
+      return;
+    }
+
+    currentPage = 1;
+    displayedEvents = filteredEvents.slice(0, pageSize);
+    hasMoreEvents = filteredEvents.length > displayedEvents.length;
+    
+    renderEvents();
+    updateFilterCount();
+    updateURL();
+  }
+
+  // Render events
+  function renderEvents() {
+    const cards = eventsGrid.querySelectorAll('.event-card');
+    
+    console.log(`🎨 [final-call-2026] Rendering ${displayedEvents.length} events out of ${filteredEvents.length} filtered`);
+    console.log(`🎨 [final-call-2026] Total cards in DOM: ${cards.length}`);
+    
+    // Hide all cards first
+    cards.forEach(card => {
+      card.classList.add('hidden');
+      card.style.display = 'none'; // Force hide with inline style
+    });
+
+    // Show filtered cards
+    let foundCount = 0;
+    displayedEvents.forEach(event => {
+      const card = eventsGrid.querySelector(`[data-event-id="${event.id}"]`);
+      if (card) {
+        card.classList.remove('hidden');
+        card.style.display = ''; // Remove inline style to let CSS take over
+        foundCount++;
+      } else {
+        console.warn(`⚠️ [final-call-2026] Card not found for event ID: ${event.id}, Title: ${event.title}`);
+      }
+    });
+
+    console.log(`🎨 [final-call-2026] Rendered ${foundCount} cards successfully`);
+
+    // Update counts
+    filteredCountEl.textContent = filteredEvents.length;
+
+    // Show/hide empty state
+    if (filteredEvents.length === 0) {
+      emptyState.classList.remove('hidden');
+      endMessage.classList.add('hidden');
+    } else {
+      emptyState.classList.add('hidden');
+      if (!hasMoreEvents) {
+        endMessage.classList.remove('hidden');
+      } else {
+        endMessage.classList.add('hidden');
+      }
+    }
+  }
+
+  // Setup infinite scroll
+  function setupInfiniteScroll() {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMoreEvents && !isLoading) {
+          loadMoreEvents();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+
+    if (scrollSentinel) {
+      observer.observe(scrollSentinel);
+    }
+  }
+
+  // Load more events
+  function loadMoreEvents() {
+    if (isLoading || !hasMoreEvents) return;
+
+    isLoading = true;
+    loadingIndicator.classList.remove('hidden');
+
+    setTimeout(() => {
+      currentPage++;
+      const startIndex = (currentPage - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      const newEvents = filteredEvents.slice(startIndex, endIndex);
+
+      displayedEvents = [...displayedEvents, ...newEvents];
+      hasMoreEvents = filteredEvents.length > displayedEvents.length;
+
+      renderEvents();
+      
+      isLoading = false;
+      loadingIndicator.classList.add('hidden');
+
+      if (!hasMoreEvents) {
+        endMessage.classList.remove('hidden');
+      }
+    }, 500);
+  }
+
+  // Update filter count badge
+  function updateFilterCount() {
+    let count = 0;
+    if (filters.searchQuery) count++;
+    if (filters.productTypes.size > 0) count++;
+    if (filters.discountCode !== 'all') count++;
+    if (filters.hideSoldOut) count++;
+    if (filters.countryEvents.size > 0) count++;
+    if (filters.venues.size > 0) count++;
+    if (filters.month) count++;
+    if (filters.priceMin !== null || filters.priceMax !== null) count++;
+    if (filters.dateFrom !== null || filters.dateTo !== null) count++;
+
+    if (count > 0) {
+      activeFilterCountEl.textContent = count;
+      activeFilterCountEl.classList.remove('hidden');
+      filterStatusEl.textContent = `${count} filter${count > 1 ? 's' : ''} selected`;
+    } else {
+      activeFilterCountEl.classList.add('hidden');
+      filterStatusEl.textContent = '0 filters selected';
+    }
+  }
+
+  // Clear all filters
+  function clearAllFilters() {
+    filters.searchQuery = '';
+    filters.productTypes.clear();
+    filters.discountCode = 'all';
+    filters.countryEvents.clear();
+    filters.venues.clear();
+    filters.month = null;
+    filters.hideSoldOut = false;
+    filters.priceMin = null;
+    filters.priceMax = null;
+    filters.dateFrom = null;
+    filters.dateTo = null;
+
+    // Clear search
+    document.getElementById('searchInput').value = '';
+    
+    // Clear hide sold out
+    document.getElementById('hideSoldOut').checked = false;
+
+    // Reset discount filter buttons
+    document.querySelectorAll('.discount-filter-btn').forEach(btn => {
+      btn.classList.remove('active', 'bg-[#ad986c]', 'text-white');
+      btn.classList.add('bg-gray-100', 'text-gray-700');
+      if (btn.dataset.discount === 'all') {
+        btn.classList.add('active', 'bg-[#ad986c]', 'text-white');
+        btn.classList.remove('bg-gray-100', 'text-gray-700');
+      }
+    });
+
+    // Clear checkboxes
+    document.querySelectorAll('input[name="product"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('input[name="countryEvent"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('input[name="venue"]').forEach(cb => cb.checked = false);
+    
+    // Clear inputs
+    document.getElementById('priceMin').value = '';
+    document.getElementById('priceMax').value = '';
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+
+    // Reset sort
+    sortBySelect.value = 'date-asc';
+
+    applyFilters();
+  }
+
+  // Update URL with filter params
+  function updateURL() {
+    const params = new URLSearchParams();
+    
+    if (filters.searchQuery) {
+      params.set('search', filters.searchQuery);
+    }
+    if (filters.productTypes.size > 0) {
+      params.set('products', [...filters.productTypes].join(','));
+    }
+    if (filters.hideSoldOut) {
+      params.set('hideSoldOut', 'true');
+    }
+    if (filters.discountCode !== 'all') {
+      params.set('discount', filters.discountCode);
+    }
+    if (filters.countryEvents.size > 0) {
+      params.set('countries', [...filters.countryEvents].join(','));
+    }
+    if (filters.venues.size > 0) {
+      params.set('venues', [...filters.venues].join(','));
+    }
+    if (filters.month) {
+      params.set('month', filters.month);
+    }
+    if (filters.priceMin !== null) {
+      params.set('minPrice', filters.priceMin);
+    }
+    if (filters.priceMax !== null) {
+      params.set('maxPrice', filters.priceMax);
+    }
+    if (filters.dateFrom !== null) {
+      params.set('dateFrom', filters.dateFrom);
+    }
+    if (filters.dateTo !== null) {
+      params.set('dateTo', filters.dateTo);
+    }
+
+    const newURL = params.toString() ? `${window.location.pathname}?${params}` : window.location.pathname;
+    window.history.replaceState({}, '', newURL);
+  }
+
+  // Restore filters from URL
+  function restoreFiltersFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    
+    console.log('🔗 [final-call-2026] URL parameters:', window.location.search);
+    console.log('🔗 [final-call-2026] All params:', Object.fromEntries(params.entries()));
+    
+    // Restore search
+    const search = params.get('search');
+    if (search) {
+      filters.searchQuery = search;
+      document.getElementById('searchInput').value = search;
+    }
+    
+    // Restore product checkboxes
+    const products = params.get('products');
+    if (products) {
+      products.split(',').forEach(product => {
+        filters.productTypes.add(product);
+        const checkbox = document.querySelector(`input[name="product"][value="${product}"]`);
+        if (checkbox) checkbox.checked = true;
+      });
+    }
+    
+    // Restore hide sold out
+    const hideSoldOut = params.get('hideSoldOut');
+    if (hideSoldOut === 'true') {
+      filters.hideSoldOut = true;
+      document.getElementById('hideSoldOut').checked = true;
+    }
+    
+    // Restore discount code pill
+    const discount = params.get('discount');
+    if (discount) {
+      filters.discountCode = discount;
+      document.querySelectorAll('.discount-filter-btn').forEach(btn => {
+        btn.classList.remove('active', 'bg-[#ad986c]', 'text-white');
+        btn.classList.add('bg-gray-100', 'text-gray-700');
+        if (btn.dataset.discount === discount) {
+          btn.classList.add('active', 'bg-[#ad986c]', 'text-white');
+          btn.classList.remove('bg-gray-100', 'text-gray-700');
+        }
+      });
+    }
+    
+    // Restore countries (using countryEvents)
+    const countries = params.get('countries');
+    if (countries) {
+      countries.split(',').forEach(country => {
+        filters.countryEvents.add(country);
+        const checkbox = document.querySelector(`input[name="countryEvent"][value="${country}"]`);
+        if (checkbox) checkbox.checked = true;
+      });
+    }
+
+    // Restore price range
+    const minPrice = params.get('minPrice');
+    const maxPrice = params.get('maxPrice');
+    if (minPrice) {
+      filters.priceMin = parseInt(minPrice);
+      document.getElementById('priceMin').value = minPrice;
+    }
+    if (maxPrice) {
+      filters.priceMax = parseInt(maxPrice);
+      document.getElementById('priceMax').value = maxPrice;
+    }
+
+    // Restore dates
+    const dateFrom = params.get('dateFrom');
+    const dateTo = params.get('dateTo');
+    if (dateFrom) {
+      filters.dateFrom = dateFrom;
+      document.getElementById('dateFrom').value = dateFrom;
+    }
+    if (dateTo) {
+      filters.dateTo = dateTo;
+      document.getElementById('dateTo').value = dateTo;
+    }
+
+    // Restore venues (from homepage search and checkbox filters)
+    const venues = params.get('venues');
+    if (venues) {
+      venues.split(',').forEach(venue => {
+        filters.venues.add(venue);
+        // Check the checkbox if it exists (for sidebar filters)
+        const checkbox = document.querySelector(`input[name="venue"][value="${venue}"]`);
+        if (checkbox) checkbox.checked = true;
+      });
+      console.log('🏨 [final-call-2026] Restored venue filter from URL:', venues);
+      console.log('🏨 [final-call-2026] Venue filter set contains:', [...filters.venues]);
+    }
+
+    // Restore month (from homepage search)
+    const month = params.get('month');
+    if (month) {
+      filters.month = month;
+      console.log('📅 [final-call-2026] Restored month filter from URL:', month);
+    }
+
+    // Apply filters if any were restored
+    if (search || products || hideSoldOut || discount || countries || minPrice || maxPrice || dateFrom || dateTo || venues || month) {
+      applyFilters();
+    }
+  }
+
+  // Debounce utility
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  // Initialize on page load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+</script>
+
+  <!-- Waiting List Modal -->
+  <WaitingListModal />
+</BaseLayout>
+

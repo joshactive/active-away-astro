@@ -2558,6 +2558,7 @@ function transformFormDetail(item) {
     formLayout: form.formLayout || 'one-column',
     formFields: formFields,
     formWebhookUrl: form.formWebhookUrl || null,
+    redirectUrl: form.redirectUrl || null,
     showOtherOptions: form.showOtherOptions || false,
     submitButtonConditional: form.submitButtonConditional || false,
     submitButtonConditionalField: form.submitButtonConditionalField || '',
@@ -2903,6 +2904,114 @@ export async function getEventsPage() {
     'Discover all our upcoming tennis, padel, pickleball, and ski events. Filter by type, location, price, and dates to find your perfect experience.',
     'EVENTS'
   );
+}
+
+// Availability Page
+export async function getAvailabilityPage() {
+  try {
+    console.log('📖 [getAvailabilityPage] Fetching availability page data...');
+    
+    const data = await fetchAPI('/availability-page');
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getAvailabilityPage] No availability page found');
+      return null;
+    }
+    
+    const page = data.data.attributes || data.data;
+    
+    const availabilityPage = {
+      heroTitle: page.heroTitle,
+      heroSubtitle: page.heroSubtitle,
+      heroKicker: page.heroKicker,
+      
+      seo: page.seo || null
+    };
+    
+    console.log('✅ [getAvailabilityPage] Availability page data fetched successfully');
+    return availabilityPage;
+  } catch (error) {
+    console.error('❌ [getAvailabilityPage] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * SEPARATE API CALL: Fetch hero background image for availability page
+ * @returns {Promise<Object|null>} Hero background image data or null
+ */
+export async function getAvailabilityPageHeroImage() {
+  try {
+    console.log('📸 [getAvailabilityPageHeroImage] Fetching hero image...');
+    
+    const data = await fetchAPI('/availability-page?populate=heroBackgroundImage');
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getAvailabilityPageHeroImage] No availability page found');
+      return null;
+    }
+    
+    const page = data.data.attributes || data.data;
+    const heroBackgroundImage = getStrapiImageData(page.heroBackgroundImage);
+    
+    if (heroBackgroundImage?.url) {
+      console.log(`📸 Availability page hero image URL:`, heroBackgroundImage.url);
+    }
+    
+    return heroBackgroundImage;
+  } catch (error) {
+    console.error('❌ [getAvailabilityPageHeroImage] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * SEPARATE API CALL: Fetch SEO data with metaImage for availability page
+ * @returns {Promise<Object|null>} SEO data object or null
+ */
+export async function getAvailabilityPageSEO() {
+  try {
+    console.log('📄 [getAvailabilityPageSEO] Fetching SEO for availability page...');
+    
+    const data = await fetchAPI('/availability-page?populate[seo][populate]=metaImage');
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getAvailabilityPageSEO] No availability page found');
+      return null;
+    }
+    
+    const page = data.data.attributes || data.data;
+    const seo = page.seo;
+    
+    if (!seo) {
+      console.warn('⚠️  [getAvailabilityPageSEO] No SEO data');
+      return null;
+    }
+
+    // Extract meta image data with Cloudflare Images optimization
+    const metaImageData = getOptimizedSEOImage(seo.metaImage);
+    
+    if (metaImageData.url) {
+      console.log(`📸 Availability page meta image URL (optimized):`, metaImageData.url);
+    }
+    
+    const seoData = {
+      metaTitle: seo.metaTitle,
+      metaDescription: seo.metaDescription,
+      keywords: seo.keywords,
+      canonicalURL: seo.canonicalURL,
+      metaImage: metaImageData.url,
+      metaImageAlt: metaImageData.alt,
+      metaImageWidth: metaImageData.width,
+      metaImageHeight: metaImageData.height
+    };
+    
+    console.log('✅ [getAvailabilityPageSEO] SEO data fetched');
+    return seoData;
+  } catch (error) {
+    console.error('❌ [getAvailabilityPageSEO] Error:', error);
+    return null;
+  }
 }
 
 // Video Archive Page
@@ -6028,6 +6137,76 @@ export async function getGroupOrganiserById(id) {
 }
 
 /**
+ * Normalize custom events for frontend display
+ * @param {Array} customEvents - Raw custom events from Strapi
+ * @returns {Array} Normalized events
+ */
+function normalizeCustomEvents(customEvents) {
+  if (!customEvents || !Array.isArray(customEvents) || customEvents.length === 0) {
+    return [];
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return customEvents.map((event, index) => {
+    // Skip if no dateFrom
+    if (!event.dateFrom) return null;
+
+    // Check if event is in the past
+    const eventDate = new Date(event.dateFrom);
+    eventDate.setHours(0, 0, 0, 0);
+    if (eventDate < today) return null;
+
+    // Format dates
+    let formattedDate = '';
+    if (event.dateFrom && event.dateUntil) {
+      const fromDate = new Date(event.dateFrom);
+      const untilDate = new Date(event.dateUntil);
+      
+      const dayFrom = fromDate.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit' });
+      const monthFrom = fromDate.toLocaleDateString('en-GB', { month: 'short' });
+      const dayUntil = untilDate.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit' });
+      const monthUntil = untilDate.toLocaleDateString('en-GB', { month: 'short' });
+      const year = untilDate.toLocaleDateString('en-GB', { year: 'numeric' });
+      
+      if (monthFrom === monthUntil) {
+        formattedDate = `${dayFrom} ${monthFrom} - ${dayUntil} ${monthUntil} ${year}`;
+      } else {
+        formattedDate = `${dayFrom} ${monthFrom} - ${dayUntil} ${monthUntil} ${year}`;
+      }
+    }
+
+    // Status badge
+    let statusBadge = 'AVAILABLE';
+    let statusClass = 'bg-[#ad986c]/10 text-[#ad986c]';
+    
+    if (event.isSoldOut) {
+      statusBadge = 'SOLD OUT';
+      statusClass = 'bg-red-50 text-red-700';
+    }
+
+    return {
+      id: event.id || `custom-${index}`,
+      title: event.title || formattedDate,
+      dateText: formattedDate,
+      dateFrom: event.dateFrom,
+      dateUntil: event.dateUntil,
+      location: event.location || 'TBC',
+      price: event.price || null,
+      singleOccupancyPrice: event.singleOccupancyPrice || null,
+      bookingLink: normalizeBookingLink(event.bookingLink),
+      buttonText: event.buttonText || 'Book Now',
+      buttonColour: event.buttonColour || '#ad986c',
+      isSoldOut: event.isSoldOut || false,
+      statusBadge: statusBadge,
+      statusClass: statusClass,
+      isCustom: true
+    };
+  }).filter(Boolean);
+}
+
+/**
  * Transform raw Strapi group organiser data to frontend format
  * @param {Object} item - Raw Strapi API response item
  * @returns {Object} Transformed group organiser data
@@ -6055,6 +6234,7 @@ function transformGroupOrganiserDetail(item) {
     masterPageType: holiday.masterPageType,
     masterPageSlug: holiday.masterPageSlug,
     eventsQueryCommaSeparated: holiday.eventsquerycommaseperated,
+    customEvents: normalizeCustomEvents(holiday.customEvents),
     
     // Hero Section
     mainHeader: holiday.mainHeader,
@@ -8163,7 +8343,8 @@ export async function getSalesLandingPageBySlug(slug) {
         description: page.formSection.description,
         privacyNote: page.formSection.privacyNote,
         form,
-        webhookUrl: page.formSection.webhookUrl || null
+        webhookUrl: page.formSection.webhookUrl || null,
+        redirectUrl: page.formSection.redirectUrl || null
       } : null,
       statsSection: page.statsSection ? {
         stats: page.statsSection.stats?.map((stat) => ({
@@ -8600,4 +8781,63 @@ export async function getSearchResultsPage() {
  */
 export async function getSearchResultsPageSEO() {
   return getPageSEO('search-results-page');
+}
+
+/**
+ * Fetch key takeaways page data from Strapi
+ * @returns {Promise<Object|null>} Page data with hero and sections
+ */
+export async function getKeyTakeawaysPage() {
+  try {
+    console.log('🔍 [getKeyTakeawaysPage] Fetching key takeaways page data...');
+    
+    const data = await fetchAPI(
+      '/key-takeaways-page?populate[pageHero][populate]=*&populate[sections][populate][items][populate]=*&populate[seo][populate]=*'
+    );
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getKeyTakeawaysPage] No data found');
+      return null;
+    }
+    
+    const pageData = data.data.attributes || data.data;
+    
+    const result = {
+      pageHero: pageData.pageHero ? {
+        kicker: pageData.pageHero.kicker || '',
+        heading: pageData.pageHero.heading || 'Key Takeaways',
+        subtitle: pageData.pageHero.subtitle || '',
+        backgroundImage: getStrapiImageData(pageData.pageHero.backgroundImage),
+        showBreadcrumbs: pageData.pageHero.showBreadcrumbs !== false
+      } : null,
+      sections: pageData.sections ? pageData.sections.map(section => ({
+        categoryLabel: section.categoryLabel || '',
+        sectionTitle: section.sectionTitle || '',
+        description: section.description || '',
+        items: section.items ? section.items.map(item => ({
+          type: item.type || 'video',
+          title: item.title || '',
+          description: item.description || '',
+          youtubeUrl: item.youtubeUrl || '',
+          pdfFile: item.pdfFile ? getStrapiImageData(item.pdfFile) : null,
+          pdfLabel: item.pdfLabel || item.title || 'Download PDF'
+        })) : []
+      })) : [],
+      seo: pageData.seo || null
+    };
+    
+    console.log('✅ [getKeyTakeawaysPage] Data fetched successfully');
+    return result;
+  } catch (error) {
+    console.error('❌ [getKeyTakeawaysPage] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch key takeaways page SEO data from Strapi
+ * @returns {Promise<Object|null>} SEO data
+ */
+export async function getKeyTakeawaysPageSEO() {
+  return getPageSEO('key-takeaways-page');
 }

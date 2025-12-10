@@ -164,6 +164,7 @@ if (masterPageData) {
       'uniqueValue', // Group organiser has its own uniqueValue for events
       'groupOrganiserName', 'groupOrganiserName2', 'groupOrganiserProduct',
       'groupOrganiserImage', 'groupOrganiserWhatsappUrl', 'groupOrganiserOtherUrl',
+      'customEvents', // Group organiser specific custom events
       'createdAt', 'publishedAt'
     ];
     
@@ -252,13 +253,31 @@ try {
   console.log(`🔍 [DEBUG] eventsQueryCommaSeparated value: "${holidayData.eventsQueryCommaSeparated}"`);
   console.log(`🔍 [DEBUG] Type: ${typeof holidayData.eventsQueryCommaSeparated}`);
   
+  // 1. Fetch standard events by document IDs
   if (holidayData.eventsQueryCommaSeparated) {
     console.log(`👥 [Dates & Prices] Fetching events by document IDs: "${holidayData.eventsQueryCommaSeparated}"`);
-    matchingEvents = await getEventsByDocumentIds(holidayData.eventsQueryCommaSeparated);
-    console.log(`👥 [Dates & Prices] Found ${matchingEvents.length} event(s) by document IDs`);
+    const standardEvents = await getEventsByDocumentIds(holidayData.eventsQueryCommaSeparated);
+    matchingEvents = [...matchingEvents, ...standardEvents];
+    console.log(`👥 [Dates & Prices] Found ${standardEvents.length} standard event(s)`);
   } else {
     console.warn(`⚠️ Group organiser "${slug}" has no eventsQueryCommaSeparated set for Dates & Prices section`);
   }
+
+  // 2. Add custom events from the group organiser record
+  if (holidayData.customEvents && holidayData.customEvents.length > 0) {
+    console.log(`👥 [Dates & Prices] Found ${holidayData.customEvents.length} custom event(s)`);
+    matchingEvents = [...matchingEvents, ...holidayData.customEvents];
+  }
+  
+  // 3. Sort all events by date
+  matchingEvents.sort((a, b) => {
+    const dateA = new Date(a.dateFrom);
+    const dateB = new Date(b.dateFrom);
+    return dateA - dateB;
+  });
+  
+  console.log(`👥 [Dates & Prices] Total events to display: ${matchingEvents.length}`);
+
 } catch (error) {
   console.error('Error fetching events for Dates & Prices section:', error);
 }

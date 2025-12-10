@@ -1,0 +1,403 @@
+<p><b>Introduction to Strapi for Active Away Team</b></p>
+
+<p><b>What is Strapi?</b></p>
+
+<p>Strapi is our <b>content management system (CMS)</b> where we manage everything that shows on the front end of our website. Think of it as the control panel for our website content.</p>
+
+<p><b>You can log in to Strapi here:</b> <a href="https://strapi-production-b96d.up.railway.app/admin" target="_blank">https://strapi-production-b96d.up.railway.app/admin</a></p>
+
+
+
+<p><b>What Can You Do in Strapi?</b></p>
+
+<p>With Strapi, you can:</p>
+
+<ul>
+<li><b>Add and edit</b> tennis holidays, padel holidays, and pickleball holiday pages</li>
+<li><b>Manage</b> blog posts and articles</li>
+<li><b>Update</b> FAQs and help content</li>
+<li><b>Create</b> new forms for customer inquiries</li>
+<li><b>Upload</b> and organize images and PDFs</li>
+<li><b>Edit</b> navigation menus</li>
+<li><b>Publish</b> or unpublish content at any time</li>
+</ul>
+
+<p><b>Important:</b> You don't need to know any code to use Strapi. It's designed to be user-friendly!</p>
+
+
+
+<p><b>Understanding Strapi Basics</b></p>
+
+<p><b>1. Content Types</b></p>
+
+<p>Content is organized into different <b>types</b>. Here are the main ones we use:</p>
+
+<table border="1" cellpadding="10" cellspacing="0" width="100%">
+<tr>
+<th>Content Type</th>
+<th>What It's For</th>
+<th>Example</th>
+</tr>
+<tr>
+<td><b>Tennis Holiday</b></td>
+<td>Our tennis holiday packages</td>
+<td>"Algarve Tennis Week"</td>
+</tr>
+<tr>
+<td><b>Padel Holiday</b></td>
+<td>Padel-specific holidays</td>
+<td>"Costa Brava Padel Camp"</td>
+</tr>
+<tr>
+<td><b>Pickleball Holiday</b></td>
+<td>Pickleball packages</td>
+<td>"Florida Pickleball Retreat"</td>
+</tr>
+<tr>
+<td><b>Blog</b></td>
+<td>Blog posts and articles</td>
+<td>"Top 10 Tennis Destinations"</td>
+</tr>
+<tr>
+<td><b>FAQ Category</b></td>
+<td>Frequently asked questions</td>
+<td>"Booking Process FAQs"</td>
+</tr>
+<tr>
+<td><b>Forms</b></td>
+<td>Contact and inquiry forms</td>
+<td>"Transfer Info Form"</td>
+</tr>
+<tr>
+<td><b>Navigation Menu</b></td>
+<td>Main website navigation</td>
+<td>Top menu with links</td>
+</tr>
+</table>
+
+<p><b>2. Collection Types vs Single Types</b></p>
+
+<p><b>Collection Types (Multiple Items)</b></p>
+<ul>
+<li>You can create many entries</li>
+<li>Examples: Blog posts, Tennis holidays, FAQs</li>
+<li>Each entry has its own page on the website</li>
+</ul>
+
+<p><b>Single Types (One Item Only)</b></p>
+<ul>
+<li>Only one entry exists</li>
+<li>Examples: Navigation Menu, Home Page settings</li>
+<li>You edit the existing entry rather than creating new ones</li>
+</ul>
+
+<p><b>3. Draft vs Published</b></p>
+
+<p>All content has two states:</p>
+
+<ul>
+<li><b>Draft</b> - Saved but NOT visible on the website</li>
+<li><b>Published</b> - Live and visible to customers</li>
+</ul>
+
+<p><b>Golden Rule:</b> Always click <b>Save</b> first, then click <b>Publish</b> when you're ready for it to go live!</p>
+
+
+
+<p><b>How to Add New Content</b></p>
+
+<p><b>Example: Adding a New Tennis Holiday</b></p>
+
+<ol>
+<li><b>Log in</b> to Strapi</li>
+<li>Click <b>Content Manager</b> in the left sidebar</li>
+<li>Find <b>Tennis Holiday</b> (or whichever type you need)</li>
+<li>Click the <b>+ Create new entry</b> button</li>
+<li>Fill in the fields:
+<ul>
+<li><b>Title:</b> "Costa del Sol Tennis Week"</li>
+<li><b>Slug:</b> Will auto-generate (e.g., costa-del-sol-tennis-week)</li>
+<li><b>Description:</b> Add details about the holiday</li>
+<li><b>Price:</b> "From £1,295"</li>
+<li><b>Upload images</b> using the Media Library</li>
+</ul>
+</li>
+<li>Click <b>Save</b> (top right)</li>
+<li>Review your content</li>
+<li>Click <b>Publish</b> when ready</li>
+</ol>
+
+
+
+<p><b>How to Edit Existing Content</b></p>
+
+<ol>
+<li><b>Content Manager</b> → Select the content type</li>
+<li><b>Click</b> on the item you want to edit</li>
+<li><b>Make your changes</b></li>
+<li><b>Save</b> your changes</li>
+<li><b>Publish</b> to update the live website</li>
+</ol>
+
+<p><b>Tip:</b> If you want to make changes without them going live immediately, just Save (don't Publish). The website will continue showing the old version until you Publish.</p>
+
+
+
+<p><b>Working with Images</b></p>
+
+<p><b>Uploading Images</b></p>
+
+<ol>
+<li>In any content entry, find the <b>image field</b></li>
+<li>Click <b>Add new assets</b></li>
+<li><b>Drag and drop</b> or <b>browse</b> to upload</li>
+<li>Select the image you want to use</li>
+<li>Click <b>Finish</b></li>
+</ol>
+
+<p><b>Image Best Practices</b></p>
+
+<ul>
+<li><b>Use high-quality images</b> (at least 1200px wide)</li>
+<li><b>Name files clearly</b> (e.g., algarve-tennis-court.jpg not IMG_1234.jpg)</li>
+<li><b>Add Alt Text</b> - Describe the image for accessibility and SEO</li>
+<li><b>Keep file sizes reasonable</b> - Compress large images before uploading</li>
+</ul>
+
+<p><b>Where to add Alt Text:</b></p>
+<ol>
+<li>Click on any uploaded image in the Media Library</li>
+<li>Find the <b>Alternative Text</b> field</li>
+<li>Add a clear description (e.g., "Tennis players on clay court in Algarve")</li>
+</ol>
+
+
+
+<p><b>Understanding the Interface</b></p>
+
+<p><b>Left Sidebar Navigation</b></p>
+
+<table border="1" cellpadding="10" cellspacing="0" width="100%">
+<tr>
+<th>Icon/Section</th>
+<th>What It Does</th>
+</tr>
+<tr>
+<td><b>Content Manager</b></td>
+<td>Add, edit, and manage all your content</td>
+</tr>
+<tr>
+<td><b>Media Library</b></td>
+<td>View and organize all uploaded images/files</td>
+</tr>
+<tr>
+<td><b>Content-Type Builder</b></td>
+<td>⚠️ Advanced - Don't use unless trained</td>
+</tr>
+<tr>
+<td><b>Settings</b></td>
+<td>⚠️ Advanced - For administrators only</td>
+</tr>
+</table>
+
+<p><b>Top Right Buttons</b></p>
+
+<ul>
+<li><b>Save</b> - Saves your work (still in draft)</li>
+<li><b>Publish</b> - Makes content live on the website</li>
+<li><b>Unpublish</b> - Removes content from the website (but keeps it in Strapi)</li>
+</ul>
+
+
+
+<p><b>Important Safety Tips</b></p>
+
+<p><b>⚠️ Things to BE CAREFUL About</b></p>
+
+<ol>
+<li><b>Don't delete content</b> unless you're absolutely sure
+<ul>
+<li>Deleted items are <b>gone forever</b></li>
+<li>When in doubt, <b>Unpublish</b> instead</li>
+</ul>
+</li>
+<li><b>Don't touch Content-Type Builder</b>
+<ul>
+<li>This changes the structure of the entire system</li>
+<li>Only developers should use this</li>
+</ul>
+</li>
+<li><b>Check your changes before publishing</b>
+<ul>
+<li>Use the <b>Save</b> button to save drafts</li>
+<li>Review everything carefully</li>
+<li>Only <b>Publish</b> when you're confident</li>
+</ul>
+</li>
+<li><b>Be careful with URLs (Slugs)</b>
+<ul>
+<li>Changing a slug changes the webpage URL</li>
+<li>This can break existing links</li>
+<li>If you must change a slug, notify the development team</li>
+</ul>
+</li>
+</ol>
+
+<p><b>✅ Things You CAN Do Safely</b></p>
+
+<ul>
+<li>Edit text, descriptions, and content</li>
+<li>Upload and replace images</li>
+<li>Create new blog posts, holidays, FAQs</li>
+<li>Save drafts without publishing</li>
+<li>Unpublish content if needed</li>
+<li>Add new entries to existing content types</li>
+</ul>
+
+
+
+<p><b>Common Tasks Quick Reference</b></p>
+
+<p><b>Publishing a New Blog Post</b></p>
+<ol>
+<li><b>Content Manager</b> → <b>Blog</b></li>
+<li><b>+ Create new entry</b></li>
+<li>Fill in: Title, Content, Category, Featured Image</li>
+<li>Add SEO description and keywords</li>
+<li><b>Save</b> → <b>Publish</b></li>
+</ol>
+
+<p><b>Updating a Holiday Price</b></p>
+<ol>
+<li><b>Content Manager</b> → <b>Tennis Holiday</b> (or relevant type)</li>
+<li>Find and click on the holiday</li>
+<li>Update the <b>Price</b> field</li>
+<li><b>Save</b> → <b>Publish</b></li>
+</ol>
+
+<p><b>Adding an Image to an Existing Entry</b></p>
+<ol>
+<li>Open the content entry</li>
+<li>Find the image field</li>
+<li>Click <b>Add new assets</b> or <b>Browse assets</b></li>
+<li>Upload new or select existing</li>
+<li><b>Save</b> → <b>Publish</b></li>
+</ol>
+
+<p><b>Unpublishing Content Temporarily</b></p>
+<ol>
+<li>Open the content entry</li>
+<li>Click <b>Unpublish</b> (top right)</li>
+<li>Content is now hidden from the website but still in Strapi</li>
+</ol>
+
+
+
+<p><b>Understanding Publishing Workflow</b></p>
+
+<p><b>Create/Edit Content</b><br>
+↓<br>
+Click <b>SAVE</b> (Content is now Draft)<br>
+↓<br>
+Review Your Work<br>
+↓<br>
+Click <b>PUBLISH</b> (Content goes live)<br>
+↓<br>
+Website Updates Automatically</p>
+
+<p><b>Important:</b> The website rebuilds every 30 minutes, so your changes might take up to 30 minutes to appear on the live site (depending on your setup).</p>
+
+
+
+<p><b>Frequently Asked Questions</b></p>
+
+<p><b>Q: I saved my changes but don't see them on the website?</b><br>
+<b>A:</b> Did you click <b>Publish</b>? Saving alone keeps content in Draft state.</p>
+
+<p><b>Q: Can I undo a change?</b><br>
+<b>A:</b> Strapi doesn't have undo. However:</p>
+<ul>
+<li>If you haven't published yet, just refresh the page to lose unsaved changes</li>
+<li>If you published by mistake, you can edit it again and re-publish</li>
+</ul>
+
+<p><b>Q: What happens if I make a mistake?</b><br>
+<b>A:</b> Don't panic! Most things can be fixed:</p>
+<ul>
+<li>Edit the content and publish again</li>
+<li>Unpublish it temporarily</li>
+<li>Contact the development team for help</li>
+</ul>
+
+<p><b>Q: How do I know if content is published?</b><br>
+<b>A:</b> Look for the <b>Published</b> badge at the top of the entry. If it says <b>Draft</b>, it's not live yet.</p>
+
+<p><b>Q: Can multiple people edit at the same time?</b><br>
+<b>A:</b> Yes, but be careful! If two people edit the same entry, the last person to save will overwrite the other's changes. Communicate with your team about who's editing what.</p>
+
+<p><b>Q: Where do deleted items go?</b><br>
+<b>A:</b> Nowhere - they're permanently deleted! Always double-check before deleting.</p>
+
+
+
+<p><b>Who to Contact for Help</b></p>
+
+<p><b>For Content Questions:</b></p>
+<ul>
+<li><b>Your Team Lead</b> - General content queries</li>
+<li><b>Marketing Team</b> - Content strategy and messaging</li>
+</ul>
+
+<p><b>For Technical Issues:</b></p>
+<ul>
+<li><b>Development Team</b> - If something isn't working</li>
+<li><b>System Administrator</b> - If you're locked out or need permissions</li>
+</ul>
+
+<p><b>For Training:</b></p>
+<ul>
+<li><b>Ask for a walk-through</b> - It's easier than it sounds!</li>
+<li><b>This guide</b> - Keep it handy as a reference</li>
+</ul>
+
+
+
+<p><b>Quick Tips for Success</b></p>
+
+<ol>
+<li><b>Save frequently</b> - Don't lose your work!</li>
+<li><b>Preview before publishing</b> - Check everything twice</li>
+<li><b>Use descriptive titles</b> - Makes finding content easier later</li>
+<li><b>Fill in all fields</b> - Especially SEO fields for better search rankings</li>
+<li><b>Organize your media</b> - Use clear file names in the Media Library</li>
+<li><b>When in doubt, ask</b> - Better to ask than to make a mistake!</li>
+</ol>
+
+
+
+<p><b>Getting Started Checklist</b></p>
+
+<ul>
+<li>☐ Log in to Strapi successfully</li>
+<li>☐ Explore the Content Manager</li>
+<li>☐ Browse existing content to see how it's structured</li>
+<li>☐ Look at the Media Library</li>
+<li>☐ Try creating a Draft blog post (don't publish yet)</li>
+<li>☐ Practice uploading an image</li>
+<li>☐ Ask a colleague or manager for a walk-through</li>
+<li>☐ Bookmark this guide for future reference</li>
+</ul>
+
+
+
+<p><b>Remember</b></p>
+
+<p><b>Strapi is powerful but user-friendly.</b> You don't need to be technical to use it effectively. Start with small edits, build your confidence, and soon you'll be managing content like a pro!</p>
+
+<p><b>The golden rule:</b> Save first, check twice, publish once!</p>
+
+
+
+<p><b>Last Updated:</b> December 2025<br>
+<b>Questions?</b> Contact your team lead or the development team.</p>
+

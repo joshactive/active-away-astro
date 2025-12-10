@@ -13,72 +13,77 @@ const GET = async ({ locals }) => {
     if (STRAPI_TOKEN) {
       headers["Authorization"] = `Bearer ${STRAPI_TOKEN}`;
     }
-    const resortNames = /* @__PURE__ */ new Set();
+    const resortMap = /* @__PURE__ */ new Map();
     try {
       const padelResponse = await fetch(
-        `${STRAPI_URL}/api/padel-tennis-holidays?pagination[pageSize]=100&fields[0]=title`,
+        `${STRAPI_URL}/api/padel-tennis-holidays?pagination[pageSize]=100&fields[0]=title&fields[1]=shortLocationName`,
         { headers }
       );
       if (padelResponse.ok) {
         const padelData = await padelResponse.json();
         padelData.data?.forEach((item) => {
           const title = item.title || item.attributes?.title;
-          if (title) resortNames.add(title);
+          const shortLocationName = item.shortLocationName || item.attributes?.shortLocationName;
+          if (title) resortMap.set(title, { title, shortLocationName });
         });
         console.log("✅ Fetched padel-tennis-holidays");
       }
       const pickleballResponse = await fetch(
-        `${STRAPI_URL}/api/pickleball-holidays?pagination[pageSize]=100&fields[0]=title`,
+        `${STRAPI_URL}/api/pickleball-holidays?pagination[pageSize]=100&fields[0]=title&fields[1]=shortLocationName`,
         { headers }
       );
       if (pickleballResponse.ok) {
         const pickleballData = await pickleballResponse.json();
         pickleballData.data?.forEach((item) => {
           const title = item.title || item.attributes?.title;
-          if (title) resortNames.add(title);
+          const shortLocationName = item.shortLocationName || item.attributes?.shortLocationName;
+          if (title) resortMap.set(title, { title, shortLocationName });
         });
         console.log("✅ Fetched pickleball-holidays");
       }
       const playWatchResponse = await fetch(
-        `${STRAPI_URL}/api/play-and-watches?pagination[pageSize]=100&fields[0]=title`,
+        `${STRAPI_URL}/api/play-and-watches?pagination[pageSize]=100&fields[0]=title&fields[1]=shortLocationName`,
         { headers }
       );
       if (playWatchResponse.ok) {
         const playWatchData = await playWatchResponse.json();
         playWatchData.data?.forEach((item) => {
           const title = item.title || item.attributes?.title;
-          if (title) resortNames.add(title);
+          const shortLocationName = item.shortLocationName || item.attributes?.shortLocationName;
+          if (title) resortMap.set(title, { title, shortLocationName });
         });
         console.log("✅ Fetched play-and-watches");
       }
       const skiResponse = await fetch(
-        `${STRAPI_URL}/api/ski-holidays?pagination[pageSize]=100&fields[0]=title`,
+        `${STRAPI_URL}/api/ski-holidays?pagination[pageSize]=100&fields[0]=title&fields[1]=shortLocationName`,
         { headers }
       );
       if (skiResponse.ok) {
         const skiData = await skiResponse.json();
         skiData.data?.forEach((item) => {
           const title = item.title || item.attributes?.title;
-          if (title) resortNames.add(title);
+          const shortLocationName = item.shortLocationName || item.attributes?.shortLocationName;
+          if (title) resortMap.set(title, { title, shortLocationName });
         });
         console.log("✅ Fetched ski-holidays");
       }
       const tennisResponse = await fetch(
-        `${STRAPI_URL}/api/tennis-holidays?pagination[pageSize]=100&fields[0]=title`,
+        `${STRAPI_URL}/api/tennis-holidays?pagination[pageSize]=100&fields[0]=title&fields[1]=shortLocationName`,
         { headers }
       );
       if (tennisResponse.ok) {
         const tennisData = await tennisResponse.json();
         tennisData.data?.forEach((item) => {
           const title = item.title || item.attributes?.title;
-          if (title) resortNames.add(title);
+          const shortLocationName = item.shortLocationName || item.attributes?.shortLocationName;
+          if (title) resortMap.set(title, { title, shortLocationName });
         });
         console.log("✅ Fetched tennis-holidays");
       }
     } catch (error) {
       console.error("Error fetching resorts:", error);
     }
-    const resorts = Array.from(resortNames).sort();
+    const resorts = Array.from(resortMap.values()).sort((a, b) => a.title.localeCompare(b.title));
     console.log(`✅ Fetched ${resorts.length} unique resort names`);
     return new Response(JSON.stringify({
       success: true,

@@ -1,0 +1,170 @@
+[
+  {
+    "type": "section",
+    "label": "Your Information"
+  },
+  {
+    "name": "resort",
+    "label": "Resort",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "options": [
+      "Ikos Aria",
+      "Ikos Kissamos",
+      "Ikos Olivia",
+      "Ikos Oceania",
+      "Ikos Dassia",
+      "Ikos Odisia"
+    ]
+  },
+  {
+    "name": "first_name",
+    "label": "First Name",
+    "type": "text",
+    "required": true,
+    "placeholder": "e.g Michael"
+  },
+  {
+    "name": "surname",
+    "label": "Surname",
+    "type": "text",
+    "required": true,
+    "placeholder": "e.g Cole"
+  },
+  {
+    "name": "email",
+    "label": "Email",
+    "type": "email",
+    "required": true,
+    "placeholder": "e.g michaelcole@gmail.com"
+  },
+  {
+    "type": "section",
+    "label": "Recommendation (1 = Never / 10 = Absolutely)"
+  },
+  {
+    "name": "recommend_tennis_coaching",
+    "label": "Would you recommend the tennis coaching?",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "options": [
+      "10",
+      "9",
+      "8",
+      "7",
+      "6",
+      "5",
+      "4",
+      "3",
+      "2",
+      "1"
+    ]
+  },
+  {
+    "name": "book_coaching_again",
+    "label": "Would you book tennis coaching again?",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "options": [
+      "10",
+      "9",
+      "8",
+      "7",
+      "6",
+      "5",
+      "4",
+      "3",
+      "2",
+      "1"
+    ]
+  },
+  {
+    "type": "section",
+    "label": "Ratings (1 = Very Bad / 10 = Exceptional)"
+  },
+  {
+    "name": "tennis_coaching_rating",
+    "label": "Tennis Coaching",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "options": [
+      "10",
+      "9",
+      "8",
+      "7",
+      "6",
+      "5",
+      "4",
+      "3",
+      "2",
+      "1"
+    ]
+  },
+  {
+    "name": "organisation_rating",
+    "label": "Organisation",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "options": [
+      "10",
+      "9",
+      "8",
+      "7",
+      "6",
+      "5",
+      "4",
+      "3",
+      "2",
+      "1"
+    ]
+  },
+  {
+    "name": "communication_rating",
+    "label": "Communication",
+    "type": "select",
+    "required": true,
+    "placeholder": "Please Select",
+    "options": [
+      "10",
+      "9",
+      "8",
+      "7",
+      "6",
+      "5",
+      "4",
+      "3",
+      "2",
+      "1"
+    ]
+  },
+  {
+    "type": "section",
+    "label": "Your Comments"
+  },
+  {
+    "name": "tennis_experience_comments",
+    "label": "In your own words, how was your tennis experience?",
+    "type": "textarea",
+    "required": false,
+    "placeholder": "Please share your thoughts about your tennis coaching experience..."
+  },
+  {
+    "type": "section",
+    "label": "Consent"
+  },
+  {
+    "name": "consent",
+    "label": "",
+    "type": "checkbox",
+    "required": true,
+    "options": [
+      "I consent to Active Away emails"
+    ]
+  }
+]
+

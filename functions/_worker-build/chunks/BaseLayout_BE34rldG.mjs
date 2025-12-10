@@ -1,20 +1,25 @@
 globalThis.process ??= {}; globalThis.process.env ??= {};
-import { f as createComponent, r as renderTemplate, l as defineScriptVars, m as maybeRenderHead, h as addAttribute, e as createAstro, k as renderComponent, n as Fragment, s as spreadAttributes, o as renderScript, an as renderSlot, ao as renderHead, u as unescapeHTML } from './astro/server_BoSsXtn0.mjs';
+import { e as createAstro, f as createComponent, r as renderTemplate, l as defineScriptVars, m as maybeRenderHead, h as addAttribute, k as renderComponent, n as Fragment, s as spreadAttributes, o as renderScript, an as renderSlot, ao as renderHead, u as unescapeHTML } from './astro/server_BoSsXtn0.mjs';
 /* empty css                          */
-import { V as getAnnouncementBar, W as getNavigationMenu, X as getImageByName, Y as getResponsiveImageByName } from './strapi_CoI6gAxC.mjs';
+import { P as getAnnouncementBar, Q as getNavigationMenu, R as getImageByName, S as getResponsiveImageByName } from './strapi_UhkUqLlA.mjs';
 
 var __freeze$3 = Object.freeze;
 var __defProp$3 = Object.defineProperty;
 var __template$3 = (cooked, raw) => __freeze$3(__defProp$3(cooked, "raw", { value: __freeze$3(raw || cooked.slice()) }));
 var _a$3;
+const $$Astro$5 = createAstro("https://activeaway.com");
 const $$AnnouncementBarTailwind = createComponent(async ($$result, $$props, $$slots) => {
+  const Astro2 = $$result.createAstro($$Astro$5, $$props, $$slots);
+  Astro2.self = $$AnnouncementBarTailwind;
   let announcementData = null;
   try {
     announcementData = await getAnnouncementBar();
   } catch (error) {
     console.warn("\u26A0\uFE0F  Could not fetch announcement bar:", error.message);
   }
-  const shouldShow = announcementData && announcementData.isActive;
+  const cookieName = announcementData?.cookieName || "announcement-dismissed";
+  const isDismissed = Astro2.cookies.has(cookieName);
+  const shouldShow = announcementData && announcementData.isActive && !isDismissed;
   const barData = shouldShow ? {
     message: announcementData.message,
     ctaText: announcementData.ctaText,
@@ -25,7 +30,7 @@ const $$AnnouncementBarTailwind = createComponent(async ($$result, $$props, $$sl
     ctaTextColor: announcementData.ctaTextColor || "#FFFFFF",
     ctaHoverColor: announcementData.ctaHoverColor || "#ad986c",
     isDismissible: announcementData.isDismissible !== false,
-    cookieName: announcementData.cookieName || "announcement-dismissed"
+    cookieName
   } : null;
   const gradientStyle = barData ? `background: linear-gradient(to right, ${barData.backgroundColorStart}, ${barData.backgroundColorEnd});` : "";
   return renderTemplate(_a$3 || (_a$3 = __template$3(["", "<script>(function(){", "\n  // Client-side logic for announcement bar\n  (function() {\n    if (!barData) return;\n    \n    const bar = document.getElementById('announcement-bar');\n    const closeBtn = bar?.querySelector('.announcement-close');\n    const cta = bar?.querySelector('.announcement-cta');\n    const cookieName = barData.cookieName;\n    \n    // Check if announcement was dismissed\n    function getCookie(name) {\n      const value = `; ${document.cookie}`;\n      const parts = value.split(`; ${name}=`);\n      if (parts.length === 2) return parts.pop().split(';').shift();\n      return null;\n    }\n    \n    // Set cookie\n    function setCookie(name, value, days) {\n      const expires = new Date();\n      expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));\n      document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;\n    }\n    \n    // Hide bar if dismissed (start visible to prevent CLS)\n    if (bar && getCookie(cookieName)) {\n      bar.style.display = 'none';\n    }\n    \n    // Handle close button\n    if (closeBtn && barData.isDismissible) {\n      closeBtn.addEventListener('click', () => {\n        bar.style.display = 'none';\n        setCookie(cookieName, 'true', 7); // Remember for 7 days\n      });\n    }\n    \n    // Handle CTA hover color\n    if (cta && barData.ctaHoverColor) {\n      cta.addEventListener('mouseenter', () => {\n        cta.style.color = barData.ctaHoverColor;\n      });\n      cta.addEventListener('mouseleave', () => {\n        cta.style.color = barData.ctaTextColor;\n      });\n    }\n  })();\n})();<\/script>"], ["", "<script>(function(){", "\n  // Client-side logic for announcement bar\n  (function() {\n    if (!barData) return;\n    \n    const bar = document.getElementById('announcement-bar');\n    const closeBtn = bar?.querySelector('.announcement-close');\n    const cta = bar?.querySelector('.announcement-cta');\n    const cookieName = barData.cookieName;\n    \n    // Check if announcement was dismissed\n    function getCookie(name) {\n      const value = \\`; \\${document.cookie}\\`;\n      const parts = value.split(\\`; \\${name}=\\`);\n      if (parts.length === 2) return parts.pop().split(';').shift();\n      return null;\n    }\n    \n    // Set cookie\n    function setCookie(name, value, days) {\n      const expires = new Date();\n      expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));\n      document.cookie = \\`\\${name}=\\${value};expires=\\${expires.toUTCString()};path=/\\`;\n    }\n    \n    // Hide bar if dismissed (start visible to prevent CLS)\n    if (bar && getCookie(cookieName)) {\n      bar.style.display = 'none';\n    }\n    \n    // Handle close button\n    if (closeBtn && barData.isDismissible) {\n      closeBtn.addEventListener('click', () => {\n        bar.style.display = 'none';\n        setCookie(cookieName, 'true', 7); // Remember for 7 days\n      });\n    }\n    \n    // Handle CTA hover color\n    if (cta && barData.ctaHoverColor) {\n      cta.addEventListener('mouseenter', () => {\n        cta.style.color = barData.ctaHoverColor;\n      });\n      cta.addEventListener('mouseleave', () => {\n        cta.style.color = barData.ctaTextColor;\n      });\n    }\n  })();\n})();<\/script>"])), shouldShow && renderTemplate`${maybeRenderHead()}<div id="announcement-bar" class="announcement-bar w-full py-3 sticky top-0 z-[60]"${addAttribute(gradientStyle, "style")}${addAttribute(barData.cookieName, "data-cookie-name")} data-astro-cid-swtpcilx><div class="container mx-auto max-w-[1400px] px-4 sm:px-10" data-astro-cid-swtpcilx><div class="flex items-center justify-between gap-4" data-astro-cid-swtpcilx><!-- Message --><div class="text-sm sm:text-base font-inter flex-1 text-left"${addAttribute(`color: ${barData.textColor};`, "style")} data-astro-cid-swtpcilx>${barData.message}</div><!-- Right Side: CTA + Close --><div class="flex items-center gap-4" data-astro-cid-swtpcilx><!-- CTA Link (Text with Arrow) -->${barData.ctaText && barData.ctaLink && renderTemplate`<a${addAttribute(barData.ctaLink, "href")} class="announcement-cta inline-flex items-center gap-2 text-sm sm:text-base font-inter font-semibold transition-colors whitespace-nowrap"${addAttribute(`color: ${barData.ctaTextColor};`, "style")}${addAttribute(barData.ctaHoverColor, "data-hover-color")} data-astro-cid-swtpcilx><span data-astro-cid-swtpcilx>${barData.ctaText}</span><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" data-astro-cid-swtpcilx><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 17L17 7M17 7H7M17 7V17" data-astro-cid-swtpcilx></path></svg></a>`}<!-- Close Button -->${barData.isDismissible && renderTemplate`<button type="button" class="announcement-close flex-shrink-0 p-1 transition-opacity hover:opacity-70" aria-label="Close announcement"${addAttribute(`color: ${barData.textColor};`, "style")} data-astro-cid-swtpcilx><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" data-astro-cid-swtpcilx><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" data-astro-cid-swtpcilx></path></svg></button>`}</div></div></div></div>`, defineScriptVars({ barData }));
@@ -35,9 +40,9 @@ var __freeze$2 = Object.freeze;
 var __defProp$2 = Object.defineProperty;
 var __template$2 = (cooked, raw) => __freeze$2(__defProp$2(cooked, "raw", { value: __freeze$2(raw || cooked.slice()) }));
 var _a$2;
-const $$Astro$3 = createAstro("https://activeaway.com");
+const $$Astro$4 = createAstro("https://activeaway.com");
 const $$NavigationHeader = createComponent(async ($$result, $$props, $$slots) => {
-  const Astro2 = $$result.createAstro($$Astro$3, $$props, $$slots);
+  const Astro2 = $$result.createAstro($$Astro$4, $$props, $$slots);
   Astro2.self = $$NavigationHeader;
   const currentPath = Astro2.url.pathname;
   let navMenuData = null;
@@ -346,9 +351,9 @@ Learn More
   }));
 }, "/Users/joshuathompson/active-away-astro/src/components/NavigationHeader.astro", void 0);
 
-const $$Astro$2 = createAstro("https://activeaway.com");
+const $$Astro$3 = createAstro("https://activeaway.com");
 const $$FooterArrow = createComponent(($$result, $$props, $$slots) => {
-  const Astro2 = $$result.createAstro($$Astro$2, $$props, $$slots);
+  const Astro2 = $$result.createAstro($$Astro$3, $$props, $$slots);
   Astro2.self = $$FooterArrow;
   const { className = "w-3 h-3" } = Astro2.props;
   return renderTemplate`${maybeRenderHead()}<svg${addAttribute(className, "class")} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"> <path d="M9 18l6-6-6-6"></path> </svg>`;
@@ -405,20 +410,603 @@ var __freeze$1 = Object.freeze;
 var __defProp$1 = Object.defineProperty;
 var __template$1 = (cooked, raw) => __freeze$1(__defProp$1(cooked, "raw", { value: __freeze$1(raw || cooked.slice()) }));
 var _a$1;
-const $$Astro$1 = createAstro("https://activeaway.com");
+const $$Astro$2 = createAstro("https://activeaway.com");
 const $$CookieConsent = createComponent(($$result, $$props, $$slots) => {
-  const Astro2 = $$result.createAstro($$Astro$1, $$props, $$slots);
+  const Astro2 = $$result.createAstro($$Astro$2, $$props, $$slots);
   Astro2.self = $$CookieConsent;
   const {
     gaMeasurementId = "G-V7EBKMBBJW",
     metaPixelId = "1239031756107828"
   } = Astro2.props;
-  return renderTemplate(_a$1 || (_a$1 = __template$1(["<!-- Full Screen Overlay for Forced Consent -->", '<div id="cookie-consent-overlay" class="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 hidden transition-opacity duration-300"> <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-gray-200 transform transition-transform duration-300 scale-100"> <div class="p-6 sm:p-10"> <div class="flex flex-col items-center text-center mb-8"> <!-- Icon removed as per request --> <h2 class="text-2xl sm:text-3xl font-playfair font-bold text-gray-900 mb-4">We Value Your Privacy</h2> <p class="text-gray-700 leading-relaxed font-inter">\nWe use cookies to enhance your browsing experience, serve personalised ads or content, and analyse our traffic. \n                    You must select your preferences to continue using our website.\n<a href="/privacy-policy" class="text-gold hover:underline font-medium">Read our Privacy Policy</a>.\n</p> </div> <div class="flex flex-col gap-4 w-full max-w-md mx-auto"> <!-- Primary Action: Accept All --> <button id="cookie-overlay-accept-all" class="w-full px-6 py-3 text-base font-semibold text-white bg-gold hover:bg-gold-600 border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold transition-all shadow-lg shadow-gold/20">\nAccept All Cookies\n</button> <!-- Secondary Actions: Single Column --> <!-- Reject button removed, only Customize available --> <button id="cookie-overlay-customize" class="w-full px-4 py-3 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">\nCustomise Settings\n</button> </div> </div> <div class="bg-gray-50 px-6 py-4 text-center border-t border-gray-100"> <p class="text-xs text-gray-500 font-inter">\nBy clicking "Accept All Cookies", you agree to the storing of cookies on your device to enhance site navigation, analyse site usage, and assist in our marketing efforts.\n</p> </div> </div> </div> <!-- Preferences Modal (Reused/Updated for Overlay Context) --> <div id="cookie-preferences-modal" class="fixed inset-0 z-[10000] bg-gray-900/50 backdrop-blur-sm hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true"> <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0"> <div class="fixed inset-0 transition-opacity" aria-hidden="true"></div> <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span> <div class="relative inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100"> <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4"> <div class="sm:flex sm:items-start"> <div class="mt-3 text-center sm:mt-0 sm:text-left w-full"> <!-- Increased font weight to extra-bold (font-extrabold) --> <h3 class="text-xl leading-6 font-playfair font-extrabold text-gray-900 border-b border-gray-100 pb-4 mb-4" id="modal-title">Cookie Preferences</h3> <div class="space-y-5"> <!-- Essential --> <div class="flex items-start"> <div class="flex items-center h-5"> <input id="consent-essential" name="consent-essential" type="checkbox" disabled checked class="focus:ring-gold h-5 w-5 text-gold border-gray-300 rounded disabled:opacity-50"> </div> <div class="ml-3 text-sm"> <label for="consent-essential" class="font-medium text-gray-900 font-playfair text-base">Essential Cookies</label> <p class="text-gray-500 font-inter mt-1">Required for the website to function properly. You cannot disable these.</p> </div> </div> <!-- Functional --> <div class="flex items-start"> <div class="flex items-center h-5"> <input id="consent-functional" name="consent-functional" type="checkbox" class="focus:ring-gold h-5 w-5 text-gold border-gray-300 rounded"> </div> <div class="ml-3 text-sm"> <label for="consent-functional" class="font-medium text-gray-900 font-playfair text-base">Functional Cookies</label> <p class="text-gray-500 font-inter mt-1">Enables enhanced functionality, such as remembering your last search.</p> </div> </div> <!-- Analytics --> <div class="flex items-start"> <div class="flex items-center h-5"> <input id="consent-analytics" name="consent-analytics" type="checkbox" class="focus:ring-gold h-5 w-5 text-gold border-gray-300 rounded"> </div> <div class="ml-3 text-sm"> <label for="consent-analytics" class="font-medium text-gray-900 font-playfair text-base">Analytics Cookies</label> <p class="text-gray-500 font-inter mt-1">Helps us understand how visitors interact with our website via Google Analytics.</p> </div> </div> <!-- Marketing --> <div class="flex items-start"> <div class="flex items-center h-5"> <input id="consent-marketing" name="consent-marketing" type="checkbox" class="focus:ring-gold h-5 w-5 text-gold border-gray-300 rounded"> </div> <div class="ml-3 text-sm"> <label for="consent-marketing" class="font-medium text-gray-900 font-playfair text-base">Marketing Cookies</label> <p class="text-gray-500 font-inter mt-1">Used to deliver relevant advertisements and track ad performance via Meta Pixel.</p> </div> </div> </div> </div> </div> </div> <div class="bg-gray-50 px-4 py-4 sm:px-6 flex flex-col sm:flex-row-reverse gap-3 border-t border-gray-100"> <button id="cookie-save-preferences" type="button" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2.5 bg-gold text-base font-semibold text-white hover:bg-gold-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold sm:w-auto sm:text-sm transition-colors">\nSave Preferences\n</button> <button id="cookie-close-modal" type="button" class="w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-4 py-2.5 bg-white text-base font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:w-auto sm:text-sm transition-colors">\nBack\n</button> </div> </div> </div> </div> <!-- Button to reopen settings (usually in footer, but hidden by default here, can be triggered via ID) --> <button id="open-cookie-settings" class="hidden">Cookie Settings</button> <script>(function(){', "\n  // State management\n  const COOKIE_CONSENT_KEY = 'active_away_cookie_consent';\n  const DEFAULT_CONSENT = {\n    essential: true,\n    functional: false,\n    analytics: false,\n    marketing: false,\n    timestamp: null\n  };\n\n  // DOM Elements\n  const overlay = document.getElementById('cookie-consent-overlay');\n  const modal = document.getElementById('cookie-preferences-modal');\n  \n  // Overlay Buttons\n  const overlayCustomizeBtn = document.getElementById('cookie-overlay-customize');\n  const overlayAcceptAllBtn = document.getElementById('cookie-overlay-accept-all');\n\n  // Modal Buttons\n  const savePrefsBtn = document.getElementById('cookie-save-preferences');\n  const closeModalBtn = document.getElementById('cookie-close-modal');\n  const openSettingsBtn = document.getElementById('open-cookie-settings');\n  \n  // Checkbox Elements\n  const functionalCheckbox = document.getElementById('consent-functional');\n  const analyticsCheckbox = document.getElementById('consent-analytics');\n  const marketingCheckbox = document.getElementById('consent-marketing');\n\n  // Load stored consent\n  function getStoredConsent() {\n    const stored = localStorage.getItem(COOKIE_CONSENT_KEY);\n    if (stored) {\n      try {\n        return JSON.parse(stored);\n      } catch (e) {\n        return null;\n      }\n    }\n    return null;\n  }\n\n  // Save consent\n  function saveConsent(consent) {\n    const consentData = {\n      ...consent,\n      timestamp: new Date().toISOString()\n    };\n    localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(consentData));\n    return consentData;\n  }\n\n  // Initialize Scripts\n  function initScripts(consent) {\n    // Google Analytics 4\n    if (consent.analytics) {\n      if (!window.dataLayer) {\n        // Inject GA4 Script\n        const script = document.createElement('script');\n        script.async = true;\n        script.src = `https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`;\n        document.head.appendChild(script);\n\n        window.dataLayer = window.dataLayer || [];\n        function gtag(){dataLayer.push(arguments);}\n        window.gtag = gtag; // Make available globally\n        gtag('js', new Date());\n        gtag('config', gaMeasurementId);\n        console.log('GA4 Initialized');\n      }\n    }\n\n    // Meta Pixel\n    if (consent.marketing) {\n      if (!window.fbq) {\n        !function(f,b,e,v,n,t,s)\n        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?\n        n.callMethod.apply(n,arguments):n.queue.push(arguments)};\n        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';\n        n.queue=[];t=b.createElement(e);t.async=!0;\n        t.src=v;s=b.getElementsByTagName(e)[0];\n        s.parentNode.insertBefore(t,s)}(window, document,'script',\n        'https://connect.facebook.net/en_US/fbevents.js');\n        \n        window.fbq('init', metaPixelId);\n        window.fbq('track', 'PageView');\n        console.log('Meta Pixel Initialized');\n      }\n    }\n  }\n\n  // Bot Detection\n  function isBot() {\n    const botPattern = /bot|googlebot|crawler|spider|robot|crawling/i;\n    return botPattern.test(navigator.userAgent);\n  }\n\n  // UI Logic\n  function showOverlay() {\n    // Allow viewing privacy policy without overlay\n    if (window.location.pathname === '/privacy-policy' || window.location.pathname === '/privacy-policy/') {\n      return;\n    }\n\n    if (overlay && !isBot()) {\n      overlay.classList.remove('hidden');\n      // Prevent scrolling while overlay is active\n      document.body.style.overflow = 'hidden';\n    }\n  }\n\n  function hideOverlay() {\n    if (overlay) {\n      overlay.classList.add('hidden');\n      // Restore scrolling\n      document.body.style.overflow = '';\n    }\n  }\n\n  function showModal() {\n    const currentConsent = getStoredConsent() || DEFAULT_CONSENT;\n    if (functionalCheckbox) functionalCheckbox.checked = currentConsent.functional;\n    if (analyticsCheckbox) analyticsCheckbox.checked = currentConsent.analytics;\n    if (marketingCheckbox) marketingCheckbox.checked = currentConsent.marketing;\n    \n    if (modal) modal.classList.remove('hidden');\n  }\n\n  function hideModal() {\n    if (modal) modal.classList.add('hidden');\n  }\n\n  // Event Listeners\n  \n  // Customise Button - Shows Modal\n  if (overlayCustomizeBtn) overlayCustomizeBtn.addEventListener('click', () => {\n      showModal();\n  });\n  \n  if (closeModalBtn) closeModalBtn.addEventListener('click', hideModal);\n\n  if (overlayAcceptAllBtn) overlayAcceptAllBtn.addEventListener('click', () => {\n    const consent = {\n      essential: true,\n      functional: true,\n      analytics: true,\n      marketing: true\n    };\n    saveConsent(consent);\n    initScripts(consent);\n    hideOverlay();\n    hideModal();\n  });\n\n  if (savePrefsBtn) savePrefsBtn.addEventListener('click', () => {\n    const consent = {\n      essential: true,\n      functional: functionalCheckbox.checked,\n      analytics: analyticsCheckbox.checked,\n      marketing: marketingCheckbox.checked\n    };\n    saveConsent(consent);\n    initScripts(consent);\n    hideModal();\n    hideOverlay(); // Also hide overlay if it was open\n  });\n\n  if (openSettingsBtn) openSettingsBtn.addEventListener('click', showModal);\n\n  // Expose open settings globally for footer link\n  window.openCookieSettings = showModal;\n\n  // Initialize on load\n  const storedConsent = getStoredConsent();\n  if (!storedConsent) {\n    showOverlay();\n  } else {\n    initScripts(storedConsent);\n  }\n\n  // Handle navigation (SPA support if needed, or re-check on load)\n  // For static site, page reload handles it. \n  // But if user went to privacy policy and navigated back, we need to show it.\n  // Astro view transitions might require this event listener:\n  document.addEventListener('astro:page-load', () => {\n    const stored = getStoredConsent();\n    if (!stored) {\n      showOverlay();\n    } else {\n      initScripts(stored);\n    }\n  });\n})();<\/script>"], ["<!-- Full Screen Overlay for Forced Consent -->", '<div id="cookie-consent-overlay" class="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 hidden transition-opacity duration-300"> <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-gray-200 transform transition-transform duration-300 scale-100"> <div class="p-6 sm:p-10"> <div class="flex flex-col items-center text-center mb-8"> <!-- Icon removed as per request --> <h2 class="text-2xl sm:text-3xl font-playfair font-bold text-gray-900 mb-4">We Value Your Privacy</h2> <p class="text-gray-700 leading-relaxed font-inter">\nWe use cookies to enhance your browsing experience, serve personalised ads or content, and analyse our traffic. \n                    You must select your preferences to continue using our website.\n<a href="/privacy-policy" class="text-gold hover:underline font-medium">Read our Privacy Policy</a>.\n</p> </div> <div class="flex flex-col gap-4 w-full max-w-md mx-auto"> <!-- Primary Action: Accept All --> <button id="cookie-overlay-accept-all" class="w-full px-6 py-3 text-base font-semibold text-white bg-gold hover:bg-gold-600 border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold transition-all shadow-lg shadow-gold/20">\nAccept All Cookies\n</button> <!-- Secondary Actions: Single Column --> <!-- Reject button removed, only Customize available --> <button id="cookie-overlay-customize" class="w-full px-4 py-3 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">\nCustomise Settings\n</button> </div> </div> <div class="bg-gray-50 px-6 py-4 text-center border-t border-gray-100"> <p class="text-xs text-gray-500 font-inter">\nBy clicking "Accept All Cookies", you agree to the storing of cookies on your device to enhance site navigation, analyse site usage, and assist in our marketing efforts.\n</p> </div> </div> </div> <!-- Preferences Modal (Reused/Updated for Overlay Context) --> <div id="cookie-preferences-modal" class="fixed inset-0 z-[10000] bg-gray-900/50 backdrop-blur-sm hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true"> <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0"> <div class="fixed inset-0 transition-opacity" aria-hidden="true"></div> <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span> <div class="relative inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100"> <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4"> <div class="sm:flex sm:items-start"> <div class="mt-3 text-center sm:mt-0 sm:text-left w-full"> <!-- Increased font weight to extra-bold (font-extrabold) --> <h3 class="text-xl leading-6 font-playfair font-extrabold text-gray-900 border-b border-gray-100 pb-4 mb-4" id="modal-title">Cookie Preferences</h3> <div class="space-y-5"> <!-- Essential --> <div class="flex items-start"> <div class="flex items-center h-5"> <input id="consent-essential" name="consent-essential" type="checkbox" disabled checked class="focus:ring-gold h-5 w-5 text-gold border-gray-300 rounded disabled:opacity-50"> </div> <div class="ml-3 text-sm"> <label for="consent-essential" class="font-medium text-gray-900 font-playfair text-base">Essential Cookies</label> <p class="text-gray-500 font-inter mt-1">Required for the website to function properly. You cannot disable these.</p> </div> </div> <!-- Functional --> <div class="flex items-start"> <div class="flex items-center h-5"> <input id="consent-functional" name="consent-functional" type="checkbox" class="focus:ring-gold h-5 w-5 text-gold border-gray-300 rounded"> </div> <div class="ml-3 text-sm"> <label for="consent-functional" class="font-medium text-gray-900 font-playfair text-base">Functional Cookies</label> <p class="text-gray-500 font-inter mt-1">Enables enhanced functionality, such as remembering your last search.</p> </div> </div> <!-- Analytics --> <div class="flex items-start"> <div class="flex items-center h-5"> <input id="consent-analytics" name="consent-analytics" type="checkbox" class="focus:ring-gold h-5 w-5 text-gold border-gray-300 rounded"> </div> <div class="ml-3 text-sm"> <label for="consent-analytics" class="font-medium text-gray-900 font-playfair text-base">Analytics Cookies</label> <p class="text-gray-500 font-inter mt-1">Helps us understand how visitors interact with our website via Google Analytics.</p> </div> </div> <!-- Marketing --> <div class="flex items-start"> <div class="flex items-center h-5"> <input id="consent-marketing" name="consent-marketing" type="checkbox" class="focus:ring-gold h-5 w-5 text-gold border-gray-300 rounded"> </div> <div class="ml-3 text-sm"> <label for="consent-marketing" class="font-medium text-gray-900 font-playfair text-base">Marketing Cookies</label> <p class="text-gray-500 font-inter mt-1">Used to deliver relevant advertisements and track ad performance via Meta Pixel.</p> </div> </div> </div> </div> </div> </div> <div class="bg-gray-50 px-4 py-4 sm:px-6 flex flex-col sm:flex-row-reverse gap-3 border-t border-gray-100"> <button id="cookie-save-preferences" type="button" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2.5 bg-gold text-base font-semibold text-white hover:bg-gold-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold sm:w-auto sm:text-sm transition-colors">\nSave Preferences\n</button> <button id="cookie-close-modal" type="button" class="w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-4 py-2.5 bg-white text-base font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:w-auto sm:text-sm transition-colors">\nBack\n</button> </div> </div> </div> </div> <!-- Button to reopen settings (usually in footer, but hidden by default here, can be triggered via ID) --> <button id="open-cookie-settings" class="hidden">Cookie Settings</button> <script>(function(){', "\n  // State management\n  const COOKIE_CONSENT_KEY = 'active_away_cookie_consent';\n  const DEFAULT_CONSENT = {\n    essential: true,\n    functional: false,\n    analytics: false,\n    marketing: false,\n    timestamp: null\n  };\n\n  // DOM Elements\n  const overlay = document.getElementById('cookie-consent-overlay');\n  const modal = document.getElementById('cookie-preferences-modal');\n  \n  // Overlay Buttons\n  const overlayCustomizeBtn = document.getElementById('cookie-overlay-customize');\n  const overlayAcceptAllBtn = document.getElementById('cookie-overlay-accept-all');\n\n  // Modal Buttons\n  const savePrefsBtn = document.getElementById('cookie-save-preferences');\n  const closeModalBtn = document.getElementById('cookie-close-modal');\n  const openSettingsBtn = document.getElementById('open-cookie-settings');\n  \n  // Checkbox Elements\n  const functionalCheckbox = document.getElementById('consent-functional');\n  const analyticsCheckbox = document.getElementById('consent-analytics');\n  const marketingCheckbox = document.getElementById('consent-marketing');\n\n  // Load stored consent\n  function getStoredConsent() {\n    const stored = localStorage.getItem(COOKIE_CONSENT_KEY);\n    if (stored) {\n      try {\n        return JSON.parse(stored);\n      } catch (e) {\n        return null;\n      }\n    }\n    return null;\n  }\n\n  // Save consent\n  function saveConsent(consent) {\n    const consentData = {\n      ...consent,\n      timestamp: new Date().toISOString()\n    };\n    localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(consentData));\n    return consentData;\n  }\n\n  // Initialize Scripts\n  function initScripts(consent) {\n    // Google Analytics 4\n    if (consent.analytics) {\n      if (!window.dataLayer) {\n        // Inject GA4 Script\n        const script = document.createElement('script');\n        script.async = true;\n        script.src = \\`https://www.googletagmanager.com/gtag/js?id=\\${gaMeasurementId}\\`;\n        document.head.appendChild(script);\n\n        window.dataLayer = window.dataLayer || [];\n        function gtag(){dataLayer.push(arguments);}\n        window.gtag = gtag; // Make available globally\n        gtag('js', new Date());\n        gtag('config', gaMeasurementId);\n        console.log('GA4 Initialized');\n      }\n    }\n\n    // Meta Pixel\n    if (consent.marketing) {\n      if (!window.fbq) {\n        !function(f,b,e,v,n,t,s)\n        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?\n        n.callMethod.apply(n,arguments):n.queue.push(arguments)};\n        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';\n        n.queue=[];t=b.createElement(e);t.async=!0;\n        t.src=v;s=b.getElementsByTagName(e)[0];\n        s.parentNode.insertBefore(t,s)}(window, document,'script',\n        'https://connect.facebook.net/en_US/fbevents.js');\n        \n        window.fbq('init', metaPixelId);\n        window.fbq('track', 'PageView');\n        console.log('Meta Pixel Initialized');\n      }\n    }\n  }\n\n  // Bot Detection\n  function isBot() {\n    const botPattern = /bot|googlebot|crawler|spider|robot|crawling/i;\n    return botPattern.test(navigator.userAgent);\n  }\n\n  // UI Logic\n  function showOverlay() {\n    // Allow viewing privacy policy without overlay\n    if (window.location.pathname === '/privacy-policy' || window.location.pathname === '/privacy-policy/') {\n      return;\n    }\n\n    if (overlay && !isBot()) {\n      overlay.classList.remove('hidden');\n      // Prevent scrolling while overlay is active\n      document.body.style.overflow = 'hidden';\n    }\n  }\n\n  function hideOverlay() {\n    if (overlay) {\n      overlay.classList.add('hidden');\n      // Restore scrolling\n      document.body.style.overflow = '';\n    }\n  }\n\n  function showModal() {\n    const currentConsent = getStoredConsent() || DEFAULT_CONSENT;\n    if (functionalCheckbox) functionalCheckbox.checked = currentConsent.functional;\n    if (analyticsCheckbox) analyticsCheckbox.checked = currentConsent.analytics;\n    if (marketingCheckbox) marketingCheckbox.checked = currentConsent.marketing;\n    \n    if (modal) modal.classList.remove('hidden');\n  }\n\n  function hideModal() {\n    if (modal) modal.classList.add('hidden');\n  }\n\n  // Event Listeners\n  \n  // Customise Button - Shows Modal\n  if (overlayCustomizeBtn) overlayCustomizeBtn.addEventListener('click', () => {\n      showModal();\n  });\n  \n  if (closeModalBtn) closeModalBtn.addEventListener('click', hideModal);\n\n  if (overlayAcceptAllBtn) overlayAcceptAllBtn.addEventListener('click', () => {\n    const consent = {\n      essential: true,\n      functional: true,\n      analytics: true,\n      marketing: true\n    };\n    saveConsent(consent);\n    initScripts(consent);\n    hideOverlay();\n    hideModal();\n  });\n\n  if (savePrefsBtn) savePrefsBtn.addEventListener('click', () => {\n    const consent = {\n      essential: true,\n      functional: functionalCheckbox.checked,\n      analytics: analyticsCheckbox.checked,\n      marketing: marketingCheckbox.checked\n    };\n    saveConsent(consent);\n    initScripts(consent);\n    hideModal();\n    hideOverlay(); // Also hide overlay if it was open\n  });\n\n  if (openSettingsBtn) openSettingsBtn.addEventListener('click', showModal);\n\n  // Expose open settings globally for footer link\n  window.openCookieSettings = showModal;\n\n  // Initialize on load\n  const storedConsent = getStoredConsent();\n  if (!storedConsent) {\n    showOverlay();\n  } else {\n    initScripts(storedConsent);\n  }\n\n  // Handle navigation (SPA support if needed, or re-check on load)\n  // For static site, page reload handles it. \n  // But if user went to privacy policy and navigated back, we need to show it.\n  // Astro view transitions might require this event listener:\n  document.addEventListener('astro:page-load', () => {\n    const stored = getStoredConsent();\n    if (!stored) {\n      showOverlay();\n    } else {\n      initScripts(stored);\n    }\n  });\n})();<\/script>"])), maybeRenderHead(), defineScriptVars({ gaMeasurementId, metaPixelId }));
+  return renderTemplate(_a$1 || (_a$1 = __template$1(["<!-- Full Screen Overlay for Forced Consent -->", '<div id="cookie-consent-overlay" class="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 hidden transition-opacity duration-300"> <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-gray-200 transform transition-transform duration-300 scale-100"> <div class="p-6 sm:p-10"> <div class="flex flex-col items-center text-center mb-8"> <!-- Icon removed as per request --> <h2 class="text-2xl sm:text-3xl font-playfair font-bold text-gray-900 mb-4">We Value Your Privacy</h2> <p class="text-gray-700 leading-relaxed font-inter">\nWe use cookies to enhance your browsing experience, serve personalised ads or content, and analyse our traffic. \n                    You must select your preferences to continue using our website.\n<a href="/privacy-policy" class="text-gold hover:underline font-medium">Read our Privacy Policy</a>.\n</p> </div> <div class="flex flex-col gap-4 w-full max-w-md mx-auto"> <!-- Primary Action: Accept All --> <button id="cookie-overlay-accept-all" class="w-full px-6 py-3 text-base font-semibold text-white bg-gold hover:bg-gold-600 border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold transition-all shadow-lg shadow-gold/20">\nAccept All Cookies\n</button> <!-- Secondary Actions: Single Column --> <!-- Reject button removed, only Customize available --> <button id="cookie-overlay-customize" class="w-full px-4 py-3 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">\nCustomise Settings\n</button> </div> </div> <div class="bg-gray-50 px-6 py-4 text-center border-t border-gray-100"> <p class="text-xs text-gray-500 font-inter">\nBy clicking "Accept All Cookies", you agree to the storing of cookies on your device to enhance site navigation, analyse site usage, and assist in our marketing efforts.\n</p> </div> </div> </div> <!-- Preferences Modal (Reused/Updated for Overlay Context) --> <div id="cookie-preferences-modal" class="fixed inset-0 z-[10000] bg-gray-900/50 backdrop-blur-sm hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true"> <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0"> <div class="fixed inset-0 transition-opacity" aria-hidden="true"></div> <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span> <div class="relative inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100"> <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4"> <div class="sm:flex sm:items-start"> <div class="mt-3 text-center sm:mt-0 sm:text-left w-full"> <!-- Increased font weight to extra-bold (font-extrabold) --> <h3 class="text-xl leading-6 font-playfair font-extrabold text-gray-900 border-b border-gray-100 pb-4 mb-4" id="modal-title">Cookie Preferences</h3> <div class="space-y-5"> <!-- Essential --> <div class="flex items-start"> <div class="flex items-center h-5"> <input id="consent-essential" name="consent-essential" type="checkbox" disabled checked class="focus:ring-gold h-5 w-5 text-gold border-gray-300 rounded disabled:opacity-50"> </div> <div class="ml-3 text-sm"> <label for="consent-essential" class="font-medium text-gray-900 font-playfair text-base">Essential Cookies</label> <p class="text-gray-500 font-inter mt-1">Required for the website to function properly. You cannot disable these.</p> </div> </div> <!-- Functional --> <div class="flex items-start"> <div class="flex items-center h-5"> <input id="consent-functional" name="consent-functional" type="checkbox" class="focus:ring-gold h-5 w-5 text-gold border-gray-300 rounded"> </div> <div class="ml-3 text-sm"> <label for="consent-functional" class="font-medium text-gray-900 font-playfair text-base">Functional Cookies</label> <p class="text-gray-500 font-inter mt-1">Enables enhanced functionality, such as remembering your last search.</p> </div> </div> <!-- Analytics --> <div class="flex items-start"> <div class="flex items-center h-5"> <input id="consent-analytics" name="consent-analytics" type="checkbox" class="focus:ring-gold h-5 w-5 text-gold border-gray-300 rounded"> </div> <div class="ml-3 text-sm"> <label for="consent-analytics" class="font-medium text-gray-900 font-playfair text-base">Analytics Cookies</label> <p class="text-gray-500 font-inter mt-1">Helps us understand how visitors interact with our website via Google Analytics.</p> </div> </div> <!-- Marketing --> <div class="flex items-start"> <div class="flex items-center h-5"> <input id="consent-marketing" name="consent-marketing" type="checkbox" class="focus:ring-gold h-5 w-5 text-gold border-gray-300 rounded"> </div> <div class="ml-3 text-sm"> <label for="consent-marketing" class="font-medium text-gray-900 font-playfair text-base">Marketing Cookies</label> <p class="text-gray-500 font-inter mt-1">Used to deliver relevant advertisements and track ad performance via Meta Pixel.</p> </div> </div> </div> </div> </div> </div> <div class="bg-gray-50 px-4 py-4 sm:px-6 flex flex-col sm:flex-row-reverse gap-3 border-t border-gray-100"> <button id="cookie-save-preferences" type="button" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2.5 bg-gold text-base font-semibold text-white hover:bg-gold-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold sm:w-auto sm:text-sm transition-colors">\nSave Preferences\n</button> <button id="cookie-close-modal" type="button" class="w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-4 py-2.5 bg-white text-base font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:w-auto sm:text-sm transition-colors">\nBack\n</button> </div> </div> </div> </div> <!-- Button to reopen settings (usually in footer, but hidden by default here, can be triggered via ID) --> <button id="open-cookie-settings" class="hidden">Cookie Settings</button> <script>(function(){', `
+  // State management
+  const COOKIE_CONSENT_KEY = 'active_away_cookie_consent';
+  const DEFAULT_CONSENT = {
+    essential: true,
+    functional: false,
+    analytics: false,
+    marketing: false,
+    timestamp: null
+  };
+
+  // DOM Elements
+  const overlay = document.getElementById('cookie-consent-overlay');
+  const modal = document.getElementById('cookie-preferences-modal');
+  
+  // Overlay Buttons
+  const overlayCustomizeBtn = document.getElementById('cookie-overlay-customize');
+  const overlayAcceptAllBtn = document.getElementById('cookie-overlay-accept-all');
+
+  // Modal Buttons
+  const savePrefsBtn = document.getElementById('cookie-save-preferences');
+  const closeModalBtn = document.getElementById('cookie-close-modal');
+  const openSettingsBtn = document.getElementById('open-cookie-settings');
+  
+  // Checkbox Elements
+  const functionalCheckbox = document.getElementById('consent-functional');
+  const analyticsCheckbox = document.getElementById('consent-analytics');
+  const marketingCheckbox = document.getElementById('consent-marketing');
+
+  // Load stored consent
+  function getStoredConsent() {
+    let stored = localStorage.getItem(COOKIE_CONSENT_KEY);
+    let source = 'localStorage';
+
+    // If not in localStorage, try cookie
+    if (!stored) {
+      stored = getCookie(COOKIE_CONSENT_KEY);
+      source = 'cookie';
+    }
+
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        
+        // Sync across storage methods
+        if (source === 'cookie') {
+          // Restore to localStorage if found in cookie
+          localStorage.setItem(COOKIE_CONSENT_KEY, stored);
+        } else {
+          // Ensure cookie exists (for subdomain support) if found in localStorage
+          setCookie(COOKIE_CONSENT_KEY, stored, 365);
+        }
+        
+        return parsed;
+      } catch (e) {
+        // If parsing fails, clear invalid data
+        localStorage.removeItem(COOKIE_CONSENT_KEY);
+        // Also delete cookie to ensure fresh start
+        setCookie(COOKIE_CONSENT_KEY, "", -1); 
+        return null;
+      }
+    }
+    return null;
+  }
+
+  // Helper: Set Cookie
+  function setCookie(name, value, days) {
+    let expires = "";
+    if (days) {
+      const date = new Date();
+      date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+      expires = "; expires=" + date.toUTCString();
+    }
+    
+    // Determine domain to allow sharing across subdomains (e.g., www.activeaway.com and activeaway.com)
+    const hostname = window.location.hostname;
+    let domainAttribute = "";
+    // Only set domain attribute if we are on the production domain
+    if (hostname.endsWith("activeaway.com")) {
+      domainAttribute = "; domain=.activeaway.com";
+      // CRITICAL FIX: Attempt to delete potential host-only duplicate cookie
+      // This prevents conflicts where a host-only cookie shadows the domain cookie
+      document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax";
+    }
+    
+    document.cookie = name + "=" + (encodeURIComponent(value) || "") + expires + "; path=/" + domainAttribute + "; SameSite=Lax";
+  }
+
+  // Helper: Get Cookie
+  function getCookie(name) {
+    const nameEQ = name + "=";
+    const ca = document.cookie.split(';');
+    for(let i=0;i < ca.length;i++) {
+      let c = ca[i];
+      while (c.charAt(0)==' ') c = c.substring(1,c.length);
+      if (c.indexOf(nameEQ) == 0) return decodeURIComponent(c.substring(nameEQ.length,c.length));
+    }
+    return null;
+  }
+
+  // Save consent
+  function saveConsent(consent) {
+    const consentData = {
+      ...consent,
+      timestamp: new Date().toISOString()
+    };
+    const json = JSON.stringify(consentData);
+    
+    // Save to both localStorage and Cookie
+    localStorage.setItem(COOKIE_CONSENT_KEY, json);
+    setCookie(COOKIE_CONSENT_KEY, json, 365); // 1 year expiry
+    
+    return consentData;
+  }
+
+  // Initialize Scripts
+  function initScripts(consent) {
+    // Google Analytics 4
+    if (consent.analytics) {
+      if (!window.dataLayer) {
+        // Inject GA4 Script
+        const script = document.createElement('script');
+        script.async = true;
+        script.src = \`https://www.googletagmanager.com/gtag/js?id=\${gaMeasurementId}\`;
+        document.head.appendChild(script);
+
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        window.gtag = gtag; // Make available globally
+        gtag('js', new Date());
+        gtag('config', gaMeasurementId);
+        console.log('GA4 Initialized');
+      }
+    }
+
+    // Meta Pixel
+    if (consent.marketing) {
+      if (!window.fbq) {
+        // Initialize fbq queue first
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        
+        // Initialize pixel - queue will handle if script not loaded yet
+        window.fbq('init', metaPixelId);
+        window.fbq('track', 'PageView');
+        console.log('Meta Pixel Initialized and PageView tracked');
+        
+        // Add noscript fallback
+        const noscript = document.createElement('noscript');
+        const img = document.createElement('img');
+        img.height = 1;
+        img.width = 1;
+        img.style.display = 'none';
+        img.src = \`https://www.facebook.com/tr?id=\${metaPixelId}&ev=PageView&noscript=1\`;
+        noscript.appendChild(img);
+        document.body.appendChild(noscript);
+      } else {
+        // fbq already exists, just track PageView
+        window.fbq('track', 'PageView');
+        console.log('Meta Pixel PageView tracked (already initialized)');
+      }
+    }
+  }
+
+  // Bot Detection
+  function isBot() {
+    const botPattern = /bot|googlebot|crawler|spider|robot|crawling/i;
+    return botPattern.test(navigator.userAgent);
+  }
+
+  // UI Logic
+  function showOverlay() {
+    // Allow viewing privacy policy without overlay
+    if (window.location.pathname === '/privacy-policy' || window.location.pathname === '/privacy-policy/') {
+      return;
+    }
+
+    if (overlay && !isBot()) {
+      overlay.classList.remove('hidden');
+      // Prevent scrolling while overlay is active
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function hideOverlay() {
+    if (overlay) {
+      overlay.classList.add('hidden');
+      // Restore scrolling
+      document.body.style.overflow = '';
+    }
+  }
+
+  function showModal() {
+    const currentConsent = getStoredConsent() || DEFAULT_CONSENT;
+    if (functionalCheckbox) functionalCheckbox.checked = currentConsent.functional;
+    if (analyticsCheckbox) analyticsCheckbox.checked = currentConsent.analytics;
+    if (marketingCheckbox) marketingCheckbox.checked = currentConsent.marketing;
+    
+    if (modal) modal.classList.remove('hidden');
+  }
+
+  function hideModal() {
+    if (modal) modal.classList.add('hidden');
+  }
+
+  // Event Listeners
+  
+  // Customise Button - Shows Modal
+  if (overlayCustomizeBtn) overlayCustomizeBtn.addEventListener('click', () => {
+      showModal();
+  });
+  
+  if (closeModalBtn) closeModalBtn.addEventListener('click', hideModal);
+
+  if (overlayAcceptAllBtn) overlayAcceptAllBtn.addEventListener('click', () => {
+    const consent = {
+      essential: true,
+      functional: true,
+      analytics: true,
+      marketing: true
+    };
+    saveConsent(consent);
+    initScripts(consent);
+    hideOverlay();
+    hideModal();
+  });
+
+  if (savePrefsBtn) savePrefsBtn.addEventListener('click', () => {
+    const consent = {
+      essential: true,
+      functional: functionalCheckbox.checked,
+      analytics: analyticsCheckbox.checked,
+      marketing: marketingCheckbox.checked
+    };
+    saveConsent(consent);
+    initScripts(consent);
+    hideModal();
+    hideOverlay(); // Also hide overlay if it was open
+  });
+
+  if (openSettingsBtn) openSettingsBtn.addEventListener('click', showModal);
+
+  // Expose open settings globally for footer link
+  window.openCookieSettings = showModal;
+
+  // Initialize on load
+  const storedConsent = getStoredConsent();
+  if (!storedConsent) {
+    showOverlay();
+  } else {
+    initScripts(storedConsent);
+  }
+
+  // Handle navigation (SPA support if needed, or re-check on load)
+  // For static site, page reload handles it. 
+  // But if user went to privacy policy and navigated back, we need to show it.
+  // Astro view transitions might require this event listener:
+  
+  const handlePageLoad = () => {
+    const stored = getStoredConsent();
+    if (!stored) {
+      showOverlay();
+    } else {
+      initScripts(stored);
+      
+      // Track PageView on navigation if Meta Pixel is already loaded
+      if (stored.marketing && typeof window.fbq === 'function') {
+        window.fbq('track', 'PageView');
+        console.log('Meta Pixel PageView tracked on navigation');
+      }
+    }
+  };
+
+  // Remove previous listener if exists (for View Transitions) to prevent stacking
+  if (window.activeAwayCookieListener) {
+    document.removeEventListener('astro:page-load', window.activeAwayCookieListener);
+  }
+
+  document.addEventListener('astro:page-load', handlePageLoad);
+  window.activeAwayCookieListener = handlePageLoad;
+})();<\/script>`], ["<!-- Full Screen Overlay for Forced Consent -->", '<div id="cookie-consent-overlay" class="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 hidden transition-opacity duration-300"> <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-gray-200 transform transition-transform duration-300 scale-100"> <div class="p-6 sm:p-10"> <div class="flex flex-col items-center text-center mb-8"> <!-- Icon removed as per request --> <h2 class="text-2xl sm:text-3xl font-playfair font-bold text-gray-900 mb-4">We Value Your Privacy</h2> <p class="text-gray-700 leading-relaxed font-inter">\nWe use cookies to enhance your browsing experience, serve personalised ads or content, and analyse our traffic. \n                    You must select your preferences to continue using our website.\n<a href="/privacy-policy" class="text-gold hover:underline font-medium">Read our Privacy Policy</a>.\n</p> </div> <div class="flex flex-col gap-4 w-full max-w-md mx-auto"> <!-- Primary Action: Accept All --> <button id="cookie-overlay-accept-all" class="w-full px-6 py-3 text-base font-semibold text-white bg-gold hover:bg-gold-600 border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold transition-all shadow-lg shadow-gold/20">\nAccept All Cookies\n</button> <!-- Secondary Actions: Single Column --> <!-- Reject button removed, only Customize available --> <button id="cookie-overlay-customize" class="w-full px-4 py-3 text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">\nCustomise Settings\n</button> </div> </div> <div class="bg-gray-50 px-6 py-4 text-center border-t border-gray-100"> <p class="text-xs text-gray-500 font-inter">\nBy clicking "Accept All Cookies", you agree to the storing of cookies on your device to enhance site navigation, analyse site usage, and assist in our marketing efforts.\n</p> </div> </div> </div> <!-- Preferences Modal (Reused/Updated for Overlay Context) --> <div id="cookie-preferences-modal" class="fixed inset-0 z-[10000] bg-gray-900/50 backdrop-blur-sm hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true"> <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0"> <div class="fixed inset-0 transition-opacity" aria-hidden="true"></div> <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span> <div class="relative inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100"> <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4"> <div class="sm:flex sm:items-start"> <div class="mt-3 text-center sm:mt-0 sm:text-left w-full"> <!-- Increased font weight to extra-bold (font-extrabold) --> <h3 class="text-xl leading-6 font-playfair font-extrabold text-gray-900 border-b border-gray-100 pb-4 mb-4" id="modal-title">Cookie Preferences</h3> <div class="space-y-5"> <!-- Essential --> <div class="flex items-start"> <div class="flex items-center h-5"> <input id="consent-essential" name="consent-essential" type="checkbox" disabled checked class="focus:ring-gold h-5 w-5 text-gold border-gray-300 rounded disabled:opacity-50"> </div> <div class="ml-3 text-sm"> <label for="consent-essential" class="font-medium text-gray-900 font-playfair text-base">Essential Cookies</label> <p class="text-gray-500 font-inter mt-1">Required for the website to function properly. You cannot disable these.</p> </div> </div> <!-- Functional --> <div class="flex items-start"> <div class="flex items-center h-5"> <input id="consent-functional" name="consent-functional" type="checkbox" class="focus:ring-gold h-5 w-5 text-gold border-gray-300 rounded"> </div> <div class="ml-3 text-sm"> <label for="consent-functional" class="font-medium text-gray-900 font-playfair text-base">Functional Cookies</label> <p class="text-gray-500 font-inter mt-1">Enables enhanced functionality, such as remembering your last search.</p> </div> </div> <!-- Analytics --> <div class="flex items-start"> <div class="flex items-center h-5"> <input id="consent-analytics" name="consent-analytics" type="checkbox" class="focus:ring-gold h-5 w-5 text-gold border-gray-300 rounded"> </div> <div class="ml-3 text-sm"> <label for="consent-analytics" class="font-medium text-gray-900 font-playfair text-base">Analytics Cookies</label> <p class="text-gray-500 font-inter mt-1">Helps us understand how visitors interact with our website via Google Analytics.</p> </div> </div> <!-- Marketing --> <div class="flex items-start"> <div class="flex items-center h-5"> <input id="consent-marketing" name="consent-marketing" type="checkbox" class="focus:ring-gold h-5 w-5 text-gold border-gray-300 rounded"> </div> <div class="ml-3 text-sm"> <label for="consent-marketing" class="font-medium text-gray-900 font-playfair text-base">Marketing Cookies</label> <p class="text-gray-500 font-inter mt-1">Used to deliver relevant advertisements and track ad performance via Meta Pixel.</p> </div> </div> </div> </div> </div> </div> <div class="bg-gray-50 px-4 py-4 sm:px-6 flex flex-col sm:flex-row-reverse gap-3 border-t border-gray-100"> <button id="cookie-save-preferences" type="button" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2.5 bg-gold text-base font-semibold text-white hover:bg-gold-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold sm:w-auto sm:text-sm transition-colors">\nSave Preferences\n</button> <button id="cookie-close-modal" type="button" class="w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-4 py-2.5 bg-white text-base font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:w-auto sm:text-sm transition-colors">\nBack\n</button> </div> </div> </div> </div> <!-- Button to reopen settings (usually in footer, but hidden by default here, can be triggered via ID) --> <button id="open-cookie-settings" class="hidden">Cookie Settings</button> <script>(function(){', `
+  // State management
+  const COOKIE_CONSENT_KEY = 'active_away_cookie_consent';
+  const DEFAULT_CONSENT = {
+    essential: true,
+    functional: false,
+    analytics: false,
+    marketing: false,
+    timestamp: null
+  };
+
+  // DOM Elements
+  const overlay = document.getElementById('cookie-consent-overlay');
+  const modal = document.getElementById('cookie-preferences-modal');
+  
+  // Overlay Buttons
+  const overlayCustomizeBtn = document.getElementById('cookie-overlay-customize');
+  const overlayAcceptAllBtn = document.getElementById('cookie-overlay-accept-all');
+
+  // Modal Buttons
+  const savePrefsBtn = document.getElementById('cookie-save-preferences');
+  const closeModalBtn = document.getElementById('cookie-close-modal');
+  const openSettingsBtn = document.getElementById('open-cookie-settings');
+  
+  // Checkbox Elements
+  const functionalCheckbox = document.getElementById('consent-functional');
+  const analyticsCheckbox = document.getElementById('consent-analytics');
+  const marketingCheckbox = document.getElementById('consent-marketing');
+
+  // Load stored consent
+  function getStoredConsent() {
+    let stored = localStorage.getItem(COOKIE_CONSENT_KEY);
+    let source = 'localStorage';
+
+    // If not in localStorage, try cookie
+    if (!stored) {
+      stored = getCookie(COOKIE_CONSENT_KEY);
+      source = 'cookie';
+    }
+
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        
+        // Sync across storage methods
+        if (source === 'cookie') {
+          // Restore to localStorage if found in cookie
+          localStorage.setItem(COOKIE_CONSENT_KEY, stored);
+        } else {
+          // Ensure cookie exists (for subdomain support) if found in localStorage
+          setCookie(COOKIE_CONSENT_KEY, stored, 365);
+        }
+        
+        return parsed;
+      } catch (e) {
+        // If parsing fails, clear invalid data
+        localStorage.removeItem(COOKIE_CONSENT_KEY);
+        // Also delete cookie to ensure fresh start
+        setCookie(COOKIE_CONSENT_KEY, "", -1); 
+        return null;
+      }
+    }
+    return null;
+  }
+
+  // Helper: Set Cookie
+  function setCookie(name, value, days) {
+    let expires = "";
+    if (days) {
+      const date = new Date();
+      date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+      expires = "; expires=" + date.toUTCString();
+    }
+    
+    // Determine domain to allow sharing across subdomains (e.g., www.activeaway.com and activeaway.com)
+    const hostname = window.location.hostname;
+    let domainAttribute = "";
+    // Only set domain attribute if we are on the production domain
+    if (hostname.endsWith("activeaway.com")) {
+      domainAttribute = "; domain=.activeaway.com";
+      // CRITICAL FIX: Attempt to delete potential host-only duplicate cookie
+      // This prevents conflicts where a host-only cookie shadows the domain cookie
+      document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax";
+    }
+    
+    document.cookie = name + "=" + (encodeURIComponent(value) || "") + expires + "; path=/" + domainAttribute + "; SameSite=Lax";
+  }
+
+  // Helper: Get Cookie
+  function getCookie(name) {
+    const nameEQ = name + "=";
+    const ca = document.cookie.split(';');
+    for(let i=0;i < ca.length;i++) {
+      let c = ca[i];
+      while (c.charAt(0)==' ') c = c.substring(1,c.length);
+      if (c.indexOf(nameEQ) == 0) return decodeURIComponent(c.substring(nameEQ.length,c.length));
+    }
+    return null;
+  }
+
+  // Save consent
+  function saveConsent(consent) {
+    const consentData = {
+      ...consent,
+      timestamp: new Date().toISOString()
+    };
+    const json = JSON.stringify(consentData);
+    
+    // Save to both localStorage and Cookie
+    localStorage.setItem(COOKIE_CONSENT_KEY, json);
+    setCookie(COOKIE_CONSENT_KEY, json, 365); // 1 year expiry
+    
+    return consentData;
+  }
+
+  // Initialize Scripts
+  function initScripts(consent) {
+    // Google Analytics 4
+    if (consent.analytics) {
+      if (!window.dataLayer) {
+        // Inject GA4 Script
+        const script = document.createElement('script');
+        script.async = true;
+        script.src = \\\`https://www.googletagmanager.com/gtag/js?id=\\\${gaMeasurementId}\\\`;
+        document.head.appendChild(script);
+
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        window.gtag = gtag; // Make available globally
+        gtag('js', new Date());
+        gtag('config', gaMeasurementId);
+        console.log('GA4 Initialized');
+      }
+    }
+
+    // Meta Pixel
+    if (consent.marketing) {
+      if (!window.fbq) {
+        // Initialize fbq queue first
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        
+        // Initialize pixel - queue will handle if script not loaded yet
+        window.fbq('init', metaPixelId);
+        window.fbq('track', 'PageView');
+        console.log('Meta Pixel Initialized and PageView tracked');
+        
+        // Add noscript fallback
+        const noscript = document.createElement('noscript');
+        const img = document.createElement('img');
+        img.height = 1;
+        img.width = 1;
+        img.style.display = 'none';
+        img.src = \\\`https://www.facebook.com/tr?id=\\\${metaPixelId}&ev=PageView&noscript=1\\\`;
+        noscript.appendChild(img);
+        document.body.appendChild(noscript);
+      } else {
+        // fbq already exists, just track PageView
+        window.fbq('track', 'PageView');
+        console.log('Meta Pixel PageView tracked (already initialized)');
+      }
+    }
+  }
+
+  // Bot Detection
+  function isBot() {
+    const botPattern = /bot|googlebot|crawler|spider|robot|crawling/i;
+    return botPattern.test(navigator.userAgent);
+  }
+
+  // UI Logic
+  function showOverlay() {
+    // Allow viewing privacy policy without overlay
+    if (window.location.pathname === '/privacy-policy' || window.location.pathname === '/privacy-policy/') {
+      return;
+    }
+
+    if (overlay && !isBot()) {
+      overlay.classList.remove('hidden');
+      // Prevent scrolling while overlay is active
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function hideOverlay() {
+    if (overlay) {
+      overlay.classList.add('hidden');
+      // Restore scrolling
+      document.body.style.overflow = '';
+    }
+  }
+
+  function showModal() {
+    const currentConsent = getStoredConsent() || DEFAULT_CONSENT;
+    if (functionalCheckbox) functionalCheckbox.checked = currentConsent.functional;
+    if (analyticsCheckbox) analyticsCheckbox.checked = currentConsent.analytics;
+    if (marketingCheckbox) marketingCheckbox.checked = currentConsent.marketing;
+    
+    if (modal) modal.classList.remove('hidden');
+  }
+
+  function hideModal() {
+    if (modal) modal.classList.add('hidden');
+  }
+
+  // Event Listeners
+  
+  // Customise Button - Shows Modal
+  if (overlayCustomizeBtn) overlayCustomizeBtn.addEventListener('click', () => {
+      showModal();
+  });
+  
+  if (closeModalBtn) closeModalBtn.addEventListener('click', hideModal);
+
+  if (overlayAcceptAllBtn) overlayAcceptAllBtn.addEventListener('click', () => {
+    const consent = {
+      essential: true,
+      functional: true,
+      analytics: true,
+      marketing: true
+    };
+    saveConsent(consent);
+    initScripts(consent);
+    hideOverlay();
+    hideModal();
+  });
+
+  if (savePrefsBtn) savePrefsBtn.addEventListener('click', () => {
+    const consent = {
+      essential: true,
+      functional: functionalCheckbox.checked,
+      analytics: analyticsCheckbox.checked,
+      marketing: marketingCheckbox.checked
+    };
+    saveConsent(consent);
+    initScripts(consent);
+    hideModal();
+    hideOverlay(); // Also hide overlay if it was open
+  });
+
+  if (openSettingsBtn) openSettingsBtn.addEventListener('click', showModal);
+
+  // Expose open settings globally for footer link
+  window.openCookieSettings = showModal;
+
+  // Initialize on load
+  const storedConsent = getStoredConsent();
+  if (!storedConsent) {
+    showOverlay();
+  } else {
+    initScripts(storedConsent);
+  }
+
+  // Handle navigation (SPA support if needed, or re-check on load)
+  // For static site, page reload handles it. 
+  // But if user went to privacy policy and navigated back, we need to show it.
+  // Astro view transitions might require this event listener:
+  
+  const handlePageLoad = () => {
+    const stored = getStoredConsent();
+    if (!stored) {
+      showOverlay();
+    } else {
+      initScripts(stored);
+      
+      // Track PageView on navigation if Meta Pixel is already loaded
+      if (stored.marketing && typeof window.fbq === 'function') {
+        window.fbq('track', 'PageView');
+        console.log('Meta Pixel PageView tracked on navigation');
+      }
+    }
+  };
+
+  // Remove previous listener if exists (for View Transitions) to prevent stacking
+  if (window.activeAwayCookieListener) {
+    document.removeEventListener('astro:page-load', window.activeAwayCookieListener);
+  }
+
+  document.addEventListener('astro:page-load', handlePageLoad);
+  window.activeAwayCookieListener = handlePageLoad;
+})();<\/script>`])), maybeRenderHead(), defineScriptVars({ gaMeasurementId, metaPixelId }));
 }, "/Users/joshuathompson/active-away-astro/src/components/CookieConsent.astro", void 0);
 
 const $$FormAnalytics = createComponent(($$result, $$props, $$slots) => {
   return renderTemplate`${renderScript($$result, "/Users/joshuathompson/active-away-astro/src/components/FormAnalytics.astro?astro&type=script&index=0&lang.ts")}`;
 }, "/Users/joshuathompson/active-away-astro/src/components/FormAnalytics.astro", void 0);
+
+const $$Astro$1 = createAstro("https://activeaway.com");
+const $$WebsiteFeedbackPopup = createComponent(($$result, $$props, $$slots) => {
+  const Astro2 = $$result.createAstro($$Astro$1, $$props, $$slots);
+  Astro2.self = $$WebsiteFeedbackPopup;
+  return renderTemplate`${maybeRenderHead()}<div id="website-feedback-popup" class="fixed bottom-5 right-5 z-[100] hidden max-w-xs sm:max-w-sm bg-white rounded-lg shadow-2xl border border-gray-100 p-5 translate-y-4 opacity-0 transition-all duration-700 ease-out" role="dialog" aria-live="polite"> <button id="close-feedback-popup" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors" aria-label="Close feedback popup"> <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"> <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path> </svg> </button> <div class="flex flex-col gap-2"> <p class="text-gray-800 text-sm leading-relaxed">
+Welcome to our new website, would you be ok to leave us some feedback?
+</p> <a href="/forms/website-feedback/" class="text-[#ad986c] hover:text-[#8c7a54] text-sm font-semibold transition-colors inline-flex items-center gap-1">
+You can do so here
+<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"> <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"></path> </svg> </a> </div> </div> ${renderScript($$result, "/Users/joshuathompson/active-away-astro/src/components/WebsiteFeedbackPopup.astro?astro&type=script&index=0&lang.ts")}`;
+}, "/Users/joshuathompson/active-away-astro/src/components/WebsiteFeedbackPopup.astro", void 0);
 
 var __freeze = Object.freeze;
 var __defProp = Object.defineProperty;
@@ -444,7 +1032,7 @@ const $$BaseLayout = createComponent(($$result, $$props, $$slots) => {
   const ogImage = metaImage || `https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/7a3f48f9-d01d-49a3-e68c-f1af978bad00/public?width=1200&height=630&fit=cover&format=auto&quality=85`;
   const ogImageWidth = metaImageWidth || 1200;
   const ogImageHeight = metaImageHeight || 630;
-  return renderTemplate(_b || (_b = __template(['<html lang="en"> <head><meta charset="UTF-8"><meta name="description"', '><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest"><meta name="theme-color" content="#0D1C4E"><meta name="msapplication-TileColor" content="#0D1C4E"><meta name="generator"', "><title>", "</title><!-- Keywords -->", "<!-- Canonical URL -->", '<!-- Open Graph / Facebook --><meta property="og:type" content="website"><meta property="og:url"', '><meta property="og:title"', '><meta property="og:description"', '><meta property="og:locale" content="en_GB"><meta property="og:image"', '><meta property="og:image:secure_url"', '><meta property="og:image:width"', '><meta property="og:image:height"', ">", `<meta property="og:site_name" content="Active Away | Tennis Holidays & Clinics as seen on Dragons' Den"><!-- Twitter --><meta property="twitter:card" content="summary_large_image"><meta property="twitter:site" content="@ActiveAway"><meta property="twitter:url"`, '><meta property="twitter:title"', '><meta property="twitter:description"', '><meta property="twitter:image"', ">", "<!-- Structured Data (JSON-LD) for Rich Snippets -->", '<!-- Fonts are now self-hosted via @fontsource for optimal performance --><!-- TrustBox script --><script type="text/javascript" src="//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js" async><\/script><!-- End TrustBox script --><!-- Cloudflare Turnstile --><script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer><\/script><!-- End Cloudflare Turnstile --><!-- Allow pages to inject additional head content (e.g., preload links) -->', "<style>\n      @tailwind base;\n      @tailwind components;\n      @tailwind utilities;\n      \n      @layer base {\n        :root {\n          --background: 0 0% 100%;\n          --foreground: 222.2 84% 4.9%;\n          --card: 0 0% 100%;\n          --card-foreground: 222.2 84% 4.9%;\n          --popover: 0 0% 100%;\n          --popover-foreground: 222.2 84% 4.9%;\n          --primary: 222.2 47.4% 11.2%;\n          --primary-foreground: 210 40% 98%;\n          --secondary: 210 40% 96.1%;\n          --secondary-foreground: 222.2 47.4% 11.2%;\n          --muted: 210 40% 96.1%;\n          --muted-foreground: 215.4 16.3% 46.9%;\n          --accent: 210 40% 96.1%;\n          --accent-foreground: 222.2 47.4% 11.2%;\n          --destructive: 0 84.2% 60.2%;\n          --destructive-foreground: 210 40% 98%;\n          --border: 214.3 31.8% 91.4%;\n          --input: 214.3 31.8% 91.4%;\n          --ring: 222.2 84% 4.9%;\n          --radius: 0.5rem;\n        }\n        \n        /* Global link hover color - #ad986c (gold) */\n        a:hover {\n          color: #ad986c;\n          transition: color 0.3s ease;\n        }\n      }\n    </style>", '</head> <body class="font-sans bg-white text-gray-900 antialiased"> ', ' <div class="relative"> ', " ", " </div> ", " ", " ", " </body></html>"])), addAttribute(description, "content"), addAttribute(Astro2.generator, "content"), title, keywords && renderTemplate`<meta name="keywords"${addAttribute(keywords, "content")}>`, canonicalURL && renderTemplate`<link rel="canonical"${addAttribute(canonicalURL, "href")}>`, addAttribute(currentUrl, "content"), addAttribute(title, "content"), addAttribute(description, "content"), addAttribute(ogImage, "content"), addAttribute(ogImage, "content"), addAttribute(ogImageWidth.toString(), "content"), addAttribute(ogImageHeight.toString(), "content"), metaImageAlt && renderTemplate`<meta property="og:image:alt"${addAttribute(metaImageAlt, "content")}>`, addAttribute(currentUrl, "content"), addAttribute(title, "content"), addAttribute(description, "content"), addAttribute(ogImage, "content"), metaImageAlt && renderTemplate`<meta property="twitter:image:alt"${addAttribute(metaImageAlt, "content")}>`, aggregateRating && renderTemplate(_a || (_a = __template(['<script type="application/ld+json">', "<\/script>"])), unescapeHTML(JSON.stringify({
+  return renderTemplate(_b || (_b = __template(['<html lang="en"> <head><meta charset="UTF-8"><meta name="description"', '><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest"><meta name="theme-color" content="#0D1C4E"><meta name="msapplication-TileColor" content="#0D1C4E"><meta name="generator"', "><title>", "</title><!-- Keywords -->", "<!-- Canonical URL -->", '<!-- Open Graph / Facebook --><meta property="og:type" content="website"><meta property="og:url"', '><meta property="og:title"', '><meta property="og:description"', '><meta property="og:locale" content="en_GB"><meta property="og:image"', '><meta property="og:image:secure_url"', '><meta property="og:image:width"', '><meta property="og:image:height"', ">", `<meta property="og:site_name" content="Active Away | Tennis Holidays & Clinics as seen on Dragons' Den"><!-- Twitter --><meta property="twitter:card" content="summary_large_image"><meta property="twitter:site" content="@ActiveAway"><meta property="twitter:url"`, '><meta property="twitter:title"', '><meta property="twitter:description"', '><meta property="twitter:image"', ">", "<!-- Structured Data (JSON-LD) for Rich Snippets -->", '<!-- Fonts are now self-hosted via @fontsource for optimal performance --><!-- TrustBox script --><script type="text/javascript" src="//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js" async><\/script><!-- End TrustBox script --><!-- Cloudflare Turnstile --><script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer><\/script><!-- End Cloudflare Turnstile --><!-- Allow pages to inject additional head content (e.g., preload links) -->', "<style>\n      @tailwind base;\n      @tailwind components;\n      @tailwind utilities;\n      \n      @layer base {\n        :root {\n          --background: 0 0% 100%;\n          --foreground: 222.2 84% 4.9%;\n          --card: 0 0% 100%;\n          --card-foreground: 222.2 84% 4.9%;\n          --popover: 0 0% 100%;\n          --popover-foreground: 222.2 84% 4.9%;\n          --primary: 222.2 47.4% 11.2%;\n          --primary-foreground: 210 40% 98%;\n          --secondary: 210 40% 96.1%;\n          --secondary-foreground: 222.2 47.4% 11.2%;\n          --muted: 210 40% 96.1%;\n          --muted-foreground: 215.4 16.3% 46.9%;\n          --accent: 210 40% 96.1%;\n          --accent-foreground: 222.2 47.4% 11.2%;\n          --destructive: 0 84.2% 60.2%;\n          --destructive-foreground: 210 40% 98%;\n          --border: 214.3 31.8% 91.4%;\n          --input: 214.3 31.8% 91.4%;\n          --ring: 222.2 84% 4.9%;\n          --radius: 0.5rem;\n        }\n        \n        /* Global link hover color - #ad986c (gold) */\n        a:hover {\n          color: #ad986c;\n          transition: color 0.3s ease;\n        }\n      }\n    </style>", '</head> <body class="font-sans bg-white text-gray-900 antialiased"> ', ' <div class="relative"> ', " ", " </div> ", " ", " ", " ", " </body></html>"])), addAttribute(description, "content"), addAttribute(Astro2.generator, "content"), title, keywords && renderTemplate`<meta name="keywords"${addAttribute(keywords, "content")}>`, canonicalURL && renderTemplate`<link rel="canonical"${addAttribute(canonicalURL, "href")}>`, addAttribute(currentUrl, "content"), addAttribute(title, "content"), addAttribute(description, "content"), addAttribute(ogImage, "content"), addAttribute(ogImage, "content"), addAttribute(ogImageWidth.toString(), "content"), addAttribute(ogImageHeight.toString(), "content"), metaImageAlt && renderTemplate`<meta property="og:image:alt"${addAttribute(metaImageAlt, "content")}>`, addAttribute(currentUrl, "content"), addAttribute(title, "content"), addAttribute(description, "content"), addAttribute(ogImage, "content"), metaImageAlt && renderTemplate`<meta property="twitter:image:alt"${addAttribute(metaImageAlt, "content")}>`, aggregateRating && renderTemplate(_a || (_a = __template(['<script type="application/ld+json">', "<\/script>"])), unescapeHTML(JSON.stringify({
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "Active Away",
@@ -463,7 +1051,7 @@ const $$BaseLayout = createComponent(($$result, $$props, $$slots) => {
       "bestRating": aggregateRating.bestRating || 5,
       "worstRating": aggregateRating.worstRating || 1
     }
-  }))), renderSlot($$result, $$slots["head"]), renderHead(), renderComponent($$result, "AnnouncementBarTailwind", $$AnnouncementBarTailwind, {}), renderComponent($$result, "NavigationHeader", $$NavigationHeader, {}), renderSlot($$result, $$slots["default"]), renderComponent($$result, "FooterTailwind", $$FooterTailwind, {}), renderComponent($$result, "CookieConsent", $$CookieConsent, {}), renderComponent($$result, "FormAnalytics", $$FormAnalytics, {}));
+  }))), renderSlot($$result, $$slots["head"]), renderHead(), renderComponent($$result, "AnnouncementBarTailwind", $$AnnouncementBarTailwind, {}), renderComponent($$result, "NavigationHeader", $$NavigationHeader, {}), renderSlot($$result, $$slots["default"]), renderComponent($$result, "FooterTailwind", $$FooterTailwind, {}), renderComponent($$result, "CookieConsent", $$CookieConsent, {}), renderComponent($$result, "FormAnalytics", $$FormAnalytics, {}), renderComponent($$result, "WebsiteFeedbackPopup", $$WebsiteFeedbackPopup, {}));
 }, "/Users/joshuathompson/active-away-astro/src/layouts/BaseLayout.astro", void 0);
 
 export { $$BaseLayout as $ };

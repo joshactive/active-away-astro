@@ -1,8 +1,8 @@
 globalThis.process ??= {}; globalThis.process.env ??= {};
 /* empty css                                     */
 import { e as createAstro, f as createComponent, m as maybeRenderHead, h as addAttribute, r as renderTemplate, s as spreadAttributes, k as renderComponent, l as defineScriptVars } from '../../chunks/astro/server_BoSsXtn0.mjs';
-import { $ as $$BaseLayout } from '../../chunks/BaseLayout_DiRkp85h.mjs';
-import { C as getEventBySlug, b as getStrapiImageAttrs } from '../../chunks/strapi_CoI6gAxC.mjs';
+import { $ as $$BaseLayout } from '../../chunks/BaseLayout_BE34rldG.mjs';
+import { C as getEventBySlug, b as getStrapiImageAttrs } from '../../chunks/strapi_UhkUqLlA.mjs';
 export { renderers } from '../../renderers.mjs';
 
 const $$Astro$5 = createAstro("https://activeaway.com");

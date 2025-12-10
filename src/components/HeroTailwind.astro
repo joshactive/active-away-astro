@@ -300,7 +300,7 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
               </div>
               
               <!-- Search Button (mobile) -->
-              <button id="hero-search-mobile" class="inline-flex items-center justify-center bg-white/30 backdrop-blur-md border border-white/30 hover:bg-white/40 active:bg-white/50 rounded-lg px-4 py-2.5 h-11 text-white text-sm transition-all shadow-lg font-medium">
+              <button id="hero-search-mobile" disabled class="inline-flex items-center justify-center bg-white/30 backdrop-blur-md border border-white/30 hover:bg-white/40 active:bg-white/50 rounded-lg px-4 py-2.5 h-11 text-white text-sm transition-all shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/30">
                 <svg class="w-4 h-4 mr-1.5" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                   <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
                   <path d="m21 21-4.34-4.34" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
@@ -353,7 +353,7 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
             <div class="hidden sm:block w-px h-10 bg-white/30 mx-4"></div>
             
             <!-- Search Button (desktop) -->
-            <button id="hero-search-desktop" class="hidden sm:inline-flex items-center justify-center bg-white/30 backdrop-blur-md border border-white/30 hover:bg-white/40 rounded-full px-5 md:px-6 py-2.5 md:py-3 h-8 md:h-10 text-white text-sm md:text-base transition-all shadow-lg font-medium">
+            <button id="hero-search-desktop" disabled class="hidden sm:inline-flex items-center justify-center bg-white/30 backdrop-blur-md border border-white/30 hover:bg-white/40 rounded-full px-5 md:px-6 py-2.5 md:py-3 h-8 md:h-10 text-white text-sm md:text-base transition-all shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/30">
               <svg class="w-3 h-3 md:w-4 md:h-4 mr-2" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
                 <path d="m21 21-4.34-4.34" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
@@ -461,6 +461,9 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
       setSelectEnabled(locationDesktop, false);
       setSelectEnabled(monthMobile, false);
       setSelectEnabled(monthDesktop, false);
+      // Disable search buttons
+      if (searchMobile) searchMobile.setAttribute('disabled', 'disabled');
+      if (searchDesktop) searchDesktop.setAttribute('disabled', 'disabled');
       return;
     }
     
@@ -483,6 +486,10 @@ console.log('📐 Design Dimensions:', `${HERO_DESIGN_WIDTH}x${HERO_DESIGN_HEIGH
     // Disable and reset month dropdowns (location not selected yet)
     setSelectEnabled(monthMobile, false);
     setSelectEnabled(monthDesktop, false);
+    
+    // Enable search buttons (product is selected)
+    if (searchMobile) searchMobile.removeAttribute('disabled');
+    if (searchDesktop) searchDesktop.removeAttribute('disabled');
   }
   
   // Handle location selection (both mobile and desktop)

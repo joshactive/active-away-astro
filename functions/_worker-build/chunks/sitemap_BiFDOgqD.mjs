@@ -1,5 +1,5 @@
 globalThis.process ??= {}; globalThis.process.env ??= {};
-import { aE as fetchAPI } from './strapi_CoI6gAxC.mjs';
+import { aG as fetchAPI } from './strapi_UhkUqLlA.mjs';
 
 // Configuration mapping Strapi collections to Frontend URL patterns
 // Ordered by priority/importance

@@ -406,13 +406,20 @@ console.log('Footer Images URLs:', {
 
       // Get Turnstile token - but allow submission without it in development
       let turnstileResponse = null;
-      try {
-        // Try to get Turnstile response if available
-        if (typeof window.turnstile !== 'undefined' && window.turnstile) {
-          turnstileResponse = window.turnstile.getResponse();
+      
+      // Try to get from form data first (most reliable for multiple forms)
+      const formData = new FormData(form);
+      turnstileResponse = formData.get('cf-turnstile-response');
+
+      if (!turnstileResponse) {
+        try {
+          // Try to get Turnstile response if available
+          if (typeof window.turnstile !== 'undefined' && window.turnstile) {
+            turnstileResponse = window.turnstile.getResponse();
+          }
+        } catch (err) {
+          console.warn('Turnstile not available:', err);
         }
-      } catch (err) {
-        console.warn('Turnstile not available:', err);
       }
 
       // Disable button and show loading
