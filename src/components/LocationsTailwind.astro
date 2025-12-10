@@ -1,6 +1,6 @@
 ---
 // Locations section component for Active Away - Tailwind CSS Version
-import { getFeaturedLocations, getAllVenues } from '../utils/strapi.js';
+import { getFeaturedLocations, getAllVenues, getTennisAcademiesForCards } from '../utils/strapi.js';
 import { getImageByName, getResponsiveImageByName, getStrapiImageAttrs } from '../utils/cloudflareImages.js';
 import MapPinIcon from './ui/icons/MapPinIcon.astro';
 import TagIcon from './ui/icons/TagIcon.astro';
@@ -41,7 +41,7 @@ if (featuredSlugs && featuredSlugs.length > 0) {
   
   // 2. Identify which slugs were not found
   const foundSlugs = featuredMatches.map(loc => loc.slug);
-  const missingSlugs = featuredSlugs.filter(slug => !foundSlugs.includes(slug));
+  let missingSlugs = featuredSlugs.filter(slug => !foundSlugs.includes(slug));
   
   // 3. If we have missing slugs, look for them in the general venues data
   if (missingSlugs.length > 0 && venuesData.venues.length > 0) {
@@ -65,9 +65,40 @@ if (featuredSlugs && featuredSlugs.length > 0) {
     }));
     
     featuredMatches = [...featuredMatches, ...mappedMatches];
+
+    // Update missing slugs
+    const foundVenueSlugs = venueMatches.map(v => v.slug);
+    missingSlugs = missingSlugs.filter(s => !foundVenueSlugs.includes(s));
+  }
+
+  // 4. If we still have missing slugs, look for them in Tennis Academies
+  if (missingSlugs.length > 0) {
+    console.log(`🔍 [LocationsTailwind] Looking for ${missingSlugs.length} missing slugs in tennis academies`);
+    try {
+      const tennisAcademies = await getTennisAcademiesForCards(1, 100);
+      const academyMatches = tennisAcademies.filter(academy => missingSlugs.includes(academy.slug));
+      
+      const mappedAcademyMatches = academyMatches.map(academy => ({
+        id: academy.id,
+        title: academy.title,
+        location: academy.location || academy.country,
+        type: academy.productType,
+        amount: academy.priceText,
+        price: academy.priceText,
+        image: academy.image,
+        imageAlt: academy.imageAlt,
+        slug: academy.slug,
+        holidayType: academy.holidayType,
+        active: false
+      }));
+      
+      featuredMatches = [...featuredMatches, ...mappedAcademyMatches];
+    } catch (error) {
+      console.error('❌ [LocationsTailwind] Error fetching tennis academies:', error);
+    }
   }
   
-  // 4. Sort the final list to match the order of featuredSlugs
+  // 5. Sort the final list to match the order of featuredSlugs
   locations = featuredMatches.sort((a, b) => {
     return featuredSlugs.indexOf(a.slug) - featuredSlugs.indexOf(b.slug);
   });

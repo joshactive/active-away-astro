@@ -587,7 +587,7 @@ const firstTabId = tabs.length > 0 ? tabs[0].id : 'video';
 
 <script>
   // Tab switching + lite YouTube embeds + Payment Calculator
-  document.addEventListener('DOMContentLoaded', () => {
+  function initBookingProcess() {
     const tabButtons = document.querySelectorAll('.booking-tab');
     const tabContents = document.querySelectorAll('.tab-content');
     
@@ -725,6 +725,12 @@ const firstTabId = tabs.length > 0 ? tabs[0].id : 'video';
         { once: true }
       );
     });
-  });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initBookingProcess);
+  } else {
+    initBookingProcess();
+  }
 </script>
 
