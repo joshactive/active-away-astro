@@ -44,10 +44,48 @@ const DEFAULT_ZOOM = 6;
 <!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-<!-- Leaflet JS -->
-<script is:inline src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
 <script define:vars={{ venues: validVenues, ukCenter: UK_CENTER, defaultZoom: DEFAULT_ZOOM }}>
+  // Store venue data globally for this component
+  window.__game4padelMapData = {
+    venues: venues,
+    ukCenter: ukCenter,
+    defaultZoom: defaultZoom
+  };
+</script>
+
+<script>
+  // Dynamically load Leaflet and initialize map
+  function loadLeafletAndInit() {
+    // Check if Leaflet is already loaded
+    if (typeof window.L !== 'undefined') {
+      initGame4PadelMap();
+      return;
+    }
+    
+    // Check if script is already being loaded
+    if (document.querySelector('script[src*="leaflet"]')) {
+      // Wait for it to load
+      const checkLeaflet = setInterval(() => {
+        if (typeof window.L !== 'undefined') {
+          clearInterval(checkLeaflet);
+          initGame4PadelMap();
+        }
+      }, 50);
+      return;
+    }
+    
+    // Load Leaflet dynamically
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    script.onload = () => {
+      initGame4PadelMap();
+    };
+    script.onerror = () => {
+      console.error('Failed to load Leaflet');
+    };
+    document.head.appendChild(script);
+  }
+  
   function initGame4PadelMap() {
     const mapContainer = document.getElementById('game4padel-map');
     if (!mapContainer) return;
@@ -57,15 +95,24 @@ const DEFAULT_ZOOM = 6;
       return;
     }
     
+    // Get data from global variable
+    const data = window.__game4padelMapData;
+    if (!data) {
+      console.error('Map data not found');
+      return;
+    }
+    
+    const { venues, ukCenter, defaultZoom } = data;
+    
     // Initialize map centered on UK
-    const map = L.map('game4padel-map', {
+    const map = window.L.map('game4padel-map', {
       center: [ukCenter.lat, ukCenter.lng],
       zoom: defaultZoom,
       scrollWheelZoom: false // Disable scroll zoom for better UX
     });
     
     // Add OpenStreetMap tiles with HTTPS
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    window.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
@@ -79,7 +126,7 @@ const DEFAULT_ZOOM = 6;
     });
     
     // Custom marker icon with brand color
-    const customIcon = L.divIcon({
+    const customIcon = window.L.divIcon({
       className: 'custom-game4padel-marker',
       html: `
         <div class="marker-pin">
@@ -129,7 +176,7 @@ const DEFAULT_ZOOM = 6;
           </div>
         `;
         
-        const marker = L.marker([venue.latitude, venue.longitude], { icon: customIcon })
+        const marker = window.L.marker([venue.latitude, venue.longitude], { icon: customIcon })
           .addTo(map)
           .bindPopup(popupContent, {
             maxWidth: 300,
@@ -142,7 +189,7 @@ const DEFAULT_ZOOM = 6;
     
     // Fit bounds to show all markers if there are any
     if (markers.length > 0) {
-      const group = L.featureGroup(markers);
+      const group = window.L.featureGroup(markers);
       map.fitBounds(group.getBounds().pad(0.1));
       
       // Don't zoom in too far if only one marker
@@ -154,13 +201,13 @@ const DEFAULT_ZOOM = 6;
   
   // Initialize on page load
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initGame4PadelMap);
+    document.addEventListener('DOMContentLoaded', loadLeafletAndInit);
   } else {
-    initGame4PadelMap();
+    loadLeafletAndInit();
   }
   
   // Support Astro View Transitions
-  document.addEventListener('astro:page-load', initGame4PadelMap);
+  document.addEventListener('astro:page-load', loadLeafletAndInit);
 </script>
 
 <style is:global>
