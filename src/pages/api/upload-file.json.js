@@ -1,6 +1,32 @@
 // API endpoint to upload files to Cloudflare R2
 export const prerender = false;
 
+// Security configuration
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const ALLOWED_FILE_TYPES = [
+  // Documents
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  // Images
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  // Text
+  'text/plain',
+  'text/csv'
+];
+
+const ALLOWED_EXTENSIONS = [
+  '.pdf', '.doc', '.docx', '.xls', '.xlsx',
+  '.jpg', '.jpeg', '.png', '.gif', '.webp',
+  '.txt', '.csv'
+];
+
 export const POST = async ({ request, locals }) => {
   try {
     const formData = await request.formData();
@@ -8,6 +34,49 @@ export const POST = async ({ request, locals }) => {
     
     if (!file || !(file instanceof File)) {
       return new Response(JSON.stringify({ error: 'No file provided' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      return new Response(JSON.stringify({ 
+        error: 'File too large',
+        maxSize: `${MAX_FILE_SIZE / (1024 * 1024)}MB`,
+        yourFileSize: `${(file.size / (1024 * 1024)).toFixed(2)}MB`
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Validate file type
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      return new Response(JSON.stringify({ 
+        error: 'File type not allowed',
+        allowedTypes: 'PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, GIF, WEBP, TXT, CSV'
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Validate file extension
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    if (!ALLOWED_EXTENSIONS.includes(fileExtension)) {
+      return new Response(JSON.stringify({ 
+        error: 'File extension not allowed',
+        allowedExtensions: ALLOWED_EXTENSIONS.join(', ')
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Check for suspicious file names
+    if (file.name.includes('..') || file.name.includes('/') || file.name.includes('\\')) {
+      return new Response(JSON.stringify({ error: 'Invalid file name' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -27,18 +96,26 @@ export const POST = async ({ request, locals }) => {
       (import.meta.env && import.meta.env.UPLOAD_TOKEN) ||
       '';
 
+    const IS_DEV = runtimeEnv.DEV ?? globalEnv.DEV ?? (import.meta.env && import.meta.env.DEV);
+
     if (!UPLOAD_TOKEN) {
-      console.error('❌ [upload-file] UPLOAD_TOKEN not configured');
+      if (IS_DEV) console.error('❌ [upload-file] UPLOAD_TOKEN not configured');
       return new Response(JSON.stringify({ error: 'Upload not configured' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    // Generate unique file name
+    // Generate secure unique file name
     const timestamp = Date.now();
     const randomStr = Math.random().toString(36).substring(2, 8);
-    const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '-');
+    // More aggressive sanitization
+    const baseName = file.name.substring(0, file.name.lastIndexOf('.'));
+    const sanitizedBaseName = baseName
+      .replace(/[^a-zA-Z0-9-_]/g, '-')
+      .replace(/-+/g, '-')
+      .substring(0, 100); // Limit length
+    const sanitizedName = `${sanitizedBaseName}${fileExtension}`;
     const fileKey = `form-uploads/${new Date().toISOString().split('T')[0]}/${timestamp}-${randomStr}-${sanitizedName}`;
 
     // Upload to R2
@@ -58,7 +135,7 @@ export const POST = async ({ request, locals }) => {
 
     if (!uploadResponse.ok) {
       const errorText = await uploadResponse.text();
-      console.error('❌ [upload-file] R2 upload failed:', errorText);
+      if (IS_DEV) console.error('❌ [upload-file] R2 upload failed:', errorText);
       return new Response(JSON.stringify({ error: 'Upload failed' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
@@ -75,7 +152,7 @@ export const POST = async ({ request, locals }) => {
       'https://files.activeaway.com';
     const publicUrl = `${publicBase.replace(/\/+$/, '')}/${fileKey}`;
     
-    console.log('✅ [upload-file] File uploaded:', fileKey);
+    if (IS_DEV) console.log('✅ [upload-file] File uploaded:', fileKey);
     
     return new Response(JSON.stringify({
       success: true,
@@ -91,14 +168,17 @@ export const POST = async ({ request, locals }) => {
     });
 
   } catch (error) {
-    console.error('❌ [upload-file] Error:', error);
+    const runtimeEnv = locals?.runtime?.env || {};
+    const globalEnv = (globalThis && (globalThis.__env || globalThis.ENV)) || {};
+    const IS_DEV = runtimeEnv.DEV ?? globalEnv.DEV ?? (import.meta.env && import.meta.env.DEV);
+    
+    if (IS_DEV) console.error('❌ [upload-file] Error:', error);
     return new Response(JSON.stringify({ 
       error: 'Internal server error',
-      message: error instanceof Error ? error.message : 'Unknown error'
+      message: IS_DEV && error instanceof Error ? error.message : undefined
     }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
   }
 };
-
