@@ -8841,3 +8841,198 @@ export async function getKeyTakeawaysPage() {
 export async function getKeyTakeawaysPageSEO() {
   return getPageSEO('key-takeaways-page');
 }
+
+/**
+ * ====================================
+ * GAME4PADEL PAGE
+ * ====================================
+ */
+
+/**
+ * Fetch Game4Padel page data from Strapi
+ * @returns {Promise<Object|null>} Page data with hero, partnership info, benefits, and SEO
+ */
+export async function getGame4PadelPage() {
+  try {
+    console.log('🏓 [getGame4PadelPage] Fetching Game4Padel page data...');
+    
+    // Use deep populate for nested components - especially seo.metaImage
+    const data = await fetchAPI('/game4padel-page?pLevel=5');
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getGame4PadelPage] No data found - is the content published?');
+      return null;
+    }
+    
+    const pageData = data.data.attributes || data.data;
+    console.log('🔍 [getGame4PadelPage] pageHero kicker:', pageData.pageHero?.kicker);
+    
+    const result = {
+      title: pageData.title || 'Game4Padel Partnership',
+      displayOnFrontEnd: pageData.displayOnFrontEnd !== false,
+      
+      pageHero: pageData.pageHero ? {
+        kicker: pageData.pageHero.kicker || '',
+        heading: pageData.pageHero.heading || 'Game4Padel',
+        subtitle: pageData.pageHero.subtitle || 'Our Official Padel Partner',
+        backgroundImage: getStrapiImageData(pageData.pageHero.backgroundImage),
+        showBreadcrumbs: pageData.pageHero.showBreadcrumbs !== false
+      } : null,
+      
+      partnershipIntro: pageData.partnershipIntro || '',
+      partnerLogo: pageData.partnerLogo ? getStrapiImageData(pageData.partnerLogo) : null,
+      
+      benefits: pageData.benefits ? pageData.benefits.map(benefit => ({
+        icon: benefit.icon || 'check',
+        customIconSvg: benefit.customIconSvg || null,
+        title: benefit.title || '',
+        description: benefit.description || ''
+      })) : [],
+      
+      venuesSectionTitle: pageData.venuesSectionTitle || 'Find a Game4Padel Venue',
+      venuesSectionDescription: pageData.venuesSectionDescription || '',
+      
+      seo: pageData.seo || null
+    };
+    
+    console.log('✅ [getGame4PadelPage] Data fetched successfully');
+    return result;
+  } catch (error) {
+    console.error('❌ [getGame4PadelPage] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch Game4Padel page SEO data from Strapi
+ * @returns {Promise<Object|null>} SEO data
+ */
+export async function getGame4PadelPageSEO() {
+  try {
+    console.log('📄 [getGame4PadelPageSEO] Fetching SEO for game4padel page...');
+    
+    const data = await fetchAPI('/game4padel-page?populate[seo][populate]=metaImage');
+    
+    if (!data || !data.data) {
+      console.warn('⚠️  [getGame4PadelPageSEO] No game4padel page found');
+      return null;
+    }
+    
+    const page = data.data.attributes || data.data;
+    const seo = page.seo;
+    
+    if (!seo) {
+      console.warn('⚠️  [getGame4PadelPageSEO] No SEO data');
+      return null;
+    }
+
+    // Extract meta image data with Cloudflare Images optimization
+    const metaImageData = getOptimizedSEOImage(seo.metaImage);
+    
+    const seoData = {
+      metaTitle: seo.metaTitle || null,
+      metaDescription: seo.metaDescription || null,
+      keywords: seo.keywords || null,
+      canonicalURL: seo.canonicalURL || null,
+      metaImage: metaImageData.url,
+      metaImageAlt: metaImageData.alt,
+      metaImageWidth: metaImageData.width,
+      metaImageHeight: metaImageData.height
+    };
+    
+    console.log('✅ [getGame4PadelPageSEO] SEO data fetched');
+    return seoData;
+  } catch (error) {
+    console.error('❌ [getGame4PadelPageSEO] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch all Game4Padel venues directly from Game4Padel's Closeby API
+ * This ensures venues are always up-to-date with their website
+ * @returns {Promise<Array>} Array of venue objects with coordinates
+ */
+export async function getGame4PadelVenues() {
+  try {
+    console.log('🏓 [getGame4PadelVenues] Fetching Game4Padel venues from Closeby API...');
+    
+    // Closeby API endpoint used by Game4Padel's website
+    // Bounding box covers the entire UK and Ireland
+    const closebyUrl = 'https://www.closeby.co/embed/856c91397736fdd971f2554b10c16a50/locations?bounding_box=43,-21,65,12&cachable=true&isInitialLoad=true';
+    
+    const response = await fetch(closebyUrl, {
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'ActiveAway/1.0'
+      }
+    });
+    
+    if (!response.ok) {
+      console.warn(`⚠️  [getGame4PadelVenues] Closeby API returned ${response.status}`);
+      return [];
+    }
+    
+    const data = await response.json();
+    
+    if (!data || !data.locations || data.locations.length === 0) {
+      console.warn('⚠️  [getGame4PadelVenues] No venues found from Closeby API');
+      return [];
+    }
+    
+    // Transform Closeby data to our venue format
+    const venues = data.locations.map((location, index) => {
+      const fullAddress = location.address_full || '';
+      
+      // Extract postcode from address (UK format)
+      const postcodeMatch = fullAddress.match(/[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}/i);
+      const postcode = postcodeMatch ? postcodeMatch[0].toUpperCase() : '';
+      
+      // Extract city from address - look for known UK cities or the part before the postcode
+      const addressParts = fullAddress.split(',').map(p => p.trim());
+      let city = '';
+      
+      // Try to find a city name (usually the last meaningful part, excluding "UK" and postcode)
+      for (let i = addressParts.length - 1; i >= 0; i--) {
+        const part = addressParts[i];
+        // Skip if it's UK, contains the postcode, or is empty
+        if (part === 'UK' || part.includes(postcode) || !part) continue;
+        // Skip if it looks like a postcode
+        if (/^[A-Z]{1,2}\d/i.test(part)) continue;
+        // This is likely the city
+        city = part;
+        break;
+      }
+      
+      // Extract region/area from categories if available (e.g., "Scotland", "England")
+      const region = (location.categories || []).find(c => ['Scotland', 'England', 'Wales', 'Northern Ireland'].includes(c)) || '';
+      
+      return {
+        id: location.id || index + 1,
+        documentId: null,
+        name: location.title || 'Unnamed Venue',
+        address: fullAddress,
+        city: city,
+        postcode: postcode,
+        region: region,
+        latitude: parseFloat(location.latitude) || 0,
+        longitude: parseFloat(location.longitude) || 0,
+        image: location.banner_url ? { url: location.banner_url } : null,
+        websiteUrl: location.custom_button_url || '',
+        phoneNumber: location.phone_number || '',
+        description: location.short_description || '',
+        categories: location.categories || [],
+        ordering: index
+      };
+    });
+    
+    // Sort venues alphabetically by name
+    venues.sort((a, b) => a.name.localeCompare(b.name));
+    
+    console.log(`✅ [getGame4PadelVenues] Fetched ${venues.length} venues from Game4Padel`);
+    return venues;
+  } catch (error) {
+    console.error('❌ [getGame4PadelVenues] Error fetching from Closeby API:', error);
+    return [];
+  }
+}

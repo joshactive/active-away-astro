@@ -1,0 +1,355 @@
+---
+// Game4Padel Partnership Page
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeroTailwind from '../components/PageHeroTailwind.astro';
+import BreadcrumbsTailwind from '../components/BreadcrumbsTailwind.astro';
+import Game4PadelMapTailwind from '../components/Game4PadelMapTailwind.astro';
+import { getGame4PadelPage, getGame4PadelPageSEO, getGame4PadelVenues } from '../utils/strapi.js';
+import { getStrapiImageAttrs } from '../utils/cloudflareImages.js';
+
+// Fetch page data
+let pageData = null;
+try {
+  pageData = await getGame4PadelPage();
+  console.log('🏓 [game4padel-partnership] Page data fetched successfully');
+} catch (error) {
+  console.error('❌ [game4padel-partnership] Error fetching page data:', error.message);
+}
+
+// Fetch SEO data
+let seoData = null;
+try {
+  seoData = await getGame4PadelPageSEO();
+  if (seoData) {
+    console.log('📄 [game4padel-partnership] SEO data fetched');
+  }
+} catch (error) {
+  console.warn('⚠️  [game4padel-partnership] Could not fetch SEO data:', error.message);
+}
+
+// Fetch venues
+let venues = [];
+try {
+  venues = await getGame4PadelVenues();
+  console.log(`🏓 [game4padel-partnership] Fetched ${venues.length} venues`);
+} catch (error) {
+  console.error('❌ [game4padel-partnership] Error fetching venues:', error.message);
+}
+
+// Extract SEO fields
+const pageTitle = seoData?.metaTitle || pageData?.seo?.metaTitle || 'Game4Padel Partnership | Active Away';
+const pageDescription = seoData?.metaDescription || pageData?.seo?.metaDescription || 'Discover our partnership with Game4Padel - the UK\'s leading padel venue operator. Find Game4Padel courts near you.';
+
+// Extract meta image URL properly
+let metaImage = null;
+if (seoData?.metaImage) {
+  metaImage = typeof seoData.metaImage === 'string' ? seoData.metaImage : seoData.metaImage.url;
+} else if (pageData?.seo?.metaImage) {
+  metaImage = typeof pageData.seo.metaImage === 'string' ? pageData.seo.metaImage : pageData.seo.metaImage.url;
+}
+
+const metaImageAlt = seoData?.metaImageAlt || pageData?.seo?.metaImageAlt || null;
+const metaImageWidth = seoData?.metaImageWidth || pageData?.seo?.metaImageWidth || null;
+const metaImageHeight = seoData?.metaImageHeight || pageData?.seo?.metaImageHeight || null;
+const keywords = seoData?.keywords || pageData?.seo?.keywords || 'game4padel, padel courts, padel venues, padel partnership, active away';
+const canonicalURL = seoData?.canonicalURL || pageData?.seo?.canonicalURL || 'https://activeaway.com/game4padel-partnership';
+
+// Icon mapping for benefits
+const iconMap = {
+  'clock': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />',
+  'star': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />',
+  'shield': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />',
+  'heart': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />',
+  'trophy': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />',
+  'users': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />',
+  'check': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />',
+  'mapPin': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />',
+  'racket': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />'
+};
+
+// Build partner image attributes (featured image, not a logo)
+let partnerLogoAttrs = null;
+if (pageData?.partnerLogo?.url) {
+  partnerLogoAttrs = getStrapiImageAttrs(pageData.partnerLogo, {
+    displayWidth: 700,
+    displayHeight: 525,
+    fit: 'cover',
+    sizes: '(max-width: 1024px) 100vw, 50vw'
+  });
+}
+
+// Check if we have data to display
+const hasPageHero = pageData?.pageHero;
+const hasBenefits = pageData?.benefits && pageData.benefits.length > 0;
+const hasVenues = venues && venues.length > 0;
+---
+
+<BaseLayout 
+  title={pageTitle}
+  description={pageDescription}
+  metaImage={metaImage}
+  metaImageAlt={metaImageAlt}
+  metaImageWidth={metaImageWidth}
+  metaImageHeight={metaImageHeight}
+  keywords={keywords}
+  canonicalURL={canonicalURL}
+>
+  <!-- Page Hero -->
+  {hasPageHero ? (
+    <PageHeroTailwind pageData={pageData} />
+  ) : (
+    <!-- Default Hero if no Strapi data -->
+    <section class="relative w-full h-[400px] sm:h-[500px] lg:h-[600px] overflow-hidden">
+      <div class="absolute inset-0 bg-[url('https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/padel-hero/public')] bg-cover bg-center"></div>
+      <div class="absolute inset-0 bg-gradient-to-b from-[#0D1C4E]/80 via-[#0D1C4E]/70 to-[#0D1C4E]/65 z-10"></div>
+      <div class="relative z-20 container mx-auto max-w-[1400px] px-4 sm:px-10 h-full flex flex-col justify-center items-center text-center">
+        <div class="hidden sm:block text-xs sm:text-sm font-inter font-semibold text-gold tracking-[0.2em] uppercase mb-4 sm:mb-6 border-t border-b border-gold/50 py-2 px-6">
+          Official Partner
+        </div>
+        <h1 class="text-4xl sm:text-5xl lg:text-7xl font-playfair font-bold text-white mb-6 sm:mb-8 leading-tight max-w-4xl">
+          Game4Padel Partnership
+        </h1>
+        <p class="text-lg sm:text-xl lg:text-2xl font-inter text-white max-w-3xl leading-relaxed">
+          Experience the best padel facilities across the UK with our official partner
+        </p>
+      </div>
+    </section>
+  )}
+  
+  <!-- Breadcrumbs -->
+  <BreadcrumbsTailwind 
+    breadcrumbs={[
+      { label: 'Home', href: '/' },
+      { label: 'Game4Padel Partnership' }
+    ]}
+  />
+  
+  <!-- Partnership Introduction Section -->
+  <section class="w-full bg-white py-12 sm:py-16 lg:py-24">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+        
+        <!-- Partner Image -->
+        <div class="order-2 lg:order-1">
+          <div class="relative overflow-hidden rounded-2xl shadow-xl">
+            {partnerLogoAttrs ? (
+              <img 
+                src={partnerLogoAttrs.src || partnerLogoAttrs.url}
+                srcset={partnerLogoAttrs.srcset}
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                alt="Game4Padel Partnership"
+                width={partnerLogoAttrs.width || 600}
+                height={partnerLogoAttrs.height || 400}
+                class="w-full h-auto aspect-[4/3] object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <div class="w-full aspect-[4/3] bg-gradient-to-br from-[#0D1C4E] to-[#1a2d5e] flex items-center justify-center">
+                <span class="text-3xl font-playfair font-bold text-white">Game4Padel</span>
+              </div>
+            )}
+            <!-- Decorative accent -->
+            <div class="absolute -bottom-3 -right-3 w-24 h-24 bg-[#ad986c]/20 rounded-full blur-2xl"></div>
+          </div>
+        </div>
+        
+        <!-- Partnership Description -->
+        <div class="order-1 lg:order-2">
+          <span class="inline-block text-[#ad986c] font-inter text-xs sm:text-sm font-bold tracking-[0.2em] uppercase mb-4">
+            Our Partnership
+          </span>
+          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-6 leading-tight">
+            Bringing World-Class Padel to the UK
+          </h2>
+          
+          {pageData?.partnershipIntro ? (
+            <div class="prose prose-lg max-w-none text-gray-700 font-inter leading-relaxed" set:html={pageData.partnershipIntro} />
+          ) : (
+            <div class="text-gray-700 font-inter leading-relaxed space-y-4">
+              <p class="text-base sm:text-lg">
+                Active Away is proud to partner with Game4Padel, one of the UK's leading padel venue operators. Together, we're making padel more accessible to players of all levels across the country.
+              </p>
+              <p class="text-base sm:text-lg">
+                Whether you're new to the sport or an experienced player, Game4Padel venues offer state-of-the-art facilities, expert coaching, and a welcoming community atmosphere.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Benefits Section -->
+  {hasBenefits && (
+    <section class="w-full bg-gray-50 py-12 sm:py-16 lg:py-24">
+      <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+        <div class="text-center mb-10 sm:mb-14">
+          <span class="inline-block text-[#ad986c] font-inter text-xs sm:text-sm font-bold tracking-[0.2em] uppercase mb-4">
+            Why Choose Game4Padel
+          </span>
+          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900">
+            Partnership Benefits
+          </h2>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+          {pageData.benefits.map((benefit) => {
+            const iconPath = benefit.customIconSvg || iconMap[benefit.icon] || iconMap['check'];
+            
+            return (
+              <div class="bg-white rounded-2xl p-6 sm:p-8 border border-gray-200 hover:shadow-lg hover:border-gray-300 transition-all duration-300">
+                <div class="w-14 h-14 sm:w-16 sm:h-16 bg-[#ad986c] rounded-xl flex items-center justify-center mb-5 shadow-md">
+                  <svg 
+                    class="w-7 h-7 sm:w-8 sm:h-8 text-white" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                    set:html={iconPath}
+                  />
+                </div>
+                
+                <h3 class="text-lg sm:text-xl font-playfair font-semibold text-gray-900 mb-3">
+                  {benefit.title}
+                </h3>
+                
+                {benefit.description && (
+                  <p class="text-base font-inter text-gray-600 leading-relaxed">
+                    {benefit.description}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  )}
+  
+  <!-- Venues Map Section -->
+  <section class="w-full bg-white py-12 sm:py-16 lg:py-24">
+    <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+      <div class="text-center mb-10 sm:mb-14">
+        <span class="inline-block text-[#ad986c] font-inter text-xs sm:text-sm font-bold tracking-[0.2em] uppercase mb-4">
+          UK Locations
+        </span>
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-semibold text-gray-900 mb-4">
+          {pageData?.venuesSectionTitle || 'Find a Game4Padel Venue'}
+        </h2>
+        {pageData?.venuesSectionDescription && (
+          <p class="text-base sm:text-lg font-inter text-gray-600 max-w-2xl mx-auto">
+            {pageData.venuesSectionDescription}
+          </p>
+        )}
+      </div>
+      
+      {hasVenues ? (
+        <Game4PadelMapTailwind venues={venues} />
+      ) : (
+        <div class="bg-gray-50 rounded-2xl p-10 sm:p-16 text-center border border-gray-200">
+          <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg class="w-10 h-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-playfair font-semibold text-gray-900 mb-3">
+            Venues Coming Soon
+          </h3>
+          <p class="text-gray-600 font-inter">
+            Game4Padel venue locations will be added shortly. Check back soon!
+          </p>
+        </div>
+      )}
+    </div>
+  </section>
+  
+  <!-- Venue Cards Grid (for accessibility and SEO) -->
+  {hasVenues && venues.length > 0 && (
+    <section class="w-full bg-gray-50 py-12 sm:py-16 lg:py-20">
+      <div class="container mx-auto max-w-[1400px] px-4 sm:px-10">
+        <h3 class="text-xl sm:text-2xl font-playfair font-semibold text-gray-900 mb-8 text-center">
+          All Venues
+        </h3>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+          {venues.map((venue) => (
+            <div class="bg-white rounded-xl p-5 border border-gray-200 hover:shadow-md hover:border-gray-300 transition-all duration-300">
+              <div class="flex items-start gap-3">
+                <div class="w-10 h-10 bg-[#ad986c]/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg class="w-5 h-5 text-[#ad986c]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h4 class="text-base font-playfair font-semibold text-gray-900 mb-1 truncate">
+                    {venue.name}
+                  </h4>
+                  {venue.city && (
+                    <p class="text-sm font-inter text-gray-500 truncate">
+                      {venue.city}
+                    </p>
+                  )}
+                  {venue.websiteUrl && (
+                    <a 
+                      href={venue.websiteUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer nofollow"
+                      class="inline-flex items-center gap-1 mt-2 text-sm font-inter font-medium text-[#ad986c] hover:text-[#8a7855] transition-colors"
+                    >
+                      Visit Venue →
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+  
+  <!-- CTA Section -->
+  <section class="w-full bg-white py-16 sm:py-20 lg:py-24">
+    <div class="container mx-auto max-w-[900px] px-4 sm:px-10 text-center">
+      <h2 class="text-2xl sm:text-3xl lg:text-4xl font-playfair font-bold text-gray-900 mb-6">
+        Ready to Play Padel?
+      </h2>
+      <p class="text-lg sm:text-xl text-gray-600 font-inter mb-8 max-w-2xl mx-auto">
+        Explore our padel holiday packages or find a Game4Padel venue near you to start playing today.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a 
+          href="/padel-tennis-holiday" 
+          class="inline-flex items-center justify-center px-8 py-4 bg-gold hover:bg-gold-600 text-white font-inter font-semibold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+        >
+          View Padel Holidays
+        </a>
+        <a 
+          href="https://www.game4padel.com" 
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center justify-center px-8 py-4 bg-white hover:bg-gray-50 border border-gray-300 hover:border-gray-400 text-gray-900 font-inter font-semibold rounded-full transition-all duration-300 hover:-translate-y-0.5"
+        >
+          Visit Game4Padel
+          <svg class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+</style>
+

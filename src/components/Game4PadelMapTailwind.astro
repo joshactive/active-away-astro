@@ -1,0 +1,316 @@
+---
+// Game4Padel Interactive Map Component using Leaflet.js
+// Displays all Game4Padel venues on an interactive OpenStreetMap
+
+interface Venue {
+  id: number;
+  name: string;
+  address?: string;
+  city?: string;
+  postcode?: string;
+  latitude: number;
+  longitude: number;
+  websiteUrl?: string;
+  phoneNumber?: string;
+}
+
+interface Props {
+  venues: Venue[];
+}
+
+const { venues } = Astro.props;
+
+// Filter venues that have valid coordinates
+const validVenues = venues.filter(v => v.latitude && v.longitude && v.latitude !== 0 && v.longitude !== 0);
+
+// Calculate center of UK for default view
+const UK_CENTER = { lat: 53.5, lng: -1.5 };
+const DEFAULT_ZOOM = 6;
+---
+
+<div class="game4padel-map-container">
+  <!-- Map Container -->
+  <div 
+    id="game4padel-map" 
+    class="w-full h-[500px] sm:h-[550px] lg:h-[600px] rounded-2xl shadow-lg border border-gray-200 overflow-hidden"
+  ></div>
+  
+  <!-- Venue Count -->
+  <p class="text-center text-gray-600 font-inter mt-4 text-sm sm:text-base">
+    Showing <span class="font-semibold text-[#ad986c]">{validVenues.length}</span> Game4Padel venues across the UK
+  </p>
+</div>
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<!-- Leaflet JS -->
+<script is:inline src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script define:vars={{ venues: validVenues, ukCenter: UK_CENTER, defaultZoom: DEFAULT_ZOOM }}>
+  function initGame4PadelMap() {
+    const mapContainer = document.getElementById('game4padel-map');
+    if (!mapContainer) return;
+    
+    // Prevent re-initialization
+    if (mapContainer._leaflet_id) {
+      return;
+    }
+    
+    // Initialize map centered on UK
+    const map = L.map('game4padel-map', {
+      center: [ukCenter.lat, ukCenter.lng],
+      zoom: defaultZoom,
+      scrollWheelZoom: false // Disable scroll zoom for better UX
+    });
+    
+    // Add OpenStreetMap tiles with HTTPS
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    
+    // Enable scroll zoom only when map is clicked/focused
+    map.on('click', function() {
+      map.scrollWheelZoom.enable();
+    });
+    map.on('mouseout', function() {
+      map.scrollWheelZoom.disable();
+    });
+    
+    // Custom marker icon with brand color
+    const customIcon = L.divIcon({
+      className: 'custom-game4padel-marker',
+      html: `
+        <div class="marker-pin">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#ad986c" width="36" height="36">
+            <path fill-rule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+          </svg>
+        </div>
+      `,
+      iconSize: [36, 36],
+      iconAnchor: [18, 36],
+      popupAnchor: [0, -36]
+    });
+    
+    // Add markers for each venue
+    const markers = [];
+    venues.forEach(venue => {
+      if (venue.latitude && venue.longitude) {
+        const popupContent = `
+          <div class="venue-popup">
+            <div class="popup-header">
+              <h3 class="popup-title">${venue.name}</h3>
+            </div>
+            ${venue.address ? `
+              <div class="popup-address">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="popup-icon">
+                  <path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 103 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 002.273 1.765 11.842 11.842 0 00.976.544l.062.029.018.008.006.003zM10 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" clip-rule="evenodd" />
+                </svg>
+                <span>${venue.address}</span>
+              </div>
+            ` : ''}
+            ${venue.phoneNumber ? `
+              <div class="popup-phone">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="popup-icon">
+                  <path fill-rule="evenodd" d="M2 3.5A1.5 1.5 0 013.5 2h1.148a1.5 1.5 0 011.465 1.175l.716 3.223a1.5 1.5 0 01-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 006.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 011.767-1.052l3.223.716A1.5 1.5 0 0118 15.352V16.5a1.5 1.5 0 01-1.5 1.5H15c-1.149 0-2.263-.15-3.326-.43A13.022 13.022 0 012.43 8.326 13.019 13.019 0 012 5V3.5z" clip-rule="evenodd" />
+                </svg>
+                <a href="tel:${venue.phoneNumber}" rel="nofollow">${venue.phoneNumber}</a>
+              </div>
+            ` : ''}
+            ${venue.websiteUrl ? `
+              <a href="${venue.websiteUrl}" target="_blank" rel="noopener noreferrer nofollow" class="popup-button">
+                Book a Court
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="popup-btn-icon">
+                  <path fill-rule="evenodd" d="M5.22 14.78a.75.75 0 001.06 0l7.22-7.22v5.69a.75.75 0 001.5 0v-7.5a.75.75 0 00-.75-.75h-7.5a.75.75 0 000 1.5h5.69l-7.22 7.22a.75.75 0 000 1.06z" clip-rule="evenodd" />
+                </svg>
+              </a>
+            ` : ''}
+          </div>
+        `;
+        
+        const marker = L.marker([venue.latitude, venue.longitude], { icon: customIcon })
+          .addTo(map)
+          .bindPopup(popupContent, {
+            maxWidth: 300,
+            className: 'game4padel-popup'
+          });
+        
+        markers.push(marker);
+      }
+    });
+    
+    // Fit bounds to show all markers if there are any
+    if (markers.length > 0) {
+      const group = L.featureGroup(markers);
+      map.fitBounds(group.getBounds().pad(0.1));
+      
+      // Don't zoom in too far if only one marker
+      if (markers.length === 1) {
+        map.setZoom(14);
+      }
+    }
+  }
+  
+  // Initialize on page load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initGame4PadelMap);
+  } else {
+    initGame4PadelMap();
+  }
+  
+  // Support Astro View Transitions
+  document.addEventListener('astro:page-load', initGame4PadelMap);
+</script>
+
+<style is:global>
+  /* Custom marker styles */
+  .custom-game4padel-marker {
+    background: transparent;
+    border: none;
+  }
+  
+  .custom-game4padel-marker .marker-pin {
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    transition: transform 0.2s ease;
+  }
+  
+  .custom-game4padel-marker:hover .marker-pin {
+    transform: scale(1.1);
+  }
+  
+  /* Popup styles */
+  .game4padel-popup .leaflet-popup-content-wrapper {
+    border-radius: 16px;
+    padding: 0;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    border: 1px solid rgba(0,0,0,0.05);
+  }
+  
+  .game4padel-popup .leaflet-popup-content {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    width: 100% !important;
+  }
+  
+  .game4padel-popup .leaflet-popup-tip {
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  .game4padel-popup .leaflet-popup-close-button {
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    font-size: 18px;
+    color: #6b7280;
+    background: #f3f4f6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+  
+  .game4padel-popup .leaflet-popup-close-button:hover {
+    color: #374151;
+    background: #e5e7eb;
+  }
+  
+  /* Venue popup content */
+  .venue-popup {
+    min-width: 240px;
+    max-width: 280px;
+    padding: 20px;
+  }
+  
+  .popup-header {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+  
+  .popup-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #0D1C4E;
+    line-height: 1.3;
+    margin: 0;
+    padding-right: 20px;
+  }
+  
+  .popup-address,
+  .popup-phone {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 0.875rem;
+    color: #4b5563;
+    line-height: 1.5;
+  }
+  
+  .popup-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: #ad986c;
+  }
+  
+  .popup-phone a {
+    color: #0D1C4E;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+  }
+  
+  .popup-phone a:hover {
+    color: #ad986c;
+  }
+  
+  .popup-button,
+  .popup-button:link,
+  .popup-button:visited,
+  .popup-button:active,
+  a.popup-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    margin-top: 14px;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #ad986c 0%, #9a8760 100%);
+    color: #ffffff !important;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 10px;
+    text-decoration: none !important;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(173, 152, 108, 0.3);
+  }
+  
+  .popup-button:hover,
+  a.popup-button:hover {
+    background: linear-gradient(135deg, #9a8760 0%, #8a7855 100%);
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(173, 152, 108, 0.4);
+  }
+  
+  .popup-btn-icon {
+    width: 14px;
+    height: 14px;
+    fill: #ffffff;
+  }
+</style>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+</style>
+
