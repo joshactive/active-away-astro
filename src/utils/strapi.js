@@ -48,6 +48,30 @@ function getStrapiUrl() {
   return getEnvValue('STRAPI_URL', DEFAULT_STRAPI_URL);
 }
 
+/**
+ * Ensure a URL has a proper protocol prefix.
+ * Fixes URLs like "www.example.com" that would otherwise be treated as relative paths.
+ * @param {string} url
+ * @returns {string}
+ */
+function formatUrl(url) {
+  if (!url || typeof url !== 'string') return '';
+  url = url.trim();
+  if (!url) return '';
+  
+  // If it already has a protocol, return as-is
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  
+  // Add https:// to URLs that start with www. or look like domains
+  if (url.startsWith('www.') || url.includes('.')) {
+    return 'https://' + url;
+  }
+  
+  return url;
+}
+
 function getStrapiToken() {
   return getEnvValue('STRAPI_API_TOKEN', DEFAULT_STRAPI_TOKEN);
 }
@@ -9018,7 +9042,7 @@ export async function getGame4PadelVenues() {
         latitude: parseFloat(location.latitude) || 0,
         longitude: parseFloat(location.longitude) || 0,
         image: location.banner_url ? { url: location.banner_url } : null,
-        websiteUrl: location.custom_button_url || '',
+        websiteUrl: formatUrl(location.custom_button_url),
         phoneNumber: location.phone_number || '',
         description: location.short_description || '',
         categories: location.categories || [],
