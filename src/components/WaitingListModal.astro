@@ -133,6 +133,13 @@
         </label>
       </div>
 
+      <!-- Cloudflare Turnstile (only show if configured) -->
+      {import.meta.env.PUBLIC_TURNSTILE_SITE_KEY && (
+        <div class="flex justify-center">
+          <div class="cf-turnstile" id="waitingListTurnstile" data-sitekey={import.meta.env.PUBLIC_TURNSTILE_SITE_KEY} data-theme="light"></div>
+        </div>
+      )}
+
       <!-- Submit Button -->
       <button
         type="submit"
@@ -218,6 +225,15 @@
     if (waitingListForm) waitingListForm.reset();
     if (successMessage) successMessage.classList.add('hidden');
     if (errorMessage) errorMessage.classList.add('hidden');
+    
+    // Reset Turnstile widget
+    try {
+      if (typeof (window as any).turnstile !== 'undefined' && (window as any).turnstile) {
+        (window as any).turnstile.reset();
+      }
+    } catch (e) {
+      // Ignore Turnstile reset errors
+    }
   }
 
   // Form validation function
@@ -279,6 +295,24 @@
         submitButton.textContent = 'Submitting...';
       }
       
+      // Get Turnstile token
+      let turnstileToken = null;
+      
+      // Try to get from form data first
+      const formDataObj = new FormData(waitingListForm);
+      turnstileToken = formDataObj.get('cf-turnstile-response');
+      
+      // Fallback to global API
+      if (!turnstileToken) {
+        try {
+          if (typeof (window as any).turnstile !== 'undefined' && (window as any).turnstile) {
+            turnstileToken = (window as any).turnstile.getResponse();
+          }
+        } catch (e) {
+          console.warn('Could not get Turnstile response:', e);
+        }
+      }
+      
       // Prepare form data
       const formData = {
         eventStartDate: eventStartDateInput?.value || '',
@@ -289,7 +323,8 @@
         surname: surnameInput?.value.trim() || '',
         email: emailInput?.value.trim() || '',
         numberOfPeople: numberOfPeopleInput?.value.trim() || '',
-        consent: consentInput?.checked ? 'Yes' : 'No'
+        consent: consentInput?.checked ? 'Yes' : 'No',
+        turnstileToken: turnstileToken
       };
       
       try {
@@ -311,14 +346,26 @@
             closeWaitingListModal();
           }, 2000);
         } else {
-          throw new Error('Submission failed');
+          // Try to get error message from response
+          let errorMsg = 'Submission failed. Please try again.';
+          try {
+            const errorData = await response.json();
+            if (errorData.error) {
+              errorMsg = errorData.error;
+            }
+          } catch (e) {
+            // Use default error message
+          }
+          throw new Error(errorMsg);
         }
       } catch (error) {
         console.error('Error submitting waiting list form:', error);
         
         // Show error message
         if (errorMessage) errorMessage.classList.remove('hidden');
-        if (errorText) errorText.textContent = 'Something went wrong. Please try again.';
+        if (errorText) {
+          errorText.textContent = error instanceof Error ? error.message : 'Something went wrong. Please try again.';
+        }
         
         // Re-enable submit button
         if (submitButton) {
