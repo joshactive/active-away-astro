@@ -453,6 +453,64 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
             ))}
           </div>
 
+          <!-- Prominent Date Filter Section -->
+          <div id="prominentDateFilter" class="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6 transition-all duration-500">
+            <div class="flex flex-col lg:flex-row lg:items-center gap-4">
+              <!-- Quick Select Buttons -->
+              <div class="flex flex-wrap gap-2">
+                <button 
+                  class="date-quick-btn active px-3 py-1.5 text-sm font-inter font-medium rounded-full transition-all bg-[#ad986c] text-white"
+                  data-range="all"
+                >
+                  All Dates
+                </button>
+                <button 
+                  class="date-quick-btn px-3 py-1.5 text-sm font-inter font-medium rounded-full transition-all bg-white border border-gray-300 text-gray-700 hover:border-[#ad986c] hover:text-[#ad986c]"
+                  data-range="this-month"
+                >
+                  This Month
+                </button>
+                <button 
+                  class="date-quick-btn px-3 py-1.5 text-sm font-inter font-medium rounded-full transition-all bg-white border border-gray-300 text-gray-700 hover:border-[#ad986c] hover:text-[#ad986c]"
+                  data-range="next-30"
+                >
+                  Next 30 Days
+                </button>
+                <button 
+                  class="date-quick-btn px-3 py-1.5 text-sm font-inter font-medium rounded-full transition-all bg-white border border-gray-300 text-gray-700 hover:border-[#ad986c] hover:text-[#ad986c]"
+                  data-range="next-3-months"
+                >
+                  Next 3 Months
+                </button>
+              </div>
+              
+              <!-- Divider -->
+              <div class="hidden lg:block w-px h-8 bg-gray-300"></div>
+              
+              <!-- Date Picker Inputs -->
+              <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                <label class="text-sm font-inter text-gray-600 whitespace-nowrap">From:</label>
+                <input 
+                  type="date" 
+                  id="dateFromProminent"
+                  class="bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-inter text-gray-900 focus:ring-2 focus:ring-[#ad986c] focus:border-[#ad986c] transition-all w-full sm:w-auto"
+                />
+                <label class="text-sm font-inter text-gray-600 whitespace-nowrap">To:</label>
+                <input 
+                  type="date" 
+                  id="dateToProminent"
+                  class="bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-inter text-gray-900 focus:ring-2 focus:ring-[#ad986c] focus:border-[#ad986c] transition-all w-full sm:w-auto"
+                />
+                <button 
+                  id="clearDateFilter"
+                  class="text-sm font-inter text-gray-500 hover:text-[#ad986c] underline transition-colors whitespace-nowrap"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+          </div>
+
           <!-- Results Header with Sort -->
           <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
             <div class="text-base sm:text-lg font-inter text-gray-900">
@@ -762,6 +820,29 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
       max-height: 2000px;
     }
   }
+
+  /* Date filter highlight animation */
+  @keyframes dateFilterHighlight {
+    0% {
+      box-shadow: 0 0 0 0 rgba(173, 152, 108, 0.7);
+      border-color: #ad986c;
+    }
+    50% {
+      box-shadow: 0 0 20px 8px rgba(173, 152, 108, 0.4);
+      border-color: #ad986c;
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(173, 152, 108, 0);
+      border-color: #e5e7eb;
+    }
+  }
+
+  .date-filter-highlight {
+    animation: dateFilterHighlight 2s ease-out;
+    border-color: #ad986c !important;
+    border-width: 2px;
+    background-color: #faf8f5 !important;
+  }
 </style>
 
 <script define:vars={{ initialEvents: events, metadata }}>
@@ -804,6 +885,11 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
   const mobileFilterToggle = document.getElementById('mobileFilterToggle');
   const filtersContainer = document.getElementById('filtersContainer');
   const filterChevron = document.getElementById('filterChevron');
+  
+  // Prominent date filter elements
+  const dateFromProminent = document.getElementById('dateFromProminent');
+  const dateToProminent = document.getElementById('dateToProminent');
+  const clearDateFilterBtn = document.getElementById('clearDateFilter');
 
   // Initialize
   function init() {
@@ -811,9 +897,47 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
     setupInfiniteScroll();
     restoreFiltersFromURL();
     
+    // Check if we should highlight the date filter (coming from homepage)
+    checkHighlightDates();
+    
     // Render initial state
     renderEvents();
     updateFilterCount();
+  }
+
+  // Check URL for highlight parameter and scroll/highlight date filter
+  function checkHighlightDates() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('highlightDates') === 'true') {
+      const dateFilter = document.getElementById('prominentDateFilter');
+      if (dateFilter) {
+        // Small delay to ensure page is rendered
+        setTimeout(() => {
+          // Scroll to the date filter with offset for header
+          const rect = dateFilter.getBoundingClientRect();
+          const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+          const targetY = rect.top + scrollTop - 150; // 150px offset for header
+          
+          window.scrollTo({
+            top: targetY,
+            behavior: 'smooth'
+          });
+          
+          // Add highlight class
+          dateFilter.classList.add('date-filter-highlight');
+          
+          // Remove highlight class after animation
+          setTimeout(() => {
+            dateFilter.classList.remove('date-filter-highlight');
+          }, 2500);
+          
+          // Remove the parameter from URL without reload
+          params.delete('highlightDates');
+          const newURL = params.toString() ? `${window.location.pathname}?${params}` : window.location.pathname;
+          window.history.replaceState({}, '', newURL);
+        }, 300);
+      }
+    }
   }
 
   // Setup event listeners
@@ -962,7 +1086,7 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
       applyFilters();
     }, 500));
 
-    // Date range inputs
+    // Date range inputs (sidebar)
     const dateFromInput = document.getElementById('dateFrom');
     const dateToInput = document.getElementById('dateTo');
     
@@ -983,11 +1107,127 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
         }
       }
       
+      // Sync with prominent date filter
+      if (dateFromProminent) dateFromProminent.value = e.target.value;
+      if (dateToProminent && filters.dateTo) dateToProminent.value = filters.dateTo;
+      updateQuickSelectActiveState();
+      
       applyFilters();
     });
 
     dateToInput?.addEventListener('change', (e) => {
       filters.dateTo = e.target.value || null;
+      // Sync with prominent date filter
+      if (dateToProminent) dateToProminent.value = e.target.value;
+      updateQuickSelectActiveState();
+      applyFilters();
+    });
+
+    // Prominent date filter - Quick select buttons
+    document.querySelectorAll('.date-quick-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const range = btn.dataset.range;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        let fromDate = null;
+        let toDate = null;
+        
+        switch (range) {
+          case 'all':
+            // Clear date filters
+            fromDate = null;
+            toDate = null;
+            break;
+          case 'this-month':
+            fromDate = today;
+            toDate = new Date(today.getFullYear(), today.getMonth() + 1, 0); // Last day of current month
+            break;
+          case 'next-30':
+            fromDate = today;
+            toDate = new Date(today);
+            toDate.setDate(toDate.getDate() + 30);
+            break;
+          case 'next-3-months':
+            fromDate = today;
+            toDate = new Date(today);
+            toDate.setMonth(toDate.getMonth() + 3);
+            break;
+        }
+        
+        // Update filter state
+        filters.dateFrom = fromDate ? fromDate.toISOString().split('T')[0] : null;
+        filters.dateTo = toDate ? toDate.toISOString().split('T')[0] : null;
+        
+        // Sync both date pickers
+        syncDateInputs();
+        
+        // Update active button state
+        document.querySelectorAll('.date-quick-btn').forEach(b => {
+          b.classList.remove('active', 'bg-[#ad986c]', 'text-white');
+          b.classList.add('bg-white', 'border', 'border-gray-300', 'text-gray-700');
+        });
+        btn.classList.add('active', 'bg-[#ad986c]', 'text-white');
+        btn.classList.remove('bg-white', 'border', 'border-gray-300', 'text-gray-700');
+        
+        applyFilters();
+      });
+    });
+
+    // Prominent date picker inputs
+    dateFromProminent?.addEventListener('change', (e) => {
+      filters.dateFrom = e.target.value || null;
+      
+      // Auto-set end date to 60 days after start date (same logic as sidebar)
+      if (filters.dateFrom && dateToProminent) {
+        const startDate = new Date(filters.dateFrom);
+        const endDate = filters.dateTo ? new Date(filters.dateTo) : null;
+        
+        if (!endDate || endDate <= startDate) {
+          const autoEndDate = new Date(startDate);
+          autoEndDate.setDate(autoEndDate.getDate() + 60);
+          const autoEndDateStr = autoEndDate.toISOString().split('T')[0];
+          dateToProminent.value = autoEndDateStr;
+          filters.dateTo = autoEndDateStr;
+        }
+      }
+      
+      // Sync with sidebar
+      if (dateFromInput) dateFromInput.value = e.target.value;
+      if (dateToInput && filters.dateTo) dateToInput.value = filters.dateTo;
+      
+      updateQuickSelectActiveState();
+      applyFilters();
+    });
+
+    dateToProminent?.addEventListener('change', (e) => {
+      filters.dateTo = e.target.value || null;
+      
+      // Sync with sidebar
+      if (dateToInput) dateToInput.value = e.target.value;
+      
+      updateQuickSelectActiveState();
+      applyFilters();
+    });
+
+    // Clear date filter button
+    clearDateFilterBtn?.addEventListener('click', () => {
+      filters.dateFrom = null;
+      filters.dateTo = null;
+      
+      // Clear all date inputs
+      syncDateInputs();
+      
+      // Reset quick select to "All Dates"
+      document.querySelectorAll('.date-quick-btn').forEach(b => {
+        b.classList.remove('active', 'bg-[#ad986c]', 'text-white');
+        b.classList.add('bg-white', 'border', 'border-gray-300', 'text-gray-700');
+        if (b.dataset.range === 'all') {
+          b.classList.add('active', 'bg-[#ad986c]', 'text-white');
+          b.classList.remove('bg-white', 'border', 'border-gray-300', 'text-gray-700');
+        }
+      });
+      
       applyFilters();
     });
 
@@ -1307,6 +1547,20 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
     document.getElementById('priceMax').value = '';
     document.getElementById('dateFrom').value = '';
     document.getElementById('dateTo').value = '';
+    
+    // Clear prominent date inputs
+    if (dateFromProminent) dateFromProminent.value = '';
+    if (dateToProminent) dateToProminent.value = '';
+    
+    // Reset quick select to "All Dates"
+    document.querySelectorAll('.date-quick-btn').forEach(b => {
+      b.classList.remove('active', 'bg-[#ad986c]', 'text-white');
+      b.classList.add('bg-white', 'border', 'border-gray-300', 'text-gray-700');
+      if (b.dataset.range === 'all') {
+        b.classList.add('active', 'bg-[#ad986c]', 'text-white');
+        b.classList.remove('bg-white', 'border', 'border-gray-300', 'text-gray-700');
+      }
+    });
 
     // Reset sort
     sortBySelect.value = 'date-asc';
@@ -1429,10 +1683,17 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
     if (dateFrom) {
       filters.dateFrom = dateFrom;
       document.getElementById('dateFrom').value = dateFrom;
+      if (dateFromProminent) dateFromProminent.value = dateFrom;
     }
     if (dateTo) {
       filters.dateTo = dateTo;
       document.getElementById('dateTo').value = dateTo;
+      if (dateToProminent) dateToProminent.value = dateTo;
+    }
+    
+    // Update quick select button state based on restored dates
+    if (dateFrom || dateTo) {
+      updateQuickSelectActiveState();
     }
 
     // Restore venues (from homepage search and checkbox filters)
@@ -1459,6 +1720,69 @@ const canonicalURL = seoData?.canonicalURL || pageContent?.seo?.canonicalURL || 
     if (search || products || hideSoldOut || type || countries || minPrice || maxPrice || dateFrom || dateTo || venues || month) {
       applyFilters();
     }
+  }
+
+  // Sync all date inputs (sidebar and prominent)
+  function syncDateInputs() {
+    const dateFromInput = document.getElementById('dateFrom');
+    const dateToInput = document.getElementById('dateTo');
+    
+    // Update prominent inputs
+    if (dateFromProminent) dateFromProminent.value = filters.dateFrom || '';
+    if (dateToProminent) dateToProminent.value = filters.dateTo || '';
+    
+    // Update sidebar inputs
+    if (dateFromInput) dateFromInput.value = filters.dateFrom || '';
+    if (dateToInput) dateToInput.value = filters.dateTo || '';
+  }
+
+  // Update quick select button active state based on current date filters
+  function updateQuickSelectActiveState() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    let matchedRange = 'custom'; // Default to custom if no preset matches
+    
+    if (!filters.dateFrom && !filters.dateTo) {
+      matchedRange = 'all';
+    } else if (filters.dateFrom && filters.dateTo) {
+      const fromDate = new Date(filters.dateFrom);
+      const toDate = new Date(filters.dateTo);
+      
+      // Check if it matches "This Month"
+      const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      if (fromDate.toDateString() === today.toDateString() && 
+          toDate.toDateString() === lastDayOfMonth.toDateString()) {
+        matchedRange = 'this-month';
+      }
+      
+      // Check if it matches "Next 30 Days"
+      const next30 = new Date(today);
+      next30.setDate(next30.getDate() + 30);
+      if (fromDate.toDateString() === today.toDateString() && 
+          toDate.toDateString() === next30.toDateString()) {
+        matchedRange = 'next-30';
+      }
+      
+      // Check if it matches "Next 3 Months"
+      const next3Months = new Date(today);
+      next3Months.setMonth(next3Months.getMonth() + 3);
+      if (fromDate.toDateString() === today.toDateString() && 
+          toDate.toDateString() === next3Months.toDateString()) {
+        matchedRange = 'next-3-months';
+      }
+    }
+    
+    // Update button states
+    document.querySelectorAll('.date-quick-btn').forEach(btn => {
+      btn.classList.remove('active', 'bg-[#ad986c]', 'text-white');
+      btn.classList.add('bg-white', 'border', 'border-gray-300', 'text-gray-700');
+      
+      if (btn.dataset.range === matchedRange) {
+        btn.classList.add('active', 'bg-[#ad986c]', 'text-white');
+        btn.classList.remove('bg-white', 'border', 'border-gray-300', 'text-gray-700');
+      }
+    });
   }
 
   // Debounce utility
