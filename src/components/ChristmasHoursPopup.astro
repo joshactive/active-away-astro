@@ -1,0 +1,273 @@
+---
+// ChristmasHoursPopup.astro
+// Christmas opening hours popup - shows once, with persistent side button
+// Active until: January 5, 2025 at 02:00am
+---
+
+<!-- Persistent Side Button (always visible when campaign is active) -->
+<button
+  id="christmas-hours-side-btn"
+  class="fixed right-0 top-1/2 -translate-y-1/2 z-[150] hidden bg-[#0D1C4E] hover:bg-[#1a2d6b] text-white px-2 py-4 rounded-l-lg shadow-lg transition-all duration-300 hover:pr-3 group"
+  aria-label="View Christmas opening hours"
+>
+  <div class="flex flex-col items-center gap-2">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"></circle>
+      <polyline points="12 6 12 12 16 14"></polyline>
+    </svg>
+    <span class="writing-mode-vertical text-xs font-medium tracking-wide">Christmas Hours</span>
+  </div>
+</button>
+
+<!-- Backdrop Overlay -->
+<div 
+  id="christmas-hours-popup-overlay" 
+  class="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 transition-opacity duration-300 opacity-0"
+  role="dialog"
+  aria-live="polite"
+  aria-labelledby="christmas-hours-popup-title"
+>
+  <!-- Modal Container -->
+  <div 
+    id="christmas-hours-popup-modal"
+    class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-gray-200 transform transition-all duration-500 scale-95 opacity-0"
+  >
+    <!-- Close Button -->
+    <button 
+      id="close-christmas-hours-popup" 
+      class="absolute top-4 right-4 z-10 text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 transition-colors"
+      aria-label="Close Christmas hours popup"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+      </svg>
+    </button>
+
+    <!-- Header with festive accent -->
+    <div class="bg-gradient-to-r from-[#0D1C4E] to-[#1a3a7a] px-6 py-5 text-center">
+      <div class="flex items-center justify-center gap-2 mb-2">
+
+        <h2 
+          id="christmas-hours-popup-title"
+          class="text-xl sm:text-2xl font-playfair font-bold text-white"
+        >
+          Christmas Opening Hours
+        </h2>
+
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="p-6 sm:p-8">
+      <p class="text-gray-700 leading-relaxed font-inter text-sm sm:text-base">
+        Our team has worked exceptionally hard this year, as such we have decided to give the team a well deserved rest. Our team will be back in the office on <strong class="text-[#0D1C4E]">05 January 2026</strong>.
+      </p>
+      <p class="text-gray-700 leading-relaxed font-inter text-sm sm:text-base mt-4">
+        Our team will check in to process bookings - however this will result in slower booking processing times and responses to queries.
+      </p>
+      <p class="text-gray-700 leading-relaxed font-inter text-sm sm:text-base mt-4 italic">
+        We can't wait to welcome you on court in 2026!
+      </p>
+      <p class="text-[#ad986c] font-semibold text-sm sm:text-base mt-4">
+        — The Active Away Team
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div class="bg-gray-50 px-6 py-4 border-t border-gray-100">
+      <button
+        id="christmas-hours-popup-dismiss"
+        class="w-full px-6 py-3 text-sm font-semibold text-white bg-[#0D1C4E] hover:bg-[#1a2d6b] rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0D1C4E] transition-all"
+      >
+        Got it, thanks!
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const OVERLAY_ID = 'christmas-hours-popup-overlay';
+  const MODAL_ID = 'christmas-hours-popup-modal';
+  const CLOSE_BTN_ID = 'close-christmas-hours-popup';
+  const DISMISS_BTN_ID = 'christmas-hours-popup-dismiss';
+  const SIDE_BTN_ID = 'christmas-hours-side-btn';
+  const STORAGE_KEY = 'active_away_christmas_hours_seen';
+  const COOKIE_CONSENT_KEY = 'active_away_cookie_consent';
+  
+  // Campaign end date (January 5, 2025 at 02:00am UTC)
+  const END_DATE = new Date('2026-01-05T02:00:00Z');
+  
+  let hasShownAuto = false;
+
+  function isCampaignActive() {
+    const now = new Date();
+    return now < END_DATE;
+  }
+
+  function initChristmasHoursPopup() {
+    // Check if campaign is still active
+    if (!isCampaignActive()) {
+      console.log('🎄 [ChristmasHours] Campaign has ended');
+      return;
+    }
+
+    const sideBtn = document.getElementById(SIDE_BTN_ID);
+    
+    // Always show side button when campaign is active
+    if (sideBtn) {
+      sideBtn.classList.remove('hidden');
+      sideBtn.addEventListener('click', showPopup);
+    }
+
+    // Check if already seen for auto-show
+    if (localStorage.getItem(STORAGE_KEY) === 'true') {
+      console.log('🎄 [ChristmasHours] Already seen by user, side button available');
+      return;
+    }
+
+    // Check if cookie consent has been handled
+    const cookieConsent = localStorage.getItem(COOKIE_CONSENT_KEY);
+    if (!cookieConsent) {
+      console.log('🎄 [ChristmasHours] Waiting for cookie consent...');
+      waitForCookieConsent();
+      return;
+    }
+
+    // Cookie consent is handled, show popup immediately
+    console.log('🎄 [ChristmasHours] Cookie consent handled, showing popup');
+    showPopupAuto();
+  }
+
+  function waitForCookieConsent() {
+    // Check every second for cookie consent
+    const checkInterval = setInterval(() => {
+      const cookieConsent = localStorage.getItem(COOKIE_CONSENT_KEY);
+      if (cookieConsent) {
+        console.log('🎄 [ChristmasHours] Cookie consent handled, showing popup');
+        clearInterval(checkInterval);
+        showPopupAuto();
+      }
+    }, 1000);
+
+    // Stop checking after 2 minutes
+    setTimeout(() => {
+      clearInterval(checkInterval);
+      console.log('🎄 [ChristmasHours] Timeout waiting for cookie consent');
+    }, 120000);
+  }
+
+  function showPopupAuto() {
+    if (hasShownAuto) return;
+    if (localStorage.getItem(STORAGE_KEY) === 'true') return;
+    
+    hasShownAuto = true;
+    
+    // Mark as seen immediately
+    localStorage.setItem(STORAGE_KEY, 'true');
+    
+    showPopup();
+  }
+
+  function showPopup() {
+    if (!isCampaignActive()) return;
+    
+    const overlay = document.getElementById(OVERLAY_ID);
+    const modal = document.getElementById(MODAL_ID);
+    const closeBtn = document.getElementById(CLOSE_BTN_ID);
+    const dismissBtn = document.getElementById(DISMISS_BTN_ID);
+
+    if (!overlay || !modal) {
+      console.error('🎄 [ChristmasHours] Popup elements not found');
+      return;
+    }
+
+    console.log('🎄 [ChristmasHours] Showing popup');
+
+    // Show overlay
+    overlay.classList.remove('hidden');
+    overlay.classList.add('flex');
+    
+    // Animate in with slight delay
+    requestAnimationFrame(() => {
+      overlay.classList.remove('opacity-0');
+      modal.classList.remove('scale-95', 'opacity-0');
+      modal.classList.add('scale-100', 'opacity-100');
+    });
+
+    // Close handler
+    const closePopup = () => {
+      overlay.classList.add('opacity-0');
+      modal.classList.remove('scale-100', 'opacity-100');
+      modal.classList.add('scale-95', 'opacity-0');
+      
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+        overlay.classList.remove('flex');
+      }, 300);
+    };
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', closePopup);
+    }
+
+    if (dismissBtn) {
+      dismissBtn.addEventListener('click', closePopup);
+    }
+
+    // Close on overlay click (but not on modal click)
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        closePopup();
+      }
+    });
+
+    // Close on Escape key
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        closePopup();
+        document.removeEventListener('keydown', handleEscape);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+  }
+
+  // Initialize on page load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initChristmasHoursPopup);
+  } else {
+    initChristmasHoursPopup();
+  }
+
+  // Support for Astro View Transitions
+  document.addEventListener('astro:page-load', initChristmasHoursPopup);
+</script>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+
+  .writing-mode-vertical {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+  }
+
+  /* Ensure smooth animations */
+  #christmas-hours-popup-overlay {
+    transition: opacity 300ms ease-in-out;
+  }
+
+  #christmas-hours-popup-modal {
+    transition: all 500ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Side button hover effect */
+  #christmas-hours-side-btn:hover {
+    box-shadow: -4px 0 20px rgba(13, 28, 78, 0.3);
+  }
+</style>
+
