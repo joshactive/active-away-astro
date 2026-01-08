@@ -1,0 +1,684 @@
+---
+// Make an Offer Modal Component
+// Modal for submitting offers on selected events
+// Generates a unique offer ID and submits to webhook via server-side API
+---
+
+<!-- Make an Offer Modal -->
+<div id="makeOfferModal" class="hidden fixed inset-0 z-[250] bg-black/75 overflow-y-auto">
+  <div class="min-h-full flex items-center justify-center p-4 py-8">
+    <div class="bg-white rounded-2xl shadow-2xl relative w-full max-w-xl max-h-[90vh] overflow-y-auto">
+      <!-- Sticky Header -->
+      <div class="sticky top-0 bg-white z-10 px-6 sm:px-8 pt-6 pb-4 border-b border-gray-100 rounded-t-2xl">
+        <!-- Close Button -->
+        <button
+          id="closeMakeOfferModal"
+          class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full"
+          aria-label="Close modal"
+          type="button"
+        >
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        <!-- Modal Header -->
+        <div class="text-center pr-8">
+          <h2 class="text-2xl font-playfair font-bold text-gray-900 mb-1">Make an Offer</h2>
+          <p class="text-sm font-inter text-gray-600">Submit your offer and we'll get back to you as soon as possible.</p>
+        </div>
+      </div>
+
+      <!-- Scrollable Content -->
+      <div class="px-6 sm:px-8 py-6">
+        <!-- Success Message (Hidden by default) -->
+        <div id="makeOfferSuccess" class="hidden mb-6 p-6 bg-green-50 border border-green-200 rounded-lg">
+          <div class="flex items-center justify-center mb-3">
+            <svg class="w-12 h-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p class="text-base font-inter text-green-800 text-center mb-2">
+            <strong>Thank you!</strong> Your offer has been submitted.
+          </p>
+          <p class="text-sm font-inter text-green-700 text-center mb-4">
+            We'll review it and get back to you soon.
+          </p>
+          <div class="bg-white/50 rounded-lg p-3 mb-4">
+            <p class="text-xs font-inter text-green-600 text-center mb-1">Your Reference Number:</p>
+            <p class="text-center">
+              <span id="offerReferenceDisplay" class="font-mono font-bold text-green-800 text-sm tracking-wide"></span>
+            </p>
+            <p class="text-xs font-inter text-green-600 text-center mt-1">Please save this for your records.</p>
+          </div>
+          <button 
+            type="button"
+            id="closeSuccessBtn"
+            class="w-full bg-green-600 hover:bg-green-700 text-white font-inter font-semibold py-3 px-6 rounded-lg transition-colors"
+          >
+            Close
+          </button>
+        </div>
+
+        <!-- Error Message (Hidden by default) -->
+        <div id="makeOfferError" class="hidden mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p class="text-sm font-inter text-red-800 text-center" id="makeOfferErrorText">
+            Something went wrong. Please try again.
+          </p>
+        </div>
+
+        <!-- Make an Offer Form -->
+        <form id="makeOfferForm" class="space-y-5">
+          
+          <input type="hidden" id="offerEventStartDate" name="eventStartDate" />
+          <input type="hidden" id="offerEventEndDate" name="eventEndDate" />
+          <input type="hidden" id="offerEventLocation" name="eventLocation" />
+          <input type="hidden" id="offerEventVenue" name="eventVenue" />
+          <input type="hidden" id="offerEventTitle" name="eventTitle" />
+          <input type="hidden" id="offerEventListedPrice" name="eventListedPrice" />
+          <input type="hidden" id="offerId" name="offerId" />
+
+          <!-- Event Details Display (Read-only) -->
+          <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-xl space-y-2 border border-gray-200">
+            <div class="text-sm font-inter">
+              <span class="text-gray-500">Event: </span>
+              <span class="font-semibold text-gray-900" id="displayOfferEventName">-</span>
+            </div>
+            <div class="text-sm font-inter">
+              <span class="text-gray-500">Dates: </span>
+              <span class="font-semibold text-gray-900" id="displayOfferEventDates">-</span>
+            </div>
+            <div class="text-sm font-inter">
+              <span class="text-gray-500">Listed Price: </span>
+              <span class="font-semibold text-[#ad986c]" id="displayOfferListedPrice">-</span>
+            </div>
+          </div>
+
+          <!-- Name Row (First Name + Surname side by side) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- First Name -->
+            <div>
+              <label for="offerFirstName" class="block text-sm font-inter font-semibold text-gray-900 mb-2">
+                First Name <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="offerFirstName"
+                name="firstName"
+                required
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg font-inter text-gray-900 focus:ring-2 focus:ring-[#ad986c] focus:border-[#ad986c] transition-all"
+                placeholder="First name"
+              />
+            </div>
+
+            <!-- Surname -->
+            <div>
+              <label for="offerSurname" class="block text-sm font-inter font-semibold text-gray-900 mb-2">
+                Surname <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="offerSurname"
+                name="surname"
+                required
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg font-inter text-gray-900 focus:ring-2 focus:ring-[#ad986c] focus:border-[#ad986c] transition-all"
+                placeholder="Surname"
+              />
+            </div>
+          </div>
+
+          <!-- Email Address -->
+          <div>
+            <label for="offerEmail" class="block text-sm font-inter font-semibold text-gray-900 mb-2">
+              Email Address <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="email"
+              id="offerEmail"
+              name="email"
+              required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg font-inter text-gray-900 focus:ring-2 focus:ring-[#ad986c] focus:border-[#ad986c] transition-all"
+              placeholder="your@email.com"
+            />
+          </div>
+
+          <!-- Phone Number -->
+          <div>
+            <label for="offerPhone" class="block text-sm font-inter font-semibold text-gray-900 mb-2">
+              Phone Number <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="tel"
+              id="offerPhone"
+              name="phone"
+              required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg font-inter text-gray-900 focus:ring-2 focus:ring-[#ad986c] focus:border-[#ad986c] transition-all"
+              placeholder="+44 7XXX XXX XXX"
+            />
+          </div>
+
+          <!-- Number of People + Offer Amount Row -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Number of People -->
+            <div>
+              <label for="offerNumberOfPeople" class="block text-sm font-inter font-semibold text-gray-900 mb-2">
+                Number of People <span class="text-red-500">*</span>
+              </label>
+              <select
+                id="offerNumberOfPeople"
+                name="numberOfPeople"
+                required
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg font-inter text-gray-900 focus:ring-2 focus:ring-[#ad986c] focus:border-[#ad986c] transition-all bg-white"
+              >
+                <option value="">Select...</option>
+                <option value="1">1 person</option>
+                <option value="2">2 people</option>
+                <option value="3">3 people</option>
+                <option value="4">4 people</option>
+                <option value="5">5 people</option>
+                <option value="6">6 people</option>
+                <option value="7">7 people</option>
+                <option value="8">8 people</option>
+                <option value="9">9 people</option>
+                <option value="10+">10+ people</option>
+              </select>
+            </div>
+
+            <!-- Offer Amount -->
+            <div>
+              <label for="offerAmount" class="block text-sm font-inter font-semibold text-gray-900 mb-2">
+                Your Offer (£/person) <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-inter font-medium">£</span>
+                <input
+                  type="number"
+                  id="offerAmount"
+                  name="offerAmount"
+                  required
+                  min="1"
+                  step="1"
+                  class="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg font-inter text-gray-900 focus:ring-2 focus:ring-[#ad986c] focus:border-[#ad986c] transition-all"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Optional Message -->
+          <div>
+            <label for="offerMessage" class="block text-sm font-inter font-semibold text-gray-900 mb-2">
+              Message <span class="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <textarea
+              id="offerMessage"
+              name="message"
+              rows="3"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg font-inter text-gray-900 focus:ring-2 focus:ring-[#ad986c] focus:border-[#ad986c] transition-all resize-none"
+              placeholder="Any additional information or special requests..."
+            ></textarea>
+          </div>
+
+          <!-- Consent Checkbox -->
+          <div class="flex items-start gap-3 bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <input
+              type="checkbox"
+              id="offerConsent"
+              name="consent"
+              required
+              class="w-5 h-5 mt-0.5 text-[#ad986c] border-gray-300 rounded focus:ring-[#ad986c] focus:ring-2 cursor-pointer"
+            />
+            <label for="offerConsent" class="text-sm font-inter text-gray-700 cursor-pointer">
+              I agree to be contacted regarding this offer and understand that submitting an offer does not guarantee acceptance. <span class="text-red-500">*</span>
+            </label>
+          </div>
+
+          <!-- Cloudflare Turnstile (only show if configured) -->
+          {import.meta.env.PUBLIC_TURNSTILE_SITE_KEY && (
+            <div class="flex justify-center">
+              <div class="cf-turnstile" id="offerTurnstileWidget" data-sitekey={import.meta.env.PUBLIC_TURNSTILE_SITE_KEY} data-callback="onOfferTurnstileSuccess" data-expired-callback="onOfferTurnstileExpired" data-theme="light"></div>
+            </div>
+          )}
+
+          <!-- Submit Button -->
+          <button
+            type="submit"
+            id="makeOfferSubmit"
+            disabled
+            class="w-full bg-[#ad986c] hover:bg-[#8a7454] text-white font-inter font-semibold py-4 px-6 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-base shadow-lg hover:shadow-xl"
+          >
+            Submit Offer
+          </button>
+
+          <p class="text-xs text-gray-500 font-inter text-center">
+            Your information is secure and will only be used to process your offer.
+          </p>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Declare turnstile global
+  declare var turnstile: any;
+  
+  // Make an Offer Modal Logic
+  const makeOfferModal = document.getElementById('makeOfferModal');
+  const makeOfferForm = document.getElementById('makeOfferForm') as HTMLFormElement;
+  const closeModalBtn = document.getElementById('closeMakeOfferModal');
+  const submitButton = document.getElementById('makeOfferSubmit') as HTMLButtonElement;
+  const successMessage = document.getElementById('makeOfferSuccess');
+  const errorMessage = document.getElementById('makeOfferError');
+  const errorText = document.getElementById('makeOfferErrorText');
+  const offerReferenceDisplay = document.getElementById('offerReferenceDisplay');
+
+  // Form fields
+  const firstNameInput = document.getElementById('offerFirstName') as HTMLInputElement;
+  const surnameInput = document.getElementById('offerSurname') as HTMLInputElement;
+  const emailInput = document.getElementById('offerEmail') as HTMLInputElement;
+  const phoneInput = document.getElementById('offerPhone') as HTMLInputElement;
+  const numberOfPeopleInput = document.getElementById('offerNumberOfPeople') as HTMLSelectElement;
+  const offerAmountInput = document.getElementById('offerAmount') as HTMLInputElement;
+  const messageInput = document.getElementById('offerMessage') as HTMLTextAreaElement;
+  const consentInput = document.getElementById('offerConsent') as HTMLInputElement;
+  const eventStartDateInput = document.getElementById('offerEventStartDate') as HTMLInputElement;
+  const eventEndDateInput = document.getElementById('offerEventEndDate') as HTMLInputElement;
+  const eventLocationInput = document.getElementById('offerEventLocation') as HTMLInputElement;
+  const eventVenueInput = document.getElementById('offerEventVenue') as HTMLInputElement;
+  const eventTitleInput = document.getElementById('offerEventTitle') as HTMLInputElement;
+  const eventListedPriceInput = document.getElementById('offerEventListedPrice') as HTMLInputElement;
+  const offerIdInput = document.getElementById('offerId') as HTMLInputElement;
+
+  // Display elements
+  const displayEventName = document.getElementById('displayOfferEventName');
+  const displayEventDates = document.getElementById('displayOfferEventDates');
+  const displayListedPrice = document.getElementById('displayOfferListedPrice');
+
+  // Turnstile state
+  let offerTurnstileToken: string | null = null;
+
+  // API Endpoint
+  const API_ENDPOINT = '/api/submit-offer.json';
+  
+  // Turnstile callbacks (global functions for data-callback attribute)
+  (window as any).onOfferTurnstileSuccess = function(token: string) {
+    offerTurnstileToken = token;
+    validateMakeOfferForm();
+  };
+  
+  (window as any).onOfferTurnstileExpired = function() {
+    offerTurnstileToken = null;
+    validateMakeOfferForm();
+  };
+
+  // Generate unique offer ID
+  // Requirements: 3-32 chars, pattern: /^[a-z][0-9a-z-]+[0-9a-z]$/
+  // Must start with lowercase letter, end with letter or number, middle can have hyphens
+  function generateOfferId(): string {
+    const letters = 'abcdefghijklmnopqrstuvwxyz';
+    const alphanumeric = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    
+    // Use crypto for better randomness
+    const getSecureRandom = (max: number): number => {
+      if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+        const array = new Uint32Array(1);
+        crypto.getRandomValues(array);
+        return array[0] % max;
+      }
+      return Math.floor(Math.random() * max);
+    };
+    
+    // Start with a letter (required by pattern)
+    const start = letters[getSecureRandom(letters.length)];
+    
+    // Timestamp in base36 for uniqueness (lowercase) - guaranteed unique per millisecond
+    const timestamp = Date.now().toString(36);
+    
+    // Cryptographically random suffix (8 chars for extra uniqueness)
+    const suffix = Array.from(
+      { length: 8 }, 
+      () => alphanumeric[getSecureRandom(alphanumeric.length)]
+    ).join('');
+    
+    // Ensure ends with alphanumeric (not hyphen)
+    const end = alphanumeric[getSecureRandom(alphanumeric.length)];
+    
+    // Format: letter + timestamp + hyphen + suffix + end = ~20-22 chars
+    // Example: am7rskd4a-x8tz3nk9j
+    return `${start}${timestamp}-${suffix}${end}`;
+  }
+
+  // Open modal function
+  function openMakeOfferModal(
+    eventStart: string, 
+    eventEnd: string, 
+    eventName: string, 
+    eventLocation: string,
+    eventVenue: string,
+    listedPrice: number
+  ) {
+    if (!makeOfferModal) return;
+    
+    // Prevent body scroll when modal is open
+    document.body.style.overflow = 'hidden';
+    
+    // Generate unique offer ID
+    const offerId = generateOfferId();
+    if (offerIdInput) offerIdInput.value = offerId;
+    
+    // Populate hidden fields
+    if (eventStartDateInput) eventStartDateInput.value = eventStart;
+    if (eventEndDateInput) eventEndDateInput.value = eventEnd;
+    if (eventLocationInput) eventLocationInput.value = eventLocation;
+    if (eventVenueInput) eventVenueInput.value = eventVenue;
+    if (eventTitleInput) eventTitleInput.value = eventName;
+    if (eventListedPriceInput) eventListedPriceInput.value = listedPrice.toString();
+    
+    // Format and display event details
+    if (displayEventName) displayEventName.textContent = eventName;
+    if (displayEventDates && eventStart && eventEnd) {
+      const startParts = eventStart.split('-');
+      const endParts = eventEnd.split('-');
+      
+      const startDate = new Date(parseInt(startParts[0]), parseInt(startParts[1]) - 1, parseInt(startParts[2]));
+      const endDate = new Date(parseInt(endParts[0]), parseInt(endParts[1]) - 1, parseInt(endParts[2]));
+      
+      const formattedStart = startDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      const formattedEnd = endDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      displayEventDates.textContent = `${formattedStart} - ${formattedEnd}`;
+    }
+    if (displayListedPrice) {
+      displayListedPrice.textContent = listedPrice > 0 ? `£${listedPrice}pp` : 'Contact for price';
+    }
+    
+    // Show modal
+    makeOfferModal.classList.remove('hidden');
+    
+    // Hide messages
+    if (successMessage) successMessage.classList.add('hidden');
+    if (errorMessage) errorMessage.classList.add('hidden');
+    
+    // Reset form and validation
+    if (makeOfferForm) makeOfferForm.reset();
+    offerTurnstileToken = null;
+    
+    // Re-set the offer ID after reset
+    if (offerIdInput) offerIdInput.value = offerId;
+    
+    // Reset submit button text and state
+    if (submitButton) {
+      submitButton.textContent = 'Submit Offer';
+      submitButton.disabled = true;
+    }
+    
+    // Reset form element visibility (in case hidden from previous successful submission)
+    if (makeOfferForm) {
+      const formElements = makeOfferForm.querySelectorAll('input, select, textarea, button, .cf-turnstile, label, div, p');
+      formElements.forEach(el => {
+        (el as HTMLElement).style.display = '';
+      });
+    }
+    
+    validateMakeOfferForm();
+    
+    // Reset Turnstile widget
+    try {
+      if (typeof turnstile !== 'undefined' && turnstile) {
+        turnstile.reset();
+      }
+    } catch (e) {
+      // Ignore Turnstile reset errors
+    }
+  }
+
+  // Close modal function
+  function closeMakeOfferModal() {
+    if (!makeOfferModal) return;
+    makeOfferModal.classList.add('hidden');
+    
+    // Restore body scroll
+    document.body.style.overflow = '';
+    
+    // Reset form
+    if (makeOfferForm) makeOfferForm.reset();
+    if (successMessage) successMessage.classList.add('hidden');
+    if (errorMessage) errorMessage.classList.add('hidden');
+    offerTurnstileToken = null;
+  }
+
+  // Validate form
+  function validateMakeOfferForm() {
+    if (!submitButton) return;
+    
+    const firstName = firstNameInput?.value.trim();
+    const surname = surnameInput?.value.trim();
+    const email = emailInput?.value.trim();
+    const phone = phoneInput?.value.trim();
+    const numberOfPeople = numberOfPeopleInput?.value;
+    const offerAmount = offerAmountInput?.value;
+    const consent = consentInput?.checked;
+    
+    // Check for Turnstile token - either from callback, form data, or directly from widget
+    let hasTurnstile = !!offerTurnstileToken;
+    if (!hasTurnstile) {
+      try {
+        // First try to get from form data (most reliable for multiple widgets)
+        if (makeOfferForm) {
+          const formDataObj = new FormData(makeOfferForm);
+          const formToken = formDataObj.get('cf-turnstile-response');
+          if (formToken) {
+            offerTurnstileToken = formToken as string;
+            hasTurnstile = true;
+          }
+        }
+        
+        // Fallback: try to get the response directly from our specific widget
+        if (!hasTurnstile) {
+          const turnstileWidget = document.getElementById('offerTurnstileWidget');
+          if (turnstileWidget && typeof turnstile !== 'undefined' && turnstile) {
+            const directToken = turnstile.getResponse(turnstileWidget);
+            if (directToken) {
+              offerTurnstileToken = directToken;
+              hasTurnstile = true;
+            }
+          }
+        }
+      } catch (e) {
+        // Ignore errors
+      }
+    }
+    
+    const isValid = firstName && surname && email && phone && numberOfPeople && offerAmount && consent && hasTurnstile;
+    
+    submitButton.disabled = !isValid;
+  }
+
+  // Event listeners
+  if (closeModalBtn) {
+    closeModalBtn.addEventListener('click', closeMakeOfferModal);
+  }
+  
+  // Close button in success message
+  const closeSuccessBtn = document.getElementById('closeSuccessBtn');
+  if (closeSuccessBtn) {
+    closeSuccessBtn.addEventListener('click', () => {
+      // Reset form visibility before closing
+      if (makeOfferForm) {
+        const formElements = makeOfferForm.querySelectorAll('input, select, textarea, button, .cf-turnstile, label, div, p');
+        formElements.forEach(el => {
+          (el as HTMLElement).style.display = '';
+        });
+      }
+      closeMakeOfferModal();
+    });
+  }
+
+  // Close on backdrop click
+  if (makeOfferModal) {
+    makeOfferModal.addEventListener('click', (e) => {
+      if (e.target === makeOfferModal || (e.target as HTMLElement).classList.contains('min-h-full')) {
+        closeMakeOfferModal();
+      }
+    });
+  }
+
+  // Close on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && makeOfferModal && !makeOfferModal.classList.contains('hidden')) {
+      closeMakeOfferModal();
+    }
+  });
+
+  // Form validation on input
+  [firstNameInput, surnameInput, emailInput, phoneInput, numberOfPeopleInput, offerAmountInput, consentInput].forEach(input => {
+    if (input) {
+      input.addEventListener('input', validateMakeOfferForm);
+      input.addEventListener('change', validateMakeOfferForm);
+    }
+  });
+
+  // Form submission
+  if (makeOfferForm) {
+    makeOfferForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      // Try to get Turnstile token from form data first (most reliable for multiple widgets)
+      if (!offerTurnstileToken) {
+        const formDataObj = new FormData(makeOfferForm);
+        const formToken = formDataObj.get('cf-turnstile-response');
+        if (formToken) {
+          offerTurnstileToken = formToken as string;
+        }
+      }
+      
+      if (!offerTurnstileToken) {
+        if (errorMessage) errorMessage.classList.remove('hidden');
+        if (errorText) errorText.textContent = 'Please complete the verification.';
+        return;
+      }
+      
+      // Disable submit button
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = 'Submitting...';
+      }
+      
+      // Hide previous messages
+      if (successMessage) successMessage.classList.add('hidden');
+      if (errorMessage) errorMessage.classList.add('hidden');
+      
+      const formData = {
+        offerId: offerIdInput?.value || generateOfferId(),
+        firstName: firstNameInput?.value.trim(),
+        surname: surnameInput?.value.trim(),
+        email: emailInput?.value.trim(),
+        phone: phoneInput?.value.trim(),
+        numberOfPeople: numberOfPeopleInput?.value,
+        offerAmount: parseFloat(offerAmountInput?.value || '0'),
+        message: messageInput?.value.trim() || '',
+        eventTitle: eventTitleInput?.value,
+        eventStartDate: eventStartDateInput?.value,
+        eventEndDate: eventEndDateInput?.value,
+        eventLocation: eventLocationInput?.value,
+        eventVenue: eventVenueInput?.value,
+        eventListedPrice: parseFloat(eventListedPriceInput?.value || '0'),
+        turnstileToken: offerTurnstileToken
+      };
+      
+      try {
+        const response = await fetch(API_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+        
+        if (response.ok) {
+          // Show success message
+          if (successMessage) successMessage.classList.remove('hidden');
+          if (offerReferenceDisplay) {
+            // Show the full offer ID (same as in webhook)
+            offerReferenceDisplay.textContent = formData.offerId;
+          }
+          
+          // Hide form fields but keep success visible
+          if (makeOfferForm) {
+            const formElements = makeOfferForm.querySelectorAll('input, select, textarea, button, .cf-turnstile, label, div:not(#makeOfferSuccess), p');
+            formElements.forEach(el => {
+              if (el !== successMessage && !successMessage?.contains(el)) {
+                (el as HTMLElement).style.display = 'none';
+              }
+            });
+          }
+          
+          // Don't auto-close - let user close manually
+        } else {
+          let errorMsg = 'Submission failed. Please try again.';
+          try {
+            const errorData = await response.json();
+            if (errorData.error) {
+              errorMsg = errorData.error;
+            }
+          } catch (e) {
+            // Use default error message
+          }
+          throw new Error(errorMsg);
+        }
+      } catch (error) {
+        console.error('Error submitting offer form:', error);
+        
+        // Show error message
+        if (errorMessage) errorMessage.classList.remove('hidden');
+        if (errorText) {
+          errorText.textContent = error instanceof Error ? error.message : 'Something went wrong. Please try again.';
+        }
+        
+        // Re-enable submit button
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = 'Submit Offer';
+        }
+        
+        // Re-validate form
+        validateMakeOfferForm();
+      }
+    });
+  }
+
+  // Make function globally available
+  (window as any).openMakeOfferModal = openMakeOfferModal;
+
+  // Initial validation on load
+  validateMakeOfferForm();
+</script>
+
+<style>
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+
+  /* Custom scrollbar for modal content */
+  #makeOfferModal .max-w-xl::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  #makeOfferModal .max-w-xl::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+
+  #makeOfferModal .max-w-xl::-webkit-scrollbar-thumb {
+    background: #c4c4c4;
+    border-radius: 3px;
+  }
+
+  #makeOfferModal .max-w-xl::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
+</style>
