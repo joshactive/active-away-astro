@@ -15,7 +15,7 @@
     "@fontsource/inter": "^5.2.8",
     "@fontsource/playfair-display": "^5.2.8",
     "@radix-ui/react-slot": "^1.2.4",
-    "astro": "^5.16.9",
+    "astro": "^5.15.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",
