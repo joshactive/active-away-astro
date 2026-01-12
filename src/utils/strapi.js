@@ -4640,7 +4640,8 @@ function transformTennisHolidayDetail(item) {
     itineraryDownloadUrl: holiday.itineraryDownloadUrl,
     itineraryDownloadUrl2: holiday.itineraryDownloadUrl2,
     otherFaqsUrl: holiday.otherFaqsUrl,
-    googleMapsSearchTerm: holiday.googleMapsSearchTerm,
+    // Support both googleMapsSearchTerm (tennis-holidays) and googleMapUrl (tennis-clinics may use this)
+    googleMapsSearchTerm: holiday.googleMapsSearchTerm || holiday.googleMapUrl || holiday.googleMapsUrl,
     fullScreenVideo: holiday.fullScreenVideo,
     emailAddress: holiday.emailAddress,
     
@@ -6361,7 +6362,8 @@ function transformGroupOrganiserDetail(item) {
     itineraryDownloadUrl: holiday.itineraryDownloadUrl,
     itineraryDownloadUrl2: holiday.itineraryDownloadUrl2,
     otherFaqsUrl: holiday.otherFaqsUrl,
-    googleMapsSearchTerm: holiday.googleMapsSearchTerm,
+    // Support both googleMapsSearchTerm and potential alternatives
+    googleMapsSearchTerm: holiday.googleMapsSearchTerm || holiday.googleMapUrl || holiday.googleMapsUrl,
     fullScreenVideo: holiday.fullScreenVideo,
     emailAddress: holiday.emailAddress,
     
