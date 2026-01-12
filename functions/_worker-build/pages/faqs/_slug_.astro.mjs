@@ -1,10 +1,10 @@
 globalThis.process ??= {}; globalThis.process.env ??= {};
 /* empty css                                     */
-import { e as createAstro, f as createComponent, r as renderTemplate, k as renderComponent, m as maybeRenderHead, h as addAttribute, n as Fragment, u as unescapeHTML } from '../../chunks/astro/server_BoSsXtn0.mjs';
-import { $ as $$BaseLayout } from '../../chunks/BaseLayout_BE34rldG.mjs';
-import { $ as $$PageHeroTailwind, a as $$BreadcrumbsTailwind } from '../../chunks/BreadcrumbsTailwind_BgRFP0qO.mjs';
-import { D as getFAQCategoryBySlug, E as getFAQCategorySEO } from '../../chunks/strapi_UhkUqLlA.mjs';
-import { p as parseMarkdown } from '../../chunks/markdown_C9eAVA1x.mjs';
+import { e as createAstro, f as createComponent, r as renderTemplate, k as renderComponent, m as maybeRenderHead, h as addAttribute, n as Fragment, u as unescapeHTML } from '../../chunks/astro/server_DGNyvb9N.mjs';
+import { $ as $$BaseLayout } from '../../chunks/BaseLayout_DFPiOYnu.mjs';
+import { $ as $$PageHeroTailwind, a as $$BreadcrumbsTailwind } from '../../chunks/BreadcrumbsTailwind_DRUEr9kD.mjs';
+import { G as getFAQCategoryBySlug, H as getFAQCategorySEO } from '../../chunks/strapi_D13TtKqq.mjs';
+import { p as parseMarkdown } from '../../chunks/markdown_T4JH12PS.mjs';
 /* empty css                                     */
 export { renderers } from '../../renderers.mjs';
 

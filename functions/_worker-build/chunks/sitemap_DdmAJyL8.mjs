@@ -1,5 +1,5 @@
 globalThis.process ??= {}; globalThis.process.env ??= {};
-import { aG as fetchAPI } from './strapi_UhkUqLlA.mjs';
+import { aN as fetchAPI } from './strapi_D13TtKqq.mjs';
 
 // Configuration mapping Strapi collections to Frontend URL patterns
 // Ordered by priority/importance
@@ -48,6 +48,7 @@ const CONTENT_TYPES = [
   { group: 'pages', type: 'single', endpoint: 'video-archive-page', path: '/videos', query: 'populate[sitemap]=*' },
   { group: 'pages', type: 'single', endpoint: 'welcomepacks-page', path: '/welcomepacks', query: 'populate[sitemap]=*' },
   { group: 'pages', type: 'single', endpoint: 'whatsapp-groups-page', path: '/whatsapp-groups', query: 'populate[sitemap]=*' },
+  { group: 'pages', type: 'single', endpoint: 'game4padel-page', path: '/game4padel-partnership', query: 'populate[sitemap]=*' },
 
   // --- MANUAL PAGES (Static/Index Pages) ---
   { group: 'blog', type: 'manual', path: '/blog', changefreq: 'daily', priority: 0.9 },

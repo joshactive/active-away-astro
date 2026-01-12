@@ -413,6 +413,18 @@ function getEnvValue(key, fallback = "") {
 function getStrapiUrl() {
   return getEnvValue("STRAPI_URL", DEFAULT_STRAPI_URL);
 }
+function formatUrl(url) {
+  if (!url || typeof url !== "string") return "";
+  url = url.trim();
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  if (url.startsWith("www.") || url.includes(".")) {
+    return "https://" + url;
+  }
+  return url;
+}
 function getStrapiToken() {
   return getEnvValue("STRAPI_API_TOKEN", DEFAULT_STRAPI_TOKEN);
 }
@@ -2054,6 +2066,7 @@ function transformFormDetail(item) {
     formLayout: form.formLayout || "one-column",
     formFields,
     formWebhookUrl: form.formWebhookUrl || null,
+    redirectUrl: form.redirectUrl || null,
     showOtherOptions: form.showOtherOptions || false,
     submitButtonConditional: form.submitButtonConditional || false,
     submitButtonConditionalField: form.submitButtonConditionalField || "",
@@ -2313,6 +2326,82 @@ async function getEventsPage() {
     "Discover all our upcoming tennis, padel, pickleball, and ski events. Filter by type, location, price, and dates to find your perfect experience.",
     "EVENTS"
   );
+}
+async function getAvailabilityPage() {
+  try {
+    console.log("📖 [getAvailabilityPage] Fetching availability page data...");
+    const data = await fetchAPI("/availability-page");
+    if (!data || !data.data) {
+      console.warn("⚠️  [getAvailabilityPage] No availability page found");
+      return null;
+    }
+    const page = data.data.attributes || data.data;
+    const availabilityPage = {
+      heroTitle: page.heroTitle,
+      heroSubtitle: page.heroSubtitle,
+      heroKicker: page.heroKicker,
+      seo: page.seo || null
+    };
+    console.log("✅ [getAvailabilityPage] Availability page data fetched successfully");
+    return availabilityPage;
+  } catch (error) {
+    console.error("❌ [getAvailabilityPage] Error:", error);
+    return null;
+  }
+}
+async function getAvailabilityPageHeroImage() {
+  try {
+    console.log("📸 [getAvailabilityPageHeroImage] Fetching hero image...");
+    const data = await fetchAPI("/availability-page?populate=heroBackgroundImage");
+    if (!data || !data.data) {
+      console.warn("⚠️  [getAvailabilityPageHeroImage] No availability page found");
+      return null;
+    }
+    const page = data.data.attributes || data.data;
+    const heroBackgroundImage = getStrapiImageData(page.heroBackgroundImage);
+    if (heroBackgroundImage?.url) {
+      console.log(`📸 Availability page hero image URL:`, heroBackgroundImage.url);
+    }
+    return heroBackgroundImage;
+  } catch (error) {
+    console.error("❌ [getAvailabilityPageHeroImage] Error:", error);
+    return null;
+  }
+}
+async function getAvailabilityPageSEO() {
+  try {
+    console.log("📄 [getAvailabilityPageSEO] Fetching SEO for availability page...");
+    const data = await fetchAPI("/availability-page?populate[seo][populate]=metaImage");
+    if (!data || !data.data) {
+      console.warn("⚠️  [getAvailabilityPageSEO] No availability page found");
+      return null;
+    }
+    const page = data.data.attributes || data.data;
+    const seo = page.seo;
+    if (!seo) {
+      console.warn("⚠️  [getAvailabilityPageSEO] No SEO data");
+      return null;
+    }
+    const metaImageData = getOptimizedSEOImage(seo.metaImage);
+    if (metaImageData.url) {
+      console.log(`📸 Availability page meta image URL (optimized):`, metaImageData.url);
+    }
+    const seoData = {
+      metaTitle: seo.metaTitle,
+      metaDescription: seo.metaDescription,
+      keywords: seo.keywords,
+      canonicalURL: seo.canonicalURL,
+      metaImage: metaImageData.url,
+      metaImageAlt: metaImageData.alt,
+      metaImageWidth: metaImageData.width,
+      metaImageHeight: metaImageData.height
+    };
+    console.log("✅ [getAvailabilityPageSEO] SEO data fetched");
+    return seoData;
+  } catch (error) {
+    console.error("❌ [getAvailabilityPageSEO] Error:", error);
+    return null;
+  }
 }
 async function getVideoArchivePage() {
   return await getArchivePage(
@@ -3442,7 +3531,8 @@ function transformTennisHolidayDetail(item) {
     itineraryDownloadUrl: holiday.itineraryDownloadUrl,
     itineraryDownloadUrl2: holiday.itineraryDownloadUrl2,
     otherFaqsUrl: holiday.otherFaqsUrl,
-    googleMapsSearchTerm: holiday.googleMapsSearchTerm,
+    // Support both googleMapsSearchTerm (tennis-holidays) and googleMapUrl (tennis-clinics may use this)
+    googleMapsSearchTerm: holiday.googleMapsSearchTerm || holiday.googleMapUrl || holiday.googleMapsUrl,
     fullScreenVideo: holiday.fullScreenVideo,
     emailAddress: holiday.emailAddress,
     // Meta
@@ -4720,7 +4810,8 @@ function transformGroupOrganiserDetail(item) {
     itineraryDownloadUrl: holiday.itineraryDownloadUrl,
     itineraryDownloadUrl2: holiday.itineraryDownloadUrl2,
     otherFaqsUrl: holiday.otherFaqsUrl,
-    googleMapsSearchTerm: holiday.googleMapsSearchTerm,
+    // Support both googleMapsSearchTerm and potential alternatives
+    googleMapsSearchTerm: holiday.googleMapsSearchTerm || holiday.googleMapUrl || holiday.googleMapsUrl,
     fullScreenVideo: holiday.fullScreenVideo,
     emailAddress: holiday.emailAddress,
     // Meta
@@ -6121,7 +6212,8 @@ async function getSalesLandingPageBySlug(slug) {
         description: page.formSection.description,
         privacyNote: page.formSection.privacyNote,
         form,
-        webhookUrl: page.formSection.webhookUrl || null
+        webhookUrl: page.formSection.webhookUrl || null,
+        redirectUrl: page.formSection.redirectUrl || null
       } : null,
       statsSection: page.statsSection ? {
         stats: page.statsSection.stats?.map((stat) => ({
@@ -6491,6 +6583,136 @@ async function getKeyTakeawaysPage() {
 async function getKeyTakeawaysPageSEO() {
   return getPageSEO("key-takeaways-page");
 }
+async function getGame4PadelPage() {
+  try {
+    console.log("🏓 [getGame4PadelPage] Fetching Game4Padel page data...");
+    const data = await fetchAPI("/game4padel-page?pLevel=5");
+    if (!data || !data.data) {
+      console.warn("⚠️  [getGame4PadelPage] No data found - is the content published?");
+      return null;
+    }
+    const pageData = data.data.attributes || data.data;
+    console.log("🔍 [getGame4PadelPage] pageHero kicker:", pageData.pageHero?.kicker);
+    const result = {
+      title: pageData.title || "Game4Padel Partnership",
+      displayOnFrontEnd: pageData.displayOnFrontEnd !== false,
+      pageHero: pageData.pageHero ? {
+        kicker: pageData.pageHero.kicker || "",
+        heading: pageData.pageHero.heading || "Game4Padel",
+        subtitle: pageData.pageHero.subtitle || "Our Official Padel Partner",
+        backgroundImage: getStrapiImageData(pageData.pageHero.backgroundImage),
+        showBreadcrumbs: pageData.pageHero.showBreadcrumbs !== false
+      } : null,
+      partnershipIntro: pageData.partnershipIntro || "",
+      partnerLogo: pageData.partnerLogo ? getStrapiImageData(pageData.partnerLogo) : null,
+      benefits: pageData.benefits ? pageData.benefits.map((benefit) => ({
+        icon: benefit.icon || "check",
+        customIconSvg: benefit.customIconSvg || null,
+        title: benefit.title || "",
+        description: benefit.description || ""
+      })) : [],
+      venuesSectionTitle: pageData.venuesSectionTitle || "Find a Game4Padel Venue",
+      venuesSectionDescription: pageData.venuesSectionDescription || "",
+      seo: pageData.seo || null
+    };
+    console.log("✅ [getGame4PadelPage] Data fetched successfully");
+    return result;
+  } catch (error) {
+    console.error("❌ [getGame4PadelPage] Error:", error);
+    return null;
+  }
+}
+async function getGame4PadelPageSEO() {
+  try {
+    console.log("📄 [getGame4PadelPageSEO] Fetching SEO for game4padel page...");
+    const data = await fetchAPI("/game4padel-page?populate[seo][populate]=metaImage");
+    if (!data || !data.data) {
+      console.warn("⚠️  [getGame4PadelPageSEO] No game4padel page found");
+      return null;
+    }
+    const page = data.data.attributes || data.data;
+    const seo = page.seo;
+    if (!seo) {
+      console.warn("⚠️  [getGame4PadelPageSEO] No SEO data");
+      return null;
+    }
+    const metaImageData = getOptimizedSEOImage(seo.metaImage);
+    const seoData = {
+      metaTitle: seo.metaTitle || null,
+      metaDescription: seo.metaDescription || null,
+      keywords: seo.keywords || null,
+      canonicalURL: seo.canonicalURL || null,
+      metaImage: metaImageData.url,
+      metaImageAlt: metaImageData.alt,
+      metaImageWidth: metaImageData.width,
+      metaImageHeight: metaImageData.height
+    };
+    console.log("✅ [getGame4PadelPageSEO] SEO data fetched");
+    return seoData;
+  } catch (error) {
+    console.error("❌ [getGame4PadelPageSEO] Error:", error);
+    return null;
+  }
+}
+async function getGame4PadelVenues() {
+  try {
+    console.log("🏓 [getGame4PadelVenues] Fetching Game4Padel venues from Closeby API...");
+    const closebyUrl = "https://www.closeby.co/embed/856c91397736fdd971f2554b10c16a50/locations?bounding_box=43,-21,65,12&cachable=true&isInitialLoad=true";
+    const response = await fetch(closebyUrl, {
+      headers: {
+        "Accept": "application/json",
+        "User-Agent": "ActiveAway/1.0"
+      }
+    });
+    if (!response.ok) {
+      console.warn(`⚠️  [getGame4PadelVenues] Closeby API returned ${response.status}`);
+      return [];
+    }
+    const data = await response.json();
+    if (!data || !data.locations || data.locations.length === 0) {
+      console.warn("⚠️  [getGame4PadelVenues] No venues found from Closeby API");
+      return [];
+    }
+    const venues = data.locations.map((location, index) => {
+      const fullAddress = location.address_full || "";
+      const postcodeMatch = fullAddress.match(/[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}/i);
+      const postcode = postcodeMatch ? postcodeMatch[0].toUpperCase() : "";
+      const addressParts = fullAddress.split(",").map((p) => p.trim());
+      let city = "";
+      for (let i = addressParts.length - 1; i >= 0; i--) {
+        const part = addressParts[i];
+        if (part === "UK" || part.includes(postcode) || !part) continue;
+        if (/^[A-Z]{1,2}\d/i.test(part)) continue;
+        city = part;
+        break;
+      }
+      const region = (location.categories || []).find((c) => ["Scotland", "England", "Wales", "Northern Ireland"].includes(c)) || "";
+      return {
+        id: location.id || index + 1,
+        documentId: null,
+        name: location.title || "Unnamed Venue",
+        address: fullAddress,
+        city,
+        postcode,
+        region,
+        latitude: parseFloat(location.latitude) || 0,
+        longitude: parseFloat(location.longitude) || 0,
+        image: location.banner_url ? { url: location.banner_url } : null,
+        websiteUrl: formatUrl(location.custom_button_url),
+        phoneNumber: location.phone_number || "",
+        description: location.short_description || "",
+        categories: location.categories || [],
+        ordering: index
+      };
+    });
+    venues.sort((a, b) => a.name.localeCompare(b.name));
+    console.log(`✅ [getGame4PadelVenues] Fetched ${venues.length} venues from Game4Padel`);
+    return venues;
+  } catch (error) {
+    console.error("❌ [getGame4PadelVenues] Error fetching from Closeby API:", error);
+    return [];
+  }
+}
 
 const strapi = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
@@ -6505,6 +6727,9 @@ const strapi = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   getAllVenues,
   getAllVideos,
   getAnnouncementBar,
+  getAvailabilityPage,
+  getAvailabilityPageHeroImage,
+  getAvailabilityPageSEO,
   getBasicStaticPageBySlug,
   getBasicStaticPages,
   getBlogBySlug,
@@ -6538,6 +6763,9 @@ const strapi = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   getFormsPage,
   getFormsPageSEO,
   getFutureEvents,
+  getGame4PadelPage,
+  getGame4PadelPageSEO,
+  getGame4PadelVenues,
   getGroupOrganiserByDocumentId,
   getGroupOrganiserById,
   getGroupOrganiserBySlug,
@@ -6656,4 +6884,4 @@ const strapi = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   normalizeBookingLink
 }, Symbol.toStringTag, { value: 'Module' }));
 
-export { getJamieMurrayPage as $, getDragonsDenPage as A, getDragonsDenPageSEO as B, getEventBySlug as C, getFAQCategoryBySlug as D, getFAQCategorySEO as E, getFAQCategories as F, getFAQsIndexPage as G, getFAQsIndexPageSEO as H, getFlightsPage as I, getFlightsPageSEO as J, getFormBySlug as K, getFormSEO as L, getForms as M, getFormsPage as N, getFormsPageSEO as O, getAnnouncementBar as P, getNavigationMenu as Q, getImageByName as R, getResponsiveImageByName as S, getProducts as T, getGroupOrganiserBySlug as U, getMasterPageData as V, getGroupOrganiserNestedData as W, getGroupOrganiserSEO as X, getGroupOrganisers as Y, getEventsByDocumentIds as Z, getGroupOrganiserPage as _, getResponsiveImageAttrs as a, getVenuesPage as a$, getJamieMurrayPageSEO as a0, getFeaturedLocations as a1, getAllVenues as a2, getJoinTheTeamPage as a3, getJoinTheTeamPageSEO as a4, getJuniorTennisCampBySlug as a5, getJuniorTennisCampNestedData as a6, getJuniorTennisCampSEO as a7, getJuniorTennisCamps as a8, getEventsByUniqueValue as a9, getSchoolTennisTours as aA, getSchoolTourPage as aB, getSearchResultsPage as aC, getSearchResultsPageSEO as aD, getSelfRatingGuidePage as aE, getSelfRatingGuidePageSEO as aF, fetchAPI as aG, getSkiHolidayBySlug as aH, getSkiHolidayNestedData as aI, getSkiHolidaySEO as aJ, getSkiHolidays as aK, getSkiHolidayPage as aL, getTennisAcademyBySlug as aM, getTennisAcademyNestedData as aN, getTennisAcademySEO as aO, getTennisAcademiesForCards as aP, getTennisAcademies as aQ, getTennisAcademyPage as aR, getTennisClinicBySlug as aS, getTennisClinicNestedData as aT, getTennisClinicSEO as aU, getTennisClinics as aV, getTennisClinicPage as aW, getTennisHolidayBySlug as aX, getTennisHolidayNestedData as aY, getTennisHolidaySEO as aZ, getTennisHolidayPage as a_, getProductReviews as aa, getJuniorCampPage as ab, getKeyTakeawaysPage as ac, getKeyTakeawaysPageSEO as ad, getPadelHolidayBySlug as ae, getPadelHolidayNestedData as af, getPadelHolidaySEO as ag, getPadelTennisHolidays as ah, getPadelHolidayPage as ai, getPickleballHolidayBySlug as aj, getPickleballHolidayNestedData as ak, getPickleballHolidaySEO as al, getPickleballHolidays as am, getPickleballHolidayPage as an, getPlayAndWatchBySlug as ao, getPlayAndWatchNestedData as ap, getPlayAndWatchSEO as aq, getPlayAndWatchHolidays as ar, getTennisHolidays as as, getPlayAndWatchPage as at, getPreOrders as au, getPreOrdersPage as av, getPrivacyPolicyPage as aw, getSchoolTennisTourBySlug as ax, getSchoolTennisTourNestedData as ay, getSchoolTennisTourSEO as az, getStrapiImageAttrs as b, getWelcomepacksPageSEO as b0, getWhatsappGroupsPageSEO as b1, getStrapiImageData as b2, getCloudflareImageVariant as b3, getProductPageBySlug as b4, getBasicStaticPageBySlug as b5, getSalesLandingPageBySlug as b6, getProductPageSEO as b7, getProductPages as b8, getBasicStaticPages as b9, getSalesLandingPages as ba, getFutureEvents as bb, getBlogs as bc, getHomePage as bd, getHomeSEO as be, strapi as bf, getPeople as c, getAboutPage as d, getAboutPageSEO as e, getHomeData as f, getRedirects as g, getTravelGuidesPage as h, getTravelGuidesPageSEO as i, getAirportTransfersPage as j, getAirportTransfersPageSEO as k, getReviews as l, getPreOrderBySlug as m, getBlogBySlug as n, getBlogSEO as o, getAllBlogPosts as p, getBlogCategoryData as q, getBlogCategorySEO as r, getBlogsByCategory as s, formatCategorySlug as t, getBlogPage as u, getBlogPageSEO as v, getBookingProcessPage as w, getBookingProcessPageSEO as x, getTermsPage as y, getPageSEO as z };
+export { getMasterPageData as $, getBookingProcessPageSEO as A, getTermsPage as B, getPageSEO as C, getDragonsDenPage as D, getDragonsDenPageSEO as E, getEventBySlug as F, getFAQCategoryBySlug as G, getFAQCategorySEO as H, getFAQCategories as I, getFAQsIndexPage as J, getFAQsIndexPageSEO as K, getAnnouncementBar as L, getNavigationMenu as M, getImageByName as N, getResponsiveImageByName as O, getProducts as P, getFlightsPage as Q, getFlightsPageSEO as R, getFormBySlug as S, getFormSEO as T, getForms as U, getFormsPage as V, getFormsPageSEO as W, getGame4PadelPage as X, getGame4PadelPageSEO as Y, getGame4PadelVenues as Z, getGroupOrganiserBySlug as _, getResponsiveImageAttrs as a, getTennisClinics as a$, getGroupOrganiserNestedData as a0, getGroupOrganiserSEO as a1, getGroupOrganisers as a2, getEventsByDocumentIds as a3, getGroupOrganiserPage as a4, getJamieMurrayPage as a5, getJamieMurrayPageSEO as a6, getFeaturedLocations as a7, getAllVenues as a8, getTennisAcademiesForCards as a9, getPlayAndWatchPage as aA, getPreOrders as aB, getPreOrdersPage as aC, getPrivacyPolicyPage as aD, getSchoolTennisTourBySlug as aE, getSchoolTennisTourNestedData as aF, getSchoolTennisTourSEO as aG, getSchoolTennisTours as aH, getSchoolTourPage as aI, getSearchResultsPage as aJ, getSearchResultsPageSEO as aK, getSelfRatingGuidePage as aL, getSelfRatingGuidePageSEO as aM, fetchAPI as aN, getSkiHolidayBySlug as aO, getSkiHolidayNestedData as aP, getSkiHolidaySEO as aQ, getSkiHolidays as aR, getSkiHolidayPage as aS, getTennisAcademyBySlug as aT, getTennisAcademyNestedData as aU, getTennisAcademySEO as aV, getTennisAcademies as aW, getTennisAcademyPage as aX, getTennisClinicBySlug as aY, getTennisClinicNestedData as aZ, getTennisClinicSEO as a_, getJoinTheTeamPage as aa, getJoinTheTeamPageSEO as ab, getJuniorTennisCampBySlug as ac, getJuniorTennisCampNestedData as ad, getJuniorTennisCampSEO as ae, getJuniorTennisCamps as af, getEventsByUniqueValue as ag, getProductReviews as ah, getJuniorCampPage as ai, getKeyTakeawaysPage as aj, getKeyTakeawaysPageSEO as ak, getPadelHolidayBySlug as al, getPadelHolidayNestedData as am, getPadelHolidaySEO as an, getPadelTennisHolidays as ao, getPadelHolidayPage as ap, getPickleballHolidayBySlug as aq, getPickleballHolidayNestedData as ar, getPickleballHolidaySEO as as, getPickleballHolidays as at, getPickleballHolidayPage as au, getPlayAndWatchBySlug as av, getPlayAndWatchNestedData as aw, getPlayAndWatchSEO as ax, getPlayAndWatchHolidays as ay, getTennisHolidays as az, getStrapiImageAttrs as b, getTennisClinicPage as b0, getTennisHolidayBySlug as b1, getTennisHolidayNestedData as b2, getTennisHolidaySEO as b3, getTennisHolidayPage as b4, getVenuesPage as b5, getWelcomepacksPageSEO as b6, getWhatsappGroupsPageSEO as b7, getStrapiImageData as b8, getCloudflareImageVariant as b9, getProductPageBySlug as ba, getBasicStaticPageBySlug as bb, getSalesLandingPageBySlug as bc, getProductPageSEO as bd, getProductPages as be, getBasicStaticPages as bf, getSalesLandingPages as bg, getFutureEvents as bh, getBlogs as bi, getHomePage as bj, getHomeSEO as bk, strapi as bl, getPeople as c, getAboutPage as d, getAboutPageSEO as e, getHomeData as f, getRedirects as g, getTravelGuidesPage as h, getTravelGuidesPageSEO as i, getAirportTransfersPage as j, getAirportTransfersPageSEO as k, getReviews as l, getPreOrderBySlug as m, getAvailabilityPage as n, getAvailabilityPageSEO as o, getAvailabilityPageHeroImage as p, getBlogBySlug as q, getBlogSEO as r, getAllBlogPosts as s, getBlogCategoryData as t, getBlogCategorySEO as u, getBlogsByCategory as v, formatCategorySlug as w, getBlogPage as x, getBlogPageSEO as y, getBookingProcessPage as z };

@@ -1,5 +1,5 @@
 globalThis.process ??= {}; globalThis.process.env ??= {};
-import { p as getDefaultExportFromCjs } from './chunks/astro/server_BoSsXtn0.mjs';
+import { p as getDefaultExportFromCjs } from './chunks/astro/server_DGNyvb9N.mjs';
 
 var react = {exports: {}};
 
@@ -550,7 +550,7 @@ function requireReact_production () {
 	react_production.useTransition = function () {
 	  return ReactSharedInternals.H.useTransition();
 	};
-	react_production.version = "19.2.0";
+	react_production.version = "19.2.3";
 	return react_production;
 }
 
@@ -789,7 +789,7 @@ function requireReactDom_production () {
 	reactDom_production.useFormStatus = function () {
 	  return ReactSharedInternals.H.useHostTransitionStatus();
 	};
-	reactDom_production.version = "19.2.0";
+	reactDom_production.version = "19.2.3";
 	return reactDom_production;
 }
 
@@ -7397,7 +7397,7 @@ function requireReactDomServerLegacy_browser_production () {
 	    'The server used "renderToString" which does not support Suspense. If you intended for this Suspense boundary to render the fallback content on the server consider throwing an Error somewhere within the Suspense boundary. If you intended to have the server wait for the suspended component please switch to "renderToReadableStream" which supports Suspense on the server'
 	  );
 	};
-	reactDomServerLegacy_browser_production.version = "19.2.0";
+	reactDomServerLegacy_browser_production.version = "19.2.3";
 	return reactDomServerLegacy_browser_production;
 }
 
@@ -14532,12 +14532,12 @@ function requireReactDomServer_browser_production () {
 	}
 	function ensureCorrectIsomorphicReactVersion() {
 	  var isomorphicReactPackageVersion = React.version;
-	  if ("19.2.0" !== isomorphicReactPackageVersion)
+	  if ("19.2.3" !== isomorphicReactPackageVersion)
 	    throw Error(
 	      formatProdErrorMessage(
 	        527,
 	        isomorphicReactPackageVersion,
-	        "19.2.0"
+	        "19.2.3"
 	      )
 	    );
 	}
@@ -14792,7 +14792,7 @@ function requireReactDomServer_browser_production () {
 	    startWork(request);
 	  });
 	};
-	reactDomServer_browser_production.version = "19.2.0";
+	reactDomServer_browser_production.version = "19.2.3";
 	return reactDomServer_browser_production;
 }
 

@@ -44,7 +44,7 @@ const POST = async ({ request, locals }) => {
         headers: { "Content-Type": "application/json" }
       });
     }
-    const { formSlug, data: formData, turnstileToken, webhookUrl: providedWebhookUrl } = body;
+    const { formSlug, data: formData, turnstileToken, webhookUrl: providedWebhookUrl, redirectUrl: providedRedirectUrl } = body;
     if (!formSlug || !formData) {
       return new Response(JSON.stringify({
         error: "Missing required fields: formSlug, data"
@@ -57,6 +57,7 @@ const POST = async ({ request, locals }) => {
     let formFields = [];
     let webhookFormat = "labels";
     let formTitle = "";
+    let redirectUrl = providedRedirectUrl || null;
     if (providedWebhookUrl) {
       webhookUrl = providedWebhookUrl;
       formTitle = formSlug;
@@ -89,6 +90,7 @@ const POST = async ({ request, locals }) => {
         webhookUrl = form.formWebhookUrl;
         formTitle = form.title || formSlug;
         webhookFormat = form.webhookFormat || "labels";
+        redirectUrl = form.redirectUrl || redirectUrl;
         if (!webhookUrl) {
           console.error(`❌ No webhook URL configured for form: ${formSlug}`);
           throw new Error("Webhook URL not configured for this form");
@@ -170,9 +172,18 @@ const POST = async ({ request, locals }) => {
         const transformedData = {};
         for (const field of formFields) {
           if (field.type === "section") {
-            transformedData[field.label] = "";
+            if (field.label) {
+              transformedData[field.label] = "";
+            }
+          } else if (field.type === "hidden") {
+            if (field.name && formData[field.name] !== void 0) {
+              transformedData[field.name] = formData[field.name];
+            }
           } else if (field.name && formData[field.name] !== void 0) {
-            transformedData[field.label] = formData[field.name];
+            const key = field.label || field.name;
+            if (key) {
+              transformedData[key] = formData[field.name];
+            }
           }
         }
         if (formData.shortLocationName) {
@@ -224,7 +235,8 @@ const POST = async ({ request, locals }) => {
     }
     return new Response(JSON.stringify({
       success: true,
-      message: "Form submitted successfully!"
+      message: "Form submitted successfully!",
+      redirectUrl: redirectUrl || null
     }), {
       status: 200,
       headers: { "Content-Type": "application/json" }

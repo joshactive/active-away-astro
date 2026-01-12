@@ -1,5 +1,5 @@
 globalThis.process ??= {}; globalThis.process.env ??= {};
-import { a as getSitemapEntries } from '../chunks/sitemap_BiFDOgqD.mjs';
+import { a as getSitemapEntries } from '../chunks/sitemap_DdmAJyL8.mjs';
 export { renderers } from '../renderers.mjs';
 
 const GET = async ({ params, request }) => {

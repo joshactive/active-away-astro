@@ -1,5 +1,5 @@
 globalThis.process ??= {}; globalThis.process.env ??= {};
-import { m as getPreOrderBySlug } from '../../chunks/strapi_UhkUqLlA.mjs';
+import { m as getPreOrderBySlug } from '../../chunks/strapi_D13TtKqq.mjs';
 export { renderers } from '../../renderers.mjs';
 
 const GET = async () => {

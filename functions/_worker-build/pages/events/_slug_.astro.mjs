@@ -1,30 +1,27 @@
 globalThis.process ??= {}; globalThis.process.env ??= {};
 /* empty css                                     */
-import { e as createAstro, f as createComponent, m as maybeRenderHead, h as addAttribute, r as renderTemplate, s as spreadAttributes, k as renderComponent, l as defineScriptVars } from '../../chunks/astro/server_BoSsXtn0.mjs';
-import { $ as $$BaseLayout } from '../../chunks/BaseLayout_BE34rldG.mjs';
-import { C as getEventBySlug, b as getStrapiImageAttrs } from '../../chunks/strapi_UhkUqLlA.mjs';
+import { e as createAstro, f as createComponent, m as maybeRenderHead, h as addAttribute, r as renderTemplate, s as spreadAttributes, k as renderComponent, l as defineScriptVars } from '../../chunks/astro/server_DGNyvb9N.mjs';
+import { $ as $$BaseLayout } from '../../chunks/BaseLayout_DFPiOYnu.mjs';
+import { F as getEventBySlug, b as getStrapiImageAttrs } from '../../chunks/strapi_D13TtKqq.mjs';
 export { renderers } from '../../renderers.mjs';
 
-const $$Astro$5 = createAstro("https://activeaway.com");
+const $$Astro$4 = createAstro("https://activeaway.com");
 const $$MapPinIcon = createComponent(($$result, $$props, $$slots) => {
-  const Astro2 = $$result.createAstro($$Astro$5, $$props, $$slots);
+  const Astro2 = $$result.createAstro($$Astro$4, $$props, $$slots);
   Astro2.self = $$MapPinIcon;
   const { class: className = "w-4 h-4" } = Astro2.props;
   return renderTemplate`${maybeRenderHead()}<svg${addAttribute(className, "class")} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"> <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path> <circle cx="12" cy="10" r="3"></circle> </svg>`;
 }, "/Users/joshuathompson/active-away-astro/src/components/ui/icons/MapPinIcon.astro", void 0);
 
-const $$Astro$4 = createAstro("https://activeaway.com");
+const $$Astro$3 = createAstro("https://activeaway.com");
 const $$SuitcaseIcon = createComponent(($$result, $$props, $$slots) => {
-  const Astro2 = $$result.createAstro($$Astro$4, $$props, $$slots);
+  const Astro2 = $$result.createAstro($$Astro$3, $$props, $$slots);
   Astro2.self = $$SuitcaseIcon;
   return renderTemplate`${maybeRenderHead()}<svg${addAttribute(Astro2.props.class || "w-5 h-5", "class")} fill="none" viewBox="0 0 24 24" stroke="currentColor"${spreadAttributes(Astro2.props)}> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path> </svg>`;
 }, "/Users/joshuathompson/active-away-astro/src/components/ui/icons/SuitcaseIcon.astro", void 0);
 
-const $$Astro$3 = createAstro("https://activeaway.com");
 const $$PlaneIcon = createComponent(($$result, $$props, $$slots) => {
-  const Astro2 = $$result.createAstro($$Astro$3, $$props, $$slots);
-  Astro2.self = $$PlaneIcon;
-  return renderTemplate`${maybeRenderHead()}<svg${addAttribute(Astro2.props.class || "w-5 h-5", "class")} fill="none" viewBox="0 0 24 24" stroke="currentColor"${spreadAttributes(Astro2.props)}> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path> </svg>`;
+  return renderTemplate``;
 }, "/Users/joshuathompson/active-away-astro/src/components/ui/icons/PlaneIcon.astro", void 0);
 
 const $$Astro$2 = createAstro("https://activeaway.com");

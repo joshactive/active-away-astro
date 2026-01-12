@@ -1,6 +1,6 @@
 globalThis.process ??= {}; globalThis.process.env ??= {};
-import { w as decryptString, x as createSlotValueFromString, y as isAstroComponentFactory, k as renderComponent, r as renderTemplate, z as REROUTE_DIRECTIVE_HEADER, A as AstroError, B as i18nNoLocaleFoundInPath, C as ResponseSentError, G as originPathnameSymbol, H as RewriteWithBodyUsed, J as GetStaticPathsRequired, K as InvalidGetStaticPathsReturn, O as InvalidGetStaticPathsEntry, P as GetStaticPathsExpectedParams, Q as GetStaticPathsInvalidRouteParam, S as PageNumberParamNotFound, D as DEFAULT_404_COMPONENT, T as NoMatchingStaticPathFound, V as PrerenderDynamicEndpointPathCollide, W as ReservedSlotName, X as renderSlotToString, Y as renderJSX, Z as chunkToString, _ as isRenderInstruction, $ as ActionNotFoundError, a0 as MiddlewareNoDataOrNextCalled, a1 as MiddlewareNotAResponse, a2 as SessionStorageInitError, a3 as SessionStorageSaveError, a4 as ROUTE_TYPE_HEADER, a5 as ForbiddenRewrite, a6 as ASTRO_VERSION, a7 as CspNotEnabled, a8 as colors, a9 as LocalsReassigned, aa as generateCspDigest, ab as PrerenderClientAddressNotAvailable, ac as clientAddressSymbol, ad as ClientAddressNotAvailable, ae as StaticClientAddressNotAvailable, af as AstroResponseHeadersReassigned, ag as responseSentSymbol$1, ah as renderPage, ai as REWRITE_DIRECTIVE_HEADER_KEY, aj as REWRITE_DIRECTIVE_HEADER_VALUE, ak as renderEndpoint } from './astro/server_BoSsXtn0.mjs';
-import { g as getActionQueryString, d as deserializeActionResult, a as distExports, D as DEFAULT_404_ROUTE, A as ActionError, s as serializeActionResult, b as ACTION_RPC_ROUTE_PATTERN, c as ACTION_QUERY_PARAMS, u as unflatten$1, e as stringify$2 } from './astro-designed-error-pages_M1_50bwR.mjs';
+import { w as decryptString, x as createSlotValueFromString, y as isAstroComponentFactory, k as renderComponent, r as renderTemplate, z as REROUTE_DIRECTIVE_HEADER, A as AstroError, B as i18nNoLocaleFoundInPath, C as ResponseSentError, G as originPathnameSymbol, H as RewriteWithBodyUsed, J as GetStaticPathsRequired, K as InvalidGetStaticPathsReturn, O as InvalidGetStaticPathsEntry, P as GetStaticPathsExpectedParams, Q as GetStaticPathsInvalidRouteParam, S as PageNumberParamNotFound, D as DEFAULT_404_COMPONENT, T as NoMatchingStaticPathFound, V as PrerenderDynamicEndpointPathCollide, W as ReservedSlotName, X as renderSlotToString, Y as renderJSX, Z as chunkToString, _ as isRenderInstruction, $ as ActionNotFoundError, a0 as MiddlewareNoDataOrNextCalled, a1 as MiddlewareNotAResponse, a2 as SessionStorageInitError, a3 as SessionStorageSaveError, a4 as ROUTE_TYPE_HEADER, a5 as ForbiddenRewrite, a6 as ASTRO_VERSION, a7 as CspNotEnabled, a8 as s, a9 as LocalsReassigned, aa as generateCspDigest, ab as PrerenderClientAddressNotAvailable, ac as clientAddressSymbol, ad as ClientAddressNotAvailable, ae as StaticClientAddressNotAvailable, af as AstroResponseHeadersReassigned, ag as responseSentSymbol$1, ah as renderPage, ai as REWRITE_DIRECTIVE_HEADER_KEY, aj as REWRITE_DIRECTIVE_HEADER_VALUE, ak as renderEndpoint } from './astro/server_DGNyvb9N.mjs';
+import { g as getActionQueryString, d as deserializeActionResult, D as DEFAULT_404_ROUTE, A as ActionError, s as serializeActionResult, a as ACTION_RPC_ROUTE_PATTERN, b as ACTION_QUERY_PARAMS, u as unflatten$1, c as stringify$2 } from './astro-designed-error-pages_D_9ipJcW.mjs';
 import { a as appendForwardSlash, j as joinPaths, r as removeTrailingForwardSlash, p as prependForwardSlash, t as trimSlashes } from './path_CH3auf61.mjs';
 
 const ACTION_API_CONTEXT_SYMBOL = Symbol.for("astro.actionAPIContext");
@@ -112,24 +112,26 @@ async function getRequestData(request) {
       if (!params.has("s") || !params.has("e") || !params.has("p")) {
         return badRequest("Missing required query parameters.");
       }
-      const rawSlots = params.get("s");
-      try {
-        return {
-          componentExport: params.get("e"),
-          encryptedProps: params.get("p"),
-          slots: JSON.parse(rawSlots)
-        };
-      } catch {
-        return badRequest("Invalid slots format.");
-      }
+      const encryptedSlots = params.get("s");
+      return {
+        componentExport: params.get("e"),
+        encryptedProps: params.get("p"),
+        encryptedSlots
+      };
     }
     case "POST": {
       try {
         const raw = await request.text();
         const data = JSON.parse(raw);
+        if ("slots" in data && typeof data.slots === "object") {
+          return badRequest("Plaintext slots are not allowed. Slots must be encrypted.");
+        }
         return data;
-      } catch {
-        return badRequest("Request format is invalid.");
+      } catch (e) {
+        if (e instanceof SyntaxError) {
+          return badRequest("Request format is invalid.");
+        }
+        throw e;
       }
     }
     default: {
@@ -160,13 +162,30 @@ function createEndpoint(manifest) {
     }
     const key = await manifest.key;
     const encryptedProps = data.encryptedProps;
-    const propString = encryptedProps === "" ? "{}" : await decryptString(key, encryptedProps);
-    const props = JSON.parse(propString);
+    let props = {};
+    if (encryptedProps !== "") {
+      try {
+        const propString = await decryptString(key, encryptedProps);
+        props = JSON.parse(propString);
+      } catch (_e) {
+        return badRequest("Encrypted props value is invalid.");
+      }
+    }
+    let decryptedSlots = {};
+    const encryptedSlots = data.encryptedSlots;
+    if (encryptedSlots !== "") {
+      try {
+        const slotsString = await decryptString(key, encryptedSlots);
+        decryptedSlots = JSON.parse(slotsString);
+      } catch (_e) {
+        return badRequest("Encrypted slots value is invalid.");
+      }
+    }
     const componentModule = await imp();
     let Component = componentModule[data.componentExport];
     const slots = {};
-    for (const prop in data.slots) {
-      slots[prop] = createSlotValueFromString(data.slots[prop]);
+    for (const prop in decryptedSlots) {
+      slots[prop] = createSlotValueFromString(decryptedSlots[prop]);
     }
     result.response.headers.set("X-Robots-Tag", "noindex");
     if (isAstroComponentFactory(Component)) {
@@ -499,6 +518,367 @@ function computeCurrentLocale(pathname, locales, defaultLocale) {
     }
   }
 }
+
+var dist = {};
+
+var hasRequiredDist;
+
+function requireDist () {
+	if (hasRequiredDist) return dist;
+	hasRequiredDist = 1;
+	Object.defineProperty(dist, "__esModule", { value: true });
+	dist.parseCookie = parseCookie;
+	dist.parse = parseCookie;
+	dist.stringifyCookie = stringifyCookie;
+	dist.stringifySetCookie = stringifySetCookie;
+	dist.serialize = stringifySetCookie;
+	dist.parseSetCookie = parseSetCookie;
+	dist.stringifySetCookie = stringifySetCookie;
+	dist.serialize = stringifySetCookie;
+	/**
+	 * RegExp to match cookie-name in RFC 6265 sec 4.1.1
+	 * This refers out to the obsoleted definition of token in RFC 2616 sec 2.2
+	 * which has been replaced by the token definition in RFC 7230 appendix B.
+	 *
+	 * cookie-name       = token
+	 * token             = 1*tchar
+	 * tchar             = "!" / "#" / "$" / "%" / "&" / "'" /
+	 *                     "*" / "+" / "-" / "." / "^" / "_" /
+	 *                     "`" / "|" / "~" / DIGIT / ALPHA
+	 *
+	 * Note: Allowing more characters - https://github.com/jshttp/cookie/issues/191
+	 * Allow same range as cookie value, except `=`, which delimits end of name.
+	 */
+	const cookieNameRegExp = /^[\u0021-\u003A\u003C\u003E-\u007E]+$/;
+	/**
+	 * RegExp to match cookie-value in RFC 6265 sec 4.1.1
+	 *
+	 * cookie-value      = *cookie-octet / ( DQUOTE *cookie-octet DQUOTE )
+	 * cookie-octet      = %x21 / %x23-2B / %x2D-3A / %x3C-5B / %x5D-7E
+	 *                     ; US-ASCII characters excluding CTLs,
+	 *                     ; whitespace DQUOTE, comma, semicolon,
+	 *                     ; and backslash
+	 *
+	 * Allowing more characters: https://github.com/jshttp/cookie/issues/191
+	 * Comma, backslash, and DQUOTE are not part of the parsing algorithm.
+	 */
+	const cookieValueRegExp = /^[\u0021-\u003A\u003C-\u007E]*$/;
+	/**
+	 * RegExp to match domain-value in RFC 6265 sec 4.1.1
+	 *
+	 * domain-value      = <subdomain>
+	 *                     ; defined in [RFC1034], Section 3.5, as
+	 *                     ; enhanced by [RFC1123], Section 2.1
+	 * <subdomain>       = <label> | <subdomain> "." <label>
+	 * <label>           = <let-dig> [ [ <ldh-str> ] <let-dig> ]
+	 *                     Labels must be 63 characters or less.
+	 *                     'let-dig' not 'letter' in the first char, per RFC1123
+	 * <ldh-str>         = <let-dig-hyp> | <let-dig-hyp> <ldh-str>
+	 * <let-dig-hyp>     = <let-dig> | "-"
+	 * <let-dig>         = <letter> | <digit>
+	 * <letter>          = any one of the 52 alphabetic characters A through Z in
+	 *                     upper case and a through z in lower case
+	 * <digit>           = any one of the ten digits 0 through 9
+	 *
+	 * Keep support for leading dot: https://github.com/jshttp/cookie/issues/173
+	 *
+	 * > (Note that a leading %x2E ("."), if present, is ignored even though that
+	 * character is not permitted, but a trailing %x2E ("."), if present, will
+	 * cause the user agent to ignore the attribute.)
+	 */
+	const domainValueRegExp = /^([.]?[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)([.][a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$/i;
+	/**
+	 * RegExp to match path-value in RFC 6265 sec 4.1.1
+	 *
+	 * path-value        = <any CHAR except CTLs or ";">
+	 * CHAR              = %x01-7F
+	 *                     ; defined in RFC 5234 appendix B.1
+	 */
+	const pathValueRegExp = /^[\u0020-\u003A\u003D-\u007E]*$/;
+	/**
+	 * RegExp to match max-age-value in RFC 6265 sec 5.6.2
+	 */
+	const maxAgeRegExp = /^-?\d+$/;
+	const __toString = Object.prototype.toString;
+	const NullObject = /* @__PURE__ */ (() => {
+	    const C = function () { };
+	    C.prototype = Object.create(null);
+	    return C;
+	})();
+	/**
+	 * Parse a `Cookie` header.
+	 *
+	 * Parse the given cookie header string into an object
+	 * The object has the various cookies as keys(names) => values
+	 */
+	function parseCookie(str, options) {
+	    const obj = new NullObject();
+	    const len = str.length;
+	    // RFC 6265 sec 4.1.1, RFC 2616 2.2 defines a cookie name consists of one char minimum, plus '='.
+	    if (len < 2)
+	        return obj;
+	    const dec = options?.decode || decode;
+	    let index = 0;
+	    do {
+	        const eqIdx = eqIndex(str, index, len);
+	        if (eqIdx === -1)
+	            break; // No more cookie pairs.
+	        const endIdx = endIndex(str, index, len);
+	        if (eqIdx > endIdx) {
+	            // backtrack on prior semicolon
+	            index = str.lastIndexOf(";", eqIdx - 1) + 1;
+	            continue;
+	        }
+	        const key = valueSlice(str, index, eqIdx);
+	        // only assign once
+	        if (obj[key] === undefined) {
+	            obj[key] = dec(valueSlice(str, eqIdx + 1, endIdx));
+	        }
+	        index = endIdx + 1;
+	    } while (index < len);
+	    return obj;
+	}
+	/**
+	 * Stringifies an object into an HTTP `Cookie` header.
+	 */
+	function stringifyCookie(cookie, options) {
+	    const enc = options?.encode || encodeURIComponent;
+	    const cookieStrings = [];
+	    for (const name of Object.keys(cookie)) {
+	        const val = cookie[name];
+	        if (val === undefined)
+	            continue;
+	        if (!cookieNameRegExp.test(name)) {
+	            throw new TypeError(`cookie name is invalid: ${name}`);
+	        }
+	        const value = enc(val);
+	        if (!cookieValueRegExp.test(value)) {
+	            throw new TypeError(`cookie val is invalid: ${val}`);
+	        }
+	        cookieStrings.push(`${name}=${value}`);
+	    }
+	    return cookieStrings.join("; ");
+	}
+	function stringifySetCookie(_name, _val, _opts) {
+	    const cookie = typeof _name === "object"
+	        ? _name
+	        : { ..._opts, name: _name, value: String(_val) };
+	    const options = typeof _val === "object" ? _val : _opts;
+	    const enc = options?.encode || encodeURIComponent;
+	    if (!cookieNameRegExp.test(cookie.name)) {
+	        throw new TypeError(`argument name is invalid: ${cookie.name}`);
+	    }
+	    const value = cookie.value ? enc(cookie.value) : "";
+	    if (!cookieValueRegExp.test(value)) {
+	        throw new TypeError(`argument val is invalid: ${cookie.value}`);
+	    }
+	    let str = cookie.name + "=" + value;
+	    if (cookie.maxAge !== undefined) {
+	        if (!Number.isInteger(cookie.maxAge)) {
+	            throw new TypeError(`option maxAge is invalid: ${cookie.maxAge}`);
+	        }
+	        str += "; Max-Age=" + cookie.maxAge;
+	    }
+	    if (cookie.domain) {
+	        if (!domainValueRegExp.test(cookie.domain)) {
+	            throw new TypeError(`option domain is invalid: ${cookie.domain}`);
+	        }
+	        str += "; Domain=" + cookie.domain;
+	    }
+	    if (cookie.path) {
+	        if (!pathValueRegExp.test(cookie.path)) {
+	            throw new TypeError(`option path is invalid: ${cookie.path}`);
+	        }
+	        str += "; Path=" + cookie.path;
+	    }
+	    if (cookie.expires) {
+	        if (!isDate(cookie.expires) || !Number.isFinite(cookie.expires.valueOf())) {
+	            throw new TypeError(`option expires is invalid: ${cookie.expires}`);
+	        }
+	        str += "; Expires=" + cookie.expires.toUTCString();
+	    }
+	    if (cookie.httpOnly) {
+	        str += "; HttpOnly";
+	    }
+	    if (cookie.secure) {
+	        str += "; Secure";
+	    }
+	    if (cookie.partitioned) {
+	        str += "; Partitioned";
+	    }
+	    if (cookie.priority) {
+	        const priority = typeof cookie.priority === "string"
+	            ? cookie.priority.toLowerCase()
+	            : undefined;
+	        switch (priority) {
+	            case "low":
+	                str += "; Priority=Low";
+	                break;
+	            case "medium":
+	                str += "; Priority=Medium";
+	                break;
+	            case "high":
+	                str += "; Priority=High";
+	                break;
+	            default:
+	                throw new TypeError(`option priority is invalid: ${cookie.priority}`);
+	        }
+	    }
+	    if (cookie.sameSite) {
+	        const sameSite = typeof cookie.sameSite === "string"
+	            ? cookie.sameSite.toLowerCase()
+	            : cookie.sameSite;
+	        switch (sameSite) {
+	            case true:
+	            case "strict":
+	                str += "; SameSite=Strict";
+	                break;
+	            case "lax":
+	                str += "; SameSite=Lax";
+	                break;
+	            case "none":
+	                str += "; SameSite=None";
+	                break;
+	            default:
+	                throw new TypeError(`option sameSite is invalid: ${cookie.sameSite}`);
+	        }
+	    }
+	    return str;
+	}
+	/**
+	 * Deserialize a `Set-Cookie` header into an object.
+	 *
+	 * deserialize('foo=bar; httpOnly')
+	 *   => { name: 'foo', value: 'bar', httpOnly: true }
+	 */
+	function parseSetCookie(str, options) {
+	    const dec = options?.decode || decode;
+	    const len = str.length;
+	    const endIdx = endIndex(str, 0, len);
+	    const eqIdx = eqIndex(str, 0, endIdx);
+	    const setCookie = eqIdx === -1
+	        ? { name: "", value: dec(valueSlice(str, 0, endIdx)) }
+	        : {
+	            name: valueSlice(str, 0, eqIdx),
+	            value: dec(valueSlice(str, eqIdx + 1, endIdx)),
+	        };
+	    let index = endIdx + 1;
+	    while (index < len) {
+	        const endIdx = endIndex(str, index, len);
+	        const eqIdx = eqIndex(str, index, endIdx);
+	        const attr = eqIdx === -1
+	            ? valueSlice(str, index, endIdx)
+	            : valueSlice(str, index, eqIdx);
+	        const val = eqIdx === -1 ? undefined : valueSlice(str, eqIdx + 1, endIdx);
+	        switch (attr.toLowerCase()) {
+	            case "httponly":
+	                setCookie.httpOnly = true;
+	                break;
+	            case "secure":
+	                setCookie.secure = true;
+	                break;
+	            case "partitioned":
+	                setCookie.partitioned = true;
+	                break;
+	            case "domain":
+	                setCookie.domain = val;
+	                break;
+	            case "path":
+	                setCookie.path = val;
+	                break;
+	            case "max-age":
+	                if (val && maxAgeRegExp.test(val))
+	                    setCookie.maxAge = Number(val);
+	                break;
+	            case "expires":
+	                if (!val)
+	                    break;
+	                const date = new Date(val);
+	                if (Number.isFinite(date.valueOf()))
+	                    setCookie.expires = date;
+	                break;
+	            case "priority":
+	                if (!val)
+	                    break;
+	                const priority = val.toLowerCase();
+	                if (priority === "low" ||
+	                    priority === "medium" ||
+	                    priority === "high") {
+	                    setCookie.priority = priority;
+	                }
+	                break;
+	            case "samesite":
+	                if (!val)
+	                    break;
+	                const sameSite = val.toLowerCase();
+	                if (sameSite === "lax" ||
+	                    sameSite === "strict" ||
+	                    sameSite === "none") {
+	                    setCookie.sameSite = sameSite;
+	                }
+	                break;
+	        }
+	        index = endIdx + 1;
+	    }
+	    return setCookie;
+	}
+	/**
+	 * Find the `;` character between `min` and `len` in str.
+	 */
+	function endIndex(str, min, len) {
+	    const index = str.indexOf(";", min);
+	    return index === -1 ? len : index;
+	}
+	/**
+	 * Find the `=` character between `min` and `max` in str.
+	 */
+	function eqIndex(str, min, max) {
+	    const index = str.indexOf("=", min);
+	    return index < max ? index : -1;
+	}
+	/**
+	 * Slice out a value between startPod to max.
+	 */
+	function valueSlice(str, min, max) {
+	    let start = min;
+	    let end = max;
+	    do {
+	        const code = str.charCodeAt(start);
+	        if (code !== 0x20 /*   */ && code !== 0x09 /* \t */)
+	            break;
+	    } while (++start < end);
+	    while (end > start) {
+	        const code = str.charCodeAt(end - 1);
+	        if (code !== 0x20 /*   */ && code !== 0x09 /* \t */)
+	            break;
+	        end--;
+	    }
+	    return str.slice(start, end);
+	}
+	/**
+	 * URL-decode string value. Optimized to skip native call when no %.
+	 */
+	function decode(str) {
+	    if (str.indexOf("%") === -1)
+	        return str;
+	    try {
+	        return decodeURIComponent(str);
+	    }
+	    catch (e) {
+	        return str;
+	    }
+	}
+	/**
+	 * Determine if value is a Date.
+	 */
+	function isDate(val) {
+	    return __toString.call(val) === "[object Date]";
+	}
+	
+	return dist;
+}
+
+var distExports = /*@__PURE__*/ requireDist();
 
 const DELETED_EXPIRATION = /* @__PURE__ */ new Date(0);
 const DELETED_VALUE = "deleted";
@@ -1340,6 +1720,38 @@ async function parseRequestBody(request) {
     return contentLength === "0" ? void 0 : await request.clone().json();
   }
   throw new TypeError("Unsupported content type");
+}
+
+function deduplicateDirectiveValues(existingDirective, newDirective) {
+  const [directiveName, ...existingValues] = existingDirective.split(/\s+/).filter(Boolean);
+  const [newDirectiveName, ...newValues] = newDirective.split(/\s+/).filter(Boolean);
+  if (directiveName !== newDirectiveName) {
+    return void 0;
+  }
+  const finalDirectives = Array.from(/* @__PURE__ */ new Set([...existingValues, ...newValues]));
+  return `${directiveName} ${finalDirectives.join(" ")}`;
+}
+function pushDirective(directives, newDirective) {
+  let deduplicated = false;
+  if (directives.length === 0) {
+    return [newDirective];
+  }
+  const finalDirectives = [];
+  for (const directive of directives) {
+    if (deduplicated) {
+      finalDirectives.push(directive);
+      continue;
+    }
+    const result = deduplicateDirectiveValues(directive, newDirective);
+    if (result) {
+      finalDirectives.push(result);
+      deduplicated = true;
+    } else {
+      finalDirectives.push(directive);
+      finalDirectives.push(newDirective);
+    }
+  }
+  return finalDirectives;
 }
 
 async function callMiddleware(onRequest, apiContext, responseFunction) {
@@ -2434,9 +2846,24 @@ function resolveSessionDriverName(driver) {
   return driver;
 }
 
+function validateAndDecodePathname(pathname) {
+  let decoded;
+  try {
+    decoded = decodeURI(pathname);
+  } catch (_e) {
+    throw new Error("Invalid URL encoding");
+  }
+  const hasDecoding = decoded !== pathname;
+  const decodedStillHasEncoding = /%[0-9a-fA-F]{2}/.test(decoded);
+  if (hasDecoding && decodedStillHasEncoding) {
+    throw new Error("Multi-level URL encoding is not allowed");
+  }
+  return decoded;
+}
+
 const apiContextRoutesSymbol = Symbol.for("context.routes");
 class RenderContext {
-  constructor(pipeline, locals, middleware, actions, pathname, request, routeData, status, clientAddress, cookies = new AstroCookies(request), params = getParams(routeData, pathname), url = new URL(request.url), props = {}, partial = void 0, shouldInjectCspMetaTags = !!pipeline.manifest.csp, session = pipeline.manifest.sessionConfig ? new AstroSession(cookies, pipeline.manifest.sessionConfig, pipeline.runtimeMode) : void 0) {
+  constructor(pipeline, locals, middleware, actions, pathname, request, routeData, status, clientAddress, cookies = new AstroCookies(request), params = getParams(routeData, pathname), url = RenderContext.#createNormalizedUrl(request.url), props = {}, partial = void 0, shouldInjectCspMetaTags = !!pipeline.manifest.csp, session = pipeline.manifest.sessionConfig ? new AstroSession(cookies, pipeline.manifest.sessionConfig, pipeline.runtimeMode) : void 0) {
     this.pipeline = pipeline;
     this.locals = locals;
     this.middleware = middleware;
@@ -2453,6 +2880,18 @@ class RenderContext {
     this.partial = partial;
     this.shouldInjectCspMetaTags = shouldInjectCspMetaTags;
     this.session = session;
+  }
+  static #createNormalizedUrl(requestUrl) {
+    const url = new URL(requestUrl);
+    try {
+      url.pathname = validateAndDecodePathname(url.pathname);
+    } catch {
+      try {
+        url.pathname = decodeURI(url.pathname);
+      } catch {
+      }
+    }
+    return url;
   }
   /**
    * A flag that tells the render content if the rewriting was triggered
@@ -2568,7 +3007,7 @@ class RenderContext {
           );
         }
         this.isRewriting = true;
-        this.url = new URL(this.request.url);
+        this.url = RenderContext.#createNormalizedUrl(this.request.url);
         this.params = getParams(routeData, pathname);
         this.pathname = pathname;
         this.status = 200;
@@ -2681,7 +3120,7 @@ class RenderContext {
         this.routeData.route
       );
     }
-    this.url = new URL(this.request.url);
+    this.url = RenderContext.#createNormalizedUrl(this.request.url);
     const newCookies = new AstroCookies(this.request);
     if (this.cookies) {
       newCookies.merge(this.cookies);
@@ -2744,14 +3183,14 @@ class RenderContext {
         if (this.isPrerendered) {
           pipeline.logger.warn(
             "session",
-            `context.session was used when rendering the route ${colors.green(this.routePattern)}, but it is not available on prerendered routes. If you need access to sessions, make sure that the route is server-rendered using \`export const prerender = false;\` or by setting \`output\` to \`"server"\` in your Astro config to make all your routes server-rendered by default. For more information, see https://docs.astro.build/en/guides/sessions/`
+            `context.session was used when rendering the route ${s.green(this.routePattern)}, but it is not available on prerendered routes. If you need access to sessions, make sure that the route is server-rendered using \`export const prerender = false;\` or by setting \`output\` to \`"server"\` in your Astro config to make all your routes server-rendered by default. For more information, see https://docs.astro.build/en/guides/sessions/`
           );
           return void 0;
         }
         if (!renderContext.session) {
           pipeline.logger.warn(
             "session",
-            `context.session was used when rendering the route ${colors.green(this.routePattern)}, but no storage configuration was provided. Either configure the storage manually or use an adapter that provides session storage. For more information, see https://docs.astro.build/en/guides/sessions/`
+            `context.session was used when rendering the route ${s.green(this.routePattern)}, but no storage configuration was provided. Either configure the storage manually or use an adapter that provides session storage. For more information, see https://docs.astro.build/en/guides/sessions/`
           );
           return void 0;
         }
@@ -2763,7 +3202,14 @@ class RenderContext {
             if (!pipeline.manifest.csp) {
               throw new AstroError(CspNotEnabled);
             }
-            renderContext.result?.directives.push(payload);
+            if (renderContext?.result?.directives) {
+              renderContext.result.directives = pushDirective(
+                renderContext.result.directives,
+                payload
+              );
+            } else {
+              renderContext?.result?.directives.push(payload);
+            }
           },
           insertScriptResource(resource) {
             if (!pipeline.manifest.csp) {
@@ -2946,14 +3392,14 @@ class RenderContext {
         if (this.isPrerendered) {
           pipeline.logger.warn(
             "session",
-            `Astro.session was used when rendering the route ${colors.green(this.routePattern)}, but it is not available on prerendered pages. If you need access to sessions, make sure that the page is server-rendered using \`export const prerender = false;\` or by setting \`output\` to \`"server"\` in your Astro config to make all your pages server-rendered by default. For more information, see https://docs.astro.build/en/guides/sessions/`
+            `Astro.session was used when rendering the route ${s.green(this.routePattern)}, but it is not available on prerendered pages. If you need access to sessions, make sure that the page is server-rendered using \`export const prerender = false;\` or by setting \`output\` to \`"server"\` in your Astro config to make all your pages server-rendered by default. For more information, see https://docs.astro.build/en/guides/sessions/`
           );
           return void 0;
         }
         if (!renderContext.session) {
           pipeline.logger.warn(
             "session",
-            `Astro.session was used when rendering the route ${colors.green(this.routePattern)}, but no storage configuration was provided. Either configure the storage manually or use an adapter that provides session storage. For more information, see https://docs.astro.build/en/guides/sessions/`
+            `Astro.session was used when rendering the route ${s.green(this.routePattern)}, but no storage configuration was provided. Either configure the storage manually or use an adapter that provides session storage. For more information, see https://docs.astro.build/en/guides/sessions/`
           );
           return void 0;
         }
@@ -2992,7 +3438,14 @@ class RenderContext {
             if (!pipeline.manifest.csp) {
               throw new AstroError(CspNotEnabled);
             }
-            renderContext.result?.directives.push(payload);
+            if (renderContext?.result?.directives) {
+              renderContext.result.directives = pushDirective(
+                renderContext.result.directives,
+                payload
+              );
+            } else {
+              renderContext?.result?.directives.push(payload);
+            }
           },
           insertScriptResource(resource) {
             if (!pipeline.manifest.csp) {
@@ -3176,4 +3629,4 @@ function defineMiddleware(fn) {
   return fn;
 }
 
-export { PERSIST_SYMBOL as P, RouteCache as R, SERVER_ISLAND_COMPONENT as S, redirectToFallback as a, redirectToDefaultLocale as b, requestHasLocale as c, normalizeTheLocale as d, defineMiddleware as e, SERVER_ISLAND_ROUTE as f, createEndpoint as g, findRouteToRewrite as h, isRequestServerIsland as i, RenderContext as j, getSetCookiesFromResponse as k, matchRoute as m, notFound as n, requestIs404Or500 as r, sequence as s };
+export { PERSIST_SYMBOL as P, RouteCache as R, SERVER_ISLAND_COMPONENT as S, redirectToFallback as a, redirectToDefaultLocale as b, requestHasLocale as c, normalizeTheLocale as d, defineMiddleware as e, SERVER_ISLAND_ROUTE as f, createEndpoint as g, findRouteToRewrite as h, isRequestServerIsland as i, RenderContext as j, getSetCookiesFromResponse as k, matchRoute as m, notFound as n, requestIs404Or500 as r, sequence as s, validateAndDecodePathname as v };

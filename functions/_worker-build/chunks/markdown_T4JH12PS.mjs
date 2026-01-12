@@ -1,5 +1,5 @@
 globalThis.process ??= {}; globalThis.process.env ??= {};
-import { k } from './marked.esm_aKArn8bq.mjs';
+import { d } from './marked.esm_BXPw9py-.mjs';
 
 /**
  * Parse markdown to HTML
@@ -10,14 +10,14 @@ function parseMarkdown(markdown) {
   if (!markdown) return '';
   
   // Configure marked options
-  k.setOptions({
+  d.setOptions({
     breaks: true, // Convert line breaks to <br>
     gfm: true, // GitHub Flavored Markdown
     headerIds: false, // Don't add IDs to headers
     mangle: false // Don't escape email addresses
   });
   
-  return k.parse(markdown);
+  return d.parse(markdown);
 }
 
 export { parseMarkdown as p };
