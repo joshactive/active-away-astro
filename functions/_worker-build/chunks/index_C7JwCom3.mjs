@@ -1,5 +1,5 @@
 globalThis.process ??= {}; globalThis.process.env ??= {};
-import { ap as commonjsGlobal, aq as getAugmentedNamespace, p as getDefaultExportFromCjs } from './astro/server_DGNyvb9N.mjs';
+import { ap as commonjsGlobal, aq as getAugmentedNamespace, p as getDefaultExportFromCjs } from './astro/server_BoSsXtn0.mjs';
 import require$$0$4 from 'events';
 import require$$1 from 'util';
 import require$$0$1 from 'crypto';

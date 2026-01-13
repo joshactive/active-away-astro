@@ -1,8 +1,8 @@
 globalThis.process ??= {}; globalThis.process.env ??= {};
 import { g as getRedirects } from './chunks/strapi_D13TtKqq.mjs';
-import './chunks/astro-designed-error-pages_D_9ipJcW.mjs';
-import './chunks/astro/server_DGNyvb9N.mjs';
-import { s as sequence } from './chunks/index_iwtmrCaN.mjs';
+import './chunks/astro-designed-error-pages_BN9FDJvp.mjs';
+import './chunks/astro/server_BoSsXtn0.mjs';
+import { s as sequence } from './chunks/index_CHJ87a5T.mjs';
 
 const REDIRECT_CACHE_TTL = 1e3 * 60 * 5;
 let redirectCache = null;

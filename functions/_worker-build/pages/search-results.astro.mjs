@@ -1,8 +1,8 @@
 globalThis.process ??= {}; globalThis.process.env ??= {};
 /* empty css                                  */
-import { e as createAstro, f as createComponent, k as renderComponent, n as Fragment, r as renderTemplate, m as maybeRenderHead, l as defineScriptVars } from '../chunks/astro/server_DGNyvb9N.mjs';
-import { $ as $$BaseLayout } from '../chunks/BaseLayout_DFPiOYnu.mjs';
-import { $ as $$PageHeroTailwind, a as $$BreadcrumbsTailwind } from '../chunks/BreadcrumbsTailwind_DRUEr9kD.mjs';
+import { e as createAstro, f as createComponent, k as renderComponent, n as Fragment, r as renderTemplate, m as maybeRenderHead, l as defineScriptVars } from '../chunks/astro/server_BoSsXtn0.mjs';
+import { $ as $$BaseLayout } from '../chunks/BaseLayout_Diefu_Wk.mjs';
+import { $ as $$PageHeroTailwind, a as $$BreadcrumbsTailwind } from '../chunks/BreadcrumbsTailwind_Bj3HUfXN.mjs';
 import { aJ as getSearchResultsPage, aK as getSearchResultsPageSEO } from '../chunks/strapi_D13TtKqq.mjs';
 /* empty css                                          */
 export { renderers } from '../renderers.mjs';

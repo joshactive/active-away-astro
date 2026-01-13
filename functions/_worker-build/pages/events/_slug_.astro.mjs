@@ -1,7 +1,7 @@
 globalThis.process ??= {}; globalThis.process.env ??= {};
 /* empty css                                     */
-import { e as createAstro, f as createComponent, m as maybeRenderHead, h as addAttribute, r as renderTemplate, s as spreadAttributes, k as renderComponent, l as defineScriptVars } from '../../chunks/astro/server_DGNyvb9N.mjs';
-import { $ as $$BaseLayout } from '../../chunks/BaseLayout_DFPiOYnu.mjs';
+import { e as createAstro, f as createComponent, m as maybeRenderHead, h as addAttribute, r as renderTemplate, s as spreadAttributes, k as renderComponent, l as defineScriptVars } from '../../chunks/astro/server_BoSsXtn0.mjs';
+import { $ as $$BaseLayout } from '../../chunks/BaseLayout_Diefu_Wk.mjs';
 import { F as getEventBySlug, b as getStrapiImageAttrs } from '../../chunks/strapi_D13TtKqq.mjs';
 export { renderers } from '../../renderers.mjs';
 

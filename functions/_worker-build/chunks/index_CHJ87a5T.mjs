@@ -1,6 +1,6 @@
 globalThis.process ??= {}; globalThis.process.env ??= {};
-import { w as decryptString, x as createSlotValueFromString, y as isAstroComponentFactory, k as renderComponent, r as renderTemplate, z as REROUTE_DIRECTIVE_HEADER, A as AstroError, B as i18nNoLocaleFoundInPath, C as ResponseSentError, G as originPathnameSymbol, H as RewriteWithBodyUsed, J as GetStaticPathsRequired, K as InvalidGetStaticPathsReturn, O as InvalidGetStaticPathsEntry, P as GetStaticPathsExpectedParams, Q as GetStaticPathsInvalidRouteParam, S as PageNumberParamNotFound, D as DEFAULT_404_COMPONENT, T as NoMatchingStaticPathFound, V as PrerenderDynamicEndpointPathCollide, W as ReservedSlotName, X as renderSlotToString, Y as renderJSX, Z as chunkToString, _ as isRenderInstruction, $ as ActionNotFoundError, a0 as MiddlewareNoDataOrNextCalled, a1 as MiddlewareNotAResponse, a2 as SessionStorageInitError, a3 as SessionStorageSaveError, a4 as ROUTE_TYPE_HEADER, a5 as ForbiddenRewrite, a6 as ASTRO_VERSION, a7 as CspNotEnabled, a8 as s, a9 as LocalsReassigned, aa as generateCspDigest, ab as PrerenderClientAddressNotAvailable, ac as clientAddressSymbol, ad as ClientAddressNotAvailable, ae as StaticClientAddressNotAvailable, af as AstroResponseHeadersReassigned, ag as responseSentSymbol$1, ah as renderPage, ai as REWRITE_DIRECTIVE_HEADER_KEY, aj as REWRITE_DIRECTIVE_HEADER_VALUE, ak as renderEndpoint } from './astro/server_DGNyvb9N.mjs';
-import { g as getActionQueryString, d as deserializeActionResult, D as DEFAULT_404_ROUTE, A as ActionError, s as serializeActionResult, a as ACTION_RPC_ROUTE_PATTERN, b as ACTION_QUERY_PARAMS, u as unflatten$1, c as stringify$2 } from './astro-designed-error-pages_D_9ipJcW.mjs';
+import { w as decryptString, x as createSlotValueFromString, y as isAstroComponentFactory, k as renderComponent, r as renderTemplate, z as REROUTE_DIRECTIVE_HEADER, A as AstroError, B as i18nNoLocaleFoundInPath, C as ResponseSentError, G as originPathnameSymbol, H as RewriteWithBodyUsed, J as GetStaticPathsRequired, K as InvalidGetStaticPathsReturn, O as InvalidGetStaticPathsEntry, P as GetStaticPathsExpectedParams, Q as GetStaticPathsInvalidRouteParam, S as PageNumberParamNotFound, D as DEFAULT_404_COMPONENT, T as NoMatchingStaticPathFound, V as PrerenderDynamicEndpointPathCollide, W as ReservedSlotName, X as renderSlotToString, Y as renderJSX, Z as chunkToString, _ as isRenderInstruction, $ as ActionNotFoundError, a0 as MiddlewareNoDataOrNextCalled, a1 as MiddlewareNotAResponse, a2 as SessionStorageInitError, a3 as SessionStorageSaveError, a4 as ROUTE_TYPE_HEADER, a5 as ForbiddenRewrite, a6 as ASTRO_VERSION, a7 as CspNotEnabled, a8 as colors, a9 as LocalsReassigned, aa as generateCspDigest, ab as PrerenderClientAddressNotAvailable, ac as clientAddressSymbol, ad as ClientAddressNotAvailable, ae as StaticClientAddressNotAvailable, af as AstroResponseHeadersReassigned, ag as responseSentSymbol$1, ah as renderPage, ai as REWRITE_DIRECTIVE_HEADER_KEY, aj as REWRITE_DIRECTIVE_HEADER_VALUE, ak as renderEndpoint } from './astro/server_BoSsXtn0.mjs';
+import { g as getActionQueryString, d as deserializeActionResult, D as DEFAULT_404_ROUTE, A as ActionError, s as serializeActionResult, a as ACTION_RPC_ROUTE_PATTERN, b as ACTION_QUERY_PARAMS, u as unflatten$1, c as stringify$2 } from './astro-designed-error-pages_BN9FDJvp.mjs';
 import { a as appendForwardSlash, j as joinPaths, r as removeTrailingForwardSlash, p as prependForwardSlash, t as trimSlashes } from './path_CH3auf61.mjs';
 
 const ACTION_API_CONTEXT_SYMBOL = Symbol.for("astro.actionAPIContext");
@@ -112,26 +112,24 @@ async function getRequestData(request) {
       if (!params.has("s") || !params.has("e") || !params.has("p")) {
         return badRequest("Missing required query parameters.");
       }
-      const encryptedSlots = params.get("s");
-      return {
-        componentExport: params.get("e"),
-        encryptedProps: params.get("p"),
-        encryptedSlots
-      };
+      const rawSlots = params.get("s");
+      try {
+        return {
+          componentExport: params.get("e"),
+          encryptedProps: params.get("p"),
+          slots: JSON.parse(rawSlots)
+        };
+      } catch {
+        return badRequest("Invalid slots format.");
+      }
     }
     case "POST": {
       try {
         const raw = await request.text();
         const data = JSON.parse(raw);
-        if ("slots" in data && typeof data.slots === "object") {
-          return badRequest("Plaintext slots are not allowed. Slots must be encrypted.");
-        }
         return data;
-      } catch (e) {
-        if (e instanceof SyntaxError) {
-          return badRequest("Request format is invalid.");
-        }
-        throw e;
+      } catch {
+        return badRequest("Request format is invalid.");
       }
     }
     default: {
@@ -162,30 +160,13 @@ function createEndpoint(manifest) {
     }
     const key = await manifest.key;
     const encryptedProps = data.encryptedProps;
-    let props = {};
-    if (encryptedProps !== "") {
-      try {
-        const propString = await decryptString(key, encryptedProps);
-        props = JSON.parse(propString);
-      } catch (_e) {
-        return badRequest("Encrypted props value is invalid.");
-      }
-    }
-    let decryptedSlots = {};
-    const encryptedSlots = data.encryptedSlots;
-    if (encryptedSlots !== "") {
-      try {
-        const slotsString = await decryptString(key, encryptedSlots);
-        decryptedSlots = JSON.parse(slotsString);
-      } catch (_e) {
-        return badRequest("Encrypted slots value is invalid.");
-      }
-    }
+    const propString = encryptedProps === "" ? "{}" : await decryptString(key, encryptedProps);
+    const props = JSON.parse(propString);
     const componentModule = await imp();
     let Component = componentModule[data.componentExport];
     const slots = {};
-    for (const prop in decryptedSlots) {
-      slots[prop] = createSlotValueFromString(decryptedSlots[prop]);
+    for (const prop in data.slots) {
+      slots[prop] = createSlotValueFromString(data.slots[prop]);
     }
     result.response.headers.set("X-Robots-Tag", "noindex");
     if (isAstroComponentFactory(Component)) {
@@ -1722,38 +1703,6 @@ async function parseRequestBody(request) {
   throw new TypeError("Unsupported content type");
 }
 
-function deduplicateDirectiveValues(existingDirective, newDirective) {
-  const [directiveName, ...existingValues] = existingDirective.split(/\s+/).filter(Boolean);
-  const [newDirectiveName, ...newValues] = newDirective.split(/\s+/).filter(Boolean);
-  if (directiveName !== newDirectiveName) {
-    return void 0;
-  }
-  const finalDirectives = Array.from(/* @__PURE__ */ new Set([...existingValues, ...newValues]));
-  return `${directiveName} ${finalDirectives.join(" ")}`;
-}
-function pushDirective(directives, newDirective) {
-  let deduplicated = false;
-  if (directives.length === 0) {
-    return [newDirective];
-  }
-  const finalDirectives = [];
-  for (const directive of directives) {
-    if (deduplicated) {
-      finalDirectives.push(directive);
-      continue;
-    }
-    const result = deduplicateDirectiveValues(directive, newDirective);
-    if (result) {
-      finalDirectives.push(result);
-      deduplicated = true;
-    } else {
-      finalDirectives.push(directive);
-      finalDirectives.push(newDirective);
-    }
-  }
-  return finalDirectives;
-}
-
 async function callMiddleware(onRequest, apiContext, responseFunction) {
   let nextCalled = false;
   let responseFunctionPromise = void 0;
@@ -2846,24 +2795,9 @@ function resolveSessionDriverName(driver) {
   return driver;
 }
 
-function validateAndDecodePathname(pathname) {
-  let decoded;
-  try {
-    decoded = decodeURI(pathname);
-  } catch (_e) {
-    throw new Error("Invalid URL encoding");
-  }
-  const hasDecoding = decoded !== pathname;
-  const decodedStillHasEncoding = /%[0-9a-fA-F]{2}/.test(decoded);
-  if (hasDecoding && decodedStillHasEncoding) {
-    throw new Error("Multi-level URL encoding is not allowed");
-  }
-  return decoded;
-}
-
 const apiContextRoutesSymbol = Symbol.for("context.routes");
 class RenderContext {
-  constructor(pipeline, locals, middleware, actions, pathname, request, routeData, status, clientAddress, cookies = new AstroCookies(request), params = getParams(routeData, pathname), url = RenderContext.#createNormalizedUrl(request.url), props = {}, partial = void 0, shouldInjectCspMetaTags = !!pipeline.manifest.csp, session = pipeline.manifest.sessionConfig ? new AstroSession(cookies, pipeline.manifest.sessionConfig, pipeline.runtimeMode) : void 0) {
+  constructor(pipeline, locals, middleware, actions, pathname, request, routeData, status, clientAddress, cookies = new AstroCookies(request), params = getParams(routeData, pathname), url = new URL(request.url), props = {}, partial = void 0, shouldInjectCspMetaTags = !!pipeline.manifest.csp, session = pipeline.manifest.sessionConfig ? new AstroSession(cookies, pipeline.manifest.sessionConfig, pipeline.runtimeMode) : void 0) {
     this.pipeline = pipeline;
     this.locals = locals;
     this.middleware = middleware;
@@ -2880,18 +2814,6 @@ class RenderContext {
     this.partial = partial;
     this.shouldInjectCspMetaTags = shouldInjectCspMetaTags;
     this.session = session;
-  }
-  static #createNormalizedUrl(requestUrl) {
-    const url = new URL(requestUrl);
-    try {
-      url.pathname = validateAndDecodePathname(url.pathname);
-    } catch {
-      try {
-        url.pathname = decodeURI(url.pathname);
-      } catch {
-      }
-    }
-    return url;
   }
   /**
    * A flag that tells the render content if the rewriting was triggered
@@ -3007,7 +2929,7 @@ class RenderContext {
           );
         }
         this.isRewriting = true;
-        this.url = RenderContext.#createNormalizedUrl(this.request.url);
+        this.url = new URL(this.request.url);
         this.params = getParams(routeData, pathname);
         this.pathname = pathname;
         this.status = 200;
@@ -3120,7 +3042,7 @@ class RenderContext {
         this.routeData.route
       );
     }
-    this.url = RenderContext.#createNormalizedUrl(this.request.url);
+    this.url = new URL(this.request.url);
     const newCookies = new AstroCookies(this.request);
     if (this.cookies) {
       newCookies.merge(this.cookies);
@@ -3183,14 +3105,14 @@ class RenderContext {
         if (this.isPrerendered) {
           pipeline.logger.warn(
             "session",
-            `context.session was used when rendering the route ${s.green(this.routePattern)}, but it is not available on prerendered routes. If you need access to sessions, make sure that the route is server-rendered using \`export const prerender = false;\` or by setting \`output\` to \`"server"\` in your Astro config to make all your routes server-rendered by default. For more information, see https://docs.astro.build/en/guides/sessions/`
+            `context.session was used when rendering the route ${colors.green(this.routePattern)}, but it is not available on prerendered routes. If you need access to sessions, make sure that the route is server-rendered using \`export const prerender = false;\` or by setting \`output\` to \`"server"\` in your Astro config to make all your routes server-rendered by default. For more information, see https://docs.astro.build/en/guides/sessions/`
           );
           return void 0;
         }
         if (!renderContext.session) {
           pipeline.logger.warn(
             "session",
-            `context.session was used when rendering the route ${s.green(this.routePattern)}, but no storage configuration was provided. Either configure the storage manually or use an adapter that provides session storage. For more information, see https://docs.astro.build/en/guides/sessions/`
+            `context.session was used when rendering the route ${colors.green(this.routePattern)}, but no storage configuration was provided. Either configure the storage manually or use an adapter that provides session storage. For more information, see https://docs.astro.build/en/guides/sessions/`
           );
           return void 0;
         }
@@ -3202,14 +3124,7 @@ class RenderContext {
             if (!pipeline.manifest.csp) {
               throw new AstroError(CspNotEnabled);
             }
-            if (renderContext?.result?.directives) {
-              renderContext.result.directives = pushDirective(
-                renderContext.result.directives,
-                payload
-              );
-            } else {
-              renderContext?.result?.directives.push(payload);
-            }
+            renderContext.result?.directives.push(payload);
           },
           insertScriptResource(resource) {
             if (!pipeline.manifest.csp) {
@@ -3392,14 +3307,14 @@ class RenderContext {
         if (this.isPrerendered) {
           pipeline.logger.warn(
             "session",
-            `Astro.session was used when rendering the route ${s.green(this.routePattern)}, but it is not available on prerendered pages. If you need access to sessions, make sure that the page is server-rendered using \`export const prerender = false;\` or by setting \`output\` to \`"server"\` in your Astro config to make all your pages server-rendered by default. For more information, see https://docs.astro.build/en/guides/sessions/`
+            `Astro.session was used when rendering the route ${colors.green(this.routePattern)}, but it is not available on prerendered pages. If you need access to sessions, make sure that the page is server-rendered using \`export const prerender = false;\` or by setting \`output\` to \`"server"\` in your Astro config to make all your pages server-rendered by default. For more information, see https://docs.astro.build/en/guides/sessions/`
           );
           return void 0;
         }
         if (!renderContext.session) {
           pipeline.logger.warn(
             "session",
-            `Astro.session was used when rendering the route ${s.green(this.routePattern)}, but no storage configuration was provided. Either configure the storage manually or use an adapter that provides session storage. For more information, see https://docs.astro.build/en/guides/sessions/`
+            `Astro.session was used when rendering the route ${colors.green(this.routePattern)}, but no storage configuration was provided. Either configure the storage manually or use an adapter that provides session storage. For more information, see https://docs.astro.build/en/guides/sessions/`
           );
           return void 0;
         }
@@ -3438,14 +3353,7 @@ class RenderContext {
             if (!pipeline.manifest.csp) {
               throw new AstroError(CspNotEnabled);
             }
-            if (renderContext?.result?.directives) {
-              renderContext.result.directives = pushDirective(
-                renderContext.result.directives,
-                payload
-              );
-            } else {
-              renderContext?.result?.directives.push(payload);
-            }
+            renderContext.result?.directives.push(payload);
           },
           insertScriptResource(resource) {
             if (!pipeline.manifest.csp) {
@@ -3629,4 +3537,4 @@ function defineMiddleware(fn) {
   return fn;
 }
 
-export { PERSIST_SYMBOL as P, RouteCache as R, SERVER_ISLAND_COMPONENT as S, redirectToFallback as a, redirectToDefaultLocale as b, requestHasLocale as c, normalizeTheLocale as d, defineMiddleware as e, SERVER_ISLAND_ROUTE as f, createEndpoint as g, findRouteToRewrite as h, isRequestServerIsland as i, RenderContext as j, getSetCookiesFromResponse as k, matchRoute as m, notFound as n, requestIs404Or500 as r, sequence as s, validateAndDecodePathname as v };
+export { PERSIST_SYMBOL as P, RouteCache as R, SERVER_ISLAND_COMPONENT as S, redirectToFallback as a, redirectToDefaultLocale as b, requestHasLocale as c, normalizeTheLocale as d, defineMiddleware as e, SERVER_ISLAND_ROUTE as f, createEndpoint as g, findRouteToRewrite as h, isRequestServerIsland as i, RenderContext as j, getSetCookiesFromResponse as k, matchRoute as m, notFound as n, requestIs404Or500 as r, sequence as s };

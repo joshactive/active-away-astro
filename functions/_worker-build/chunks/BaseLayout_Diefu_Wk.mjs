@@ -1,5 +1,5 @@
 globalThis.process ??= {}; globalThis.process.env ??= {};
-import { f as createComponent, r as renderTemplate, l as defineScriptVars, m as maybeRenderHead, h as addAttribute, e as createAstro, k as renderComponent, n as Fragment, s as spreadAttributes, o as renderScript, an as renderSlot, ao as renderHead, u as unescapeHTML } from './astro/server_DGNyvb9N.mjs';
+import { f as createComponent, r as renderTemplate, l as defineScriptVars, m as maybeRenderHead, h as addAttribute, e as createAstro, k as renderComponent, n as Fragment, s as spreadAttributes, o as renderScript, an as renderSlot, ao as renderHead, u as unescapeHTML } from './astro/server_BoSsXtn0.mjs';
 /* empty css                          */
 import { L as getAnnouncementBar, M as getNavigationMenu, N as getImageByName, O as getResponsiveImageByName } from './strapi_D13TtKqq.mjs';
 

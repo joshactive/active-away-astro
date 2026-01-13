@@ -1,5 +1,5 @@
 globalThis.process ??= {}; globalThis.process.env ??= {};
-import { p as pg } from '../../chunks/index_Bxo-jn7C.mjs';
+import { p as pg } from '../../chunks/index_C7JwCom3.mjs';
 export { renderers } from '../../renderers.mjs';
 
 const { Client } = pg;

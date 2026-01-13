@@ -1,5 +1,5 @@
 globalThis.process ??= {}; globalThis.process.env ??= {};
-import { e as createAstro, f as createComponent, m as maybeRenderHead, h as addAttribute, s as spreadAttributes, r as renderTemplate, k as renderComponent, n as Fragment } from './astro/server_DGNyvb9N.mjs';
+import { e as createAstro, f as createComponent, m as maybeRenderHead, h as addAttribute, s as spreadAttributes, r as renderTemplate, k as renderComponent, n as Fragment } from './astro/server_BoSsXtn0.mjs';
 import { b as getStrapiImageAttrs } from './strapi_D13TtKqq.mjs';
 /* empty css                          */
 
