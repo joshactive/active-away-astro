@@ -60,6 +60,18 @@ META_CONVERSIONS_API_TOKEN=your_meta_access_token_here
 - Get this from: Meta Events Manager → Your Pixel → Settings → Conversions API → Generate access token
 - Pixel ID configured: `1239031756107828`
 
+### **6. Moosend Email Preferences**
+```
+MOOSEND_API_KEY=your_moosend_api_key_here
+MOOSEND_MAILING_LIST_ID=0bc91db5-8fec-482c-ad60-65295b569c0e
+```
+
+**Required for:** `/preferences` page and preference API endpoints
+- Allows subscribers to view and update their email preferences
+- The API key is from Moosend Settings → API Key
+- The Mailing List ID is for "Master | All Active Away Contacts"
+- Link in emails using: `https://activeaway.com/preferences?email=#recipient:email#`
+
 ---
 
 ## 📝 How to Add Environment Variables to Cloudflare Pages
@@ -158,6 +170,7 @@ https://your-site.pages.dev/api/newsletter-signup.json
   "timestamp": "2025-10-28T..."
 }
 ```
+
 
 ---
 
