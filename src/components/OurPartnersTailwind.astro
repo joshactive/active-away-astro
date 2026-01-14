@@ -1,5 +1,6 @@
 ---
 // Our Partners section component for Active Away - Tailwind CSS Version
+// Desktop/Tablet: Auto-scrolling marquee | Mobile: Grid layout
 import { getImageByName, getResponsiveImageByName, getStrapiImageAttrs } from '../utils/cloudflareImages.js';
 
 // Accept homeData as prop (fetched once in index.astro)
@@ -52,6 +53,14 @@ const fallbackPartners = [
       url: 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/41c47858-e08c-4853-5aac-c4f666c8ba00/public',
       alternativeText: 'Partner logo'
     }, 'partner-6', 'Partner logo') 
+  },
+  { 
+    id: 7, 
+    name: "Partner", 
+    logo: buildPartnerLogo({
+      url: 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/78b28eac-7870-4e0b-4fea-fe4275be4800/public',
+      alternativeText: 'Partner logo'
+    }, 'partner-7', 'Partner logo') 
   }
 ];
 
@@ -63,14 +72,22 @@ const partners = homeData?.partners?.length > 0
         name: p.name,
         logo: buildPartnerLogo(p.logo, `partner-${(i % fallbackPartners.length) + 1}`, p.name)
       })),
-      // Append the new partner if using Strapi data (ensuring it shows up everywhere)
+      // Append hardcoded partners if using Strapi data (ensuring they show up everywhere)
       { 
-        id: 100, // Arbitrary ID to avoid collision
+        id: 100,
         name: "Partner", 
         logo: buildPartnerLogo({
           url: 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/41c47858-e08c-4853-5aac-c4f666c8ba00/public',
           alternativeText: 'Partner logo'
         }, 'partner-6', 'Partner logo') 
+      },
+      { 
+        id: 101,
+        name: "Partner", 
+        logo: buildPartnerLogo({
+          url: 'https://activeaway.com/cdn-cgi/imagedelivery/-aT8Z2F9gGvZ9fdofZcCaQ/78b28eac-7870-4e0b-4fea-fe4275be4800/public',
+          alternativeText: 'Partner logo'
+        }, 'partner-7', 'Partner logo') 
       }
     ]
   : fallbackPartners;
@@ -86,11 +103,11 @@ console.log('Partner Logos URLs:', partners.map(p => ({ name: p.name, logo: p.lo
       Our Partners
     </h2>
     
-    <!-- Partners Grid -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6 lg:gap-12">
-      {partners.map((partner, index) => (
-        <div class="partner-card flex items-center justify-center p-4 sm:p-6 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all duration-300 hover:-translate-y-1">
-          <div class="partner-logo w-full h-20 sm:h-24 lg:h-28 flex items-center justify-center">
+    <!-- Mobile Grid (visible below sm breakpoint) -->
+    <div class="grid grid-cols-2 gap-4 sm:hidden">
+      {partners.map((partner) => (
+        <div class="partner-card flex items-center justify-center p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all duration-300">
+          <div class="partner-logo w-full h-20 flex items-center justify-center">
             <img 
               src={partner.logo.src || partner.logo.url} 
               {...(partner.logo.srcset && { srcset: partner.logo.srcset })}
@@ -105,11 +122,87 @@ console.log('Partner Logos URLs:', partners.map(p => ({ name: p.name, logo: p.lo
         </div>
       ))}
     </div>
+
+    <!-- Desktop/Tablet Marquee (visible at sm and above) -->
+    <div class="hidden sm:block partner-marquee-container relative overflow-hidden">
+      <!-- Edge fade gradients -->
+      <div class="absolute left-0 top-0 bottom-0 w-16 sm:w-24 lg:w-32 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
+      <div class="absolute right-0 top-0 bottom-0 w-16 sm:w-24 lg:w-32 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
+      
+      <!-- Marquee track -->
+      <div class="partner-marquee flex">
+        <!-- First set of logos -->
+        {partners.map((partner) => (
+          <div class="partner-slide flex-shrink-0 mx-4 sm:mx-6 lg:mx-8">
+            <div class="partner-card flex items-center justify-center p-4 sm:p-6 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all duration-300 hover:-translate-y-1 w-40 sm:w-48 lg:w-56">
+              <div class="partner-logo w-full h-20 sm:h-24 lg:h-28 flex items-center justify-center">
+                <img 
+                  src={partner.logo.src || partner.logo.url} 
+                  {...(partner.logo.srcset && { srcset: partner.logo.srcset })}
+                  {...(partner.logo.sizes && { sizes: partner.logo.sizes })}
+                  alt={partner.logo.alt || partner.name} 
+                  width={partner.logo.width || 200} 
+                  height={partner.logo.height || 120} 
+                  class="max-w-full max-h-full object-contain filter grayscale hover:grayscale-0 transition-all duration-300" 
+                  loading={partner.logo.loading || 'lazy'} 
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+        <!-- Duplicate set for seamless loop -->
+        {partners.map((partner) => (
+          <div class="partner-slide flex-shrink-0 mx-4 sm:mx-6 lg:mx-8" aria-hidden="true">
+            <div class="partner-card flex items-center justify-center p-4 sm:p-6 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all duration-300 hover:-translate-y-1 w-40 sm:w-48 lg:w-56">
+              <div class="partner-logo w-full h-20 sm:h-24 lg:h-28 flex items-center justify-center">
+                <img 
+                  src={partner.logo.src || partner.logo.url} 
+                  {...(partner.logo.srcset && { srcset: partner.logo.srcset })}
+                  {...(partner.logo.sizes && { sizes: partner.logo.sizes })}
+                  alt={partner.logo.alt || partner.name} 
+                  width={partner.logo.width || 200} 
+                  height={partner.logo.height || 120} 
+                  class="max-w-full max-h-full object-contain filter grayscale hover:grayscale-0 transition-all duration-300" 
+                  loading="lazy" 
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   </div>
 </section>
 
 <style>
   .font-playfair {
     font-family: 'Playfair Display', serif;
+  }
+
+  /* Marquee animation */
+  @keyframes scroll-marquee {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  .partner-marquee {
+    animation: scroll-marquee 35s linear infinite;
+    width: max-content;
+  }
+
+  /* Pause on hover for accessibility */
+  .partner-marquee-container:hover .partner-marquee {
+    animation-play-state: paused;
+  }
+
+  /* Reduce motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    .partner-marquee {
+      animation: none;
+    }
   }
 </style>

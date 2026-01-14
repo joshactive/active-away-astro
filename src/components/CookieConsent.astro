@@ -1,16 +1,18 @@
 ---
 // CookieConsent.astro
 // A comprehensive cookie consent manager for GDPR compliance
-// Handles GA4 and Meta Pixel injection based on user preferences
+// Handles GA4, Meta Pixel, and Moosend injection based on user preferences
 
 export interface Props {
   gaMeasurementId?: string;
   metaPixelId?: string;
+  moosendSiteId?: string;
 }
 
 const { 
   gaMeasurementId = "G-V7EBKMBBJW", 
-  metaPixelId = "1239031756107828" 
+  metaPixelId = "1239031756107828",
+  moosendSiteId = "cac37bb7-d651-40c9-b2fa-df88dd58a911"
 } = Astro.props;
 ---
 
@@ -126,7 +128,7 @@ const {
 <!-- Button to reopen settings (usually in footer, but hidden by default here, can be triggered via ID) -->
 <button id="open-cookie-settings" class="hidden">Cookie Settings</button>
 
-<script is:inline define:vars={{ gaMeasurementId, metaPixelId }}>
+<script is:inline define:vars={{ gaMeasurementId, metaPixelId, moosendSiteId }}>
   // State management
   const COOKIE_CONSENT_KEY = 'active_away_cookie_consent';
   const DEFAULT_CONSENT = {
@@ -293,6 +295,21 @@ const {
         window.fbq('track', 'PageView');
         console.log('Meta Pixel PageView tracked (already initialized)');
       }
+
+      // Moosend
+      if (!window.mootrack) {
+        // Initialize Moosend TrackerJS
+        !function(t,n,e,o,a){function d(t){var n=~~(Date.now()/3e5),o=document.createElement(e);o.async=!0,o.src=t+"?ts="+n;var a=document.getElementsByTagName(e)[0];a.parentNode.insertBefore(o,a)}t.MooTrackerObject=a,t[a]=t[a]||function(){return t[a].q?void t[a].q.push(arguments):void(t[a].q=[arguments])},window.attachEvent?window.attachEvent("onload",d.bind(this,o)):window.addEventListener("load",d.bind(this,o),!1)}(window,document,"script","//cdn.stat-track.com/statics/moosend-tracking.min.js","mootrack");
+        
+        // Initialize tracker
+        mootrack('init', moosendSiteId);
+        mootrack('trackPageView');
+        console.log('Moosend Initialized and PageView tracked');
+      } else {
+        // mootrack already exists, just track PageView
+        mootrack('trackPageView');
+        console.log('Moosend PageView tracked (already initialized)');
+      }
     }
   }
 
@@ -401,6 +418,12 @@ const {
       if (stored.marketing && typeof window.fbq === 'function') {
         window.fbq('track', 'PageView');
         console.log('Meta Pixel PageView tracked on navigation');
+      }
+      
+      // Track PageView on navigation if Moosend is already loaded
+      if (stored.marketing && typeof window.mootrack === 'function') {
+        mootrack('trackPageView');
+        console.log('Moosend PageView tracked on navigation');
       }
     }
   };

@@ -49,6 +49,17 @@ STRAPI_TOKEN=your_strapi_api_token_here
 - All page content, images, and data come from Strapi
 - Without this, fallback content will be used
 
+### **5. Meta Conversions API (CAPI)**
+```
+META_CONVERSIONS_API_TOKEN=your_meta_access_token_here
+```
+
+**Required for:** Server-side event tracking via Meta Conversions API
+- Sends Lead, Purchase, and other events to Meta for better attribution
+- Without this, only client-side Meta Pixel tracking will work (less reliable)
+- Get this from: Meta Events Manager → Your Pixel → Settings → Conversions API → Generate access token
+- Pixel ID configured: `1239031756107828`
+
 ---
 
 ## 📝 How to Add Environment Variables to Cloudflare Pages
@@ -223,6 +234,7 @@ After adding environment variables and redeploying:
 - [ ] No "API key not configured" errors in browser console
 - [ ] `/api/google-reviews.json` returns valid JSON
 - [ ] `/api/newsletter-signup.json` returns status "ok"
+- [ ] Meta CAPI Lead events appear in Meta Events Manager (test form submission with marketing consent)
 
 ---
 

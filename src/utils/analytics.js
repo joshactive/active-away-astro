@@ -1,6 +1,6 @@
 /**
  * Analytics Utility
- * Handles tracking events across Google Analytics 4, Meta Pixel, and Server-Side API (CAPI)
+ * Handles tracking events across Google Analytics 4, Meta Pixel, Moosend, and Server-Side API (CAPI)
  */
 
 // Helper to generate unique Event ID for deduplication
@@ -35,7 +35,26 @@ export async function trackEvent(eventName, params = {}, userData = {}) {
     console.log('📊 Meta Pixel Event tracked:', eventName, pixelParams);
   }
 
-  // 3. Meta Conversions API (Server Side)
+  // 3. Moosend
+  if (typeof window.mootrack === 'function') {
+    // Identify user if email is provided
+    if (userData.email) {
+      const fullName = [userData.firstName, userData.lastName].filter(Boolean).join(' ');
+      if (fullName) {
+        window.mootrack('identify', userData.email, fullName);
+        console.log('📊 Moosend user identified:', userData.email, fullName);
+      } else {
+        window.mootrack('identify', userData.email);
+        console.log('📊 Moosend user identified:', userData.email);
+      }
+    }
+    
+    // Track custom event with params
+    window.mootrack(eventName, params);
+    console.log('📊 Moosend Event tracked:', eventName, params);
+  }
+
+  // 4. Meta Conversions API (Server Side)
   // We send this to our own API endpoint which forwards to Meta
   try {
     // Check if we have consent for marketing (Meta)
@@ -79,6 +98,9 @@ export function trackPageView() {
     
     // Also send CAPI PageView? Usually not needed if browser pixel is reliable for page views, 
     // but good for complete coverage. skipping for now to save quota/complexity.
+  }
+  if (typeof window.mootrack === 'function') {
+    window.mootrack('trackPageView');
   }
 }
 
