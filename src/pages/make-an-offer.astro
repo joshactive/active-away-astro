@@ -621,21 +621,23 @@ const EVENT_IMAGE_QUALITY = 60;
                 
                 {/* Make an Offer Button */}
                 <div 
-                  class="block w-full text-center text-white font-inter font-semibold py-3 px-4 rounded-full transition-colors bg-[#ad986c] hover:bg-[#8d7a56]"
+                  class={`block w-full text-center font-inter font-semibold py-3 px-4 rounded-full transition-colors ${event.isSoldOut ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-[#ad986c] hover:bg-[#8d7a56] text-white'}`}
                 >
-                  Make an Offer
+                  {event.isSoldOut ? 'Sold Out' : 'Make an Offer'}
                 </div>
               </div>
 
               {/* Main Card Action - Absolute Overlay */}
-              <button 
-                type="button"
-                onclick={openModalClick}
-                class="absolute inset-0 z-0 w-full h-full cursor-pointer text-left indent-[-9999px] focus:outline-none"
-                aria-label={`Make an offer for ${event.title}`}
-              >
-                Make an Offer
-              </button>
+              {!event.isSoldOut && (
+                <button 
+                  type="button"
+                  onclick={openModalClick}
+                  class="absolute inset-0 z-0 w-full h-full cursor-pointer text-left indent-[-9999px] focus:outline-none"
+                  aria-label={`Make an offer for ${event.title}`}
+                >
+                  Make an Offer
+                </button>
+              )}
             </div>
           );
         })}
